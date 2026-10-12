@@ -70,6 +70,7 @@ services/           Regras do jogo (energia, crime, prisão, lavagem, combate...
 database/           Conexão SQLite e migrações (rodam sozinhas ao iniciar)
 config/             Valores ajustáveis (empregos, itens, crime, cooldowns...)
 utils/              Embeds, tempo, IDs e utilitários
+tests/              Testes automáticos (npm test)
 generated/          Dados gerados em execução (ex.: contador de visualizações do /userinfo)
 assets/             Imagens: insígnias, selos Pulse e base do cartão de perfil
 ```
@@ -110,14 +111,47 @@ export default {
 | Comando | O que faz |
 |---|---|
 | `/crime` | Arrisca um crime: 50% de chance, rende dinheiro sujo e XP. Falhar custa multa, prisão e, às vezes, vida. |
+| `/roubar` | Rouba a carteira de outro jogador (nome, @menção ou ID). Precisa de arma equipada; a chance depende da arma. Leva de 10% a 25% da carteira, com teto: metade vem limpa e metade como dinheiro sujo. Alvo armado pode revidar. |
 | `/lavagem` | Converte dinheiro sujo em limpo. Lavanderia **pública** (35% a 55%, uma por vez no servidor) ou **privada** (75% a 85%, exige gemas uma vez). |
 | `/lavageminfo` | Tempo restante da lavagem em andamento. |
-| `/prisao` | Pena restante e ficha criminal. |
+| `/procurados` | Quem tem ficha criminal no servidor, 8 por página. |
+| `/prisao` | Pena restante e ficha criminal. Preso, mostra o botão **Tentar fuga**. |
 
 - Dinheiro sujo não compra, deposita nem transfere: só serve depois de lavado.
+- Cada crime, roubo e lavagem iniciada entra na **ficha criminal**, que não expira. Quem tem ficha aparece em `/procurados`. As recompensas pelos procurados dependem da carreira de policial, que ainda não existe.
 - Preso, o jogador não trabalha, não compra e não movimenta dinheiro. A lista de comandos bloqueados está em `config/crime.mjs`.
 - O tempo da prisão é atualizado ao vivo na própria mensagem (a cada 10 s por padrão).
-- Valores, histórias, custos e limites ficam todos em `config/crime.mjs`.
+- **Fuga da prisão:** o botão abre um minigame de 3 etapas numa mensagem só sua. Em cada etapa o guarda vigia (clicar é ser pego), às vezes finge virar as costas (clicar também é ser pego) e então abre o corredor: aperte a saída indicada, dentre 8, a tempo. Vencer corta 15% da pena e ser pego soma 10%, sempre limitado a ±50% da pena original. Há 10 minutos de recarga entre tentativas.
+- Valores, histórias, custos, chances por arma e tempos da fuga ficam todos em `config/crime.mjs`.
+
+## Perfil e quantias
+
+- `/perfil` mostra o seu cartão. `/perfil usuario:<@usuário>` (ou `hperfil maria`, `hperfil @maria`, `hperfil <@menção>`) mostra o de outra pessoa do servidor. A busca é só pelo **@usuário** (o nome de usuário, que é único, sem diferenciar maiúsculas) ou por menção: apelidos e nomes de exibição das plataformas não entram. A mensagem menciona a pessoa e, se não achar ninguém, avisa que não encontrou. O cartão é enviado direto para a VSync, sem gravar nada em disco.
+- Nos comandos de dinheiro (`/depositar`, `/sacar`, `/transferir`, `/lavagem`), `tudo` ou `all` usa o saldo inteiro: `hdep all`, `hsacar tudo`.
+
+## Painéis e modais
+
+Alguns comandos mostram botões que abrem formulários (modais) da VSync, no estilo dos painéis da Alfacusa:
+
+| Comando | Botões | Formulário |
+|---|---|---|
+| `/saldo` | Depositar, Sacar, Transferir | quantia (`tudo`/`all` vale); a transferência também pede o destinatário por nome, @menção ou ID |
+| `/lavagem` | Lavar (pública), Lavar (privada) ou Liberar privada | valor sujo; liberar pede para digitar `LIBERAR`, porque custa gemas |
+| `/bio` (sem texto) | Editar bio | campo de parágrafo já preenchido com a bio atual |
+| `/loja` | Comprar | item (por nome, sem acento, ou ID) e quantidade |
+
+- Comandos pelo prefixo (`hbio`) não têm interação e não abrem modal sozinhos: o botão da mensagem faz isso.
+- Os botões pessoais só funcionam para quem abriu o painel. O botão da loja serve a todos, e cada um compra para si.
+- O envio do formulário roda o comando de sempre com as opções preenchidas, então limites, recargas e a prisão continuam valendo (preso não deposita, nem por modal).
+- Para criar um painel: `services/modals.mjs` (`textField`, `openModal`, `readFields`) e `services/panels.mjs` (botões, clique e envio).
+
+## Testes
+
+```bash
+npm test
+```
+
+Usa o executor nativo do Node (`node --test`). Cada arquivo de `tests/` roda num processo próprio, com um banco SQLite temporário, sem tocar em `data/` e sem chamar a VSync (a API é simulada).
 
 ## Banco de dados
 

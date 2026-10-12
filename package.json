@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env helena.mjs",
-    "start:test": "node --env-file=.env.test helena.mjs"
+    "start:test": "node --env-file=.env.test helena.mjs",
+    "test": "node --test \"tests/*.test.mjs\""
   },
   "dependencies": {
     "sharp": "^0.35.5",
