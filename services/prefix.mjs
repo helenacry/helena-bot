@@ -9,114 +9,26 @@ import {
     savePlayerName
 } from "./player-names.mjs";
 
+import {
+    parseArguments,
+    PrefixUsageError
+} from "./prefix-parser.mjs";
+
 export const PREFIX = "h";
 
-function tokenize(input) {
-    return input.match(/"[^"]*"|'[^']*'|\S+/g)
-        ?.map(value => {
-            if (
-                (value.startsWith('"') && value.endsWith('"')) ||
-                (value.startsWith("'") && value.endsWith("'"))
-            ) {
-                return value.slice(1, -1);
-            }
+// Monta a dica de uso exibida quando os argumentos
+// estão incorretos: hcomprar <item> [quantidade]
 
-            return value;
-        }) ?? [];
-}
+function usageHint(commandName, definitions = []) {
+    const parts = definitions.map(definition =>
+        definition.required
+            ? `<${definition.name}>`
+            : `[${definition.name}]`
+    );
 
-function convertOption(value, definition) {
-    if (value === undefined) {
-        return undefined;
-    }
-
-    switch (definition.type) {
-        case "integer": {
-            const number = Number(value);
-
-            if (!Number.isSafeInteger(number)) {
-                throw new Error(
-                    `A opção "${definition.name}" precisa ser um número inteiro.`
-                );
-            }
-
-            return number;
-        }
-
-        case "number": {
-            const number = Number(value);
-
-            if (!Number.isFinite(number)) {
-                throw new Error(
-                    `A opção "${definition.name}" precisa ser um número.`
-                );
-            }
-
-            return number;
-        }
-
-        case "boolean":
-            if (["true", "sim", "1"].includes(value.toLowerCase())) {
-                return true;
-            }
-
-            if (["false", "não", "nao", "0"].includes(value.toLowerCase())) {
-                return false;
-            }
-
-            throw new Error(
-                `A opção "${definition.name}" precisa ser sim ou não.`
-            );
-
-        default:
-            return value;
-    }
-}
-
-function parseOptions(args, definitions = []) {
-    const options = [];
-
-    for (let index = 0; index < definitions.length; index++) {
-        const definition = definitions[index];
-        const raw = args[index];
-
-        if (raw === undefined) {
-            if (definition.required) {
-                throw new Error(
-                    `Faltou a opção "${definition.name}".`
-                );
-            }
-
-            continue;
-        }
-
-        const value = convertOption(raw, definition);
-
-        if (
-            Array.isArray(definition.choices) &&
-            !definition.choices.some(choice => choice.value === value)
-        ) {
-            throw new Error(
-                `Valor inválido para "${definition.name}". Opções: ${
-                    definition.choices.map(choice => choice.value).join(", ")
-                }`
-            );
-        }
-
-        options.push({
-            name: definition.name,
-            type: definition.type,
-            value
-        });
-    }
-
-    if (args.length > definitions.length) {
-        throw new Error(
-            "Foram informados mais argumentos do que o comando aceita."
-        );
-    }
-
-    return options;
+    return `Uso: \`${PREFIX}${commandName}${
+        parts.length ? " " + parts.join(" ") : ""
+    }\``;
 }
 
 export async function processarPrefixo({
@@ -130,13 +42,17 @@ export async function processarPrefixo({
         return false;
     }
 
-    const parts = tokenize(body.slice(PREFIX.length));
+    const content = body.slice(PREFIX.length).trimStart();
 
-    const commandName = parts.shift()?.toLowerCase();
+    const parsed = content.match(/^(\S+)\s*([\s\S]*)$/);
 
-    if (!commandName) {
+    if (!parsed) {
         return false;
     }
+
+    const commandName = parsed[1].toLowerCase();
+
+    const argumentText = parsed[2];
 
     const comando = comandos.get(commandName);
 
@@ -184,20 +100,28 @@ export async function processarPrefixo({
     let options;
 
     try {
-        options = parseOptions(
-            parts,
+        options = parseArguments(
+            argumentText,
             comando.options ?? []
         );
     } catch (error) {
+        if (!(error instanceof PrefixUsageError)) {
+            throw error;
+        }
+
         await send(message, {
-            body: `❌ ${error.message}`
+            body:
+                `❌ ${error.message}\n` +
+                usageHint(commandName, comando.options)
         });
 
         return true;
     }
 
-    // Adaptador: mantém o formato que os comandos
-    // slash já esperam receber.
+    // Adaptador: entrega o mesmo formato do comando de
+    // barra da VSync. data.options é um objeto indexado
+    // pelo nome da opção, e opções do tipo user chegam
+    // como ID (string).
     const interaction = {
         id: message.id,
         type: "command",

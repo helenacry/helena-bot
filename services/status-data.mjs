@@ -122,10 +122,10 @@ export function getStatusMessages({
             : `Cluster ${STATUS_CONFIG.clusterId} | [${formatNumber(count)}]`;
 
     const serversText = count === null
-        ? "Servidores: aguardando dados"
+        ? "Servers: aguardando dados"
         : guildCountComplete
-            ? `${formatNumber(count)} servidores`
-            : `${formatNumber(count)} servidores observados`;
+            ? `${formatNumber(count)} servers`
+            : `${formatNumber(count)} servers`;
 
     const topText = top
         ? `Top XP: ${top.name} ${formatXP(top.xp)}`

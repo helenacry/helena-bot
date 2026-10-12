@@ -43,6 +43,11 @@ import {
 } from "./services/prefix.mjs";
 
 import {
+    startSupportStats,
+    stopSupportStats
+} from "./services/support-stats.mjs";
+
+import {
     runPlayerNamesMigrations,
     savePlayerName
 } from "./services/player-names.mjs";
@@ -663,7 +668,12 @@ function conectarGateway() {
 
     limparReconexao();
     limparHeartbeat();
+
     stopStatusRotation();
+
+    // Impede que intervalos antigos continuem
+    // funcionando após uma reconexão.
+    stopSupportStats();
 
     guildIds.clear();
     guildCountComplete = false;
@@ -774,10 +784,14 @@ function conectarGateway() {
 
                 processarReadyGuilds(msg);
 
+                // Rotação de presença.
                 startStatusRotation(
                     atualizarPresenca,
                     obterMensagensStatus
                 );
+
+                // Contadores do servidor de suporte.
+                startSupportStats();
 
                 console.log(
                     "[STATUS] Rotação com dados reais iniciada."
@@ -802,17 +816,11 @@ function conectarGateway() {
             // COMANDOS COM PREFIXO H
             // ==================================
 
-            // Recebe mensagens comuns do canal.
-            //
             // Exemplos:
             // hajuda
             // hperfil
             // hdaily
             // hajuda economia
-            //
-            // Não utiliza callback de interação.
-            // A resposta é publicada diretamente
-            // no canal através da API REST.
 
             if (
                 msg.op === "dispatch" &&
@@ -1067,7 +1075,12 @@ function conectarGateway() {
             }
 
             limparHeartbeat();
+
             stopStatusRotation();
+
+            // Interrompe os contadores enquanto
+            // o Gateway estiver desconectado.
+            stopSupportStats();
 
             ws = null;
 
@@ -1120,7 +1133,11 @@ function encerrar(signal) {
 
     limparHeartbeat();
     limparReconexao();
+
     stopStatusRotation();
+
+    // Finaliza os contadores de suporte.
+    stopSupportStats();
 
     const socket = ws;
 

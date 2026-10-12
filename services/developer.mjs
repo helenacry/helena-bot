@@ -12,25 +12,12 @@ import { calculateLevel } from "./experience.mjs";
 // IDs configurados no .env.
 // Aceita um ou vários IDs separados por vírgula.
 
-const envOwnerIds = String(
-    process.env.HELENA_OWNER_ID ?? ""
-)
-    .split(",")
-    .map(id => id.trim())
-    .filter(Boolean);
-
-// Segundo desenvolvedor autorizado.
-
-const additionalDeveloperIds = [
-    "0615ce1b-db76-442b-b296-7358b97ff03c"
-];
-
-// Junta os IDs sem duplicatas.
-
-const ownerIds = new Set([
-    ...envOwnerIds,
-    ...additionalDeveloperIds
-]);
+const ownerIds = new Set(
+    String(process.env.HELENA_OWNER_ID ?? "")
+        .split(",")
+        .map(id => id.trim())
+        .filter(Boolean)
+);
 
 // ==========================================
 // VERIFICAÇÃO DE PERMISSÕES
