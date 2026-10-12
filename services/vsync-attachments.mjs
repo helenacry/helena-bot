@@ -1,7 +1,4 @@
 
-import { readFile } from "node:fs/promises";
-import { basename } from "node:path";
-
 const API = "https://api.vsync.lat";
 
 const MAX_FILE_BYTES = 100 * 1024 * 1024;
@@ -58,9 +55,8 @@ async function apiRequest(endpoint, options = {}) {
 /**
  * Envia um arquivo para um canal do VSync.
  *
- * O conteúdo vem de `bytes` (Buffer em memória) ou, se não
- * houver, é lido de `filepath`. Com `bytes` nada é gravado
- * em disco.
+ * O conteúdo vem de `bytes` (Buffer em memória): nada é lido
+ * nem gravado em disco.
  *
  * Retorna uma referência descartável:
  * att:<id>
@@ -71,9 +67,8 @@ async function apiRequest(endpoint, options = {}) {
 export async function uploadVSyncAttachment({
     guildId,
     channelId,
-    filepath,
-    bytes: providedBytes,
-    filename,
+    bytes,
+    filename = "arquivo",
     contentType = "image/png"
 }) {
     if (!guildId || !channelId) {
@@ -82,17 +77,11 @@ export async function uploadVSyncAttachment({
         );
     }
 
-    if (!filepath && !providedBytes) {
+    if (!bytes) {
         throw new Error(
-            "Informe o arquivo (filepath) ou o conteúdo (bytes)."
+            "Conteúdo do arquivo (bytes) não informado."
         );
     }
-
-    // ======================================
-    // CONTEÚDO DO ARQUIVO
-    // ======================================
-
-    const bytes = providedBytes ?? await readFile(filepath);
 
     const size = bytes.length;
 
@@ -135,8 +124,7 @@ export async function uploadVSyncAttachment({
     // 2. INICIAR UPLOAD
     // ======================================
 
-    const name = filename ||
-        (filepath ? basename(filepath) : "arquivo");
+    const name = filename;
 
     const initialized = await apiRequest(
         "/attachments/init",
