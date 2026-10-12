@@ -198,6 +198,20 @@ export function searchUsers(users, query) {
         .map(item => item.user);
 }
 
+// Só o @usuário, exato (sem diferenciar maiúsculas nem o "@" do
+// começo). O nome de usuário é único, então não há ambiguidade.
+export function searchByUsername(users, query) {
+    const wanted = normalizeName(query);
+
+    if (!wanted) {
+        return [];
+    }
+
+    return users.filter(
+        user => normalizeName(user.username) === wanted
+    );
+}
+
 // ==========================================
 // MENSAGENS
 // ==========================================
@@ -213,15 +227,19 @@ export function safeText(text) {
 
 // Quando a busca não terminou em uma pessoa, devolve o título e o
 // texto do aviso para o usuário; quando achou, devolve null.
-export function lookupProblem(result, query) {
+export function lookupProblem(result, query, { by = "any" } = {}) {
     if (result.status === "not_found") {
         return {
             title: "Usuário não encontrado",
-            message:
-                "Não encontrei ninguém com **" + safeText(query) +
-                "** neste servidor.\n\n" +
-                "Tente o nome de exibição ou o @usuário, " +
-                "ou mencione a pessoa."
+            message: by === "username"
+                ? "Não encontrei ninguém com o @usuário **" +
+                  safeText(query) + "** neste servidor.\n\n" +
+                  "Use o @usuário exato (o nome de usuário, não o " +
+                  "apelido) ou mencione a pessoa."
+                : "Não encontrei ninguém com **" + safeText(query) +
+                  "** neste servidor.\n\n" +
+                  "Tente o nome de exibição ou o @usuário, " +
+                  "ou mencione a pessoa."
         };
     }
 
@@ -263,7 +281,15 @@ export function lookupProblem(result, query) {
 //   { status: "found", user }
 //   { status: "ambiguous", candidates, total }
 //   { status: "not_found", query }
-export async function resolveUser(guildId, text) {
+//
+// by: "any" (padrão) compara apelido, nome de exibição e @usuário;
+//     "username" só aceita o @usuário exato (que é único) ou uma
+//     menção/ID, sem olhar apelidos nem nomes de exibição.
+export async function resolveUser(
+    guildId,
+    text,
+    { by = "any" } = {}
+) {
     const query = String(text ?? "").trim();
 
     const id = parseUserReference(query);
@@ -309,7 +335,9 @@ export async function resolveUser(guildId, text) {
         users = knownUsers(guildId);
     }
 
-    const matches = searchUsers(users, query);
+    const matches = by === "username"
+        ? searchByUsername(users, query)
+        : searchUsers(users, query);
 
     if (matches.length === 0) {
         return { status: "not_found", query };

@@ -12,7 +12,6 @@ import { getEquippedWeapon } from "../../services/equipment.mjs";
 import {
     resolveUser,
     lookupProblem,
-    safeText,
     shownName
 } from "../../services/user-lookup.mjs";
 
@@ -72,7 +71,7 @@ export default {
         {
             name: "usuario",
             description:
-                "Nome, @menção ou ID de quem você quer ver (vazio = você)",
+                "@usuário ou @menção de quem você quer ver (vazio = você)",
             type: "string",
             required: false
         }
@@ -114,9 +113,19 @@ export default {
             ).trim();
 
             if (query) {
-                const found = await resolveUser(guildId, query);
+                // Só pelo @usuário (que é único) ou por menção: apelidos
+                // e nomes de exibição das plataformas não entram na busca.
+                const found = await resolveUser(
+                    guildId,
+                    query,
+                    { by: "username" }
+                );
 
-                const problem = lookupProblem(found, query);
+                const problem = lookupProblem(
+                    found,
+                    query,
+                    { by: "username" }
+                );
 
                 if (problem) {
                     return warningEmbed(
@@ -292,11 +301,11 @@ export default {
                 type: "message",
 
                 data: {
-                    // Marca quem pediu o próprio perfil. No de outra
-                    // pessoa não há menção, para não notificá-la.
+                    // A mensagem menciona o dono do perfil: você, no
+                    // seu, ou a pessoa pesquisada, no de outra.
                     body: target.self
                         ? `<@${userId}>`
-                        : `Perfil de **${safeText(target.name)}**`,
+                        : `Perfil de <@${target.id}>`,
 
                     attachments: [
                         attachment.reference
