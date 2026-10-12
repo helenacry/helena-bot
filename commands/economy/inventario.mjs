@@ -1,34 +1,36 @@
 
-import {
-    getPlayer
-} from "../../database/economy.mjs";
+import { getPlayer } from "../../database/economy.mjs";
+
+import { ITEM_CATEGORIES } from "../../config/items.mjs";
 
 import {
-    ITEM_CATEGORIES,
-    getCategoryName
-} from "../../config/items.mjs";
+    buildInventoryView,
+    ALL_SHELVES
+} from "../../services/inventory-view.mjs";
 
 import {
-    getInventory,
-    getInventoryStats
-} from "../../services/inventory.mjs";
-
-import {
-    createEmbed,
     embedResponse,
-    errorEmbed,
-    HELENA_COLORS
+    errorEmbed
 } from "../../utils/embed.mjs";
+
+// ==========================================
+// COMANDO /INVENTARIO
+// ==========================================
+
+// A mochila é um painel: menu de prateleiras, 12 itens por página,
+// Anterior/Próxima/Atualizar e o botão Descartar (abre um modal e
+// depois pede confirmação). A navegação fica em
+// services/shop-panels.mjs.
 
 export default {
     name: "inventario",
     aliases: ["inv"],
-    description: "Consulte os itens do seu inventário",
+    description: "Abra seu inventário: veja, organize e descarte itens",
 
     options: [
         {
             name: "categoria",
-            description: "Filtre os itens por categoria",
+            description: "Abrir já numa prateleira (categoria)",
             type: "string",
             required: false,
             choices: Object.entries(
@@ -54,173 +56,34 @@ export default {
             getPlayer(guildId, userId);
 
             const category =
-                interaction.data.options?.categoria;
+                interaction.data?.options?.categoria ??
+                ALL_SHELVES;
 
             if (
-                category &&
+                category !== ALL_SHELVES &&
                 !Object.hasOwn(ITEM_CATEGORIES, category)
             ) {
                 return errorEmbed("Categoria inválida.");
             }
 
-            const inventory = getInventory(
+            const view = buildInventoryView({
+                ownerId: userId,
                 guildId,
-                userId
-            );
-
-            const stats = getInventoryStats(
-                guildId,
-                userId
-            );
-
-            const filtered = category
-                ? inventory.filter(
-                    entry => entry.category === category
-                )
-                : inventory;
-
-            const username =
-                interaction.user?.displayName ||
-                interaction.user?.username ||
-                "Jogador";
-
-            const categoryLabel = category
-                ? getCategoryName(category)
-                : "Todas";
-
-            // ==================================
-            // INVENTÁRIO VAZIO
-            // ==================================
-
-            if (filtered.length === 0) {
-                return embedResponse(
-                    createEmbed({
-                        title: "🎒 Helena Inventário",
-
-                        description:
-                            "👤 **Jogador:** " + username + "\n" +
-                            "📂 **Categoria:** " + categoryLabel +
-                            "\n\n📦 Nenhum item encontrado nesta seleção.\n\n" +
-                            "Visite `/loja` para adquirir novos itens.",
-
-                        color: HELENA_COLORS.inventory,
-
-                        fields: [
-                            {
-                                name: "📦 Itens diferentes",
-                                value: String(stats.uniqueItems),
-                                inline: true
-                            },
-                            {
-                                name: "🔢 Quantidade total",
-                                value: String(stats.totalQuantity),
-                                inline: true
-                            },
-                            {
-                                name: "📚 Catálogo",
-                                value: String(stats.catalogSize),
-                                inline: true
-                            }
-                        ]
-                    })
-                );
-            }
-
-            // ==================================
-            // AGRUPAR POR CATEGORIA
-            // ==================================
-
-            const groups = new Map();
-
-            for (const entry of filtered) {
-                const key = entry.category;
-
-                if (!groups.has(key)) {
-                    groups.set(key, []);
-                }
-
-                groups.get(key).push(entry);
-            }
-
-            const fields = [];
-
-            for (const [key, entries] of groups) {
-                const lines = entries.map(entry => {
-                    const description =
-                        entry.item?.description ||
-                        "Item sem descrição.";
-
-                    return [
-                        entry.emoji +
-                            " **" +
-                            entry.name +
-                            "** ×" +
-                            entry.quantity,
-                        description,
-                        "ID: `" + entry.item_id + "`"
-                    ].join("\n");
-                });
-
-                // Campos de embeds possuem limite de 1024 caracteres.
-                // Divide os itens sem cortar suas informações.
-                let chunk = "";
-
-                for (const line of lines) {
-                    const next = chunk
-                        ? chunk + "\n\n" + line
-                        : line;
-
-                    if (next.length > 1000 && chunk) {
-                        fields.push({
-                            name: "📂 " + getCategoryName(key),
-                            value: chunk,
-                            inline: false
-                        });
-
-                        chunk = line;
-                    } else {
-                        chunk = next;
-                    }
-                }
-
-                if (chunk) {
-                    fields.push({
-                        name: "📂 " + getCategoryName(key),
-                        value: chunk,
-                        inline: false
-                    });
-                }
-            }
-
-            fields.push({
-                name: "📊 Estatísticas",
-                value:
-                    "📦 **Itens diferentes:** " +
-                    stats.uniqueItems + "\n" +
-                    "🔢 **Quantidade total:** " +
-                    stats.totalQuantity + "\n" +
-                    "📚 **Itens no catálogo:** " +
-                    stats.catalogSize,
-                inline: false
+                userId,
+                username:
+                    interaction.user?.displayName ||
+                    interaction.user?.username ||
+                    "Jogador",
+                category,
+                page: 1
             });
 
-            return embedResponse(
-                createEmbed({
-                    title: "🎒 Helena Inventário",
+            const response = embedResponse(view.embed);
 
-                    description:
-                        "👤 **Jogador:** " + username + "\n" +
-                        "📂 **Categoria:** " + categoryLabel + "\n\n" +
-                        "Seus itens estão organizados abaixo.",
+            // Só o dono do painel navega e descarta por ele.
+            response.data.components = view.components;
 
-                    color: HELENA_COLORS.inventory,
-
-                    fields,
-
-                    footer:
-                        "Helena • Use /inventario categoria para filtrar."
-                })
-            );
+            return response;
 
         } catch (error) {
             console.error("[INVENTARIO]", error);

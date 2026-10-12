@@ -1,13 +1,10 @@
 
 import { formatMoney, getPlayer } from "../database/economy.mjs";
 
-import { prisonBlock } from "./prison.mjs";
-
 import {
     resolveUser,
     lookupProblem,
-    normalizeName,
-    safeText
+    normalizeName
 } from "./user-lookup.mjs";
 
 import {
@@ -16,11 +13,22 @@ import {
     readFields
 } from "./modals.mjs";
 
-import { ITEMS } from "../config/items.mjs";
+import {
+    handleShopClick,
+    handleShopModal,
+    handleInventoryClick,
+    handleInventoryModal
+} from "./shop-panels.mjs";
+
+import {
+    button,
+    row,
+    warn,
+    notYours,
+    runCommand
+} from "./panel-kit.mjs";
 
 import { LAUNDERING_CONFIG } from "../config/crime.mjs";
-
-import { warningEmbed } from "../utils/embed.mjs";
 
 // ==========================================
 // PAINÉIS COM BOTÕES E MODAIS
@@ -31,26 +39,17 @@ import { warningEmbed } from "../utils/embed.mjs";
 // opções preenchidas, então as regras (limites, prisão, recargas)
 // continuam num lugar só.
 //
-//   banco:dep|sac|trf:<dono>             /saldo
+//   banco:dep|sac|trf:<dono>                 /saldo
 //   lavagem:publica|privada|liberar:<dono>   /lavagem
-//   bio:editar:<dono>                    /bio
-//   loja:comprar                         /loja
+//   bio:editar:<dono>                        /bio
+//   loja:...                                 /loja        (shop-panels.mjs)
+//   inv:...                                  /inventario  (shop-panels.mjs)
 //
 // O ID do dono vai no customId: os botões pessoais só funcionam
 // para quem abriu o painel. O envio do modal leva o customId do
 // modal (sem o dono): a VSync só entrega o envio para quem o abriu.
 
 const BIO_MAX_LENGTH = 160;
-
-const button = (customId, label, emoji, style = "secondary") => ({
-    type: "button",
-    customId,
-    label,
-    emoji,
-    style
-});
-
-const row = (...components) => ({ type: "row", components });
 
 // ==========================================
 // BOTÕES (usados pelos comandos)
@@ -80,128 +79,25 @@ export function bioPanel(userId) {
     )];
 }
 
-export function shopPanel() {
-    return [row(
-        button("loja:comprar", "Comprar", "🛒", "success")
-    )];
-}
-
 // ==========================================
-// RESPOSTAS
+// CLIQUE NUM BOTÃO OU MENU
 // ==========================================
 
-// Marca uma resposta de mensagem como privada (só quem agiu vê).
-function priv(response) {
-    return response?.type === "message"
-        ? { ...response, data: { ...response.data, ephemeral: true } }
-        : response;
-}
-
-const warn = (title, message) => priv(warningEmbed(title, message));
-
-const notYours = () => warn(
-    "Esse painel é de outra pessoa",
-    "Use o comando para abrir o seu próprio painel."
-);
-
-// ==========================================
-// EXECUTAR UM COMANDO A PARTIR DO MODAL
-// ==========================================
-
-async function runCommand(
-    comandos,
-    name,
-    options,
-    interaction,
-    { ephemeral = true } = {}
-) {
-    const comando = comandos.get(name);
-
-    if (!comando) {
-        return warn("Indisponível", "Esse comando não está disponível.");
-    }
-
-    // Preso não movimenta dinheiro: vale também pelos modais.
-    const blocked = prisonBlock(
-        name,
-        interaction.guildId,
-        interaction.user?.id
-    );
-
-    if (blocked) {
-        return priv(blocked);
-    }
-
-    const result = await comando.execute({
-        id: interaction.id,
-        type: "command",
-        guildId: interaction.guildId,
-        channelId: interaction.channelId,
-        user: interaction.user,
-        data: { name, options }
-    });
-
-    return ephemeral ? priv(result) : result;
-}
-
-// ==========================================
-// ITEM DA LOJA POR NOME OU ID
-// ==========================================
-
-// Aceita o ID ou o nome, sem diferenciar maiúsculas nem acentos.
-// Prefere igual > começa com > contém, como a busca de usuários.
-function findShopItem(text) {
-    const wanted = normalizeName(text);
-
-    if (!wanted) {
-        return [];
-    }
-
-    let best = Infinity;
-
-    const ranked = [];
-
-    for (const item of ITEMS) {
-        if (!Number.isSafeInteger(item.buyPrice) || item.buyPrice <= 0) {
-            continue;
-        }
-
-        let rank = Infinity;
-
-        for (const name of [item.id, item.name].map(normalizeName)) {
-            if (name === wanted) {
-                rank = Math.min(rank, 1);
-
-            } else if (name.startsWith(wanted)) {
-                rank = Math.min(rank, 2);
-
-            } else if (wanted.length >= 2 && name.includes(wanted)) {
-                rank = Math.min(rank, 3);
-            }
-        }
-
-        if (rank < Infinity) {
-            ranked.push({ item, rank });
-
-            best = Math.min(best, rank);
-        }
-    }
-
-    return ranked
-        .filter(entry => entry.rank === best)
-        .map(entry => entry.item);
-}
-
-// ==========================================
-// CLIQUE NUM BOTÃO
-// ==========================================
-
-// Devolve a resposta (abrir o modal ou um aviso) ou null se o botão
-// não é de nenhum painel.
+// Devolve a resposta (abrir o modal, atualizar a tela ou um aviso)
+// ou null se o componente não é de nenhum painel.
 export function handlePanelClick(interaction) {
     const [area, action, ownerId] = String(
         interaction.data?.customId || ""
     ).split(":");
+
+    // A loja e o inventário têm as próprias regras de dono.
+    if (area === "loja") {
+        return handleShopClick(interaction);
+    }
+
+    if (area === "inv") {
+        return handleInventoryClick(interaction);
+    }
 
     const userId = interaction.user?.id;
 
@@ -308,29 +204,7 @@ export function handlePanelClick(interaction) {
         });
     }
 
-    if (area === "loja" && action === "comprar") {
-        return openModal({
-            customId: "loja:comprar",
-            title: "Comprar item",
-            fields: [
-                textField({
-                    id: "item",
-                    label: "Item (nome ou ID)",
-                    placeholder: "Ex.: revolver ou Revólver",
-                    maxLength: 60
-                }),
-                textField({
-                    id: "quantidade",
-                    label: "Quantidade (1 a 99)",
-                    value: "1",
-                    required: false,
-                    maxLength: 2
-                })
-            ]
-        });
-    }
-
-    return ["banco", "lavagem", "bio", "loja"].includes(area)
+    return ["banco", "lavagem", "bio"].includes(area)
         ? warn("Botão desconhecido", "Esse botão não é reconhecido.")
         : null;
 }
@@ -345,7 +219,7 @@ export async function handleModalSubmit(interaction, comandos) {
         interaction.data?.customId || ""
     ).split(":");
 
-    if (!["banco", "lavagem", "bio", "loja"].includes(area)) {
+    if (!["banco", "lavagem", "bio", "loja", "inv"].includes(area)) {
         return null;
     }
 
@@ -353,6 +227,20 @@ export async function handleModalSubmit(interaction, comandos) {
 
     if (!guildId || !interaction.user?.id) {
         return warn("Indisponível", "Isso só funciona em um servidor.");
+    }
+
+    // ----------------------------------
+    // LOJA E INVENTÁRIO
+    // ----------------------------------
+
+    if (area === "loja") {
+        return handleShopModal(interaction, comandos);
+    }
+
+    if (area === "inv") {
+        return action === "descartar"
+            ? handleInventoryModal(interaction)
+            : warn("Formulário desconhecido", "Esse formulário não é reconhecido.");
     }
 
     const fields = readFields(interaction);
@@ -452,53 +340,6 @@ export async function handleModalSubmit(interaction, comandos) {
             comandos,
             "bio",
             { texto: fields.texto ?? "" },
-            interaction
-        );
-    }
-
-    // ----------------------------------
-    // LOJA
-    // ----------------------------------
-
-    if (area === "loja" && action === "comprar") {
-        const query = (fields.item ?? "").trim();
-
-        if (!query) {
-            return warn("Faltou o item", "Diga o nome ou o ID do item.");
-        }
-
-        const matches = findShopItem(query);
-
-        if (matches.length === 0) {
-            return warn(
-                "Item não encontrado",
-                "Não encontrei nenhum item à venda com **" +
-                safeText(query) + "**.\n\nUse `/loja` para ver os itens."
-            );
-        }
-
-        if (matches.length > 1) {
-            return warn(
-                "Mais de um item encontrado",
-                "Vários itens combinam com **" + safeText(query) +
-                "**:\n\n" +
-                matches.slice(0, 5).map(item => "• " + item.name).join("\n") +
-                "\n\nSeja mais específico."
-            );
-        }
-
-        const rawQuantity = (fields.quantidade ?? "").trim();
-
-        const quantity = rawQuantity === "" ? 1 : Number(rawQuantity);
-
-        if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
-            return warn("Quantidade inválida", "Use um número inteiro de 1 a 99.");
-        }
-
-        return runCommand(
-            comandos,
-            "comprar",
-            { item: matches[0].id, quantidade: quantity },
             interaction
         );
     }

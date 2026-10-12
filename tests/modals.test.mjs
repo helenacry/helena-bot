@@ -450,7 +450,12 @@ test("os comandos mostram os botões dos painéis", async () => {
 
     assert.deepEqual(ids((await run("hlavagem")).components), [`lavagem:publica:${ME}`, `lavagem:privada:${ME}`]);
 
-    assert.deepEqual(ids((await run("hloja")).components), ["loja:comprar"]);
+    // a loja é um painel completo (ver shop.test.mjs); aqui só o essencial
+    const shop = ids((await run("hloja")).components);
+
+    assert.ok(shop.includes(`loja:cat:${ME}`), "menu de categorias");
+    assert.ok(shop.includes(`loja:nome:${ME}`), "botão Por nome");
+    assert.ok(shop.includes(`loja:vender:${ME}`), "botão Vender");
 
     // bio sem texto: painel; com texto: salva direto
     const panel = await run("hbio");

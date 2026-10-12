@@ -20,7 +20,10 @@ const CATEGORIES = {
         commands: [
             ["daily", "Resgate sua recompensa diária."],
             ["perfil", "Consulte seu perfil econômico."],
-            ["ranking", "Veja a classificação dos jogadores."]
+            ["ranking", "Veja a classificação dos jogadores."],
+            ["loja", "Abra a loja: compre e venda itens pelos botões."],
+            ["inventario", "Veja, organize e descarte seus itens."],
+            ["descartar", "Destrua itens do inventário (sem reembolso)."]
         ]
     },
 

@@ -138,7 +138,9 @@ Alguns comandos mostram botões que abrem formulários (modais) da VSync, no est
 | `/saldo` | Depositar, Sacar, Transferir | quantia (`tudo`/`all` vale); a transferência também pede o destinatário por nome, @menção ou ID |
 | `/lavagem` | Lavar (pública), Lavar (privada) ou Liberar privada | valor sujo; liberar pede para digitar `LIBERAR`, porque custa gemas |
 | `/bio` (sem texto) | Editar bio | campo de parágrafo já preenchido com a bio atual |
-| `/loja` | Comprar | item (por nome, sem acento, ou ID) e quantidade |
+| `/loja` | menu de categorias, 5 itens numerados por página (Anterior/Próxima), um botão por item, **Por nome** e **Vender** | quantidade do item (número ou `max`, o máximo que dá); por nome pede item e quantidade; vender aceita `metade` e `tudo` |
+| `/inventario` | menu de prateleiras, 12 itens por página (Anterior/Próxima/Atualizar), **Descartar** | item e quantidade (número, `metade` ou `tudo`); depois uma tela de confirmação com botão. 🟢 marca a arma equipada |
+| `/descartar` (alias `dropitem`) | **Confirmar descarte** | mesma confirmação do inventário; destrói o item, sem reembolso |
 
 - Comandos pelo prefixo (`hbio`) não têm interação e não abrem modal sozinhos: o botão da mensagem faz isso.
 - Os botões pessoais só funcionam para quem abriu o painel. O botão da loja serve a todos, e cada um compra para si.

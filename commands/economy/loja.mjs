@@ -1,61 +1,35 @@
 
-import {
-    ITEMS,
-    ITEM_CATEGORIES,
-    getCategoryName
-} from "../../config/items.mjs";
+import { ITEM_CATEGORIES } from "../../config/items.mjs";
+
+import { getPlayer } from "../../database/economy.mjs";
 
 import {
-    getPlayer,
-    formatMoney
-} from "../../database/economy.mjs";
-
-import { shopPanel } from "../../services/panels.mjs";
+    buildShopView,
+    ALL_CATEGORIES
+} from "../../services/shop-view.mjs";
 
 import {
-    createEmbed,
     embedResponse,
-    errorEmbed,
-    HELENA_COLORS
+    errorEmbed
 } from "../../utils/embed.mjs";
-
-// ==========================================
-// INFORMAÇÕES DAS ARMAS
-// ==========================================
-
-function getWeaponInfo(item) {
-    if (item.category !== "weapon") {
-        return "";
-    }
-
-    const weaponType =
-        item.weaponType === "firearm"
-            ? "Arma de fogo"
-            : "Arma branca";
-
-    const damage = Number(item.damage);
-
-    const damageText =
-        Number.isFinite(damage) && damage >= 0
-            ? String(damage)
-            : "Não informado";
-
-    return `\n⚔️ Dano: ${damageText} • ${weaponType}`;
-}
 
 // ==========================================
 // COMANDO /LOJA
 // ==========================================
 
+// A loja é um painel: menu de categorias, 5 itens por página,
+// botões para comprar cada item (abrem um modal de quantidade),
+// "Por nome" e "Vender". A navegação fica em services/shop-panels.mjs.
+
 export default {
     name: "loja",
 
-    description: "Consulte os itens disponíveis na loja",
+    description: "Abra a loja: compre e venda itens",
 
     options: [
         {
             name: "categoria",
-            description: "Filtrar itens por categoria",
+            description: "Abrir já numa categoria",
             type: "string",
             required: false,
 
@@ -79,156 +53,35 @@ export default {
         }
 
         try {
-            const player = getPlayer(
-                guildId,
-                userId
-            );
+            const player = getPlayer(guildId, userId);
 
             const category =
-                interaction.data?.options?.categoria;
+                interaction.data?.options?.categoria ??
+                ALL_CATEGORIES;
 
             if (
-                category &&
+                category !== ALL_CATEGORIES &&
                 !Object.hasOwn(ITEM_CATEGORIES, category)
             ) {
-                return errorEmbed(
-                    "Categoria inválida."
-                );
+                return errorEmbed("Categoria inválida.");
             }
 
-            // ==================================
-            // FILTRAR PRODUTOS
-            // ==================================
-
-            const items = ITEMS.filter(item =>
-                Number.isSafeInteger(item.buyPrice) &&
-                item.buyPrice > 0 &&
-                (!category || item.category === category)
-            );
-
-            const fields = [];
-            const groups = new Map();
-
-            // ==================================
-            // AGRUPAR POR CATEGORIA
-            // ==================================
-
-            for (const item of items) {
-                if (!groups.has(item.category)) {
-                    groups.set(item.category, []);
-                }
-
-                groups.get(item.category).push(item);
-            }
-
-            // ==================================
-            // CONSTRUIR CAMPOS DA LOJA
-            // ==================================
-
-            for (const [key, entries] of groups) {
-                const lines = entries.map(item => {
-                    const sellPrice = item.sellable
-                        ? formatMoney(item.sellPrice)
-                        : "Indisponível";
-
-                    return [
-                        `${item.emoji} **${item.name}**`,
-                        `💰 Compra: ${formatMoney(item.buyPrice)}`,
-                        `💵 Venda: ${sellPrice}`,
-                        `📦 Limite: ${item.maxStack}`,
-                        `🆔 \`${item.id}\``
-                    ].join("\n") + getWeaponInfo(item);
-                });
-
-                let chunk = "";
-
-                for (const line of lines) {
-                    const next = chunk
-                        ? `${chunk}\n\n${line}`
-                        : line;
-
-                    if (next.length > 1000 && chunk) {
-                        fields.push({
-                            name: "📂 " + getCategoryName(key),
-                            value: chunk,
-                            inline: false
-                        });
-
-                        chunk = line;
-                    } else {
-                        chunk = next;
-                    }
-                }
-
-                if (chunk) {
-                    fields.push({
-                        name: "📂 " + getCategoryName(key),
-                        value: chunk,
-                        inline: false
-                    });
-                }
-            }
-
-            // ==================================
-            // LOJA VAZIA
-            // ==================================
-
-            if (fields.length === 0) {
-                fields.push({
-                    name: "📦 Nenhum item disponível",
-                    value:
-                        "Não há produtos à venda nesta categoria.",
-                    inline: false
-                });
-            }
-
-            // ==================================
-            // CRIAR EMBED
-            // ==================================
-
-            const embed = createEmbed({
-                title: "🛒 Helena Loja",
-
-                description:
-                    "📂 **Categoria:** " +
-                    (
-                        category
-                            ? getCategoryName(category)
-                            : "Todas"
-                    ) +
-                    "\n👛 **Sua carteira:** " +
-                    formatMoney(player.wallet) +
-                    "\n\nConfira nossos produtos disponíveis.",
-
-                color: HELENA_COLORS.economy,
-
-                fields: [
-                    ...fields,
-                    {
-                        name: "🛍️ Como negociar?",
-                        value:
-                            "Use `/comprar` para adquirir itens.\n" +
-                            "Use `/vender` para vender itens permitidos.",
-                        inline: false
-                    }
-                ],
-
-                footer:
-                    "Helena • Seu próximo item está aqui."
+            const view = buildShopView({
+                ownerId: userId,
+                category,
+                page: 1,
+                wallet: player.wallet
             });
 
-            const response = embedResponse(embed);
+            const response = embedResponse(view.embed);
 
-            // Botão que abre o formulário de compra (item e quantidade).
-            response.data.components = shopPanel();
+            // Só o dono do painel navega e compra por ele.
+            response.data.components = view.components;
 
             return response;
 
         } catch (error) {
-            console.error(
-                "[LOJA]",
-                error
-            );
+            console.error("[LOJA]", error);
 
             return errorEmbed(
                 "Não foi possível carregar a loja."
