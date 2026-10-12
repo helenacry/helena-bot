@@ -19,7 +19,7 @@ export default {
     options: [
         {
             name: "quantia",
-            description: "Quantidade ou 'tudo'",
+            description: "Quantidade, 'tudo' ou 'all'",
             type: "string",
             required: true
         }

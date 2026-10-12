@@ -1,7 +1,8 @@
 
 import {
     parseAmount,
-    formatMoney
+    formatMoney,
+    ALL_AMOUNT_WORDS
 } from "../../database/economy.mjs";
 
 import {
@@ -146,7 +147,7 @@ export default {
         {
             name: "valor",
             description:
-                "Valor em reais, 'tudo' ou 'desbloquear' (opcional)",
+                "Valor em reais, 'tudo'/'all' ou 'desbloquear' (opcional)",
             type: "string",
             required: false
         },
@@ -216,7 +217,7 @@ export default {
 
             let amount;
 
-            if (valor === "tudo") {
+            if (ALL_AMOUNT_WORDS.includes(valor)) {
                 const { dirtyMoney } = getLaunderingStatus(
                     guildId,
                     userId

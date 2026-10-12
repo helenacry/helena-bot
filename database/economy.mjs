@@ -102,6 +102,9 @@ export function getPlayer(guildId, userId) {
 // VALIDAÇÃO DE VALORES
 // ==========================================
 
+// Palavras que significam "todo o saldo disponível".
+export const ALL_AMOUNT_WORDS = Object.freeze(["tudo", "all"]);
+
 export function parseAmount(value, available) {
     if (
         !Number.isSafeInteger(available) ||
@@ -114,7 +117,7 @@ export function parseAmount(value, available) {
 
     if (
         typeof value === "string" &&
-        value.trim().toLowerCase() === "tudo"
+        ALL_AMOUNT_WORDS.includes(value.trim().toLowerCase())
     ) {
         if (available <= 0) {
             throw new Error(
