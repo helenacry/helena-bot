@@ -1,11 +1,10 @@
 
 import { ITEM_CATEGORIES } from "../../config/items.mjs";
 
-import { getPlayer } from "../../database/economy.mjs";
-
 import {
+    buildShopHome,
     buildShopView,
-    ALL_CATEGORIES
+    shopContext
 } from "../../services/shop-view.mjs";
 
 import {
@@ -17,12 +16,14 @@ import {
 // COMANDO /LOJA
 // ==========================================
 
-// A loja é um painel: menu de categorias, 5 itens por página,
-// botões para comprar cada item (abrem um modal de quantidade),
-// "Por nome" e "Vender". A navegação fica em services/shop-panels.mjs.
+// A loja é um painel: abre numa vitrine com as prateleiras (ou direto
+// numa categoria), 5 itens por página, botões para comprar cada item
+// (abrem um modal de quantidade), "Por nome", "Vender" e "Fechar".
+// A navegação fica em services/shop-panels.mjs.
 
 export default {
     name: "loja",
+    aliases: ["store"],
 
     description: "Abra a loja: compre e venda itens",
 
@@ -53,25 +54,27 @@ export default {
         }
 
         try {
-            const player = getPlayer(guildId, userId);
+            const context = shopContext(guildId, userId);
 
-            const category =
-                interaction.data?.options?.categoria ??
-                ALL_CATEGORIES;
+            const category = interaction.data?.options?.categoria;
 
-            if (
-                category !== ALL_CATEGORIES &&
-                !Object.hasOwn(ITEM_CATEGORIES, category)
-            ) {
+            if (category && !Object.hasOwn(ITEM_CATEGORIES, category)) {
                 return errorEmbed("Categoria inválida.");
             }
 
-            const view = buildShopView({
-                ownerId: userId,
-                category,
-                page: 1,
-                wallet: player.wallet
-            });
+            // Sem categoria: a vitrine inicial.
+            const view = category
+                ? buildShopView({
+                    ownerId: userId,
+                    category,
+                    page: 1,
+                    ...context
+                })
+                : buildShopHome({
+                    ownerId: userId,
+                    wallet: context.wallet,
+                    gems: context.gems
+                });
 
             const response = embedResponse(view.embed);
 

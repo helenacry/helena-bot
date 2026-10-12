@@ -2,10 +2,13 @@
 import {
     ITEMS,
     ITEM_CATEGORIES,
-    getCategoryName
+    getCategoryName,
+    getCategoryEmoji
 } from "../config/items.mjs";
 
-import { formatMoney } from "../database/economy.mjs";
+import { formatMoney, getPlayer } from "../database/economy.mjs";
+
+import { getInventory } from "./inventory.mjs";
 
 import {
     createEmbed,
@@ -18,20 +21,29 @@ import { button, row } from "./panel-kit.mjs";
 // VISÃO DA LOJA
 // ==========================================
 
-// A loja é um painel: menu de categorias, 5 itens numerados por
-// página, botões Anterior/Próxima e botões para comprar cada item
-// (cada um abre um modal de quantidade). Toda a navegação está nos
-// customIds, então nada fica guardado em memória.
+// A loja é um painel. Abre numa vitrine com as prateleiras (categorias);
+// cada prateleira lista 5 itens por página, com botão Anterior/Próxima e
+// um botão por item (que abre o modal de quantidade). Toda a navegação
+// está nos customIds, então nada fica guardado em memória.
 //
-//   loja:cat:<dono>                   menu de categorias
-//   loja:pg:<dono>:<categoria>:<n>    página n da categoria
+//   loja:home:<dono>                  vitrine inicial
+//   loja:cat:<dono>                   menu de prateleiras
+//   loja:pg:<dono>:<categoria>:<n>    página n da prateleira
 //   loja:item:<dono>:<itemId>         comprar este item (abre o modal)
 //   loja:nome:<dono>                  comprar por nome (abre o modal)
 //   loja:vender:<dono>                vender (abre o modal)
+//   loja:fechar:<dono>                fecha o painel
 
 export const SHOP_PAGE_SIZE = 5;
 
+// Mais que isso por compra o comando não aceita.
+export const MAX_PURCHASE = 99;
+
 export const ALL_CATEGORIES = "todas";
+
+const ALL_EMOJI = "🛍️";
+
+const KEYCAPS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"];
 
 export const isBuyable = item =>
     Number.isSafeInteger(item.buyPrice) && item.buyPrice > 0;
@@ -46,7 +58,8 @@ export function weaponInfo(item) {
         ? "Arma de fogo"
         : "Arma branca";
 
-    const damage = Number(item.damage);
+    // O combate usa 10 quando a arma não define o dano.
+    const damage = Number(item.damage || 10);
 
     const damageText =
         Number.isFinite(damage) && damage >= 0
@@ -64,21 +77,28 @@ export function buyableItems(category = ALL_CATEGORIES) {
     );
 }
 
-// Categorias que têm itens à venda, com a contagem de cada uma.
+// Categorias que têm itens à venda, com a contagem e o menor preço
+// de cada uma. A primeira é sempre "Todas".
 export function shopCategories() {
     const all = ITEMS.filter(isBuyable);
 
-    const list = [{
-        value: ALL_CATEGORIES,
-        label: "Todas",
-        count: all.length
-    }];
+    const entry = (value, label, emoji, items) => ({
+        value,
+        label,
+        emoji,
+        count: items.length,
+        minPrice: items.length
+            ? Math.min(...items.map(item => item.buyPrice))
+            : 0
+    });
+
+    const list = [entry(ALL_CATEGORIES, "Todas", ALL_EMOJI, all)];
 
     for (const [value, label] of Object.entries(ITEM_CATEGORIES)) {
-        const count = all.filter(item => item.category === value).length;
+        const items = all.filter(item => item.category === value);
 
-        if (count > 0) {
-            list.push({ value, label, count });
+        if (items.length > 0) {
+            list.push(entry(value, label, getCategoryEmoji(value), items));
         }
     }
 
@@ -88,13 +108,193 @@ export function shopCategories() {
 export const isShopCategory = value =>
     shopCategories().some(category => category.value === value);
 
+// ==========================================
+// DADOS DO JOGADOR
+// ==========================================
+
+// Carteira, gemas e quanto o jogador já tem de cada item: o que a
+// vitrine precisa saber sobre quem está olhando.
+export function shopContext(guildId, userId) {
+    const player = getPlayer(guildId, userId);
+
+    const owned = {};
+
+    for (const entry of getInventory(guildId, userId)) {
+        owned[entry.item_id] = entry.quantity;
+    }
+
+    return {
+        wallet: player.wallet,
+        gems: player.gems ?? 0,
+        owned
+    };
+}
+
+const plural = (count, one, many) =>
+    `${count} ${count === 1 ? one : many}`;
+
+const walletLine = (wallet, gems) =>
+    `👛 **Carteira:** ${formatMoney(wallet)}  •  💎 **Gemas:** ${gems}`;
+
+// O que a carteira e o limite do item permitem: quantas unidades dá
+// para comprar agora e a frase que aparece no cartão.
+export function affordability(item, wallet, owned = 0) {
+    const room = Number.isFinite(item.maxStack)
+        ? item.maxStack - owned
+        : Infinity;
+
+    if (room <= 0) {
+        return {
+            max: 0,
+            text: "📦 Limite do item atingido"
+        };
+    }
+
+    const max = Math.min(
+        MAX_PURCHASE,
+        Math.floor(wallet / item.buyPrice),
+        room
+    );
+
+    if (max < 1) {
+        return {
+            max: 0,
+            text: `🔒 Faltam **${formatMoney(item.buyPrice - wallet)}**`
+        };
+    }
+
+    return {
+        max,
+        text: `✅ Você pode comprar até **${max}**`
+    };
+}
+
+// ==========================================
+// COMPONENTES COMUNS
+// ==========================================
+
+function categoryMenu(ownerId, selected) {
+    return row({
+        type: "select",
+        customId: `loja:cat:${ownerId}`,
+        placeholder: "📂 Escolha uma prateleira",
+        minValues: 1,
+        maxValues: 1,
+        options: shopCategories().map(entry => ({
+            label: `${entry.emoji} ${entry.label} (${entry.count})`,
+            value: entry.value,
+            description: `A partir de ${formatMoney(entry.minPrice)}`,
+            default: entry.value === selected
+        }))
+    });
+}
+
+const toolButtons = ownerId => [
+    button(`loja:nome:${ownerId}`, "Por nome", "🔎", "primary"),
+    button(`loja:vender:${ownerId}`, "Vender", "💰", "success"),
+    button(`loja:fechar:${ownerId}`, "Fechar", "✖️", "danger")
+];
+
+// ==========================================
+// VITRINE INICIAL
+// ==========================================
+
+export function buildShopHome({
+    ownerId,
+    wallet = 0,
+    gems = 0
+}) {
+    const categories = shopCategories();
+
+    const total = categories[0].count;
+
+    const embed = createEmbed({
+        title: "🛒 Helena Loja",
+
+        description: [
+            walletLine(wallet, gems),
+            "",
+            "Bem-vindo! Escolha uma prateleira no menu abaixo " +
+            "ou toque em **Ver tudo**."
+        ].join("\n"),
+
+        color: HELENA_COLORS.economy,
+
+        fields: [
+            ...categories.slice(1).map(entry => ({
+                name: `${entry.emoji} ${entry.label}`,
+
+                value:
+                    `${plural(entry.count, "item", "itens")}\n` +
+                    `A partir de **${formatMoney(entry.minPrice)}**`,
+
+                inline: true
+            })),
+
+            {
+                name: "💡 Dicas",
+
+                value: [
+                    "Comida e bebida repõem energia: use `/usaritem`.",
+                    "Itens que você não precisa? Toque em **Vender**."
+                ].join("\n"),
+
+                inline: false
+            }
+        ],
+
+        footer: `Helena • Loja • ${plural(total, "item", "itens")} à venda`
+    });
+
+    return {
+        embed,
+
+        components: [
+            categoryMenu(ownerId, null),
+
+            row(
+                button(
+                    `loja:pg:${ownerId}:${ALL_CATEGORIES}:1`,
+                    "Ver tudo",
+                    ALL_EMOJI,
+                    "primary"
+                ),
+                ...toolButtons(ownerId)
+            )
+        ]
+    };
+}
+
+// ==========================================
+// LOJA FECHADA
+// ==========================================
+
+export function buildShopClosed() {
+    return {
+        embed: createEmbed({
+            title: "🛒 Loja fechada",
+            description: "Volte sempre! Use `/loja` para abrir de novo.",
+            color: HELENA_COLORS.neutral,
+            footer: "Helena • Loja"
+        }),
+
+        components: []
+    };
+}
+
+// ==========================================
+// PRATELEIRA
+// ==========================================
+
 // Monta a tela: embed + componentes. A página é limitada ao que
 // existe, então números fora do intervalo não quebram nada.
 export function buildShopView({
     ownerId,
     category = ALL_CATEGORIES,
     page = 1,
-    wallet = 0
+    wallet = 0,
+    gems = 0,
+    owned = {}
 }) {
     const items = buyableItems(category);
 
@@ -114,42 +314,71 @@ export function buildShopView({
         ? "Todas"
         : getCategoryName(category);
 
+    const emoji = category === ALL_CATEGORIES
+        ? ALL_EMOJI
+        : getCategoryEmoji(category);
+
     // ==================================
     // EMBED
     // ==================================
 
-    const fields = slice.map((item, index) => ({
-        name: `${index + 1}. ${item.emoji} ${item.name}`,
+    const status = slice.map(item =>
+        affordability(item, wallet, owned[item.id] ?? 0)
+    );
 
-        value: [
-            `💰 Compra: **${formatMoney(item.buyPrice)}** • ` +
-            `💵 Venda: ${item.sellable
-                ? formatMoney(item.sellPrice)
-                : "indisponível"}`,
-            `📦 Limite: ${item.maxStack} • 🆔 \`${item.id}\``,
+    const fields = slice.map((item, index) => {
+        const have = owned[item.id] ?? 0;
+
+        const sell = item.sellable
+            ? formatMoney(item.sellPrice)
+            : "indisponível";
+
+        const stack = Number.isFinite(item.maxStack)
+            ? `/${item.maxStack}`
+            : "";
+
+        const lines = [
+            `💰 **${formatMoney(item.buyPrice)}**  •  💵 Venda: ${sell}`,
+            status[index].text,
             item.description
-        ].join("\n") + weaponInfo(item),
+        ];
 
-        inline: false
-    }));
+        const weapon = weaponInfo(item).trim();
+
+        if (weapon) {
+            lines.push(weapon);
+        }
+
+        lines.push(
+            `🎒 Você tem **${have}**${stack}  •  🆔 \`${item.id}\``
+        );
+
+        return {
+            name: `${KEYCAPS[index] ?? `${index + 1}.`} ${item.emoji} ${item.name}`,
+            value: lines.join("\n"),
+            inline: false
+        };
+    });
 
     if (fields.length === 0) {
         fields.push({
             name: "📦 Nenhum item disponível",
-            value: "Não há produtos à venda nesta categoria.",
+            value: "Não há produtos à venda nesta prateleira.",
             inline: false
         });
     }
 
     const embed = createEmbed({
-        title: "🛒 Helena Loja",
+        title: `🛒 Helena Loja • ${emoji} ${label}`,
 
-        description:
-            "📂 **Categoria:** " + label + "\n" +
-            "👛 **Sua carteira:** " + formatMoney(wallet) + "\n\n" +
-            "Use os botões numerados para comprar um item, " +
-            "**Por nome** para digitar o item ou **Vender** " +
-            "para vender o que você tem.",
+        description: [
+            walletLine(wallet, gems),
+            `📂 **Prateleira:** ${emoji} ${label} • ` +
+            plural(items.length, "item", "itens"),
+            "",
+            "Toque no número do item para comprar. " +
+            "Os verdes cabem na sua carteira."
+        ].join("\n"),
 
         color: HELENA_COLORS.economy,
 
@@ -157,34 +386,22 @@ export function buildShopView({
 
         footer:
             `Helena • Página ${current}/${pages} • ` +
-            `${items.length} ${items.length === 1 ? "item" : "itens"}`
+            plural(items.length, "item", "itens")
     });
 
     // ==================================
     // COMPONENTES
     // ==================================
 
-    const rows = [
-        row({
-            type: "select",
-            customId: `loja:cat:${ownerId}`,
-            placeholder: "📂 Escolha uma categoria",
-            minValues: 1,
-            maxValues: 1,
-            options: shopCategories().map(entry => ({
-                label: `${entry.label} (${entry.count})`,
-                value: entry.value,
-                default: entry.value === category
-            }))
-        })
-    ];
+    const rows = [categoryMenu(ownerId, category)];
 
     if (slice.length > 0) {
         rows.push(row(
             ...slice.map((item, index) => button(
                 `loja:item:${ownerId}:${item.id}`,
                 `${index + 1}. ${item.name}`.slice(0, 80),
-                item.emoji
+                item.emoji,
+                status[index].max > 0 ? "success" : "secondary"
             ))
         ));
     }
@@ -212,11 +429,12 @@ export function buildShopView({
             "▶️",
             "secondary",
             { disabled: current >= pages }
-        ),
+        )
+    ));
 
-        button(`loja:nome:${ownerId}`, "Por nome", "🔎", "primary"),
-
-        button(`loja:vender:${ownerId}`, "Vender", "💰", "success")
+    rows.push(row(
+        button(`loja:home:${ownerId}`, "Início", "🏠", "primary"),
+        ...toolButtons(ownerId)
     ));
 
     return {

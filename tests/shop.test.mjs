@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 const { handlePanelClick, handleModalSubmit } = await import("../services/panels.mjs");
-const { buildShopView, shopCategories, SHOP_PAGE_SIZE } = await import("../services/shop-view.mjs");
+const { buildShopView, buildShopHome, shopCategories, SHOP_PAGE_SIZE } = await import("../services/shop-view.mjs");
 const { buildInventoryView, INVENTORY_PAGE_SIZE } = await import("../services/inventory-view.mjs");
 const { prepareDiscard } = await import("../services/discard.mjs");
 const { addItem } = await import("../services/inventory.mjs");
@@ -103,8 +103,13 @@ test("a loja mostra 5 itens numerados por página", () => {
 
     assert.equal(view.items.length, SHOP_PAGE_SIZE);
     assert.deepEqual(
-        view.embed.fields.map(f => f.name.slice(0, 2)),
-        ["1.", "2.", "3.", "4.", "5."]
+        view.embed.fields.map(f => f.name.slice(0, 3)),
+        ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"].map(k => k.slice(0, 3))
+    );
+    assert.deepEqual(
+        view.components[1].components.map(b => b.label.slice(0, 2)),
+        ["1.", "2.", "3.", "4.", "5."],
+        "os botões têm os mesmos números dos cartões"
     );
     assert.match(view.embed.description, /1\.234,56/, "mostra a carteira");
     assert.match(view.embed.footer.text, new RegExp(`Página 1/${view.pages}`));
@@ -172,8 +177,137 @@ test("categoria sem itens mostra o aviso e não tem botões de compra", () => {
 });
 
 // ==========================================
+// LOJA: VISUAL
+// ==========================================
+
+test("a vitrine mostra uma prateleira por categoria, com contagem e menor preço", () => {
+    const view = buildShopHome({ ownerId: ME, wallet: 123456, gems: 7 });
+
+    const categories = shopCategories().slice(1);
+
+    assert.equal(view.embed.title, "🛒 Helena Loja");
+    assert.match(view.embed.description, /1\.234,56/, "carteira");
+    assert.match(view.embed.description, /Gemas:\*\* 7/, "gemas");
+
+    const shelves = view.embed.fields.filter(f => f.inline);
+
+    assert.equal(shelves.length, categories.length);
+    assert.ok(shelves.every(f => /\d+ (?:item|itens)\nA partir de \*\*R\$/.test(f.value)));
+    assert.match(shelves[0].name, /Consumíveis/);
+    assert.match(shelves[0].value, /3 itens\nA partir de \*\*R\$\s?3,00\*\*/);
+
+    assert.match(
+        view.embed.footer.text,
+        new RegExp(`${ITEMS.filter(i => i.buyPrice > 0).length} itens à venda`)
+    );
+
+    // menu sem prateleira marcada + botões; nada de itens soltos
+    const select = view.components[0].components[0];
+
+    assert.equal(select.options.filter(o => o.default).length, 0);
+    assert.ok(select.options.every(o => /A partir de R\$/.test(o.description)));
+
+    assert.deepEqual(
+        allButtons(view.components).map(b => b.customId),
+        [`loja:pg:${ME}:todas:1`, `loja:nome:${ME}`, `loja:vender:${ME}`, `loja:fechar:${ME}`]
+    );
+});
+
+test("o cartão do item diz o que dá para comprar, o que falta e o limite", () => {
+    const view = (wallet, owned = {}) =>
+        buildShopView({ ownerId: ME, category: "consumable", page: 1, wallet, gems: 0, owned });
+
+    // Em centavos: Maçã R$ 3,00 / Café R$ 7,00 / Energético R$ 15,00
+    const rich = view(100000, { apple: 4 });
+
+    assert.match(rich.embed.fields[0].value, /Você pode comprar até \*\*95\*\*/, "limite 99 menos os 4 que já tem");
+    assert.match(rich.embed.fields[0].value, /Você tem \*\*4\*\*\/99/);
+    assert.match(rich.embed.fields[1].value, /Você tem \*\*0\*\*\/99/);
+
+    assert.match(view(100000).embed.fields[0].value, /Você pode comprar até \*\*99\*\*/, "teto de 99 por compra");
+
+    const poor = view(1000);
+
+    assert.match(poor.embed.fields[0].value, /Você pode comprar até \*\*3\*\*/);
+    assert.match(poor.embed.fields[1].value, /Você pode comprar até \*\*1\*\*/);
+    assert.match(poor.embed.fields[2].value, /Faltam \*\*R\$\s?5,00\*\*/);
+
+    assert.match(view(1000, { apple: 99 }).embed.fields[0].value, /Limite do item atingido/);
+
+    // botão verde = cabe na carteira; cinza = não cabe ou no limite
+    const styles = response => response.components[1].components.map(b => b.style);
+
+    assert.deepEqual(styles(poor), ["success", "success", "secondary"]);
+    assert.deepEqual(styles(view(0)), ["secondary", "secondary", "secondary"]);
+    assert.deepEqual(styles(view(1000, { apple: 99 })), ["secondary", "success", "secondary"]);
+});
+
+test("o cartão de arma mostra o dano e a prateleira tem emoji", () => {
+    const view = buildShopView({ ownerId: ME, category: "weapon", page: 1, wallet: 0 });
+
+    assert.match(view.embed.title, /Helena Loja • ⚔️ Armas/);
+    assert.match(view.embed.fields[0].value, /⚔️ Dano: \d+ • Arma/);
+    assert.match(view.embed.description, /Prateleira:\*\* ⚔️ Armas • 14 itens/);
+});
+
+test("a prateleira tem Início e Fechar, e os botões cabem nos limites", () => {
+    const view = buildShopView({ ownerId: ME, category: "todas", page: 1, wallet: 0 });
+
+    const last = view.components.at(-1).components;
+
+    assert.deepEqual(
+        last.map(b => b.customId),
+        [`loja:home:${ME}`, `loja:nome:${ME}`, `loja:vender:${ME}`, `loja:fechar:${ME}`]
+    );
+
+    assert.equal(last.at(-1).style, "danger");
+    assert.equal(view.components.length, 4);
+});
+
+test("a loja mostra a carteira e as gemas de quem abriu", () => {
+    reset(250000);
+
+    set("UPDATE global_users SET gems = 12 WHERE user_id = ?", ME);
+
+    const home = handlePanelClick(click(`loja:home:${ME}`));
+
+    assert.equal(home.type, "update");
+    assert.match(home.data.embeds[0].description, /2\.500,00/);
+    assert.match(home.data.embeds[0].description, /Gemas:\*\* 12/);
+
+    const shelf = handlePanelClick(click(`loja:cat:${ME}`, { values: ["consumable"] }));
+
+    assert.match(shelf.data.embeds[0].description, /Gemas:\*\* 12/);
+});
+
+test("o cartão usa o que o jogador já tem no inventário", () => {
+    reset(100000);
+    giveItem("apple", 5);
+
+    const response = handlePanelClick(click(`loja:cat:${ME}`, { values: ["consumable"] }));
+
+    assert.match(response.data.embeds[0].fields[0].value, /Você tem \*\*5\*\*\/99/);
+});
+
+// ==========================================
 // LOJA: NAVEGAÇÃO
 // ==========================================
+
+test("Início volta para a vitrine e Fechar encerra o painel", () => {
+    reset(5000);
+
+    const home = handlePanelClick(click(`loja:home:${ME}`));
+
+    assert.equal(home.type, "update");
+    assert.equal(home.data.embeds[0].title, "🛒 Helena Loja");
+    assert.equal(home.data.embeds[0].fields.filter(f => f.inline).length, shopCategories().length - 1);
+
+    const closed = handlePanelClick(click(`loja:fechar:${ME}`));
+
+    assert.equal(closed.type, "update");
+    assert.match(closed.data.embeds[0].title, /Loja fechada/);
+    assert.deepEqual(closed.data.components, [], "sem botões");
+});
 
 test("o menu troca de categoria e volta para a página 1", () => {
     reset(5000);
@@ -208,7 +342,10 @@ test("categoria inválida avisa; o indicador de página não faz nada", () => {
 test("só o dono navega e compra pelo painel", () => {
     reset(0);
 
-    for (const id of [`loja:cat:${ME}`, `loja:pg:${ME}:todas:2`, `loja:item:${ME}:apple`, `loja:nome:${ME}`, `loja:vender:${ME}`]) {
+    for (const id of [
+        `loja:cat:${ME}`, `loja:pg:${ME}:todas:2`, `loja:item:${ME}:apple`,
+        `loja:nome:${ME}`, `loja:vender:${ME}`, `loja:home:${ME}`, `loja:fechar:${ME}`
+    ]) {
         const response = handlePanelClick(click(id, { userId: OTHER, values: ["weapon"] }));
 
         assert.equal(response.type, "message", id);
@@ -650,15 +787,19 @@ const run = await createPrefixRunner({
 test("hloja mostra o painel; hloja categoria já abre na categoria", async () => {
     reset(5000);
 
+    // sem categoria: a vitrine inicial, sem itens
     const home = await run("hloja");
 
     assert.match(home.title, /Helena Loja/);
     assert.ok(ids(home.components).includes(`loja:cat:${ME}`));
-    assert.equal(allButtons(home.components).filter(b => b.customId.startsWith("loja:item:")).length, 5);
+    assert.ok(ids(home.components).includes(`loja:pg:${ME}:todas:1`), "Ver tudo");
+    assert.equal(allButtons(home.components).filter(b => b.customId.startsWith("loja:item:")).length, 0);
 
+    // com categoria: já abre nas prateleiras, com os 5 itens
     const weapons = await run("hloja categoria:weapon");
 
     assert.match(JSON.parse(weapons.text).embeds[0].description, /Armas/);
+    assert.equal(allButtons(weapons.components).filter(b => b.customId.startsWith("loja:item:")).length, 5);
 
     // categoria inexistente: o próprio parser do prefixo recusa
     assert.match((await run("hloja categoria:xyz")).body, /inválido/i);
@@ -684,6 +825,14 @@ test("hinventario e hinv mostram o painel; hdescartar pede confirmação", async
     assert.equal(owned("apple"), 4, "o comando só pede confirmação");
 
     assert.match((await run("hdescartar xyz")).title, /Item não encontrado/);
+});
+
+test("alias store abre a mesma loja", async () => {
+    assert.equal(resolverComando(comandos, "store")?.name, "loja");
+
+    reset(5000);
+
+    assert.equal((await run("hstore")).title, "🛒 Helena Loja");
 });
 
 test("aliases de descartar", () => {

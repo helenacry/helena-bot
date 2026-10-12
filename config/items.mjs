@@ -8,6 +8,16 @@ export const ITEM_CATEGORIES = Object.freeze({
     collectible: "Colecionáveis"
 });
 
+// Emoji de cada categoria (loja, inventário).
+export const ITEM_CATEGORY_EMOJIS = Object.freeze({
+    consumable: "🍽️",
+    tool: "🧰",
+    equipment: "🎒",
+    weapon: "⚔️",
+    box: "🎁",
+    collectible: "💎"
+});
+
 export const WEAPON_TYPES = Object.freeze({
     firearm: "Armas de fogo",
     melee: "Armas brancas"
@@ -300,6 +310,10 @@ export function getItem(itemId) {
 
 export function getCategoryName(category) {
     return ITEM_CATEGORIES[category] ?? "Outros";
+}
+
+export function getCategoryEmoji(category) {
+    return ITEM_CATEGORY_EMOJIS[category] ?? "📦";
 }
 
 // O que o item faz quando usado em /usaritem:

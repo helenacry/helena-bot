@@ -17,8 +17,12 @@ import {
 
 import {
     buildShopView,
+    buildShopHome,
+    buildShopClosed,
+    shopContext,
     isShopCategory,
-    isBuyable
+    isBuyable,
+    MAX_PURCHASE
 } from "./shop-view.mjs";
 
 import {
@@ -53,8 +57,6 @@ import {
 // LOJA E INVENTÁRIO: CLIQUES E FORMULÁRIOS
 // ==========================================
 
-const MAX_PURCHASE = 99;
-
 const noop = { type: "defer_update" };
 
 // ==========================================
@@ -62,12 +64,21 @@ const noop = { type: "defer_update" };
 // ==========================================
 
 function shopScreen(interaction, ownerId, category, page) {
-    const wallet = getPlayer(
+    return update(buildShopView({
+        ownerId,
+        category,
+        page,
+        ...shopContext(interaction.guildId, interaction.user.id)
+    }));
+}
+
+function shopHome(interaction, ownerId) {
+    const { wallet, gems } = shopContext(
         interaction.guildId,
         interaction.user.id
-    ).wallet;
+    );
 
-    return update(buildShopView({ ownerId, category, page, wallet }));
+    return update(buildShopHome({ ownerId, wallet, gems }));
 }
 
 function inventoryScreen(interaction, ownerId, category, page) {
@@ -204,6 +215,14 @@ export function handleShopClick(interaction) {
 
     if (action === "noop") {
         return noop;
+    }
+
+    if (action === "home") {
+        return shopHome(interaction, ownerId);
+    }
+
+    if (action === "fechar") {
+        return update(buildShopClosed());
     }
 
     if (action === "item") {
