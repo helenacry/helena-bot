@@ -14,6 +14,8 @@ import {
 
 import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 
+import { launderingPanel } from "../../services/panels.mjs";
+
 import { GameBlocked } from "../../utils/game-error.mjs";
 
 import { formatDuration } from "../../utils/time.mjs";
@@ -39,7 +41,7 @@ const percent = rate => Math.round(rate * 100) + "%";
 // SITUAÇÃO
 // ==========================================
 
-function statusResponse(status) {
+function statusResponse(status, userId) {
     const { kinds } = LAUNDERING_CONFIG;
 
     const fields = [
@@ -116,7 +118,7 @@ function statusResponse(status) {
         }
     );
 
-    return embedResponse(
+    const response = embedResponse(
         createEmbed({
             title: "🧼 Lavagem de dinheiro",
 
@@ -132,6 +134,12 @@ function statusResponse(status) {
             footer: "Helena • Lavagens em andamento pausam se você for preso."
         })
     );
+
+    // Botões que abrem o formulário de valor (ou a confirmação para
+    // liberar a privada). Só o dono do painel consegue usar.
+    response.data.components = launderingPanel(userId, status);
+
+    return response;
 }
 
 // ==========================================
@@ -188,7 +196,8 @@ export default {
             // Sem valor: mostra a situação.
             if (!valor) {
                 return statusResponse(
-                    getLaunderingStatus(guildId, userId)
+                    getLaunderingStatus(guildId, userId),
+                    userId
                 );
             }
 

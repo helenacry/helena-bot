@@ -5,6 +5,8 @@ import {
     getPlayer
 } from "../../database/economy.mjs";
 
+import { bioPanel } from "../../services/panels.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -21,9 +23,9 @@ export default {
     options: [
         {
             name: "texto",
-            description: "Sua biografia (até 160 caracteres)",
+            description: "Sua biografia (até 160 caracteres). Vazio abre o editor",
             type: "string",
-            required: true
+            required: false
         }
     ],
 
@@ -39,6 +41,32 @@ export default {
 
         try {
             const texto = interaction.data.options?.texto;
+
+            // Sem texto: mostra a bio atual e o botão que abre o
+            // editor (modal com a bio já preenchida).
+            if (texto === undefined || texto === null) {
+                const current = String(
+                    getPlayer(guildId, userId).bio ?? ""
+                ).trim();
+
+                const panel = embedResponse(
+                    createEmbed({
+                        title: "✏️ Sua bio",
+
+                        description: current ||
+                            "Você ainda não definiu uma bio.",
+
+                        color: HELENA_COLORS.primary,
+
+                        footer:
+                            "Helena • Use o botão para editar ou /bio <texto>."
+                    })
+                );
+
+                panel.data.components = bioPanel(userId);
+
+                return panel;
+            }
 
             if (typeof texto !== "string") {
                 return errorEmbed(

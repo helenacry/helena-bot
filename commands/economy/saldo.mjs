@@ -4,6 +4,8 @@ import {
     formatMoney
 } from "../../database/economy.mjs";
 
+import { bankPanel } from "../../services/panels.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -36,7 +38,7 @@ export default {
 
             const patrimonio = player.wallet + player.bank;
 
-            return embedResponse(
+            const response = embedResponse(
                 createEmbed({
                     title: "🏦 Helena Bank",
 
@@ -97,6 +99,12 @@ export default {
                         "Helena • Seu progresso, sua conquista."
                 })
             );
+
+            // Botões que abrem formulários: depositar, sacar e
+            // transferir (só o dono do painel consegue usar).
+            response.data.components = bankPanel(userId);
+
+            return response;
 
         } catch (error) {
             console.error("[SALDO]", error);

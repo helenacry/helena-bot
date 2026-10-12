@@ -82,6 +82,11 @@ import {
 } from "./services/prison-escape.mjs";
 
 import {
+    handlePanelClick,
+    handleModalSubmit
+} from "./services/panels.mjs";
+
+import {
     LIVE_CONFIG
 } from "./config/live.mjs";
 
@@ -441,6 +446,13 @@ async function executarComponente(interaction) {
         });
     }
 
+    // Painéis (banco, lavagem, bio, loja): o botão abre um modal.
+    const painel = handlePanelClick(interaction);
+
+    if (painel) {
+        return painel;
+    }
+
     if (customId.startsWith("userinfo:")) {
         console.log(
             "[USERINFO COMPONENT]",
@@ -473,6 +485,33 @@ async function executarComponente(interaction) {
 
     return mensagemErro(
         "❌ Este componente não está disponível."
+    );
+}
+
+// ==========================================
+// ENVIO DE MODAIS (FORMULÁRIOS)
+// ==========================================
+
+// O formulário aberto por um botão de painel chega aqui como
+// modal_submit; roda o comando correspondente com os valores
+// digitados.
+async function executarModal(interaction) {
+    const resposta = await handleModalSubmit(
+        interaction,
+        comandos
+    );
+
+    if (resposta) {
+        return resposta;
+    }
+
+    console.warn(
+        "[MODAL DESCONHECIDO]",
+        interaction.data?.customId
+    );
+
+    return mensagemErro(
+        "❌ Este formulário não está disponível."
     );
 }
 
@@ -1054,6 +1093,40 @@ function conectarGateway() {
 
                     resultado = mensagemErro(
                         "❌ Não foi possível processar esta interação."
+                    );
+                }
+
+                await responderInteracao(
+                    interaction,
+                    resultado
+                );
+
+                return;
+            }
+
+            // ==================================
+            // FORMULÁRIOS (MODAIS)
+            // ==================================
+
+            if (
+                interaction.type === "modal_submit"
+            ) {
+                let resultado;
+
+                try {
+                    resultado =
+                        await executarModal(
+                            interaction
+                        );
+
+                } catch (erro) {
+                    console.error(
+                        "[ERRO MODAL]",
+                        erro
+                    );
+
+                    resultado = mensagemErro(
+                        "❌ Não foi possível processar este formulário."
                     );
                 }
 

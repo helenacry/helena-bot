@@ -10,6 +10,8 @@ import {
     formatMoney
 } from "../../database/economy.mjs";
 
+import { shopPanel } from "../../services/panels.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -215,7 +217,12 @@ export default {
                     "Helena • Seu próximo item está aqui."
             });
 
-            return embedResponse(embed);
+            const response = embedResponse(embed);
+
+            // Botão que abre o formulário de compra (item e quantidade).
+            response.data.components = shopPanel();
+
+            return response;
 
         } catch (error) {
             console.error(
