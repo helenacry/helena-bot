@@ -22,6 +22,7 @@ import {
 
 export default {
     name: "inventario",
+    aliases: ["inv"],
     description: "Consulte os itens do seu inventário",
 
     options: [

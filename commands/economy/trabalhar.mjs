@@ -53,6 +53,7 @@ function formatTime(seconds) {
 
 export default {
     name: "trabalhar",
+    aliases: ["work"],
     description: "Trabalhe para ganhar dinheiro e experiência",
 
     async execute(interaction) {

@@ -189,6 +189,7 @@ function add(fields, name, value, inline = false) {
 
 export default {
     name: "userinfo",
+    aliases: ["ui"],
     description: "Veja as informações e insígnias de um usuário do VSync",
     options: [
         {

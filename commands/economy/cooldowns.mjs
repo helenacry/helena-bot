@@ -18,6 +18,7 @@ import {
 
 export default {
     name: "cooldowns",
+    aliases: ["cd"],
     description: "Consulte o tempo restante das suas atividades",
 
     async execute(interaction) {

@@ -47,6 +47,7 @@ function progressBar(progress, target) {
 
 export default {
     name: "missoes",
+    aliases: ["missao"],
     description: "Consulte e resgate suas missões diárias",
 
     options: [

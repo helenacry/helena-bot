@@ -14,6 +14,7 @@ import {
 
 export default {
     name: "depositar",
+    aliases: ["dep"],
     description: "Guarda seu dinheiro no banco da Helena",
 
     options: [

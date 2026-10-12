@@ -100,6 +100,7 @@ function getNextStreak(currentStreak, lastDaily, now) {
 
 export default {
     name: "daily",
+    aliases: ["diario"],
 
     description:
         "Resgate sua recompensa diária e aumente sua sequência",

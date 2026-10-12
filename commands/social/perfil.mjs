@@ -31,6 +31,7 @@ const OWNER_ID = String(
 
 export default {
     name: "perfil",
+    aliases: ["profile"],
 
     description: "Consulte seu cartão de perfil na Helena",
 

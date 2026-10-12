@@ -11,7 +11,8 @@ import {
 
 import {
     carregarComandos,
-    registrarComandos
+    registrarComandos,
+    resolverComando
 } from "./registrar.mjs";
 
 import {
@@ -961,8 +962,9 @@ function conectarGateway() {
             const commandName =
                 interaction.data?.name;
 
+            // Aceita o nome oficial ou um alias (/ajuda, /help...).
             const comando =
-                comandos.get(commandName);
+                resolverComando(comandos, commandName);
 
             if (!comando) {
                 console.warn(
@@ -984,7 +986,8 @@ function conectarGateway() {
             // TRATAMENTO ESPECIAL DO /PERFIL
             // ==================================
 
-            if (commandName === "perfil") {
+            // Compara pelo nome oficial: /profile também gera o cartão.
+            if (comando.name === "perfil") {
                 await executarPerfil(
                     interaction,
                     comando

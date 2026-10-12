@@ -43,6 +43,68 @@ function caminhoRelativo(url) {
     return url.href.slice(COMMANDS_DIR.href.length);
 }
 
+// Aliases: um comando pode declarar aliases: ["bal", "carteira"]
+// para ser chamado também por hbal e hcarteira, e por /bal e
+// /carteira. Cada alias é registrado na VSync como um comando
+// de barra próprio, com a mesma descrição e as mesmas opções.
+
+const aliasesPorComandos = new WeakMap();
+
+// Mesma regra de nome dos comandos de barra da VSync:
+// 1 a 32 caracteres, minúsculas, números, "-" ou "_".
+const ALIAS_VALIDO = /^[a-z0-9_-]{1,32}$/;
+
+// Limite de comandos globais por aplicativo na VSync.
+const LIMITE_COMANDOS = 100;
+
+function indexarAliases(comandos, origem) {
+    const aliases = new Map();
+
+    for (const comando of comandos.values()) {
+        const caminho = origem.get(comando.name);
+        const lista = comando.aliases ?? [];
+
+        if (!Array.isArray(lista)) {
+            throw new Error(
+                `"aliases" de ${caminho} deve ser uma lista.`
+            );
+        }
+
+        for (const alias of lista) {
+            if (typeof alias !== "string" || !ALIAS_VALIDO.test(alias)) {
+                throw new Error(
+                    `Alias inválido "${alias}" em ${caminho} ` +
+                    "(use de 1 a 32 caracteres: minúsculas sem acento, " +
+                    "números, \"-\" ou \"_\")."
+                );
+            }
+
+            if (comandos.has(alias)) {
+                throw new Error(
+                    `Alias "${alias}" de ${caminho} conflita ` +
+                    `com o comando ${origem.get(alias)}.`
+                );
+            }
+
+            if (aliases.has(alias)) {
+                throw new Error(
+                    `Alias duplicado "${alias}": ` +
+                    `${origem.get(aliases.get(alias).name)} e ${caminho}.`
+                );
+            }
+
+            aliases.set(alias, comando);
+        }
+    }
+
+    return aliases;
+}
+
+// Encontra o comando pelo nome oficial ou por um alias.
+export function resolverComando(comandos, nome) {
+    return comandos.get(nome) ?? aliasesPorComandos.get(comandos)?.get(nome);
+}
+
 export async function carregarComandos() {
     const comandos = new Map();
 
@@ -81,22 +143,48 @@ export async function carregarComandos() {
         porPasta.set(pasta, (porPasta.get(pasta) ?? 0) + 1);
     }
 
+    // Os aliases só podem ser conferidos depois de carregar todos
+    // os comandos, porque podem colidir com nomes de outras pastas.
+    const aliases = indexarAliases(comandos, origem);
+
+    aliasesPorComandos.set(comandos, aliases);
+
     console.log(
         "[COMANDOS] " +
-        [...porPasta].map(([pasta, total]) => `${pasta}: ${total}`).join(" | ")
+        [...porPasta].map(([pasta, total]) => `${pasta}: ${total}`).join(" | ") +
+        ` | aliases: ${aliases.size}`
     );
 
     return comandos;
 }
 
 export async function registrarComandos(appId, comandos) {
-    const payload = [...comandos.values()].map(
-        ({ name, description, options }) => ({
-            name,
-            description,
-            ...(options ? { options } : {})
-        })
-    );
+    const aliases = aliasesPorComandos.get(comandos) ?? new Map();
+
+    const montar = (name, { description, options }) => ({
+        name,
+        description,
+        ...(options ? { options } : {})
+    });
+
+    // Cada comando seguido dos seus aliases, que repetem a
+    // descrição e as opções do comando original.
+    const payload = [
+        ...[...comandos.values()].map(
+            comando => montar(comando.name, comando)
+        ),
+        ...[...aliases].map(
+            ([alias, comando]) => montar(alias, comando)
+        )
+    ];
+
+    if (payload.length > LIMITE_COMANDOS) {
+        throw new Error(
+            `São ${payload.length} comandos de barra (${comandos.size} ` +
+            `comandos + ${aliases.size} aliases), acima do limite de ` +
+            `${LIMITE_COMANDOS} da VSync. Remova aliases.`
+        );
+    }
 
     const resposta = await fetch(
         `${API}/applications/${appId}/commands`,
@@ -113,5 +201,8 @@ export async function registrarComandos(appId, comandos) {
         );
     }
 
-    console.log(`${payload.length} comandos registrados!`);
+    console.log(
+        `${payload.length} comandos registrados! ` +
+        `(${comandos.size} comandos + ${aliases.size} aliases)`
+    );
 }

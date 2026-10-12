@@ -184,6 +184,7 @@ function createCategoryHelp(categoryId) {
 
 export default {
     name: "ajuda",
+    aliases: ["help", "comandos"],
 
     description:
         "Consulte os comandos e sistemas da Helena.",

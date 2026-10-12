@@ -13,6 +13,7 @@ import {
 
 export default {
     name: "saldo",
+    aliases: ["bal", "carteira"],
     description: "Consulta sua situação financeira",
 
     async execute(interaction) {

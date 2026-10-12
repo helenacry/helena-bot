@@ -14,6 +14,7 @@ import {
 
 export default {
     name: "transferir",
+    aliases: ["pagar"],
     description: "Transfere dinheiro para outro jogador",
 
     options: [

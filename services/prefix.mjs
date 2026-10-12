@@ -14,6 +14,7 @@ import {
     PrefixUsageError
 } from "./prefix-parser.mjs";
 
+import { resolverComando } from "../registrar.mjs";
 export const PREFIX = "h";
 
 // Monta a dica de uso exibida quando os argumentos
@@ -50,15 +51,20 @@ export async function processarPrefixo({
         return false;
     }
 
-    const commandName = parsed[1].toLowerCase();
+    const nomeDigitado = parsed[1].toLowerCase();
 
     const argumentText = parsed[2];
 
-    const comando = comandos.get(commandName);
+    // Aceita o nome oficial ou um alias (hsaldo, hbal...).
+    const comando = resolverComando(comandos, nomeDigitado);
 
     if (!comando) {
         return false;
     }
+
+    // O alias serve só para achar o comando; daqui em diante
+    // vale o nome oficial.
+    const commandName = comando.name;
 
     const user = message.author ?? message.user;
 
