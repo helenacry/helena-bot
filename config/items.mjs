@@ -19,7 +19,8 @@ export const ITEMS = Object.freeze([
         name: "Maçã",
         emoji: "🍎",
         category: "consumable",
-        description: "Uma maçã fresquinha.",
+        description: "Uma maçã fresquinha. Repõe 10 de energia.",
+        use: { verb: "Comer", energy: 10 },
         maxStack: 99,
         buyPrice: 300,
         sellable: true,
@@ -30,7 +31,8 @@ export const ITEMS = Object.freeze([
         name: "Café",
         emoji: "☕",
         category: "consumable",
-        description: "Um café para começar o expediente.",
+        description: "Um café para começar o expediente. Repõe 25 de energia.",
+        use: { verb: "Beber", energy: 25 },
         maxStack: 99,
         buyPrice: 700,
         sellable: true,
@@ -41,7 +43,8 @@ export const ITEMS = Object.freeze([
         name: "Energético",
         emoji: "⚡",
         category: "consumable",
-        description: "Uma bebida energética.",
+        description: "Uma bebida energética. Repõe 50 de energia.",
+        use: { verb: "Beber", energy: 50 },
         maxStack: 50,
         buyPrice: 1500,
         sellable: true,
@@ -297,4 +300,24 @@ export function getItem(itemId) {
 
 export function getCategoryName(category) {
     return ITEM_CATEGORIES[category] ?? "Outros";
+}
+
+// O que o item faz quando usado em /usaritem:
+//   { kind: "energy", verb, energy }  repõe energia e gasta 1 unidade
+//   { kind: "equip", verb }           equipa a arma (não gasta)
+//   null                              não é usável
+export function getItemUse(item) {
+    if (!item) {
+        return null;
+    }
+
+    if (item.use) {
+        return { kind: "energy", ...item.use };
+    }
+
+    if (item.category === "weapon") {
+        return { kind: "equip", verb: "Equipar" };
+    }
+
+    return null;
 }

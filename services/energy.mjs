@@ -203,3 +203,55 @@ export function consumeEnergy(
             : status.nextRegen
     };
 }
+
+// ==========================================
+// REPOR ENERGIA
+// ==========================================
+
+// Soma energia (comida, café...) até o máximo; o que passa disso se
+// perde. Com a energia já cheia, não faz nada e devolve success:false,
+// para quem chama não gastar o item à toa.
+//
+// Deve ser chamada DENTRO de uma transação, junto do gasto do item.
+export function restoreEnergy(
+    guildId,
+    userId,
+    amount,
+    now = Math.floor(Date.now() / 1000)
+) {
+    if (!Number.isSafeInteger(amount) || amount <= 0) {
+        throw new Error("Quantidade de energia inválida.");
+    }
+
+    if (!db.isTransaction) {
+        throw new Error(
+            "Repor energia exige uma transação SQLite."
+        );
+    }
+
+    const status = syncEnergy(guildId, userId, now);
+
+    if (status.energy >= status.max) {
+        return { success: false, ...status, gained: 0, wasted: 0 };
+    }
+
+    const energy = Math.min(status.max, status.energy + amount);
+
+    // Ao chegar no máximo, o relógio de regeneração reinicia (como
+    // no syncEnergy); abaixo disso ele segue de onde estava.
+    db.prepare(`
+        UPDATE players
+        SET energy = ?,
+            energy_updated_at = CASE WHEN ? >= ? THEN ? ELSE energy_updated_at END
+        WHERE guild_id = ?
+          AND user_id = ?
+    `).run(energy, energy, status.max, now, guildId, userId);
+
+    return {
+        success: true,
+        energy,
+        max: status.max,
+        gained: energy - status.energy,
+        wasted: amount - (energy - status.energy)
+    };
+}

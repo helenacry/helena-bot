@@ -21,6 +21,11 @@ import {
 } from "./shop-panels.mjs";
 
 import {
+    handleUseClick,
+    handleUseModal
+} from "./use-panel.mjs";
+
+import {
     button,
     row,
     warn,
@@ -97,6 +102,10 @@ export function handlePanelClick(interaction) {
 
     if (area === "inv") {
         return handleInventoryClick(interaction);
+    }
+
+    if (area === "uso") {
+        return handleUseClick(interaction);
     }
 
     const userId = interaction.user?.id;
@@ -219,7 +228,7 @@ export async function handleModalSubmit(interaction, comandos) {
         interaction.data?.customId || ""
     ).split(":");
 
-    if (!["banco", "lavagem", "bio", "loja", "inv"].includes(area)) {
+    if (!["banco", "lavagem", "bio", "loja", "inv", "uso"].includes(area)) {
         return null;
     }
 
@@ -240,6 +249,12 @@ export async function handleModalSubmit(interaction, comandos) {
     if (area === "inv") {
         return action === "descartar"
             ? handleInventoryModal(interaction)
+            : warn("Formulário desconhecido", "Esse formulário não é reconhecido.");
+    }
+
+    if (area === "uso") {
+        return action === "varios"
+            ? handleUseModal(interaction)
             : warn("Formulário desconhecido", "Esse formulário não é reconhecido.");
     }
 

@@ -23,6 +23,7 @@ const CATEGORIES = {
             ["ranking", "Veja a classificação dos jogadores."],
             ["loja", "Abra a loja: compre e venda itens pelos botões."],
             ["inventario", "Veja, organize e descarte seus itens."],
+            ["usaritem", "Coma, beba (repõe energia) ou equipe uma arma."],
             ["descartar", "Destrua itens do inventário (sem reembolso)."]
         ]
     },
