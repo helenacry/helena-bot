@@ -141,12 +141,6 @@ export async function processarPrefixo({
     };
 
     try {
-        if (commandName === "perfil") {
-            await send(message, {
-                body: "🎨 Gerando seu cartão de perfil..."
-            });
-        }
-
         const result = await comando.execute(interaction);
 
         if (result?.type !== "message" || !result.data) {
