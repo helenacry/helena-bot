@@ -1,10 +1,17 @@
 
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
-mkdirSync("data", { recursive: true });
+// Caminho do banco. Cada ambiente (produção e testes)
+// define o seu em HELENA_DATABASE_PATH; sem a variável,
+// usa o banco padrão da produção.
+const DATABASE_PATH =
+    process.env.HELENA_DATABASE_PATH || "data/helena.db";
 
-export const db = new DatabaseSync("data/helena.db");
+mkdirSync(dirname(DATABASE_PATH), { recursive: true });
+
+export const db = new DatabaseSync(DATABASE_PATH);
 
 db.exec(`
     PRAGMA journal_mode = WAL;

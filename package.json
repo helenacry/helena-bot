@@ -1,7 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "start": "node --env-file=.env helena.mjs"
+    "start": "node --env-file=.env helena.mjs",
+    "start:test": "node --env-file=.env.test helena.mjs"
   },
   "dependencies": {
     "sharp": "^0.35.5",
