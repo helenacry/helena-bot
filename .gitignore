@@ -22,5 +22,8 @@ node_modules/
 *.log
 logs/
 
+# Configurações locais de ferramentas de IA
+.claude/
+
 # Sistema
 .DS_Store
