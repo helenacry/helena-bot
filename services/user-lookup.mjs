@@ -199,6 +199,63 @@ export function searchUsers(users, query) {
 }
 
 // ==========================================
+// MENSAGENS
+// ==========================================
+
+// Texto digitado pelo usuário, seguro para voltar numa mensagem:
+// sem formatação, menções ou quebras de linha, e com tamanho limitado.
+export function safeText(text) {
+    return String(text ?? "")
+        .replace(/[*_`~|<>@\\\r\n]/g, "")
+        .trim()
+        .slice(0, 40);
+}
+
+// Quando a busca não terminou em uma pessoa, devolve o título e o
+// texto do aviso para o usuário; quando achou, devolve null.
+export function lookupProblem(result, query) {
+    if (result.status === "not_found") {
+        return {
+            title: "Usuário não encontrado",
+            message:
+                "Não encontrei ninguém com **" + safeText(query) +
+                "** neste servidor.\n\n" +
+                "Tente o nome de exibição ou o @usuário, " +
+                "ou mencione a pessoa."
+        };
+    }
+
+    if (result.status === "ambiguous") {
+        const list = result.candidates
+            .map(user =>
+                "• " + safeText(shownName(user)) +
+                (
+                    user.username
+                        ? " (@" + safeText(user.username) + ")"
+                        : ""
+                )
+            )
+            .join("\n");
+
+        return {
+            title: "Mais de um usuário encontrado",
+            message:
+                "Vários usuários combinam com **" +
+                safeText(query) + "**:\n\n" + list +
+                (
+                    result.total > result.candidates.length
+                        ? "\n… e mais " +
+                          (result.total - result.candidates.length)
+                        : ""
+                ) +
+                "\n\nSeja mais específico ou mencione a pessoa."
+        };
+    }
+
+    return null;
+}
+
+// ==========================================
 // RESOLVER
 // ==========================================
 

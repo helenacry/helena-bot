@@ -6,7 +6,8 @@ import {
 
 import {
     getPrison,
-    prisonLiveKey
+    prisonLiveKey,
+    escapeRow
 } from "../../services/prison.mjs";
 
 import { ensureCrimePlayer } from "../../services/crime-player.mjs";
@@ -139,6 +140,9 @@ export default {
             // mensagem até a pena acabar (services/live-embed.mjs).
             // Livre: não há nada para atualizar.
             if (view.jailed) {
+                // Botão para tentar a fuga (só o dono consegue usar).
+                response.data.components = [escapeRow(userId)];
+
                 response.live = {
                     key: prisonLiveKey(guildId, userId),
 
@@ -150,7 +154,12 @@ export default {
                         );
 
                         return {
-                            payload: { embeds: [next.embed] },
+                            payload: {
+                                embeds: [next.embed],
+
+                                // Solto: tira também o botão de fuga.
+                                ...(next.jailed ? {} : { components: [] })
+                            },
                             done: !next.jailed
                         };
                     }

@@ -376,9 +376,11 @@ export function startLaundering(
             finishAt
         );
 
+        // Iniciar uma lavagem também entra na ficha criminal.
         db.prepare(`
             UPDATE crime_players
-            SET launder_ready_at = ?
+            SET launder_ready_at = ?,
+                criminal_record = criminal_record + 1
             WHERE guild_id = ?
               AND user_id = ?
         `).run(now + spec.cooldown, guildId, userId);

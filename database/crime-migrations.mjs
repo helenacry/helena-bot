@@ -88,7 +88,41 @@ export function runCrimeMigrations() {
         WHERE settled_at IS NULL AND kind = 'public';
     `);
 
+    // Colunas acrescentadas depois da primeira versão. Bancos já
+    // existentes ganham as colunas sem perder dados.
+
+    // Ficha criminal: cada crime, roubo e lavagem iniciada soma 1.
+    // Quem tem pelo menos 1 aparece em /procurados.
+    addColumn("crime_players", "criminal_record", "INTEGER NOT NULL DEFAULT 0");
+
+    // Última tentativa de roubo (recarga própria).
+    addColumn("crime_players", "last_rob", "INTEGER NOT NULL DEFAULT 0");
+
+    // Fuga da prisão: quanto a pena já foi cortada (negativo) ou
+    // aumentada (positivo) por fugas, em segundos, e quando a última
+    // tentativa começou.
+    addColumn("prison_players", "escape_delta", "INTEGER NOT NULL DEFAULT 0");
+    addColumn("prison_players", "last_escape_at", "INTEGER NOT NULL DEFAULT 0");
+
+    db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_crime_record
+        ON crime_players(guild_id, criminal_record);
+    `);
+
     console.log(
         "[DATABASE] Sistema de crime verificado."
     );
+}
+
+function addColumn(table, column, definition) {
+    const exists = db
+        .prepare(`PRAGMA table_info(${table})`)
+        .all()
+        .some(info => info.name === column);
+
+    if (!exists) {
+        db.exec(
+            `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`
+        );
+    }
 }

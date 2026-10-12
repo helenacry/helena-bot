@@ -9,7 +9,10 @@ import {
     formatCooldown
 } from "../../config/cooldowns.mjs";
 
-import { CRIME_CONFIG } from "../../config/crime.mjs";
+import {
+    CRIME_CONFIG,
+    ROBBERY_CONFIG
+} from "../../config/crime.mjs";
 
 import { ensureCrimePlayer } from "../../services/crime-player.mjs";
 
@@ -66,6 +69,17 @@ export default {
                     remaining: getRemaining(
                         crime.last_crime,
                         CRIME_CONFIG.cooldown,
+                        now
+                    )
+                },
+
+                {
+                    name: "Roubo",
+                    command: "/roubar",
+                    emoji: "🔫",
+                    remaining: getRemaining(
+                        crime.last_rob,
+                        ROBBERY_CONFIG.cooldown,
                         now
                     )
                 },

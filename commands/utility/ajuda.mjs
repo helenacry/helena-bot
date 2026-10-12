@@ -52,9 +52,11 @@ const CATEGORIES = {
         description: "Arrisque a sorte, lave o dinheiro e evite a cadeia.",
         commands: [
             ["crime", "Cometa um crime e ganhe dinheiro sujo."],
+            ["roubar", "Roube a carteira de outro jogador (precisa de arma)."],
             ["lavagem", "Lave o dinheiro sujo e receba-o limpo."],
             ["lavageminfo", "Veja o tempo da lavagem em andamento."],
-            ["prisao", "Consulte sua pena e sua ficha criminal."]
+            ["procurados", "Veja quem tem ficha criminal no servidor."],
+            ["prisao", "Consulte sua pena. Preso, tente a fuga pelo botão."]
         ]
     },
 

@@ -141,6 +141,114 @@ export const LAUNDERING_CONFIG = Object.freeze({
 });
 
 // ==========================================
+// ROUBO DE JOGADORES
+// ==========================================
+
+export const ROBBERY_CONFIG = Object.freeze({
+    // Custo em energia (a energia máxima é 100).
+    energyCost: 50,
+
+    // Recarga, contada a partir de cada tentativa.
+    cooldown: 60 * 60,
+
+    // Vida mínima para tentar roubar.
+    minHp: 30,
+
+    // A carteira do alvo precisa ter MAIS que isso. Com menos, a
+    // tentativa sempre falha, mas gasta energia e recarga.
+    minTargetWallet: reais(100),
+
+    // Parte da carteira do alvo levada em caso de sucesso.
+    stealRate: Object.freeze({ min: 0.10, max: 0.25 }),
+
+    // Teto do roubo: carteiras até capThreshold rendem no máximo
+    // capBase; acima disso soma capExcessRate do que passa do limite,
+    // sem nunca ultrapassar capMax.
+    capBase: reais(4_000),
+    capThreshold: reais(16_000),
+    capExcessRate: 0.033,
+    capMax: reais(15_000),
+
+    // Do que foi levado, esta parte vem limpa para a carteira e o
+    // resto vira dinheiro sujo (que precisa ser lavado).
+    cleanShare: 0.5,
+
+    // Revide: se a tentativa falha e o alvo está armado (e, com arma
+    // de fogo, tem munição), existe esta chance de ferir o ladrão.
+    retaliationChance: 0.5,
+    retaliationHp: Object.freeze({ min: 30, max: 50 }),
+
+    // Ferimento na fuga depois de um roubo bem-sucedido.
+    escapeInjuryChance: 0.18,
+
+    injuryLevels: Object.freeze([
+        Object.freeze({ name: "leve", weight: 20, hp: 10 }),
+        Object.freeze({ name: "moderado", weight: 60, hp: 25 }),
+        Object.freeze({ name: "grave", weight: 20, hp: 45 })
+    ])
+});
+
+// Chance base de sucesso (em %) conforme a arma equipada. Armas de
+// fogo precisam de munição (1 por roubo bem-sucedido); armas brancas
+// não. Arma desconhecida usa ROBBERY_DEFAULT_CHANCE.
+export const ROBBERY_WEAPON_CHANCE = Object.freeze({
+    wooden_sword: 8,
+    iron_sword: 12,
+    steel_sword: 18,
+
+    pocket_knife: 10,
+    combat_knife: 15,
+    machete: 20,
+    katana: 30,
+    legendary_blade: 45,
+
+    revolver: 25,
+    pistol: 40,
+    smg: 60,
+    shotgun: 70,
+    assault_rifle: 85,
+    sniper_rifle: 30
+});
+
+export const ROBBERY_DEFAULT_CHANCE = 10;
+
+// ==========================================
+// PROCURADOS
+// ==========================================
+
+export const WANTED_PAGE_SIZE = 8;
+
+// ==========================================
+// FUGA DA PRISÃO
+// ==========================================
+
+// Minigame de 3 etapas. Em cada uma o guarda vigia (clicar = ser
+// pego), às vezes finge virar as costas (clicar = ser pego) e por fim
+// abre o corredor: é preciso apertar a saída certa dentre 8, a tempo.
+export const ESCAPE_CONFIG = Object.freeze({
+    stages: 3,
+    exits: 8,
+
+    // Intervalo mínimo entre tentativas, contado do início da anterior.
+    cooldown: 10 * 60,
+
+    // Efeito na pena (em fração da pena original): vencer corta,
+    // ser pego acrescenta. O total acumulado nunca passa de maxChange
+    // para nenhum dos lados.
+    winCut: 0.15,
+    lossAdd: 0.10,
+    maxChange: 0.50,
+
+    // Tempos de cada etapa, em milissegundos.
+    watchMs: Object.freeze({ min: 2_500, max: 7_000 }),
+    feintChance: 0.5,
+    feintMs: 1_500,
+    // Depois de um fingimento, o corredor nunca abre em menos disso.
+    afterFeintMs: Object.freeze({ min: 2_000, max: 3_500 }),
+    openMs: 4_000
+});
+
+// ==========================================
 // PRISÃO
 // ==========================================
 
@@ -149,6 +257,7 @@ export const LAUNDERING_CONFIG = Object.freeze({
 // liberadas. A lavagem decide sozinha o que bloquear.
 export const PRISON_BLOCKED_COMMANDS = new Set([
     "crime",
+    "roubar",
     "trabalhar",
     "daily",
     "comprar",

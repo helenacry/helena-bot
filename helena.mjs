@@ -77,6 +77,11 @@ import {
 } from "./services/live-embed.mjs";
 
 import {
+    handleEscapeClick,
+    clearEscapeSessions
+} from "./services/prison-escape.mjs";
+
+import {
     LIVE_CONFIG
 } from "./config/live.mjs";
 
@@ -427,6 +432,14 @@ async function executarComponente(interaction) {
     const customId = String(
         interaction.data?.customId || ""
     );
+
+    // Fuga da prisão: botão "Tentar fuga" e as saídas do minigame.
+    // As telas seguintes saem editando a resposta original.
+    if (customId.startsWith("fuga:")) {
+        return handleEscapeClick(interaction, {
+            edit: data => editarRespostaOriginal(interaction, data)
+        });
+    }
 
     if (customId.startsWith("userinfo:")) {
         console.log(
@@ -1275,6 +1288,9 @@ function encerrar(signal) {
 
     // Para as contagens ao vivo (tempo da prisão).
     stopAllLiveUpdates();
+
+    // Encerra as tentativas de fuga em andamento.
+    clearEscapeSessions();
 
     const socket = ws;
 

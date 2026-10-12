@@ -2,8 +2,11 @@
 import { db } from "../database/connection.mjs";
 
 import {
-    PRISON_BLOCKED_COMMANDS
+    PRISON_BLOCKED_COMMANDS,
+    ESCAPE_CONFIG
 } from "../config/crime.mjs";
+
+import { tx } from "./combat.mjs";
 
 import {
     createEmbed,
@@ -27,7 +30,8 @@ export function getPrison(
     now = clock()
 ) {
     const row = db.prepare(`
-        SELECT release_at, sentence, reason
+        SELECT release_at, sentence, reason,
+               escape_delta, last_escape_at
         FROM prison_players
         WHERE guild_id = ?
           AND user_id = ?
@@ -52,7 +56,12 @@ export function getPrison(
         releaseAt: row.release_at,
         remaining: row.release_at - now,
         sentence: row.sentence,
-        reason: row.reason
+        reason: row.reason,
+
+        // Quanto as fugas já mexeram na pena (negativo = cortou) e
+        // quando a última tentativa começou.
+        escapeDelta: row.escape_delta,
+        lastEscapeAt: row.last_escape_at
     };
 }
 
@@ -119,8 +128,119 @@ export function imprison(
 }
 
 // ==========================================
+// FUGA: EFEITO NA PENA
+// ==========================================
+
+// Aplica o resultado de uma fuga. Vencer corta winCut da pena
+// original; ser pego acrescenta lossAdd. O total acumulado nunca
+// passa de maxChange da pena, para nenhum dos lados. Se o corte
+// passar do que resta, o jogador é solto na hora. As lavagens
+// pausadas acompanham a mudança.
+//
+// A "pena original" é a duração total da estadia atual, incluindo
+// penas somadas depois.
+export function applyEscape(
+    guildId,
+    userId,
+    outcome,
+    now = clock()
+) {
+    if (outcome !== "win" && outcome !== "loss") {
+        throw new Error("Resultado de fuga inválido.");
+    }
+
+    const run = () => {
+        const row = db.prepare(`
+            SELECT release_at, sentence, escape_delta
+            FROM prison_players
+            WHERE guild_id = ?
+              AND user_id = ?
+        `).get(guildId, userId);
+
+        if (!row || row.release_at <= now) {
+            return { applied: 0, released: true, remaining: 0 };
+        }
+
+        const sentence = row.sentence;
+
+        const limit = Math.round(sentence * ESCAPE_CONFIG.maxChange);
+
+        const step = Math.round(
+            sentence *
+            (outcome === "win"
+                ? ESCAPE_CONFIG.winCut
+                : ESCAPE_CONFIG.lossAdd)
+        );
+
+        const target = outcome === "win"
+            ? Math.max(-limit, row.escape_delta - step)
+            : Math.min(limit, row.escape_delta + step);
+
+        const applied = target - row.escape_delta;
+
+        const releaseAt = row.release_at + applied;
+
+        db.prepare(`
+            UPDATE prison_players
+            SET release_at = ?,
+                escape_delta = ?
+            WHERE guild_id = ?
+              AND user_id = ?
+        `).run(releaseAt, target, guildId, userId);
+
+        if (applied !== 0) {
+            db.prepare(`
+                UPDATE laundering_jobs
+                SET finish_at = finish_at + ?
+                WHERE guild_id = ?
+                  AND user_id = ?
+                  AND settled_at IS NULL
+            `).run(applied, guildId, userId);
+        }
+
+        const released = releaseAt <= now;
+
+        if (released) {
+            db.prepare(`
+                DELETE FROM prison_players
+                WHERE guild_id = ?
+                  AND user_id = ?
+            `).run(guildId, userId);
+        }
+
+        return {
+            applied,
+            released,
+            remaining: Math.max(0, releaseAt - now),
+            delta: target,
+            limit,
+            sentence
+        };
+    };
+
+    return db.isTransaction ? run() : tx(run);
+}
+
+// ==========================================
 // EMBEDS DO BLOQUEIO
 // ==========================================
+
+// Botão que inicia o minigame de fuga. O ID do dono vai no
+// customId: só ele pode usar o botão.
+export function escapeRow(userId) {
+    return {
+        type: "row",
+        components: [
+            {
+                type: "button",
+                customId: `fuga:iniciar:${userId}`,
+                label: "Tentar fuga",
+                emoji: "🏃",
+                style: "danger"
+            }
+        ]
+    };
+}
 
 // Uma atualização ao vivo por jogador: o /prisao e o aviso
 // de comando bloqueado compartilham a mesma chave, então a
@@ -200,6 +320,9 @@ export function prisonBlock(commandName, guildId, userId) {
 
         const response = embedResponse(blockEmbed(prison));
 
+        // Botão para tentar a fuga (só o dono consegue usar).
+        response.data.components = [escapeRow(userId)];
+
         // O tempo restante é atualizado na própria mensagem
         // até o fim da pena (ver services/live-embed.mjs).
         response.live = {
@@ -209,8 +332,12 @@ export function prisonBlock(commandName, guildId, userId) {
                 const current = getPrison(guildId, userId);
 
                 if (!current) {
+                    // Solto: tira também o botão de fuga.
                     return {
-                        payload: { embeds: [releasedBlockEmbed()] },
+                        payload: {
+                            embeds: [releasedBlockEmbed()],
+                            components: []
+                        },
                         done: true
                     };
                 }

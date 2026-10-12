@@ -11,6 +11,8 @@ import { getEquippedWeapon } from "../../services/equipment.mjs";
 
 import {
     resolveUser,
+    lookupProblem,
+    safeText,
     shownName
 } from "../../services/user-lookup.mjs";
 
@@ -31,15 +33,6 @@ import {
 } from "../../utils/embed.mjs";
 
 const MAX_LEVEL = 100;
-
-// Texto digitado pelo usuário, seguro para voltar numa mensagem:
-// sem formatação, menções ou quebras de linha, e com tamanho limitado.
-function safeText(text) {
-    return String(text ?? "")
-        .replace(/[*_`~|<>@\\\r\n]/g, "")
-        .trim()
-        .slice(0, 40);
-}
 
 // Dados de outra pessoa, só para leitura: olhar o perfil de
 // alguém não cria registro nem altera nada. Quem nunca jogou
@@ -123,40 +116,12 @@ export default {
             if (query) {
                 const found = await resolveUser(guildId, query);
 
-                if (found.status === "not_found") {
-                    return warningEmbed(
-                        "Usuário não encontrado",
-                        "Não encontrei ninguém com **" +
-                        safeText(query) +
-                        "** neste servidor.\n\n" +
-                        "Tente o nome de exibição ou o @usuário, " +
-                        "ou mencione a pessoa."
-                    );
-                }
+                const problem = lookupProblem(found, query);
 
-                if (found.status === "ambiguous") {
-                    const list = found.candidates
-                        .map(user =>
-                            "• " + safeText(shownName(user)) +
-                            (
-                                user.username
-                                    ? " (@" + safeText(user.username) + ")"
-                                    : ""
-                            )
-                        )
-                        .join("\n");
-
+                if (problem) {
                     return warningEmbed(
-                        "Mais de um usuário encontrado",
-                        "Vários usuários combinam com **" +
-                        safeText(query) + "**:\n\n" + list +
-                        (
-                            found.total > found.candidates.length
-                                ? "\n… e mais " +
-                                  (found.total - found.candidates.length)
-                                : ""
-                        ) +
-                        "\n\nSeja mais específico ou mencione a pessoa."
+                        problem.title,
+                        problem.message
                     );
                 }
 

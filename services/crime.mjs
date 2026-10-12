@@ -225,6 +225,7 @@ function resolveSuccess({
         SET last_crime = ?,
             crimes = crimes + 1,
             successes = successes + 1,
+            criminal_record = criminal_record + 1,
             dirty_earned = dirty_earned + ?
         WHERE guild_id = ?
           AND user_id = ?
@@ -336,7 +337,8 @@ function resolveFailure({
         UPDATE crime_players
         SET last_crime = ?,
             crimes = crimes + 1,
-            failures = failures + 1
+            failures = failures + 1,
+            criminal_record = criminal_record + 1
         WHERE guild_id = ?
           AND user_id = ?
     `).run(now, guildId, userId);

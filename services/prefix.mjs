@@ -149,7 +149,10 @@ export async function processarPrefixo({
     if (bloqueioPrisao) {
         const sent = await send(message, {
             body: bloqueioPrisao.data.body ?? "",
-            embeds: bloqueioPrisao.data.embeds
+            embeds: bloqueioPrisao.data.embeds,
+            ...(bloqueioPrisao.data.components
+                ? { components: bloqueioPrisao.data.components }
+                : {})
         });
 
         iniciarAoVivo(bloqueioPrisao.live, sent, message, edit);
@@ -208,6 +211,7 @@ export async function processarPrefixo({
         const sent = await send(message, {
             body: data.body ?? "",
             ...(data.embeds ? { embeds: data.embeds } : {}),
+            ...(data.components ? { components: data.components } : {}),
             ...(data.attachments ? { attachments: data.attachments } : {})
         });
 
