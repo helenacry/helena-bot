@@ -448,6 +448,22 @@ export function resetPlayer(
             target
         );
 
+        // Sistema de crime: prisão, ficha criminal e lavagens.
+        for (const table of [
+            "prison_players",
+            "crime_players",
+            "laundering_jobs"
+        ]) {
+            db.prepare(`
+                DELETE FROM ${table}
+                WHERE guild_id = ?
+                  AND user_id = ?
+            `).run(
+                guild,
+                target
+            );
+        }
+
         logDev(
             actor,
             "reset",

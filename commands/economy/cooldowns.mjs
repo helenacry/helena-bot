@@ -9,6 +9,10 @@ import {
     formatCooldown
 } from "../../config/cooldowns.mjs";
 
+import { CRIME_CONFIG } from "../../config/crime.mjs";
+
+import { ensureCrimePlayer } from "../../services/crime-player.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -41,14 +45,44 @@ export default {
             let available = 0;
             let waiting = 0;
 
-            for (const activity of Object.values(COOLDOWNS)) {
-                const lastUsed = player[activity.column];
+            // Crime e lavagem guardam o tempo na própria tabela,
+            // então entram aqui já com o tempo restante.
+            const crime = ensureCrimePlayer(guildId, userId);
 
-                const remaining = getRemaining(
-                    lastUsed,
-                    activity.duration,
-                    now
-                );
+            const activities = [
+                ...Object.values(COOLDOWNS).map(activity => ({
+                    ...activity,
+                    remaining: getRemaining(
+                        player[activity.column],
+                        activity.duration,
+                        now
+                    )
+                })),
+
+                {
+                    name: "Crime",
+                    command: "/crime",
+                    emoji: "🕵️",
+                    remaining: getRemaining(
+                        crime.last_crime,
+                        CRIME_CONFIG.cooldown,
+                        now
+                    )
+                },
+
+                {
+                    name: "Lavagem",
+                    command: "/lavagem",
+                    emoji: "🧼",
+                    remaining: Math.max(
+                        0,
+                        crime.launder_ready_at - now
+                    )
+                }
+            ];
+
+            for (const activity of activities) {
+                const remaining = activity.remaining;
 
                 if (remaining === 0) {
                     available++;

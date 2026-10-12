@@ -72,6 +72,15 @@ export default {
                             value: `**${player.xp} XP**`,
                             inline: true
                         },
+                        // Dinheiro sujo só aparece para quem tem. Não
+                        // entra no patrimônio: precisa ser lavado.
+                        ...(player.dirty_money > 0
+                            ? [{
+                                name: "🧺 Dinheiro sujo",
+                                value: `**${formatMoney(player.dirty_money)}**`,
+                                inline: true
+                            }]
+                            : []),
                         {
                             name: "━━━━━━━━━━━━━━━━",
                             value: "\u200B",

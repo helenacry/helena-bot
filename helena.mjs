@@ -57,6 +57,29 @@ import {
     runAchievementMigrations
 } from "./database/achievement-migrations.mjs";
 
+import {
+    runCrimeMigrations
+} from "./database/crime-migrations.mjs";
+
+import {
+    startLaunderingSweeper,
+    stopLaunderingSweeper
+} from "./services/laundering.mjs";
+
+import {
+    prisonBlock
+} from "./services/prison.mjs";
+
+import {
+    startLiveUpdate,
+    stopAllLiveUpdates,
+    LiveEditError
+} from "./services/live-embed.mjs";
+
+import {
+    LIVE_CONFIG
+} from "./config/live.mjs";
+
 // ==========================================
 // CONFIGURAÇÕES
 // ==========================================
@@ -87,6 +110,9 @@ async function responderInteracao(
     interaction,
     resultado
 ) {
+    // "live" é só para o bot: não pode ir no corpo enviado à API.
+    const { live, ...payload } = resultado ?? {};
+
     const callback = await fetch(
         `${API}/interactions/${interaction.id}/${interaction.token}/callback`,
         {
@@ -96,7 +122,7 @@ async function responderInteracao(
                 "Content-Type": "application/json"
             },
 
-            body: JSON.stringify(resultado)
+            body: JSON.stringify(payload)
         }
     );
 
@@ -108,7 +134,75 @@ async function responderInteracao(
         );
     }
 
+    // Resposta com contagem ao vivo (ex.: tempo da prisão):
+    // continua editando a mesma mensagem enquanto o token da
+    // interação valer.
+    if (callback.ok && live) {
+        startLiveUpdate({
+            key: live.key,
+            render: live.render,
+            maxMs: LIVE_CONFIG.interactionMaxMs,
+            edit: data => editarRespostaOriginal(interaction, data)
+        });
+    }
+
     return callback.ok;
+}
+
+// ==========================================
+// EDITAR MENSAGENS (ATUALIZAÇÃO AO VIVO)
+// ==========================================
+
+// Faz um PATCH e, se a API recusar, lança LiveEditError com o
+// status e o tempo de espera pedido (429), para o mecanismo de
+// atualização decidir se tenta de novo ou desiste.
+async function enviarEdicao(url, requestHeaders, data) {
+    const response = await fetch(url, {
+        method: "PATCH",
+        headers: requestHeaders,
+        body: JSON.stringify(data)
+    });
+
+    if (response.ok) {
+        return;
+    }
+
+    let retryAfterMs = 0;
+
+    if (response.status === 429) {
+        const detail = await response.json().catch(() => ({}));
+
+        retryAfterMs =
+            Number(detail?.retryAfterMs) ||
+            (Number(response.headers.get("Retry-After")) || 0) * 1000;
+    }
+
+    throw new LiveEditError(
+        `[EDIÇÃO] HTTP ${response.status}`,
+        { status: response.status, retryAfterMs }
+    );
+}
+
+// Mensagem de canal enviada pelo prefixo h.
+function editarMensagemCanal(message, messageId, data) {
+    return enviarEdicao(
+        `${API}/guilds/${encodeURIComponent(message.guildId)}` +
+        `/channels/${encodeURIComponent(message.channelId)}` +
+        `/messages/${encodeURIComponent(messageId)}`,
+        headers,
+        data
+    );
+}
+
+// Resposta original de um comando de barra. A rota usa o
+// token da interação, sem o cabeçalho de autorização do bot.
+function editarRespostaOriginal(interaction, data) {
+    return enviarEdicao(
+        `${API}/webhooks/${encodeURIComponent(appId)}` +
+        `/${encodeURIComponent(interaction.token)}/messages/@original`,
+        { "Content-Type": "application/json" },
+        data
+    );
 }
 
 function mensagemErro(
@@ -294,6 +388,7 @@ runDeveloperMigrations();
 runStreakMigrations();
 runPlayerNamesMigrations();
 runAchievementMigrations();
+runCrimeMigrations();
 
 // ==========================================
 // CARREGAR E REGISTRAR COMANDOS
@@ -312,6 +407,16 @@ console.log(
 
 console.log(
     "[PREFIXO] Sistema de comandos h preparado."
+);
+
+// Credita as lavagens concluídas e avisa o canal onde
+// foram iniciadas.
+startLaunderingSweeper(
+    ({ guildId, channelId, body }) =>
+        enviarMensagemCanal(
+            { guildId, channelId },
+            { body }
+        )
 );
 
 // ==========================================
@@ -834,7 +939,9 @@ function conectarGateway() {
 
                         comandos,
 
-                        send: enviarMensagemCanal
+                        send: enviarMensagemCanal,
+
+                        edit: editarMensagemCanal
                     });
 
                 } catch (erro) {
@@ -977,6 +1084,27 @@ function conectarGateway() {
                     mensagemErro(
                         "❌ Este comando não está disponível."
                     )
+                );
+
+                return;
+            }
+
+            // ==================================
+            // PRISÃO
+            // ==================================
+
+            // Preso não trabalha, não compra nem movimenta
+            // dinheiro. Vale também para os aliases.
+            const bloqueioPrisao = prisonBlock(
+                comando.name,
+                interaction.guildId,
+                actorId
+            );
+
+            if (bloqueioPrisao) {
+                await responderInteracao(
+                    interaction,
+                    bloqueioPrisao
                 );
 
                 return;
@@ -1141,6 +1269,12 @@ function encerrar(signal) {
 
     // Finaliza os contadores de suporte.
     stopSupportStats();
+
+    // Para a conclusão automática das lavagens.
+    stopLaunderingSweeper();
+
+    // Para as contagens ao vivo (tempo da prisão).
+    stopAllLiveUpdates();
 
     const socket = ws;
 

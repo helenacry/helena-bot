@@ -46,6 +46,18 @@ const CATEGORIES = {
         ]
     },
 
+    crime: {
+        emoji: "🕵️",
+        name: "Crime",
+        description: "Arrisque a sorte, lave o dinheiro e evite a cadeia.",
+        commands: [
+            ["crime", "Cometa um crime e ganhe dinheiro sujo."],
+            ["lavagem", "Lave o dinheiro sujo e receba-o limpo."],
+            ["lavageminfo", "Veja o tempo da lavagem em andamento."],
+            ["prisao", "Consulte sua pena e sua ficha criminal."]
+        ]
+    },
+
     social: {
         emoji: "💍",
         name: "Social",
@@ -210,6 +222,10 @@ export default {
                 {
                     name: "⚔️ Combate",
                     value: "combate"
+                },
+                {
+                    name: "🕵️ Crime",
+                    value: "crime"
                 },
                 {
                     name: "💍 Social",

@@ -15,6 +15,13 @@ import {
 } from "./prefix-parser.mjs";
 
 import { resolverComando } from "../registrar.mjs";
+
+import { prisonBlock } from "./prison.mjs";
+
+import { startLiveUpdate } from "./live-embed.mjs";
+
+import { LIVE_CONFIG } from "../config/live.mjs";
+
 export const PREFIX = "h";
 
 // Monta a dica de uso exibida quando os argumentos
@@ -32,10 +39,39 @@ function usageHint(commandName, definitions = []) {
     }\``;
 }
 
+// Quando a resposta pede atualização ao vivo (campo live),
+// passa a editar a mensagem recém-enviada. Nunca lança erro:
+// a resposta já foi entregue e a atualização é um extra.
+function iniciarAoVivo(live, sent, message, edit) {
+    if (!live || typeof edit !== "function") {
+        return;
+    }
+
+    try {
+        // A API devolve { message }; aceita também a mensagem direta.
+        const sentMessage = sent?.message ?? sent;
+
+        if (!sentMessage?.id) {
+            return;
+        }
+
+        startLiveUpdate({
+            key: live.key,
+            render: live.render,
+            maxMs: LIVE_CONFIG.channelMaxMs,
+            edit: payload => edit(message, sentMessage.id, payload)
+        });
+
+    } catch (error) {
+        console.warn("[PREFIX] Atualização ao vivo não iniciada:", error);
+    }
+}
+
 export async function processarPrefixo({
     message,
     comandos,
-    send
+    send,
+    edit
 }) {
     const body = String(message.body ?? "").trim();
 
@@ -103,6 +139,24 @@ export async function processarPrefixo({
 
     savePlayerName(user);
 
+    // Preso não trabalha, não compra nem movimenta dinheiro.
+    const bloqueioPrisao = prisonBlock(
+        comando.name,
+        message.guildId,
+        actorId
+    );
+
+    if (bloqueioPrisao) {
+        const sent = await send(message, {
+            body: bloqueioPrisao.data.body ?? "",
+            embeds: bloqueioPrisao.data.embeds
+        });
+
+        iniciarAoVivo(bloqueioPrisao.live, sent, message, edit);
+
+        return true;
+    }
+
     let options;
 
     try {
@@ -151,11 +205,13 @@ export async function processarPrefixo({
 
         const data = result.data;
 
-        await send(message, {
+        const sent = await send(message, {
             body: data.body ?? "",
             ...(data.embeds ? { embeds: data.embeds } : {}),
             ...(data.attachments ? { attachments: data.attachments } : {})
         });
+
+        iniciarAoVivo(result.live, sent, message, edit);
 
         return true;
 
