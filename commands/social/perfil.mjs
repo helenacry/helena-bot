@@ -1,6 +1,5 @@
 
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { db } from "../../database/connection.mjs";
 import { isOwner } from "../../services/developer.mjs";
 import { getPlayer } from "../../database/economy.mjs";
 import { getJob } from "../../config/jobs.mjs";
@@ -9,6 +8,11 @@ import { getMarriage } from "../../services/marriage.mjs";
 import { getPlayerName } from "../../services/player-names.mjs";
 import { WEAPON_TYPES } from "../../config/items.mjs";
 import { getEquippedWeapon } from "../../services/equipment.mjs";
+
+import {
+    resolveUser,
+    shownName
+} from "../../services/user-lookup.mjs";
 
 import {
     checkAchievements,
@@ -21,19 +25,65 @@ import {
     uploadVSyncAttachment
 } from "../../services/vsync-attachments.mjs";
 
-import { errorEmbed } from "../../utils/embed.mjs";
+import {
+    errorEmbed,
+    warningEmbed
+} from "../../utils/embed.mjs";
 
 const MAX_LEVEL = 100;
 
-const OWNER_ID = String(
-    process.env.HELENA_OWNER_ID || ""
-).trim();
+// Texto digitado pelo usuário, seguro para voltar numa mensagem:
+// sem formatação, menções ou quebras de linha, e com tamanho limitado.
+function safeText(text) {
+    return String(text ?? "")
+        .replace(/[*_`~|<>@\\\r\n]/g, "")
+        .trim()
+        .slice(0, 40);
+}
+
+// Dados de outra pessoa, só para leitura: olhar o perfil de
+// alguém não cria registro nem altera nada. Quem nunca jogou
+// aparece com os valores iniciais.
+function readPlayer(guildId, userId) {
+    const row = db.prepare(`
+        SELECT *
+        FROM players
+        WHERE guild_id = ?
+          AND user_id = ?
+    `).get(guildId, userId);
+
+    const global = db.prepare(`
+        SELECT gems
+        FROM global_users
+        WHERE user_id = ?
+    `).get(userId);
+
+    return {
+        wallet: 0,
+        bank: 0,
+        xp: 0,
+        level: 1,
+        bio: "",
+        ...row,
+        gems: global?.gems ?? 0
+    };
+}
 
 export default {
     name: "perfil",
     aliases: ["profile"],
 
-    description: "Consulte seu cartão de perfil na Helena",
+    description: "Consulte o cartão de perfil na Helena",
+
+    options: [
+        {
+            name: "usuario",
+            description:
+                "Nome, @menção ou ID de quem você quer ver (vazio = você)",
+            type: "string",
+            required: false
+        }
+    ],
 
     async execute(interaction) {
         const guildId = interaction.guildId;
@@ -48,11 +98,93 @@ export default {
 
         try {
 
-            const player = await getPlayer(guildId, userId);
+            // ==================================
+            // DE QUEM É O PERFIL?
+            // ==================================
+
+            // Sem argumento, é o seu. Com nome, menção ou ID,
+            // procura a pessoa no servidor.
+            let target = {
+                id: userId,
+                self: true,
+
+                name:
+                    interaction.user?.displayName ||
+                    interaction.user?.username ||
+                    "Jogador",
+
+                avatarUrl: interaction.user?.avatarUrl || null
+            };
+
+            const query = String(
+                interaction.data?.options?.usuario ?? ""
+            ).trim();
+
+            if (query) {
+                const found = await resolveUser(guildId, query);
+
+                if (found.status === "not_found") {
+                    return warningEmbed(
+                        "Usuário não encontrado",
+                        "Não encontrei ninguém com **" +
+                        safeText(query) +
+                        "** neste servidor.\n\n" +
+                        "Tente o nome de exibição ou o @usuário, " +
+                        "ou mencione a pessoa."
+                    );
+                }
+
+                if (found.status === "ambiguous") {
+                    const list = found.candidates
+                        .map(user =>
+                            "• " + safeText(shownName(user)) +
+                            (
+                                user.username
+                                    ? " (@" + safeText(user.username) + ")"
+                                    : ""
+                            )
+                        )
+                        .join("\n");
+
+                    return warningEmbed(
+                        "Mais de um usuário encontrado",
+                        "Vários usuários combinam com **" +
+                        safeText(query) + "**:\n\n" + list +
+                        (
+                            found.total > found.candidates.length
+                                ? "\n… e mais " +
+                                  (found.total - found.candidates.length)
+                                : ""
+                        ) +
+                        "\n\nSeja mais específico ou mencione a pessoa."
+                    );
+                }
+
+                if (found.user.bot) {
+                    return warningEmbed(
+                        "Sem perfil",
+                        "Bots não têm perfil na Helena."
+                    );
+                }
+
+                // Se a busca achou você mesmo, segue como o seu perfil.
+                if (found.user.id !== userId) {
+                    target = {
+                        id: found.user.id,
+                        self: false,
+                        name: shownName(found.user),
+                        avatarUrl: found.user.avatarUrl
+                    };
+                }
+            }
+
+            const player = target.self
+                ? await getPlayer(guildId, target.id)
+                : readPlayer(guildId, target.id);
 
             if (!player) {
                 return errorEmbed(
-                    "Não foi possível localizar seu perfil."
+                    "Não foi possível localizar o perfil."
                 );
             }
 
@@ -60,22 +192,20 @@ export default {
 
             const marriage = await getMarriage(
                 guildId,
-                userId
+                target.id
             );
 
-            const owner = isOwner(userId);
+            const owner = isOwner(target.id);
 
-            const username =
-                interaction.user?.displayName ||
-                interaction.user?.username ||
-                "Jogador";
-
-
-            await checkAchievements(guildId, userId);
+            // Atualizar conquistas pode conceder recompensas:
+            // só no seu próprio perfil.
+            if (target.self) {
+                await checkAchievements(guildId, target.id);
+            }
 
             const equippedTitle = await getEquippedTitle(
                 guildId,
-                userId
+                target.id
             );
 
             const title = equippedTitle?.formatted || "";
@@ -90,7 +220,7 @@ export default {
 
             const weapon = await getEquippedWeapon(
                 guildId,
-                userId
+                target.id
             );
 
             const weaponType = weapon
@@ -124,12 +254,11 @@ export default {
             );
 
             const png = await renderProfileCard({
-                name: username,
+                name: target.name,
 
                 isOwner: owner,
 
-                avatarUrl:
-                    interaction.user?.avatarUrl || null,
+                avatarUrl: target.avatarUrl,
 
                 title,
                 bio,
@@ -162,56 +291,24 @@ export default {
                     (marriage ? "Desconhecido" : null)
             });
 
-
             if (!Buffer.isBuffer(png) || png.length === 0) {
                 throw new Error(
                     "O gerador não retornou um PNG válido."
                 );
             }
 
-            const outputDir = join(
-                process.cwd(),
-                "generated",
-                "profiles"
-            );
-
-            await mkdir(outputDir, {
-                recursive: true
-            });
-
-            const safeId = String(userId).replace(
+            // O cartão vai direto da memória para a VSync:
+            // nada é gravado em disco.
+            const safeId = String(target.id).replace(
                 /[^a-zA-Z0-9_-]/g,
                 "_"
-            );
-
-            const uniqueId = String(
-                interaction.id ||
-                `${Date.now()}-${process.hrtime.bigint()}`
-            ).replace(
-                /[^a-zA-Z0-9_-]/g,
-                "_"
-            );
-
-            const filename =
-                `helena-perfil-${safeId}-${uniqueId}.png`;
-
-            const imagePath = join(
-                outputDir,
-                filename
-            );
-
-            await writeFile(imagePath, png);
-
-            console.log(
-                "[PERFIL] Cartão PNG gerado:",
-                imagePath
             );
 
             const attachment = await uploadVSyncAttachment({
                 guildId,
                 channelId,
-                filepath: imagePath,
-                filename,
+                bytes: png,
+                filename: `helena-perfil-${safeId}.png`,
                 contentType: "image/png"
             });
 
@@ -222,16 +319,19 @@ export default {
             }
 
             console.log(
-                "[PERFIL] Anexo finalizado:",
+                "[PERFIL] Cartão enviado:",
                 attachment.reference
             );
-
 
             return {
                 type: "message",
 
                 data: {
-                    body: `<@${userId}>`,
+                    // Marca quem pediu o próprio perfil. No de outra
+                    // pessoa não há menção, para não notificá-la.
+                    body: target.self
+                        ? `<@${userId}>`
+                        : `Perfil de **${safeText(target.name)}**`,
 
                     attachments: [
                         attachment.reference
@@ -243,7 +343,7 @@ export default {
             console.error("[PERFIL]", error);
 
             return errorEmbed(
-                "Não foi possível gerar ou enviar seu cartão de perfil."
+                "Não foi possível gerar ou enviar o cartão de perfil."
             );
         }
     }

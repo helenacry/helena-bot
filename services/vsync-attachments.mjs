@@ -56,7 +56,11 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 /**
- * Envia um arquivo local para um canal do VSync.
+ * Envia um arquivo para um canal do VSync.
+ *
+ * O conteúdo vem de `bytes` (Buffer em memória) ou, se não
+ * houver, é lido de `filepath`. Com `bytes` nada é gravado
+ * em disco.
  *
  * Retorna uma referência descartável:
  * att:<id>
@@ -68,6 +72,7 @@ export async function uploadVSyncAttachment({
     guildId,
     channelId,
     filepath,
+    bytes: providedBytes,
     filename,
     contentType = "image/png"
 }) {
@@ -77,17 +82,17 @@ export async function uploadVSyncAttachment({
         );
     }
 
-    if (!filepath) {
+    if (!filepath && !providedBytes) {
         throw new Error(
-            "Caminho do arquivo não informado."
+            "Informe o arquivo (filepath) ou o conteúdo (bytes)."
         );
     }
 
     // ======================================
-    // LER ARQUIVO
+    // CONTEÚDO DO ARQUIVO
     // ======================================
 
-    const bytes = await readFile(filepath);
+    const bytes = providedBytes ?? await readFile(filepath);
 
     const size = bytes.length;
 
@@ -131,7 +136,7 @@ export async function uploadVSyncAttachment({
     // ======================================
 
     const name = filename ||
-        basename(filepath);
+        (filepath ? basename(filepath) : "arquivo");
 
     const initialized = await apiRequest(
         "/attachments/init",

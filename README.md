@@ -70,7 +70,7 @@ services/           Regras do jogo (energia, crime, prisão, lavagem, combate...
 database/           Conexão SQLite e migrações (rodam sozinhas ao iniciar)
 config/             Valores ajustáveis (empregos, itens, crime, cooldowns...)
 utils/              Embeds, tempo, IDs e utilitários
-generated/          Arquivos gerados em execução (cartões de perfil, contadores)
+generated/          Dados gerados em execução (ex.: contador de visualizações do /userinfo)
 assets/             Imagens: insígnias, selos Pulse e base do cartão de perfil
 ```
 
