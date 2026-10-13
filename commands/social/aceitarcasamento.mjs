@@ -4,6 +4,11 @@ import {
 } from "../../services/marriage.mjs";
 
 import {
+    mention,
+    mentionAll
+} from "../../services/mentions.mjs";
+
+import {
     createEmbed,
     embedResponse,
     errorEmbed,
@@ -35,10 +40,12 @@ export default {
                 );
             }
 
+            // Na descrição e nos campos do embed a menção vira chip (sem
+            // notificar); quem avisa os dois é o texto da mensagem, abaixo.
             const coupleText = [
-                result.senderId,
+                mention(result.senderId),
                 "❤️",
-                result.targetId
+                mention(result.targetId)
             ].join("\n");
 
             const weddingDate = new Date(
@@ -79,9 +86,10 @@ export default {
                     "Helena • Uma nova história começa."
             });
 
-            const mentions =
-                "<@" + result.senderId + "> " +
-                "<@" + result.targetId + ">";
+            const mentions = mentionAll([
+                result.senderId,
+                result.targetId
+            ]);
 
             return embedResponse(embed, mentions);
 

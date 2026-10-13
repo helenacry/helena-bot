@@ -17,6 +17,10 @@ import {
     getEquippedTitle
 } from "../../services/achievements.mjs";
 
+import { getPlayerName } from "../../services/player-names.mjs";
+
+import { mention } from "../../services/mentions.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -250,14 +254,24 @@ export default {
                 )
                 : 0;
 
-            const displayName = ownProfile
-                ? interaction.user?.displayName ||
-                  interaction.user?.username ||
-                  "Você"
-                : "Jogador #" + String(targetId).slice(-6);
+            // Outra pessoa: o nome salvo, ou a menção (a VSync mostra o
+            // nome real; no lugar do antigo "Jogador #123456").
+            const savedName = ownProfile
+                ? null
+                : getPlayerName(targetId);
+
+            const playerText = ownProfile
+                ? safeName(
+                    interaction.user?.displayName ||
+                    interaction.user?.username ||
+                    "Você"
+                )
+                : savedName
+                    ? safeName(savedName)
+                    : mention(targetId);
 
             const description = [
-                "**Jogador:** " + safeName(displayName),
+                "**Jogador:** " + playerText,
 
                 "**Progresso geral:** " +
                     unlocked.length +

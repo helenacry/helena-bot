@@ -3,6 +3,8 @@ import {
     requestMarriage
 } from "../../services/marriage.mjs";
 
+import { mention } from "../../services/mentions.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -54,12 +56,13 @@ export default {
                     fields: [
                         {
                             name: "❤️ Quem pediu",
-                            value: `\`${request.senderId}\``,
+                            // Menção: vira chip no embed, sem notificar.
+                            value: mention(request.senderId),
                             inline: false
                         },
                         {
                             name: "💌 Destinatário",
-                            value: `\`${request.targetId}\``,
+                            value: mention(request.targetId),
                             inline: false
                         },
                         {

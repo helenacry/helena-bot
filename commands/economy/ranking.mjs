@@ -11,6 +11,8 @@ import {
     getPlayerName
 } from "../../services/player-names.mjs";
 
+import { mention } from "../../services/mentions.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -108,9 +110,9 @@ function displayName(userId, currentUserId) {
         return savedName;
     }
 
-    // Identificação provisória até o jogador
-    // utilizar algum comando da Helena.
-    return "Jogador #" + String(userId).slice(-6);
+    // Ainda sem nome salvo (a pessoa nunca usou um comando da
+    // Helena): vale a menção, que a VSync mostra como o nome real.
+    return null;
 }
 
 // ==========================================
@@ -264,9 +266,13 @@ export default {
                     String(row.user_id) ===
                     String(userId);
 
-                const name = safeName(
-                    displayName(row.user_id, userId)
-                );
+                const savedName = displayName(row.user_id, userId);
+
+                // Com nome salvo, o nome em negrito; sem nome, a menção
+                // (chip no embed, sem notificar ninguém).
+                const name = savedName
+                    ? "**" + safeName(savedName) + "**"
+                    : mention(row.user_id);
 
                 const marker = currentUser
                     ? " · Você"
@@ -274,9 +280,8 @@ export default {
 
                 return [
                     medal(position) +
-                        " **" +
+                        " " +
                         name +
-                        "**" +
                         marker,
 
                     formatValue(row, type)

@@ -5,6 +5,8 @@ import {
     formatMoney
 } from "../../database/economy.mjs";
 
+import { mention } from "../../services/mentions.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -93,7 +95,8 @@ export default {
                     fields: [
                         {
                             name: "👤 Destinatário",
-                            value: `\`${targetId}\``,
+                            // Menção: vira chip no embed, em vez do ID puro.
+                            value: mention(targetId),
                             inline: false
                         },
                         {
