@@ -62,6 +62,12 @@ import {
 } from "./database/crime-migrations.mjs";
 
 import {
+    runWebMigrations
+} from "./database/web-migrations.mjs";
+
+import { guildIds } from "./services/guild-registry.mjs";
+
+import {
     startLaunderingSweeper,
     stopLaunderingSweeper
 } from "./services/laundering.mjs";
@@ -399,6 +405,7 @@ runStreakMigrations();
 runPlayerNamesMigrations();
 runAchievementMigrations();
 runCrimeMigrations();
+runWebMigrations();
 
 // ==========================================
 // CARREGAR E REGISTRAR COMANDOS
@@ -533,7 +540,7 @@ let shuttingDown = false;
 // ESTADO DOS SERVIDORES
 // ==========================================
 
-const guildIds = new Set();
+// O conjunto vive em services/guild-registry.mjs, compartilhado com a API do site.
 
 let guildCountComplete = false;
 

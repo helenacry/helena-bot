@@ -30,7 +30,8 @@ const migrations = [
     ["../database/streak-migrations.mjs", "runStreakMigrations"],
     ["../services/player-names.mjs", "runPlayerNamesMigrations"],
     ["../database/achievement-migrations.mjs", "runAchievementMigrations"],
-    ["../database/crime-migrations.mjs", "runCrimeMigrations"]
+    ["../database/crime-migrations.mjs", "runCrimeMigrations"],
+    ["../database/web-migrations.mjs", "runWebMigrations"]
 ];
 
 // Silencia o log das migrações.
