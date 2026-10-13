@@ -119,6 +119,12 @@ test("cabeçalho da página: título e descrição são obrigatórios", () => {
     assert.deepEqual(meta, { title: "Bolsa", description: "O mercado." });
     assert.equal(body, "Corpo\n");
 
+    // aspas servem para valores com dois-pontos e não aparecem no título
+    assert.equal(
+        parseFrontMatter('---\ntitle: "Crime: por onde começar"\ndescription: Um texto.\n---\n', "x.md").meta.title,
+        "Crime: por onde começar"
+    );
+
     assert.throws(() => parseFrontMatter("sem cabeçalho", "x.md"), /faltou o cabeçalho/);
     assert.throws(() => parseFrontMatter("---\ntitle: A\n---\n", "x.md"), /precisa de "description"/);
     assert.throws(() => parseFrontMatter("---\ntitle A\n---\n", "x.md"), /linha inválida/);

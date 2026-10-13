@@ -18,6 +18,12 @@ Esta wiki explica cada parte do jogo. Os valores (preços, salários, tempos de 
 
 {{cards: economy/market}}
 
+## Crime e segurança
+
+Dinheiro rápido, risco alto. Aqui está o que dá certo, o que dá cadeia e como lavar o que você ganhou.
+
+{{cards: crime/getting-started, crime/robbery, crime/laundering, crime/wanted-and-prison, crime/prison-escape}}
+
 ## Como achar o que você procura
 
 - Use a busca no topo do menu (no teclado, aperte `/`).

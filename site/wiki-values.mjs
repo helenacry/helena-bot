@@ -43,6 +43,10 @@ export function duration(seconds) {
     return plural(seconds, "segundo", "segundos");
 }
 
+// 270 -> "4,5 minutos"
+export const minutes = seconds =>
+    `${(seconds / 60).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} minutos`;
+
 // "30 a 80"
 export const range = (min, max, format = String) => `${format(min)} a ${format(max)}`;
 
@@ -85,6 +89,7 @@ export async function collectWikiBot() {
     const { DUEL_RULES } = await import("../services/combat.mjs");
     const { HOSPITAL_RULES } = await import("../services/hospital.mjs");
     const { ARMORY_RULES } = await import("../services/armory.mjs");
+    const { robberyCap } = await import("../services/robbery.mjs");
     const { collectSiteData } = await import("./data-source.mjs");
 
     const { CRIME_CONFIG, CRIME_FINE, LAUNDERING_CONFIG, ROBBERY_CONFIG, ESCAPE_CONFIG } = crime;
@@ -188,6 +193,7 @@ export async function collectWikiBot() {
                 reais
             ),
             jackpotPrize: range(crime.CRIME_JACKPOT_STORY.min, crime.CRIME_JACKPOT_STORY.max, reais),
+            failureInjury: `${crime.CRIME_FAILURE_STORIES.filter(story => story.injury).length} de ${crime.CRIME_FAILURE_STORIES.length}`,
             scale100: crime.rewardScale(100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })
         },
 
@@ -198,13 +204,22 @@ export async function collectWikiBot() {
             minTarget: reais(ROBBERY_CONFIG.minTargetWallet),
             steal: range(ROBBERY_CONFIG.stealRate.min, ROBBERY_CONFIG.stealRate.max, percent),
             capBase: reais(ROBBERY_CONFIG.capBase),
+            capThreshold: reais(ROBBERY_CONFIG.capThreshold),
             capMax: reais(ROBBERY_CONFIG.capMax),
             clean: percent(ROBBERY_CONFIG.cleanShare),
             dirty: percent(1 - ROBBERY_CONFIG.cleanShare),
             retaliation: percent(ROBBERY_CONFIG.retaliationChance),
             retaliationHp: range(ROBBERY_CONFIG.retaliationHp.min, ROBBERY_CONFIG.retaliationHp.max),
             escapeInjury: percent(ROBBERY_CONFIG.escapeInjuryChance),
-            defaultChance: String(crime.ROBBERY_DEFAULT_CHANCE)
+            defaultChance: String(crime.ROBBERY_DEFAULT_CHANCE),
+            injuries: ROBBERY_CONFIG.injuryLevels
+                .map(level => `${level.name} (${level.hp} de vida, em ${percent(level.weight / ROBBERY_CONFIG.injuryLevels.reduce((sum, item) => sum + item.weight, 0))} dos casos)`)
+                .join(", ")
+        },
+
+        prison: {
+            blocked: [...crime.PRISON_BLOCKED_COMMANDS].map(name => code(`/${name}`)).join(", "),
+            wantedPage: String(crime.WANTED_PAGE_SIZE)
         },
 
         laundering: {
@@ -217,7 +232,13 @@ export async function collectWikiBot() {
             publicPerMinute: reais(LAUNDERING_CONFIG.kinds.public.perMinute),
             privatePerMinute: reais(LAUNDERING_CONFIG.kinds.private.perMinute),
             publicCooldown: duration(LAUNDERING_CONFIG.kinds.public.cooldown),
-            privateCooldown: duration(LAUNDERING_CONFIG.kinds.private.cooldown)
+            privateCooldown: duration(LAUNDERING_CONFIG.kinds.private.cooldown),
+
+            // o tempo de uma lavagem máxima e quanto ela devolve, em média
+            publicMaxTime: duration(Math.ceil(LAUNDERING_CONFIG.maxAmount / LAUNDERING_CONFIG.kinds.public.perMinute) * LAUNDERING_CONFIG.batchSeconds),
+            privateMaxTime: duration(Math.ceil(LAUNDERING_CONFIG.maxAmount / LAUNDERING_CONFIG.kinds.private.perMinute) * LAUNDERING_CONFIG.batchSeconds),
+            publicMaxBack: reais(Math.round(LAUNDERING_CONFIG.maxAmount * (LAUNDERING_CONFIG.kinds.public.rate.min + LAUNDERING_CONFIG.kinds.public.rate.max) / 2)),
+            privateMaxBack: reais(Math.round(LAUNDERING_CONFIG.maxAmount * (LAUNDERING_CONFIG.kinds.private.rate.min + LAUNDERING_CONFIG.kinds.private.rate.max) / 2))
         },
 
         escape: {
@@ -227,7 +248,12 @@ export async function collectWikiBot() {
             winCut: percent(ESCAPE_CONFIG.winCut),
             lossAdd: percent(ESCAPE_CONFIG.lossAdd),
             maxChange: percent(ESCAPE_CONFIG.maxChange),
-            open: `${ESCAPE_CONFIG.openMs / 1000}`
+            open: `${ESCAPE_CONFIG.openMs / 1000}`,
+
+            // em uma pena de crime (a mais comum): quanto corta, quanto soma e o limite
+            exampleCut: minutes(CRIME_CONFIG.jailSeconds * ESCAPE_CONFIG.winCut),
+            exampleAdd: minutes(CRIME_CONFIG.jailSeconds * ESCAPE_CONFIG.lossAdd),
+            exampleMax: minutes(CRIME_CONFIG.jailSeconds * ESCAPE_CONFIG.maxChange)
         },
 
         duel: {
@@ -276,7 +302,7 @@ export async function collectWikiBot() {
     );
 
     tables.weapons = table(
-        ["Arma", "Tipo", "Dano", "Preço", "Chance no roubo"],
+        ["Arma", "Tipo", "Dano", "Preço de tabela", "Chance no roubo"],
         weapons.map(item => [
             `${item.emoji} ${item.name}`,
             item.weaponType === "firearm" ? "Fogo" : "Branca",
@@ -324,6 +350,42 @@ export async function collectWikiBot() {
                 `${band.emoji} ${band.label}`,
                 `${from} a ${band.max}`,
                 `de ${percent(priceBp(from) / 10_000)} a ${percent(priceBp(band.max) / 10_000)} da tabela`
+            ];
+        })
+    );
+
+    // prêmio e multa do crime por nível (o multiplicador é o do código: rewardScale)
+    const wholeReais = cents => Math.round(cents / 100) * 100;
+
+    tables["crime-scale"] = table(
+        ["Nível", "Multiplicador", "Prêmio de um crime comum", "Multa se falhar"],
+        [1, 10, 25, 50, 75, 100].map(level => {
+            const scale = crime.rewardScale(level);
+
+            return [
+                String(level),
+                `${scale.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}x`,
+                range(
+                    wholeReais(Math.min(...stories.map(story => story.min)) * scale),
+                    wholeReais(Math.max(...stories.map(story => story.max)) * scale),
+                    reais
+                ),
+                range(wholeReais(CRIME_FINE.min * scale), wholeReais(CRIME_FINE.max * scale), reais)
+            ];
+        })
+    );
+
+    // quanto um roubo pode levar, conforme a carteira do alvo
+    tables["robbery-cap"] = table(
+        ["Carteira do alvo", "Um roubo leva de", "até"],
+        [500, 2_000, 10_000, 16_000, 50_000, 200_000].map(wallet => {
+            const cents = wallet * 100;
+            const cap = robberyCap(cents);
+
+            return [
+                reais(cents),
+                reais(Math.min(Math.floor(cents * ROBBERY_CONFIG.stealRate.min), cap, cents)),
+                reais(Math.min(Math.floor(cents * ROBBERY_CONFIG.stealRate.max), cap, cents))
             ];
         })
     );

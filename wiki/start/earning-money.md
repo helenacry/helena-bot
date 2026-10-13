@@ -49,6 +49,10 @@ Cumpra o objetivo e resgate com `/missoes`. O progresso conta por dia **UTC**: a
 
 Itens vendáveis, como comida e ferramentas, voltam pela metade do preço de compra no `/vender`. O preço também sofre a influência do mercado do servidor, que você acompanha no [`/bolsa`](wiki:economy/market).
 
+## E o crime?
+
+Existem formas mais rápidas de ganhar, e mais arriscadas: crime, roubo e lavagem, que podem dar cadeia. Elas têm uma seção própria, [Crime e segurança](wiki:crime/getting-started).
+
 ## Próximo passo
 
-{{cards: start/jobs, economy/market}}
+{{cards: start/jobs, economy/market, crime/getting-started}}

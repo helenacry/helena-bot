@@ -54,7 +54,10 @@ export function parseFrontMatter(source, file = "página") {
             throw new Error(`${file}: linha inválida no cabeçalho: "${line}"`);
         }
 
-        meta[pair[1]] = pair[2].trim();
+        // "entre aspas" serve para valores com dois-pontos (title: "Crime: o começo")
+        const value = pair[2].trim();
+
+        meta[pair[1]] = /^"[^"]*"$/.test(value) ? value.slice(1, -1) : value;
     }
 
     for (const key of ["title", "description"]) {
