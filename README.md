@@ -154,12 +154,26 @@ Alguns comandos mostram botões que abrem formulários (modais) da VSync, no est
 
 ## Site
 
-A pasta `site/` tem a página de divulgação da Helena: um `index.html` único (CSS, JS e dados embutidos) e as imagens em `site/assets/`. Não precisa de build nem de servidor: dá para abrir o arquivo direto no navegador ou publicar a pasta em qualquer hospedagem estática (GitHub Pages, Netlify, Cloudflare Pages...).
+A pasta `site/` tem a página de divulgação da Helena. É HTML, CSS e JS puros, sem build e sem servidor: dá para abrir `site/index.html` direto no navegador ou publicar a pasta em qualquer hospedagem estática (GitHub Pages, Netlify, Cloudflare Pages...).
 
-- **Links:** o convite do bot e o servidor oficial ficam no objeto `CONFIG`, no fim de `site/index.html`. `codeUrl` (link do repositório) está vazio e o item some do rodapé enquanto não for preenchido.
-- **Números e comandos:** rode `npm run site:data` depois de criar, renomear ou remover comandos, empregos, itens ou conquistas. O script lê o bot de verdade (com um banco temporário, sem tocar em `data/`) e regrava o bloco entre `<!-- helena:data:start -->` e `<!-- helena:data:end -->`. Comandos de `admin/` e `dev/` não aparecem.
-- **O que não é automático:** os valores escritos nos textos das seções *O jogo*, *Rotina* e *O outro lado* (prêmio do `/daily`, custos e chances do crime, retornos da lavagem, tempos da prisão...) vêm de `config/` e de `commands/economy/daily.mjs`, mas foram copiados à mão. Se mudar esses valores no bot, atualize o texto da página.
-- **Imagens:** foram recortadas de `assets/helena-profile.png` (cartão de exemplo, avatar redondo, favicon e a faixa do templo usada no rodapé).
+```
+site/
+  index.html          só marcação
+  css/                tokens, base, components, sections, motion
+  js/                 config, util, nav, render, commands, copy, petals, motion
+  data/site-data.js   gerado por `npm run site:data` (não edite à mão)
+  assets/img/         imagens recortadas de assets/helena-profile.png
+  data-source.mjs     lê o bot e devolve os dados do site
+  build-data.mjs      grava data/site-data.js
+```
+
+Os scripts são clássicos (não módulos) e dividem o objeto `window.Helena`, para a página abrir direto do disco.
+
+- **Links:** o convite do bot e o servidor oficial ficam em `site/js/config.js`. `codeUrl` (link do repositório) está vazio e o item some do rodapé enquanto não for preenchido.
+- **Números e comandos:** rode `npm run site:data` depois de criar, renomear ou remover comandos, empregos, itens ou conquistas. O script lê o bot de verdade (com um banco temporário, sem tocar em `data/`). Comandos de `admin/` e `dev/` não aparecem. O `npm test` falha se `site/data/site-data.js` ficar para trás.
+- **O que não é automático:** os valores escritos nos textos (prêmio do `/daily`, custos e chances do crime, retornos da lavagem, tempos da prisão, e os textos das simulações de conversa) vêm de `config/` e dos comandos, mas foram copiados à mão. Se mudar esses valores no bot, atualize a página.
+- **Animações:** tudo nasce no estado final e visível; o JS só adiciona a classe `in` pouco antes de o elemento entrar na tela (veja `css/motion.css` e `js/motion.js`). Sem JS ou com `prefers-reduced-motion`, nada se mexe e a página está completa.
+- **Skill de front:** `.claude/skills/front-sem-cara-de-ia/SKILL.md` reúne o que evitar para a página não parecer feita por IA, receitas para fazer diferente e um checklist. O Claude Code a usa ao mexer no site; também dá para chamar com `/front-sem-cara-de-ia`. A pasta `.claude/` está no `.gitignore`, então a skill fica só na sua máquina.
 
 ## Testes
 

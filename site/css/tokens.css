@@ -1,0 +1,48 @@
+/* Conceito: noite de sakura sobre o templo do cartão de perfil. Fundo quase preto
+   com violeta, texto lilás claro, coroa dourada só no dinheiro e nos detalhes, e
+   verde/vermelho apenas para dizer "renda" e "risco". Tema único e escuro, de propósito. */
+:root {
+  /* superfícies */
+  --bg: #09060f;
+  --bg-2: #0f0a1c;
+  --bg-3: #171030;
+  --line: #261a45;
+  --line-2: #3b2870;
+
+  /* texto */
+  --text: #f0eaff;
+  --muted: #a99fcb;
+  --dim: #8478ab;
+
+  /* marca e função */
+  --brand: #8755da;
+  --brand-hi: #b69cf6;
+  --gold: #e9c46a;
+  --green: #4ade80;
+  --red: #fb7185;
+  --pink: #f472b6;
+  --blue: #7dd3fc;
+
+  /* raridade das conquistas (mesma ordem do bot) */
+  --r-common: #a99fcb;
+  --r-uncommon: #4ade80;
+  --r-rare: #7dd3fc;
+  --r-epic: #c084fc;
+  --r-legendary: #e9c46a;
+
+  /* tipografia */
+  --font-display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+  --font-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  /* forma e movimento */
+  --radius: 14px;
+  --gutter: 16px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: dark;
+}
+
+@media (min-width: 720px) {
+  :root { --gutter: 28px; }
+}

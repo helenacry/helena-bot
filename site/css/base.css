@@ -1,0 +1,130 @@
+/* Base: reset, tipografia, layout comum, botões, etiquetas e chip de comando. */
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+[hidden] { display: none !important; }
+
+img { max-width: 100%; display: block; }
+a { color: var(--brand-hi); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, .mono { font-family: var(--font-mono); }
+h1, h2, h3, h4 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+
+:focus-visible {
+  outline: 2px solid var(--brand-hi);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.skip {
+  position: absolute; left: 16px; top: -60px; z-index: 100;
+  background: var(--brand); color: #fff;
+  padding: 10px 16px; border-radius: 8px; font-weight: 600;
+}
+.skip:focus { top: 12px; text-decoration: none; }
+
+/* ---------- layout ---------- */
+.wrap { width: 100%; max-width: 1120px; margin-inline: auto; padding-inline: var(--gutter); }
+
+section { scroll-margin-top: 76px; }
+.band { padding-block: clamp(56px, 9vw, 104px); }
+.band.alt { background: var(--bg-2); border-block: 1px solid var(--line); }
+
+/* título de seção com coluna fixa ao lado do conteúdo (no desktop) */
+.split { display: grid; gap: clamp(28px, 5vw, 56px); grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.7fr); align-items: start; }
+.split > .head { position: sticky; top: 96px; margin-bottom: 0; }
+@media (max-width: 920px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .split > .head { position: static; margin-bottom: 4px; }
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-hi);
+}
+
+.head { display: grid; gap: 14px; max-width: 680px; margin-bottom: clamp(28px, 5vw, 48px); }
+.head h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.85rem, 3.6vw, 2.7rem);
+  line-height: 1.12;
+}
+.head .lede { color: var(--muted); font-size: 1.06rem; max-width: 60ch; }
+.head::after {
+  content: "";
+  width: 56px; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+.after { color: var(--dim); font-size: 0.92rem; margin-top: 18px; }
+.after code { color: var(--brand-hi); }
+
+/* ---------- botões ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--text);
+  font: 600 0.95rem/1 var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.btn:hover { background: var(--bg-3); border-color: var(--brand); text-decoration: none; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn.primary:hover { background: #9a6ee6; border-color: #9a6ee6; }
+.btn.big { padding: 14px 26px; font-size: 1rem; }
+.btn:active { transform: translateY(1px); }
+
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 28px 18px; }
+.cta-row.end { justify-content: center; margin-block: 0; }
+
+/* ---------- etiquetas ---------- */
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 999px;
+  color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
+  white-space: nowrap;
+}
+.tag.renda { --c: var(--green); }
+.tag.risco { --c: var(--red); }
+.tag.seguro { --c: var(--blue); }
+.tag.itens { --c: var(--gold); }
+.tag.social { --c: var(--pink); }
+.tag.estilo { --c: var(--brand-hi); }
+
+/* ---------- chip de comando (clique copia) ---------- */
+.cmd {
+  align-self: flex-start;
+  justify-self: start;
+  font: 500 0.84rem/1 var(--font-mono);
+  color: var(--brand-hi);
+  background: #0b0716;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 11px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.cmd:hover { border-color: var(--brand); }
+.cmd.copied { color: var(--green); border-color: var(--green); }
