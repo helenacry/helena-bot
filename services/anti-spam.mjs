@@ -97,9 +97,18 @@ export function antiSpamText(remainingMs) {
     return `⏳ Devagar! Espere mais ${seconds}s para usar outro comando.`;
 }
 
-// O intervalo do bot: comandos de barra e prefixo h compartilham o mesmo, e o
-// dono do bot não espera.
-export const commandGate = createAntiSpam({
-    cooldownMs: antiSpamEnabled() ? ANTI_SPAM.commandCooldownSeconds * 1000 : 0,
-    exempt: isOwner
-});
+// Monta o intervalo do bot a partir da configuração e do ambiente. Os donos só
+// ficam isentos se config/anti-spam.mjs mandar (exemptOwners).
+export function buildCommandGate({
+    env = process.env,
+    owner = isOwner,
+    exemptOwners = ANTI_SPAM.exemptOwners
+} = {}) {
+    return createAntiSpam({
+        cooldownMs: antiSpamEnabled(env) ? ANTI_SPAM.commandCooldownSeconds * 1000 : 0,
+        exempt: exemptOwners ? owner : () => false
+    });
+}
+
+// O intervalo do bot: comandos de barra e prefixo h compartilham o mesmo.
+export const commandGate = buildCommandGate();

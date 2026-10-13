@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const { createAntiSpam, antiSpamEnabled, antiSpamText, commandGate } =
+const { createAntiSpam, buildCommandGate, antiSpamEnabled, antiSpamText, commandGate } =
     await import("../services/anti-spam.mjs");
 
 const { ANTI_SPAM } = await import("../config/anti-spam.mjs");
@@ -153,6 +153,36 @@ test("HELENA_ANTI_SPAM=off desliga o intervalo; sem a variável, fica ligado", (
     assert.equal(commandGate.check("qualquer").allowed, true);
 });
 
+test("o intervalo de verdade (o que o bot usa) vale para o dono também, e só poupa o dono se a config mandar", () => {
+    const owner = id => id === "DONO";
+
+    // ambiente sem HELENA_ANTI_SPAM = como o bot em produção
+    const real = buildCommandGate({ env: {}, owner });
+
+    assert.equal(ANTI_SPAM.exemptOwners, false, "por padrão o dono espera como todo mundo");
+
+    assert.equal(real.check("DONO").allowed, true);
+    assert.equal(real.check("DONO").allowed, false, "o dono é barrado no segundo comando seguido");
+    assert.equal(real.check("outro").allowed, true);
+    assert.equal(real.check("outro").allowed, false);
+
+    // com exemptOwners ligado, só o dono passa direto
+    const lenient = buildCommandGate({ env: {}, owner, exemptOwners: true });
+
+    for (let i = 0; i < 4; i++) assert.equal(lenient.check("DONO").allowed, true);
+
+    assert.equal(lenient.check("outro").allowed, true);
+    assert.equal(lenient.check("outro").allowed, false);
+
+    // HELENA_ANTI_SPAM=off desliga para todos, dono inclusive
+    const off = buildCommandGate({ env: { HELENA_ANTI_SPAM: "off" }, owner });
+
+    for (let i = 0; i < 4; i++) {
+        assert.equal(off.check("DONO").allowed, true);
+        assert.equal(off.check("outro").allowed, true);
+    }
+});
+
 test("o aviso diz quanto falta, em segundos inteiros, nunca zero", () => {
     assert.match(antiSpamText(2400), /Espere mais 3s/);
     assert.match(antiSpamText(3000), /Espere mais 3s/);
@@ -230,7 +260,7 @@ test("pelo prefixo: o intervalo é por pessoa, e barrar uma não atrapalha a out
     assert.doesNotMatch((await bia("hsaldo")).text, /Devagar/);
 });
 
-test("pelo prefixo: o dono do bot não espera", async () => {
+test("pelo prefixo: uma pessoa isenta pela regra não espera", async () => {
     const time = clock();
     const gate = createAntiSpam({ cooldownMs: 3000, now: time.now, exempt: id => id === ANA.id });
     const run = await createPrefixRunner({ guildId: G, author: ANA, gate });

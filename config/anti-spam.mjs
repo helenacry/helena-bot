@@ -10,5 +10,10 @@
 
 export const ANTI_SPAM = Object.freeze({
     // Tempo mínimo entre dois comandos da mesma pessoa.
-    commandCooldownSeconds: 3
+    commandCooldownSeconds: 3,
+
+    // Os donos do bot (HELENA_OWNER_ID) esperam como todo mundo. Com true, eles
+    // passam direto: útil para trabalhar rápido, mas quem testa o intervalo
+    // sendo dono acha que ele não funciona.
+    exemptOwners: false
 });
