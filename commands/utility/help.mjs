@@ -128,10 +128,7 @@ export default {
                 return reply(buildHelpHome({ ownerId, catalog }));
             }
 
-            // Os nomes antigos (como "outros") ainda funcionam.
-            const typed = String(selected).trim().toLowerCase();
-
-            const categoryId = HELP_CONFIG.legacyCategories[typed] ?? typed;
+            const categoryId = String(selected).trim().toLowerCase();
 
             const view = buildHelpCategory({ ownerId, catalog, categoryId, page: 1 });
 

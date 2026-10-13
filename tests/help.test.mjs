@@ -156,10 +156,6 @@ test("cada categoria tem texto de apresentação e os ids são os da configuraç
     for (const id of Object.keys(HELP_CONFIG.blurbs)) {
         assert.ok(COMMAND_CATEGORIES.some(item => item.id === id), `${id} é uma categoria`);
     }
-
-    for (const target of Object.values(HELP_CONFIG.legacyCategories)) {
-        assert.ok(COMMAND_CATEGORIES.some(item => item.id === target), `o nome antigo leva a ${target}`);
-    }
 });
 
 test("o catálogo se monta de qualquer carga de comandos (comando novo entra sozinho)", () => {
@@ -490,15 +486,15 @@ test("/ajuda abre o início, com os componentes", async () => {
     assert.deepEqual(selects(response.data.components).map(item => item.customId), [`ajuda:cat:${OWNER}`]);
 });
 
-test("/ajuda categoria: abre direto na categoria, inclusive pelo nome antigo", async () => {
+test("/ajuda categoria: abre direto na categoria", async () => {
     const combat = await runHelp({ categoria: "combate" });
 
     assert.match(embedOf(combat).title, /Combate/);
     assert.ok(embedOf(combat).fields.some(field => field.name === "/atacar"));
 
-    const legacy = await runHelp({ categoria: "outros" });
+    const utilities = await runHelp({ categoria: "utilidades" });
 
-    assert.match(embedOf(legacy).title, /Utilidades/);
+    assert.match(embedOf(utilities).title, /Utilidades/);
 
     const invalid = await runHelp({ categoria: "xyz" });
 
@@ -532,6 +528,12 @@ test("pelo prefixo: hajuda, hajuda categoria:combate e hajuda comando:daily", as
     assert.ok(idsOf(home.components).includes(`ajuda:cat:${OWNER}`));
 
     assert.match((await run("hajuda categoria:combate")).title, /Combate/);
+
+    // o nome antigo "outros" foi trocado por "utilidades": o prefixo recusa e lista as opções
+    const old = await run("hajuda categoria:outros");
+
+    assert.match(old.body, /Valor inválido para "categoria"/);
+    assert.match(old.body, /utilidades/);
     assert.match((await run("hajuda comando:daily")).title, /\/daily/);
     assert.match((await run("hhelp")).title, /Central de Ajuda/, "atalho help");
 });

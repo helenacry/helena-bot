@@ -25,10 +25,5 @@ export const HELP_CONFIG = Object.freeze({
         progresso: "Conquistas e títulos.",
         social: "Perfil, casamento e informações de usuário.",
         utilidades: "A central de ajuda e o teste de que o bot está no ar."
-    }),
-
-    // Nomes antigos de categoria que ainda funcionam em `/ajuda categoria:`.
-    legacyCategories: Object.freeze({
-        outros: "utilidades"
     })
 });
