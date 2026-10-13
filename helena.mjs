@@ -68,6 +68,11 @@ import {
 import { guildIds } from "./services/guild-registry.mjs";
 
 import {
+    startWebApi,
+    stopWebApi
+} from "./services/web-api.mjs";
+
+import {
     startLaunderingSweeper,
     stopLaunderingSweeper
 } from "./services/laundering.mjs";
@@ -435,6 +440,13 @@ startLaunderingSweeper(
             { body }
         )
 );
+
+// API do painel do site (daily e gemas pelo navegador). Só liga se
+// HELENA_WEB_PORT estiver definida; sem ela, o bot funciona como sempre.
+// Uma falha aqui nunca derruba o bot.
+startWebApi().catch(erro => {
+    console.error("[WEB] Não foi possível iniciar a API do site:", erro);
+});
 
 // ==========================================
 // COMPONENTES INTERATIVOS
@@ -1365,6 +1377,9 @@ function encerrar(signal) {
 
     // Para a conclusão automática das lavagens.
     stopLaunderingSweeper();
+
+    // Fecha a API do painel do site, se estiver ligada.
+    stopWebApi().catch(() => {});
 
     // Para as contagens ao vivo (tempo da prisão).
     stopAllLiveUpdates();
