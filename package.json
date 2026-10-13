@@ -6,7 +6,8 @@
     "start": "node --env-file=.env helena.mjs",
     "start:test": "node --env-file=.env.test helena.mjs",
     "test": "node --test \"tests/*.test.mjs\"",
-    "site:data": "node --disable-warning=ExperimentalWarning site/build-data.mjs"
+    "site:data": "node --disable-warning=ExperimentalWarning site/build-data.mjs",
+    "site:card": "node --disable-warning=ExperimentalWarning site/build-card.mjs"
   },
   "dependencies": {
     "sharp": "^0.35.5",

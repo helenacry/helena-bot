@@ -6,8 +6,8 @@ import { getJob } from "../../config/jobs.mjs";
 import { xpForLevel } from "../../services/experience.mjs";
 import { getMarriage } from "../../services/marriage.mjs";
 import { getPlayerName } from "../../services/player-names.mjs";
-import { WEAPON_TYPES } from "../../config/items.mjs";
 import { getEquippedWeapon } from "../../services/equipment.mjs";
+import { getPlayerRank } from "../../services/player-rank.mjs";
 
 import {
     resolveUser,
@@ -197,10 +197,6 @@ export default {
                 target.id
             );
 
-            const weaponType = weapon
-                ? WEAPON_TYPES[weapon.weaponType] || "Desconhecido"
-                : "";
-
             const level = Math.max(
                 1,
                 Number(player.level) || 1
@@ -247,9 +243,12 @@ export default {
                     ? `${weapon.emoji || "🔫"} ${weapon.name}`
                     : "Nenhuma",
 
-                weaponDetail: weapon
-                    ? `Tipo: ${weaponType} • Dano: ${weapon.damage}`
-                    : "",
+                weaponDamage: weapon
+                    ? Number(weapon.damage || 10)
+                    : undefined,
+
+                // Posição no ranking de patrimônio, igual à do /ranking.
+                rank: getPlayerRank(guildId, target.id),
 
                 level,
                 maxLevel: MAX_LEVEL,
