@@ -56,7 +56,7 @@ test("PKCE: verifier de 43 caracteres e desafio S256 certo, diferente a cada log
 test("o endereço de autorização leva exatamente o que a VSync documenta", () => {
     const url = new URL(lib.buildAuthorizeUrl({
         clientId: "app-id",
-        redirectUri: "https://site.exemplo.test/conta/",
+        redirectUri: "https://site.exemplo.test/account/",
         state: "estado123",
         challenge: "desafio456"
     }));
@@ -66,7 +66,7 @@ test("o endereço de autorização leva exatamente o que a VSync documenta", () 
     assert.deepEqual(Object.fromEntries(url.searchParams), {
         client_id: "app-id",
         response_type: "code",
-        redirect_uri: "https://site.exemplo.test/conta/",
+        redirect_uri: "https://site.exemplo.test/account/",
         scope: "identify guilds",
         state: "estado123",
         code_challenge: "desafio456",
@@ -77,10 +77,10 @@ test("o endereço de autorização leva exatamente o que a VSync documenta", () 
 test("o endereço de retorno é a própria página, sempre com a barra final", () => {
     const uri = pathname => lib.redirectUri({ origin: "https://helenacry.github.io", pathname });
 
-    assert.equal(uri("/helena-bot/conta/"), "https://helenacry.github.io/helena-bot/conta/");
-    assert.equal(uri("/helena-bot/conta/index.html"), "https://helenacry.github.io/helena-bot/conta/");
-    assert.equal(uri("/helena-bot/conta"), "https://helenacry.github.io/helena-bot/conta/");
-    assert.equal(uri("/conta/"), "https://helenacry.github.io/conta/");
+    assert.equal(uri("/helena-bot/account/"), "https://helenacry.github.io/helena-bot/account/");
+    assert.equal(uri("/helena-bot/account/index.html"), "https://helenacry.github.io/helena-bot/account/");
+    assert.equal(uri("/helena-bot/account"), "https://helenacry.github.io/helena-bot/account/");
+    assert.equal(uri("/account/"), "https://helenacry.github.io/account/");
 });
 
 test("lê o que a VSync devolve na volta do login", () => {
@@ -199,7 +199,7 @@ test("sem apiUrl a página mostra o aviso em vez de tentar o login", () => {
     const page = {
         window: {
             Helena: { config: { apiUrl: "", clientId: "app-id" }, el },
-            location: { search: "", pathname: "/conta/", origin: "https://x.test", assign: url => calls.push(url) },
+            location: { search: "", pathname: "/account/", origin: "https://x.test", assign: url => calls.push(url) },
             localStorage: { getItem() { return null; }, setItem() {}, removeItem() {} },
             sessionStorage: { getItem() { return null; }, setItem() {}, removeItem() {} }
         },
@@ -246,7 +246,7 @@ test("o que o painel gera é aceito pela API: login com PKCE conferido de verdad
     // o painel monta o pedido de autorização e guarda o desafio
     const { verifier, challenge } = await lib.pkce();
 
-    const redirect = lib.redirectUri({ origin: SITE_ORIGIN, pathname: "/conta/index.html" });
+    const redirect = lib.redirectUri({ origin: SITE_ORIGIN, pathname: "/account/index.html" });
 
     const authorize = new URL(lib.buildAuthorizeUrl({ clientId: "app-id", redirectUri: redirect, state: "s", challenge }));
 

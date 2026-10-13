@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 const { carregarComandos, resolverComando, registrarComandos } =
-    await import("../registrar.mjs");
+    await import("../command-registry.mjs");
 
 const silently = async fn => {
     const log = console.log;

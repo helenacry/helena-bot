@@ -14,7 +14,7 @@ import {
     PrefixUsageError
 } from "./prefix-parser.mjs";
 
-import { resolverComando } from "../registrar.mjs";
+import { resolverComando } from "../command-registry.mjs";
 
 import { prisonBlock } from "./prison.mjs";
 

@@ -46,7 +46,7 @@ const CATEGORY_BY_FOLDER = {
 };
 
 export async function collectSiteData() {
-    const { carregarComandos } = await import("../registrar.mjs");
+    const { carregarComandos } = await import("../command-registry.mjs");
     const { JOBS } = await import("../config/jobs.mjs");
     const { ITEMS } = await import("../config/items.mjs");
 

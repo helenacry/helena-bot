@@ -13,7 +13,7 @@ const { addItem } = await import("../services/inventory.mjs");
 const { equipWeapon, getEquippedWeapon } = await import("../services/equipment.mjs");
 const { tx } = await import("../services/combat.mjs");
 const { imprison } = await import("../services/prison.mjs");
-const { carregarComandos, resolverComando } = await import("../registrar.mjs");
+const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
 const { ITEMS } = await import("../config/items.mjs");
 
 const G = "g-shop";

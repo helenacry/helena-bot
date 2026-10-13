@@ -62,22 +62,22 @@ Para montar o ambiente de testes:
 ## Estrutura
 
 ```
-helena.mjs          Conexão com o gateway e despacho de comandos
-registrar.mjs       Carrega os comandos e registra na VSync
-commands/           Um arquivo por comando, agrupados por categoria
+helena.mjs               Conexão com o gateway e despacho de comandos
+command-registry.mjs     Carrega os comandos e registra na VSync
+commands/                Um arquivo por comando, agrupados por categoria
   admin/ crime/ dev/ economy/ progress/ social/ utility/
-services/           Regras do jogo (energia, crime, prisão, lavagem, combate...)
-database/           Conexão SQLite e migrações (rodam sozinhas ao iniciar)
-config/             Valores ajustáveis (empregos, itens, crime, cooldowns...)
-utils/              Embeds, tempo, IDs e utilitários
-tests/              Testes automáticos (npm test)
-generated/          Dados gerados em execução (ex.: contador de visualizações do /userinfo)
-assets/             Imagens: insígnias, selos Pulse e base do cartão de perfil
+services/                Regras do jogo (energia, crime, prisão, lavagem, combate...)
+database/                Conexão SQLite e migrações (rodam sozinhas ao iniciar)
+config/                  Valores ajustáveis (empregos, itens, crime, cooldowns...)
+utils/                   Embeds, tempo, IDs e utilitários
+tests/                   Testes automáticos (npm test)
+generated/               Dados gerados em execução (ex.: contador de visualizações do /userinfo)
+assets/                  Imagens: insígnias, selos Pulse e base do cartão de perfil
 ```
 
 ## Criando um comando
 
-Crie um `.mjs` em `commands/<categoria>/` exportando um objeto com `name`, `description` e `execute`. O `registrar.mjs` carrega todas as subpastas e recusa nomes duplicados ao iniciar.
+Crie um `.mjs` em `commands/<categoria>/` exportando um objeto com `name`, `description` e `execute`. O `command-registry.mjs` carrega todas as subpastas e recusa nomes duplicados ao iniciar.
 
 ```js
 import { embedResponse, createEmbed } from "../../utils/embed.mjs";
@@ -173,7 +173,7 @@ O painel permite coletar o **daily** e um **bônus de gemas** pelo navegador, en
 
 **Para ligar** (variáveis em `.env.example`):
 
-1. No Portal do Desenvolvedor da VSync, cadastre o endereço de retorno do login, igual ao do site e com a barra final (por exemplo `https://helenacry.github.io/helena-bot/conta/`). Para testar no computador, `http://127.0.0.1:PORTA/conta/` também vale.
+1. No Portal do Desenvolvedor da VSync, cadastre o endereço de retorno do login, igual ao do site e com a barra final (por exemplo `https://helenacry.github.io/helena-bot/account/`). Para testar no computador, `http://127.0.0.1:PORTA/account/` também vale.
 2. Preencha `HELENA_WEB_PORT`, `HELENA_WEB_ORIGINS`, `HELENA_OAUTH_REDIRECTS` e `HELENA_OAUTH_CLIENT_ID`. A API escuta só em `127.0.0.1`.
 3. Publique essa porta na internet com HTTPS (Tailscale Funnel, Cloudflare Tunnel, ngrok ou um servidor) e, com a API atrás de um túnel, ponha `HELENA_WEB_TRUST_PROXY=1`. Se o bot ficar desligado, o painel mostra "fora do ar".
 4. Crie uma chave gratuita do [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile): a chave **secreta** vai em `HELENA_TURNSTILE_SECRET` e a chave **do site** em `site/js/config.js`.
@@ -188,8 +188,8 @@ A pasta `site/` tem a página de divulgação da Helena. É HTML, CSS e JS puros
 ```
 site/
   index.html          só marcação
-  conta/index.html    painel da conta (daily e gemas), escondido até haver API
-  css/                tokens, base, components, sections, motion, conta
+  account/index.html  painel da conta (daily e gemas), escondido até haver API
+  css/                tokens, base, components, sections, motion, account
   js/                 config, util, nav, render, commands, copy, petals, motion, account
   data/site-data.js   gerado por `npm run site:data` (não edite à mão)
   assets/img/         imagens derivadas da arte em assets/ (veja abaixo)

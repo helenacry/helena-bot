@@ -13,7 +13,7 @@ const workDir = mkdtempSync(join(tmpdir(), "helena-userinfo-"));
 process.chdir(workDir);
 
 const { clearUserLookupCache } = await import("../services/user-lookup.mjs");
-const { carregarComandos, resolverComando } = await import("../registrar.mjs");
+const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
 
 const G = "900000000000000001";
 const ME = { id: "111111111111111111", username: "eu", displayName: "Eu Mesmo" };

@@ -3,7 +3,7 @@ import "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { join, dirname } from "node:path";
 
 const { collectSiteData } = await import("../site/data-source.mjs");
@@ -32,7 +32,7 @@ function embedded() {
 
 test("tudo o que as páginas carregam existe", () => {
     // [arquivo, pasta de onde os caminhos relativos partem]
-    for (const [page, folder] of [["index.html", ""], ["conta/index.html", "conta"]]) {
+    for (const [page, folder] of [["index.html", ""], ["account/index.html", "account"]]) {
         const refs = [...read(page).matchAll(/(?:src|href)="([^"]+)"/g)]
             .map(match => match[1])
             .filter(ref => !/^(https?:|mailto:|#|data:)/.test(ref))
@@ -43,7 +43,7 @@ test("tudo o que as páginas carregam existe", () => {
         for (const ref of refs) {
             const path = join(SITE, folder, ref);
 
-            // um link para uma pasta (conta/) vale se ela tem index.html
+            // um link para uma pasta (account/) vale se ela tem index.html
             assert.ok(
                 existsSync(path) && (!path.endsWith("/") && !path.endsWith("\\") || existsSync(join(path, "index.html"))),
                 `${page} aponta para ${ref}, que não existe`
@@ -91,16 +91,22 @@ test("os números de reserva do HTML batem com os dados", () => {
     }
 });
 
-test("comandos do dono do bot e de teste não aparecem no site", () => {
+test("comandos do dono do bot e de teste não aparecem no site", async () => {
     const names = data.categories.flatMap(c => c.commands.map(command => command.name));
 
     for (const folder of ["admin", "dev"]) {
         const dir = join(dirname(SITE), "commands", folder);
 
-        for (const file of readdirSync(dir).filter(f => f.endsWith(".mjs"))) {
-            const name = file.replace(/\.mjs$/, "");
+        const files = readdirSync(dir).filter(f => f.endsWith(".mjs"));
 
-            assert.ok(!names.includes(name), `/${name} (commands/${folder}) está no site`);
+        assert.ok(files.length > 0, `commands/${folder} tem comandos`);
+
+        for (const file of files) {
+            // o nome do arquivo é em inglês; o que vale é o nome do comando dentro dele
+            const { default: command } = await import(pathToFileURL(join(dir, file)).href);
+
+            assert.ok(command?.name, `commands/${folder}/${file} exporta um comando`);
+            assert.ok(!names.includes(command.name), `/${command.name} (commands/${folder}) está no site`);
         }
     }
 
@@ -193,7 +199,7 @@ test("as cores ficam nos tokens: nenhum CSS fora de tokens.css tem cor solta", (
 // ==========================================
 
 test("a página do painel existe, não vai para buscadores e carrega os scripts na ordem", () => {
-    const page = read("conta/index.html");
+    const page = read("account/index.html");
 
     assert.match(page, /<meta name="robots" content="noindex">/);
     assert.match(page, /<title>Painel da Helena<\/title>/);
@@ -209,7 +215,7 @@ test("a página do painel existe, não vai para buscadores e carrega os scripts 
 });
 
 test("o painel vem escondido: sem apiUrl o link não aparece no menu", () => {
-    assert.match(html, /<a href="conta\/" data-account hidden>Painel<\/a>/);
+    assert.match(html, /<a href="account\/" data-account hidden>Painel<\/a>/);
 
     const config = read("js/config.js");
 
@@ -222,7 +228,7 @@ test("o painel vem escondido: sem apiUrl o link não aparece no menu", () => {
 });
 
 test("nenhum segredo vai para o site (só a chave pública do Turnstile)", () => {
-    const files = ["index.html", "conta/index.html", "js/config.js", "js/account.js", "js/nav.js"];
+    const files = ["index.html", "account/index.html", "js/config.js", "js/account.js", "js/nav.js"];
 
     for (const file of files) {
         const text = read(file);

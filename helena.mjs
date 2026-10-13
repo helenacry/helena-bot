@@ -13,7 +13,7 @@ import {
     carregarComandos,
     registrarComandos,
     resolverComando
-} from "./registrar.mjs";
+} from "./command-registry.mjs";
 
 import {
     startStatusRotation,

@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 
 const { textField, openModal, readFields } = await import("../services/modals.mjs");
 const { handlePanelClick, handleModalSubmit } = await import("../services/panels.mjs");
-const { carregarComandos } = await import("../registrar.mjs");
+const { carregarComandos } = await import("../command-registry.mjs");
 const { imprison } = await import("../services/prison.mjs");
 const { clearUserLookupCache } = await import("../services/user-lookup.mjs");
 

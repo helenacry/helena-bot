@@ -94,7 +94,7 @@ export async function createPrefixRunner({
     send,
     edit
 }) {
-    const { carregarComandos } = await import("../registrar.mjs");
+    const { carregarComandos } = await import("../command-registry.mjs");
     const { processarPrefixo } = await import("../services/prefix.mjs");
 
     const log = console.log;

@@ -11,7 +11,7 @@ const { WEB_CONFIG } = await import("../config/web.mjs");
 const { GEM_BONUS } = await import("../config/gems.mjs");
 
 const SITE = "https://site.exemplo.test";
-const REDIRECT = "https://site.exemplo.test/conta/";
+const REDIRECT = "https://site.exemplo.test/account/";
 const VERIFIER = "v".repeat(43);
 
 const USER = "444444444444444444";
@@ -331,7 +331,7 @@ test("com segredo configurado, ele vai junto na troca", async () => {
 test("login recusado: endereço de retorno fora da lista, verifier ruim, código errado", async () => {
     await withApi({}, async ctx => {
         const strange = await call(ctx, "POST", "/api/auth/login", {
-            body: { code: "good-code", codeVerifier: VERIFIER, redirectUri: "https://golpista.exemplo.test/conta/" }
+            body: { code: "good-code", codeVerifier: VERIFIER, redirectUri: "https://golpista.exemplo.test/account/" }
         });
 
         assert.equal(strange.status, 400);
