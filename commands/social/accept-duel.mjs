@@ -11,7 +11,7 @@ import { mention, mentionAll } from "../../services/mentions.mjs";
 
 export default {
     name: "aceitarduelo",
-    description: "Aceita o desafio PvP",
+    description: "Aceita o desafio de duelo que você recebeu",
     options: [],
 
     async execute(interaction) {

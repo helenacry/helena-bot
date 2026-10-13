@@ -1,5 +1,88 @@
-import { createEmbed,embedResponse,errorEmbed,HELENA_COLORS } from "../../utils/embed.mjs";
-const ok=(title,description)=>embedResponse(createEmbed({title,description,color:HELENA_COLORS.primary}));
-const fail=e=>embedResponse(errorEmbed(e.message||String(e)));
-import {repair} from "../../services/armory.mjs";
-export default {name:"reparar",description:"Restaura a durabilidade da arma",options:[],async execute(i){try{const g=i.guildId,u=i.user.id,o=i.data.options||{};repair(g,u);return ok("🔧 Reparação","Durabilidade restaurada para 100%. Preço: 50 moedas.");}catch(e){return fail(e);}}};
+
+import {
+    createEmbed,
+    embedResponse,
+    errorEmbed,
+    warningEmbed,
+    HELENA_COLORS
+} from "../../utils/embed.mjs";
+
+import { formatMoney, getPlayer } from "../../database/economy.mjs";
+
+import { repair, ARMORY_RULES } from "../../services/armory.mjs";
+
+import { status } from "../../services/combat.mjs";
+
+import { getEquippedWeapon } from "../../services/equipment.mjs";
+
+import { durabilityLine } from "../../services/combat-view.mjs";
+
+import { reais } from "../../utils/money-text.mjs";
+
+// ==========================================
+// COMANDO /REPARAR
+// ==========================================
+
+// Devolve a durabilidade da arma equipada ao máximo. Cada duelo e cada roubo
+// bem-sucedido gasta 1 ponto.
+
+export default {
+    name: "reparar",
+    description: `Conserta a arma equipada (${reais(ARMORY_RULES.repairPrice)})`,
+    options: [],
+
+    async execute(interaction) {
+        const guildId = interaction.guildId;
+        const userId = interaction.user?.id;
+
+        if (!guildId || !userId) {
+            return errorEmbed(
+                "Este comando só pode ser usado em um servidor."
+            );
+        }
+
+        try {
+            const cost = repair(guildId, userId);
+
+            const weapon = getEquippedWeapon(guildId, userId);
+
+            const embed = createEmbed({
+                title: "🔧 Arma reparada",
+
+                description: weapon
+                    ? `${weapon.emoji} **${weapon.name}** voltou ao novo.`
+                    : "Sua arma voltou ao novo.",
+
+                color: HELENA_COLORS.success,
+
+                fields: [
+                    {
+                        name: "🔧 Durabilidade",
+                        value: durabilityLine(status(guildId, userId).durability),
+                        inline: false
+                    },
+                    {
+                        name: "💸 Valor pago",
+                        value: formatMoney(cost),
+                        inline: true
+                    },
+                    {
+                        name: "👛 Carteira",
+                        value: formatMoney(getPlayer(guildId, userId).wallet),
+                        inline: true
+                    }
+                ],
+
+                footer: "Helena • Arsenal"
+            });
+
+            return embedResponse(embed);
+
+        } catch (error) {
+            return warningEmbed(
+                "Não foi possível reparar",
+                error?.message || "Tente de novo em instantes."
+            );
+        }
+    }
+};

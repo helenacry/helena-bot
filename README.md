@@ -99,6 +99,12 @@ export default {
 };
 ```
 
+### Onde o comando aparece
+
+Comando novo entra sozinho na central de ajuda (`/ajuda`), na lista do site e na wiki, sem lista escrita à mão. A categoria vem da **pasta** (`commands/economy` é Economia, `commands/social` é Social...), e as exceções, como o combate que mora em `crime/`, estão em `config/command-categories.mjs`. Comandos de `admin/`, `dev/` e o de teste não aparecem para os jogadores. A wiki exige um texto sobre o comando novo (veja a seção Wiki).
+
+Escreva uma `description` clara (até 100 caracteres, é o que a VSync mostra na lista de comandos) e uma `description` em cada opção: a ajuda usa os dois para montar o "como usar".
+
 ### Aliases
 
 `aliases: ["ex"]` faz o comando responder também a `hex` e `/ex`. Cada alias é registrado na VSync como um comando próprio, com a mesma descrição e opções.
@@ -144,6 +150,7 @@ Alguns comandos mostram botões que abrem formulários (modais) da VSync, no est
 | `/bio` (sem texto) | Editar bio | campo de parágrafo já preenchido com a bio atual |
 | `/loja` (alias `store`) | vitrine inicial com as prateleiras e o menu; em cada prateleira, 5 cartões numerados por página (Anterior/Próxima), um botão por item, **Início**, **Por nome**, **Vender** e **Fechar** | quantidade do item (número ou `max`, o máximo que dá); por nome pede item e quantidade; vender aceita `metade` e `tudo` |
 | `/bolsa` (alias `mercado`) | **Abrir a loja**, **Atualizar**, **Fechar** | sem formulário: só mostra o mercado |
+| `/ajuda` (aliases `help`, `comandos`) | menu de categorias, menu de comandos (detalhe), **Anterior**/**Próxima**, **Buscar**, **Início**, **Fechar** | busca: uma palavra (nome, atalho ou o que o comando faz, sem acento). Também `/ajuda categoria:combate` e `/ajuda comando:daily` |
 | `/inventario` | menu de prateleiras, 12 itens por página (Anterior/Próxima/Atualizar), **Descartar** | item e quantidade (número, `metade` ou `tudo`); depois uma tela de confirmação com botão. 🟢 marca a arma equipada |
 | `/descartar` (alias `dropitem`) | **Confirmar descarte** | mesma confirmação do inventário; destrói o item, sem reembolso |
 | `/usaritem` (aliases `useitem`, `usar`) | menu com o que dá para usar, **Usar vários**, **Atualizar** | item (por nome, sem acento) e quantidade (número ou `max`, que usa até a energia encher) |

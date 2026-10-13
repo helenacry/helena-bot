@@ -53,8 +53,8 @@ Vence quem termina com **mais vida**. Empatou, **ninguém vence**: nenhum dos do
 
 ## Acompanhe os seus números
 
-- **`/statuscombate`**: vida, vitórias, derrotas, munição, defesa e durabilidade.
-- **`/historico`**: os últimos 5 duelos em que você lutou.
+- **`/statuscombate`**: vida, vitórias, derrotas, arma, munição, defesa, durabilidade e proteção.
+- **`/historico`**: os últimos 5 duelos em que você lutou, com quem venceu e para quem perdeu.
 - **`/protecaopvp`**: quanto falta da proteção do hospital.
 
 ## Próximo passo

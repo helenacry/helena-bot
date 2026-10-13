@@ -15,7 +15,7 @@ const REQUEST_MINUTES = Math.round(DUEL_RULES.requestTtl / 60);
 export default {
     name: "atacar",
 
-    description: "Desafia um jogador para PvP",
+    description: "Desafia outro jogador para um duelo",
 
     options: [
         {

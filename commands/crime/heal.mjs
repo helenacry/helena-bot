@@ -1,5 +1,85 @@
-import { createEmbed,embedResponse,errorEmbed,HELENA_COLORS } from "../../utils/embed.mjs";
-const ok=(title,description)=>embedResponse(createEmbed({title,description,color:HELENA_COLORS.primary}));
-const fail=e=>embedResponse(errorEmbed(e.message||String(e)));
-import {heal} from "../../services/hospital.mjs";
-export default {name:"curar",description:"Recupera HP no hospital",options:[],async execute(i){try{const g=i.guildId,u=i.user.id,o=i.data.options||{};const c=heal(g,u);return ok("🏥 Tratamento concluído",`HP restaurado para 100. Custo: ${(c/100).toFixed(2)} moedas. Proteção PvP por 10 minutos.`);}catch(e){return fail(e);}}};
+
+import {
+    createEmbed,
+    embedResponse,
+    errorEmbed,
+    warningEmbed,
+    HELENA_COLORS
+} from "../../utils/embed.mjs";
+
+import { formatMoney, getPlayer } from "../../database/economy.mjs";
+
+import { heal, HOSPITAL_RULES } from "../../services/hospital.mjs";
+
+import { hpLine } from "../../services/combat-view.mjs";
+
+import { duration } from "../../utils/duration-text.mjs";
+
+import { reais } from "../../utils/money-text.mjs";
+
+// ==========================================
+// COMANDO /CURAR
+// ==========================================
+
+// Leva a vida a 100. Cada ponto que falta custa dinheiro da carteira, e quem
+// se cura ganha um tempo de proteção contra duelos (regras em services/hospital.mjs).
+
+export default {
+    name: "curar",
+    description: `Cure sua vida no hospital (${reais(HOSPITAL_RULES.costPerHp)} por ponto)`,
+    options: [],
+
+    async execute(interaction) {
+        const guildId = interaction.guildId;
+        const userId = interaction.user?.id;
+
+        if (!guildId || !userId) {
+            return errorEmbed(
+                "Este comando só pode ser usado em um servidor."
+            );
+        }
+
+        try {
+            const cost = heal(guildId, userId);
+
+            const wallet = getPlayer(guildId, userId).wallet;
+
+            const embed = createEmbed({
+                title: "🏥 Tratamento concluído",
+
+                description: hpLine(HOSPITAL_RULES.maxHp),
+
+                color: HELENA_COLORS.success,
+
+                fields: [
+                    {
+                        name: "💸 Custo",
+                        value: formatMoney(cost),
+                        inline: true
+                    },
+                    {
+                        name: "🛡️ Proteção contra duelos",
+                        value: duration(HOSPITAL_RULES.protectionSeconds),
+                        inline: true
+                    },
+                    {
+                        name: "👛 Carteira",
+                        value: formatMoney(wallet),
+                        inline: true
+                    }
+                ],
+
+                footer: "Helena • Hospital"
+            });
+
+            return embedResponse(embed);
+
+        } catch (error) {
+            // As mensagens do serviço são avisos ao jogador (vida cheia, sem dinheiro).
+            return warningEmbed(
+                "Não foi possível se curar",
+                error?.message || "Tente de novo em instantes."
+            );
+        }
+    }
+};

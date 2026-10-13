@@ -198,32 +198,32 @@ window.Helena.data = {
     {
      "name": "aceitarduelo",
      "aliases": [],
-     "description": "Aceita o desafio PvP"
+     "description": "Aceita o desafio de duelo que você recebeu"
     },
     {
      "name": "armas",
      "aliases": [],
-     "description": "Mostra arma equipada e seus atributos"
+     "description": "Mostra a arma equipada, o dano e o desgaste"
     },
     {
      "name": "atacar",
      "aliases": [],
-     "description": "Desafia um jogador para PvP"
+     "description": "Desafia outro jogador para um duelo"
     },
     {
      "name": "colete",
      "aliases": [],
-     "description": "Compra um colete com 10 pontos de defesa"
+     "description": "Compra um colete (10 pontos de defesa)"
     },
     {
      "name": "curar",
      "aliases": [],
-     "description": "Recupera HP no hospital"
+     "description": "Cure sua vida no hospital (R$ 1 por ponto)"
     },
     {
      "name": "desequipar",
      "aliases": [],
-     "description": "Remove sua arma equipada"
+     "description": "Guarda a arma equipada de volta no inventário"
     },
     {
      "name": "equipar",
@@ -233,42 +233,42 @@ window.Helena.data = {
     {
      "name": "historico",
      "aliases": [],
-     "description": "Mostra últimos duelos"
+     "description": "Mostra os seus últimos duelos"
     },
     {
      "name": "hospital",
      "aliases": [],
-     "description": "Mostra estado de saúde"
+     "description": "Mostra sua vida e quanto custa se curar"
     },
     {
      "name": "municao",
      "aliases": [],
-     "description": "Compra munição por 1 moeda cada"
+     "description": "Compra munição (R$ 1 cada)"
     },
     {
      "name": "protecaopvp",
      "aliases": [],
-     "description": "Mostra sua proteção PvP"
+     "description": "Mostra quanto falta da sua proteção contra duelos"
     },
     {
      "name": "recarregar",
      "aliases": [],
-     "description": "Verifica munição da arma equipada"
+     "description": "Mostra a munição da arma de fogo equipada"
     },
     {
      "name": "recusarduelo",
      "aliases": [],
-     "description": "Recusa um desafio PvP"
+     "description": "Recusa o desafio de duelo que você recebeu"
     },
     {
      "name": "reparar",
      "aliases": [],
-     "description": "Restaura a durabilidade da arma"
+     "description": "Conserta a arma equipada (R$ 50)"
     },
     {
      "name": "statuscombate",
      "aliases": [],
-     "description": "Mostra vida e estatísticas de combate"
+     "description": "Mostra sua vida, vitórias, derrotas e equipamento"
     }
    ]
   },

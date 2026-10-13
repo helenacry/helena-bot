@@ -16,7 +16,7 @@ import { mention } from "../../services/mentions.mjs";
 export default {
     name: "recusarduelo",
 
-    description: "Recusa um desafio PvP",
+    description: "Recusa o desafio de duelo que você recebeu",
 
     options: [],
 

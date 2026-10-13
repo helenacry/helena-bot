@@ -6,42 +6,23 @@
 // temporária antes (site/build-wiki.mjs e tests/wiki.test.mjs fazem isso com
 // tests/helpers.mjs), porque carregar os comandos abre o SQLite.
 
+import { duration } from "../utils/duration-text.mjs";
+import { reais } from "../utils/money-text.mjs";
+
 // ==========================================
 // FORMATOS
 // ==========================================
 
-// "R$ 500", "R$ 2,50"
-export function reais(cents) {
-    const value = cents / 100;
-
-    return "R$ " + value.toLocaleString("pt-BR", {
-        minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
-        maximumFractionDigits: 2
-    });
-}
+// "R$ 500", "R$ 2,50" (o mesmo texto que os comandos do bot usam: utils/money-text.mjs)
+export { reais };
 
 // 0.5 -> "50%", 0.033 -> "3,3%"
 export const percent = fraction =>
     `${(fraction * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
 
-// 3600 -> "1 hora", 1800 -> "30 minutos", 86400 -> "24 horas"
-export function duration(seconds) {
-    const plural = (n, one, many) => `${n.toLocaleString("pt-BR")} ${n === 1 ? one : many}`;
-
-    if (seconds % 3600 === 0 && seconds <= 48 * 3600) {
-        return plural(seconds / 3600, "hora", "horas");
-    }
-
-    if (seconds % 86400 === 0) {
-        return plural(seconds / 86400, "dia", "dias");
-    }
-
-    if (seconds % 60 === 0) {
-        return plural(seconds / 60, "minuto", "minutos");
-    }
-
-    return plural(seconds, "segundo", "segundos");
-}
+// 3600 -> "1 hora", 1800 -> "30 minutos", 86400 -> "24 horas" (o mesmo texto
+// que os comandos do bot usam: utils/duration-text.mjs)
+export { duration };
 
 // 30000 -> "8 h 20 min"
 export function hoursMinutes(seconds) {

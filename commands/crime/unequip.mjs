@@ -12,7 +12,7 @@ import {
 
 export default {
     name: "desequipar",
-    description: "Remove sua arma equipada",
+    description: "Guarda a arma equipada de volta no inventário",
 
     async execute(interaction) {
         const guildId = interaction.guildId;

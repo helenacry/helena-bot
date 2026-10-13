@@ -13,7 +13,7 @@ A Helena tem **{{v:site.commands}} comandos** e {{v:site.aliases}} atalhos. Esta
 - Quantias são em reais inteiros. `tudo` ou `all` usa todo o saldo disponível.
 
 > [!TIP]
-> Esqueceu o nome de um comando? Use `/ajuda` (atalhos `/help` e `/comandos`): ele lista tudo por categoria, no próprio servidor.
+> Esqueceu o nome de um comando? Use `/ajuda` (atalhos `/help` e `/comandos`). É um painel com um menu de categorias, o detalhe de cada comando (opções, atalhos e como usar) e um botão **Buscar**, que acha um comando pelo nome ou pelo que ele faz. Dá para ir direto: `/ajuda comando:daily` ou `/ajuda categoria:combate`.
 
 ## Economia
 
