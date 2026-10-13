@@ -84,14 +84,15 @@
 /* tabelas (prazos e bases legais): rolam de lado no celular, sem quebrar a página */
 .legal-table { overflow-x: auto; margin: 4px 0 16px; border-top: 1px solid var(--line-2); }
 .legal-table table { min-width: 560px; }
-.legal-table th, .legal-table td { text-align: left; vertical-align: top; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--line); }
+.legal-table th, .legal-table td { text-align: left; vertical-align: top; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--line); white-space: normal; }
+.legal-table tr:last-child td { border-bottom: 1px solid var(--line); }
 .legal-table td { color: var(--muted); line-height: 1.55; }
 .legal-table td:first-child { color: var(--text); }
 
 /* celular: cada linha vira um bloco, com o nome da coluna (data-label) acima do valor */
 @media (max-width: 640px) {
   .legal-table { overflow-x: visible; }
-  .legal-table table { min-width: 0; }
+  .legal-table table, .legal-table tbody { display: block; width: 100%; min-width: 0; }
   .legal-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .legal-table tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--line); }
   .legal-table td { display: block; padding: 2px 0; border: 0; }

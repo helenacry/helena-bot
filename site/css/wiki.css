@@ -1,0 +1,212 @@
+/* Wiki da Helena (site/wiki/). Página de consulta: menu à esquerda, texto no
+   meio, sumário da página à direita. Sem animação de entrada: quem consulta
+   quer achar a resposta. Usa os mesmos tokens do resto do site. */
+
+.sr {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+.wiki-tag {
+  align-self: center; flex: none; padding: 3px 9px; border-radius: 999px;
+  border: 1px solid var(--line-2); color: var(--brand-hi);
+  font: 500 0.72rem var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+/* ---------- moldura ---------- */
+.wiki {
+  display: grid; gap: clamp(20px, 3vw, 44px); align-items: start;
+  grid-template-columns: 16rem minmax(0, 1fr) 14rem;
+  max-width: 1360px; margin-inline: auto; padding: 0 var(--gutter);
+}
+@media (max-width: 1180px) { .wiki { grid-template-columns: 16rem minmax(0, 1fr); } .wiki-toc { display: none; } }
+@media (max-width: 860px) { .wiki { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- menu da esquerda ---------- */
+.wiki-side {
+  position: sticky; top: 64px; align-self: start;
+  max-height: calc(100vh - 64px); overflow-y: auto;
+  padding: 28px 4px 40px 0; border-right: 1px solid var(--line);
+  overscroll-behavior: contain;
+}
+.wiki-search { position: relative; margin-bottom: 22px; padding-right: 16px; }
+.wiki-search input {
+  width: 100%; padding: 10px 12px; border-radius: 10px;
+  background: var(--sunk); border: 1px solid var(--line-2); color: var(--text);
+  font: 400 0.92rem var(--font-body);
+}
+.wiki-search input::placeholder { color: var(--dim); }
+.wiki-search input:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+#wiki-results {
+  position: absolute; z-index: 5; left: 0; right: 16px; top: calc(100% + 6px);
+  margin: 0; padding: 6px; list-style: none; max-height: 60vh; overflow-y: auto;
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 12px;
+  box-shadow: 0 20px 40px -20px #000;
+}
+#wiki-results a { display: grid; gap: 2px; padding: 9px 10px; border-radius: 8px; color: var(--text); }
+#wiki-results a:hover, #wiki-results a:focus-visible { background: var(--bg-3); text-decoration: none; }
+#wiki-results b { font-weight: 600; font-size: 0.92rem; }
+#wiki-results small { color: var(--dim); font-size: 0.78rem; line-height: 1.4; }
+#wiki-results .none { padding: 10px; color: var(--muted); font-size: 0.9rem; }
+
+.wiki-nav { display: grid; gap: 22px; }
+.side-home { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+.wiki-nav section h2 {
+  font: 500 0.72rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 8px;
+}
+.wiki-nav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.wiki-nav li a {
+  display: block; padding: 6px 12px 6px 10px; margin-left: -10px;
+  border-left: 2px solid transparent; border-radius: 0 8px 8px 0;
+  color: var(--muted); font-size: 0.93rem; line-height: 1.4;
+}
+.wiki-nav li a:hover { color: var(--text); text-decoration: none; background: var(--bg-2); }
+.wiki-nav a[aria-current="page"] { color: var(--text); border-left-color: var(--brand-hi); background: var(--bg-2); font-weight: 600; }
+
+/* celular: o menu vira uma gaveta (só com JS; sem JS ele fica no topo da página) */
+@media (max-width: 860px) {
+  .wiki-side { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); padding: 20px 0 24px; }
+  .wiki-js .wiki-side {
+    position: fixed; z-index: 30; top: 64px; left: 0; bottom: 0; width: min(20rem, 86vw);
+    max-height: none; padding: 20px 16px 40px; background: var(--bg);
+    border-right: 1px solid var(--line-2); transform: translateX(-102%); visibility: hidden;
+    transition: transform 0.25s var(--ease), visibility 0.25s;
+  }
+  .wiki-js .wiki-side.open { transform: none; visibility: visible; }
+}
+.wiki-menu-btn { white-space: nowrap; }
+@media (min-width: 861px) { .wiki-menu-btn { display: none !important; } }
+
+/* ---------- texto ---------- */
+.wiki-main { min-width: 0; padding: 28px 0 72px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 18px; color: var(--dim); font: 400 0.78rem var(--font-mono); letter-spacing: 0.04em; }
+.crumbs span::before { content: "›"; margin-right: 10px; color: var(--line-2); }
+
+.wiki-doc { max-width: 76ch; }
+.wiki-doc > header { margin-bottom: 28px; }
+.wiki-doc h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 4.2vw, 2.8rem); line-height: 1.1; }
+.wiki-doc .lede { color: var(--muted); font-size: 1.1rem; margin-top: 12px; max-width: 60ch; }
+
+.wiki-doc h2, .wiki-doc h3 { position: relative; scroll-margin-top: 84px; }
+.wiki-doc h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.4rem, 2.6vw, 1.7rem); line-height: 1.2; margin: 44px 0 14px; padding-top: 26px; border-top: 1px solid var(--line); }
+.wiki-doc h2:first-of-type { margin-top: 32px; }
+.wiki-doc h3 { font-weight: 700; font-size: 1.1rem; margin: 28px 0 8px; }
+.wiki-doc .anchor {
+  position: absolute; left: -1.1em; color: var(--line-2); font: 400 0.9em var(--font-mono);
+  opacity: 0; text-decoration: none;
+}
+.wiki-doc h2:hover .anchor, .wiki-doc h3:hover .anchor, .wiki-doc .anchor:focus-visible { opacity: 1; }
+@media (max-width: 860px) { .wiki-doc .anchor { display: none; } }
+
+.wiki-doc p, .wiki-doc li { color: var(--muted); line-height: 1.7; }
+.wiki-doc p { margin: 0 0 14px; }
+.wiki-doc strong { color: var(--text); font-weight: 600; }
+.wiki-doc em { color: var(--text); }
+.wiki-doc ul, .wiki-doc ol { margin: 0 0 16px; padding-left: 1.3rem; display: grid; gap: 6px; }
+.wiki-doc li::marker { color: var(--brand-hi); }
+.wiki-doc li ul, .wiki-doc li ol { margin: 6px 0 0; }
+.wiki-doc hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+.wiki-doc code {
+  font-size: 0.86em; color: var(--text); background: var(--bg-3);
+  border-radius: 5px; padding: 1px 6px; overflow-wrap: anywhere;
+}
+.wiki-doc pre {
+  margin: 0 0 18px; padding: 14px 16px; overflow-x: auto;
+  background: var(--sunk); border: 1px solid var(--line); border-radius: 10px;
+}
+.wiki-doc pre code { background: none; padding: 0; font-size: 0.86rem; line-height: 1.6; }
+
+/* tabelas: rolam de lado no celular sem quebrar a página */
+.table-wrap { overflow-x: auto; margin: 6px 0 20px; border-top: 1px solid var(--line-2); }
+.table-wrap table { min-width: 0; }
+.table-wrap th, .table-wrap td { text-align: left; vertical-align: top; padding: 10px 16px 10px 0; border-bottom: 1px solid var(--line); white-space: normal; }
+.table-wrap tr:last-child td { border-bottom: 1px solid var(--line); }
+.table-wrap td { color: var(--muted); line-height: 1.5; font-size: 0.94rem; }
+.table-wrap td:first-child { color: var(--text); }
+.table-wrap td code { white-space: nowrap; }
+
+/* avisos: a cor diz o tipo (marca, risco, dinheiro) e só isso */
+.callout {
+  --c: var(--brand-hi);
+  margin: 6px 0 20px; padding: 12px 16px 4px; border-radius: 0 12px 12px 0;
+  border-left: 3px solid var(--c);
+  background: color-mix(in srgb, var(--c) 9%, transparent);
+}
+.callout.tip { --c: var(--pink); }
+.callout.warning { --c: var(--red); }
+.callout.money { --c: var(--gold); }
+.callout.example { --c: var(--blue); }
+.callout-title {
+  margin: 0 0 6px !important; color: var(--c) !important;
+  font: 500 0.74rem var(--font-mono) !important; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.callout p:last-child, .callout ul:last-child { margin-bottom: 12px; }
+
+/* cartões de navegação (início e fim das páginas) */
+.cards { list-style: none; margin: 8px 0 24px; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.cards a {
+  display: grid; gap: 4px; height: 100%; padding: 14px 16px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); color: var(--text);
+}
+.cards a:hover { border-color: var(--brand); text-decoration: none; background: var(--bg-3); }
+.cards b { font-family: var(--font-display); font-size: 1.05rem; }
+.cards span { color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
+
+/* anterior e próxima */
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 76ch; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); }
+.pager a { display: grid; gap: 2px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; color: var(--text); }
+.pager a:hover { border-color: var(--brand); text-decoration: none; }
+.pager small { color: var(--dim); font: 400 0.72rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.pager b { font-family: var(--font-display); font-size: 1rem; }
+.pager .next { text-align: right; grid-column: 2; }
+.pager .prev { grid-column: 1; }
+@media (max-width: 560px) { .pager { grid-template-columns: 1fr; } .pager .next, .pager .prev { grid-column: 1; text-align: left; } }
+
+/* ---------- sumário da direita ---------- */
+.wiki-toc { position: sticky; top: 64px; align-self: start; max-height: calc(100vh - 64px); overflow-y: auto; padding: 32px 0 40px; }
+.wiki-toc h2 { font: 500 0.72rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+.wiki-toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; border-left: 1px solid var(--line); }
+.wiki-toc a { display: block; padding: 4px 0 4px 14px; margin-left: -1px; border-left: 2px solid transparent; color: var(--muted); font-size: 0.86rem; line-height: 1.4; }
+.wiki-toc .l3 a { padding-left: 28px; font-size: 0.82rem; }
+.wiki-toc a:hover { color: var(--text); text-decoration: none; }
+.wiki-toc a.on { color: var(--brand-hi); border-left-color: var(--brand-hi); }
+
+/* ---------- rodapé ---------- */
+.wiki-foot { border-top: 1px solid var(--line); padding: 28px 0 56px; }
+.wiki-foot .wrap { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; justify-content: space-between; }
+.wiki-foot ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.wiki-foot a { font-size: 0.92rem; }
+.wiki-foot p { color: var(--dim); font-size: 0.85rem; max-width: 56ch; }
+
+/* ---------- ajustes finos ---------- */
+
+/* o cabeçalho acompanha a largura das três colunas, com o botão na ponta direita */
+.wiki-page .top .wrap { max-width: 1360px; }
+.wiki-page .top .actions { margin-left: auto; }
+
+/* a lista de cartões não herda o recuo das listas do texto */
+.wiki-doc ul.cards { padding-left: 0; gap: 12px; }
+.wiki-doc ul.cards li { display: block; }
+
+/* celular: cabeçalho enxuto (o logo e o rodapé já levam ao site) */
+@media (max-width: 560px) {
+  .wiki-page .top .actions .btn:not(.wiki-menu-btn) { display: none; }
+}
+
+/* celular: tabelas curtas empilham, com o nome da coluna acima de cada valor */
+@media (max-width: 640px) {
+  .table-wrap.stack { overflow-x: visible; border-top: 0; }
+  .table-wrap.stack table, .table-wrap.stack tbody { display: block; width: 100%; }
+  .table-wrap.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .table-wrap.stack tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .table-wrap.stack tr:first-child { border-top: 1px solid var(--line-2); }
+  .table-wrap.stack td, .table-wrap.stack tr:last-child td { display: block; padding: 2px 0; border: 0; }
+  .table-wrap.stack td:first-child { font-weight: 600; margin-bottom: 4px; }
+  .table-wrap.stack td[data-label]::before {
+    content: attr(data-label); display: block; margin-top: 6px;
+    color: var(--dim); font: 500 0.7rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .table-wrap.stack td code { white-space: normal; }
+}

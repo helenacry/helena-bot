@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Escolha seu emprego | Wiki da Helena</title>
+<meta name="description" content="A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.">
+<meta name="theme-color" content="#0d0613">
+<link rel="icon" href="../../../assets/img/favicon.png">
+<link rel="apple-touch-icon" href="../../../assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../../css/tokens.css">
+<link rel="stylesheet" href="../../../css/base.css">
+<link rel="stylesheet" href="../../../css/components.css">
+<link rel="stylesheet" href="../../../css/wiki.css">
+<script defer src="../../../js/config.js"></script>
+<script defer src="../../../js/util.js"></script>
+<script defer src="../../../js/nav.js"></script>
+<script defer src="../../search-index.js"></script>
+<script defer src="../../../js/wiki.js"></script>
+</head>
+<body class="wiki-page" data-wiki-root="../../">
+<a class="skip" href="#content">Pular para o conteúdo</a>
+
+<header class="top" id="top-bar">
+  <div class="wrap">
+    <a class="brand" href="../../../" aria-label="Helena, voltar ao site">
+      <img src="../../../assets/img/helena-avatar.webp" alt="" width="36" height="36">
+      <b>Helena</b><small>ヘレナ</small>
+    </a>
+    <span class="wiki-tag">Wiki</span>
+    <div class="actions">
+      <button class="btn wiki-menu-btn" id="wiki-menu-btn" type="button" aria-expanded="false" aria-controls="wiki-side" hidden>Menu</button>
+      <a class="btn" href="../../../">Voltar ao site</a>
+    </div>
+  </div>
+</header>
+
+<div class="wiki">
+
+  <aside class="wiki-side" id="wiki-side" aria-label="Menu da wiki">
+    <form class="wiki-search" id="wiki-search-box" role="search" hidden>
+      <label class="sr" for="wiki-search">Buscar na wiki</label>
+      <input id="wiki-search" type="search" placeholder="Buscar na wiki" autocomplete="off">
+      <ul id="wiki-results" hidden></ul>
+    </form>
+    <nav class="wiki-nav" aria-label="Seções da wiki">
+      <a class="side-home" href="../../">Início da wiki</a><section><h2>Comece por aqui</h2><ul><li><a href="../first-steps/">Primeiros passos</a></li><li><a href="../earning-money/">Ganhar dinheiro</a></li><li><a href="./" aria-current="page">Escolha seu emprego</a></li></ul></section><section><h2>Economia</h2><ul><li><a href="../../economy/market/">Bolsa</a></li></ul></section>
+    </nav>
+  </aside>
+
+  <main class="wiki-main" id="content">
+    <nav class="crumbs" aria-label="Você está em"><a href="../../">Wiki</a><span>Comece por aqui</span></nav>
+    <article class="wiki-doc">
+      <header>
+        <h1>Escolha seu emprego</h1>
+        <p class="lede">A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.</p>
+      </header>
+      <p>O emprego define quanto o <code>/trabalhar</code> paga. São <strong>23 empregos</strong>, do Entregador (R$ 150 por turno) ao Magnata (R$ 10.000 por turno), e cada um libera num nível.</p><h2 id="como-trocar-de-emprego"><a class="anchor" href="#como-trocar-de-emprego" aria-label="Link para esta seção">#</a>Como trocar de emprego</h2><ol><li>Veja a lista com <strong><code>/empregos</code></strong>. Cada linha mostra se o emprego é o atual (👔), se já está liberado (🔓) ou se ainda está bloqueado (🔒).</li><li>Para trocar, use <code>/empregos</code> com a opção <code>cargo</code> e escolha o emprego.</li></ol><p>No prefixo, fica assim:</p><pre><code>hempregos cargo:motorista</code></pre><aside class="callout warning"><p class="callout-title">Atenção</p><p><strong>O emprego não sobe sozinho.</strong> Você começa como Entregador e continua nele mesmo depois de passar de nível. Se não trocar, vai ganhar o salário do primeiro emprego pelo resto da vida.</p></aside><p>A troca é de graça e vale na hora. Você pode voltar para um emprego mais baixo quando quiser.</p><h2 id="todos-os-empregos"><a class="anchor" href="#todos-os-empregos" aria-label="Link para esta seção">#</a>Todos os empregos</h2><div class="table-wrap"><table><thead><tr><th>#</th><th>Emprego</th><th>Nível</th><th>Salário por turno</th></tr></thead><tbody><tr><td>1</td><td data-label="Emprego">Entregador</td><td data-label="Nível">1</td><td data-label="Salário por turno">R$ 150</td></tr><tr><td>2</td><td data-label="Emprego">Atendente</td><td data-label="Nível">2</td><td data-label="Salário por turno">R$ 180</td></tr><tr><td>3</td><td data-label="Emprego">Faxineiro</td><td data-label="Nível">3</td><td data-label="Salário por turno">R$ 220</td></tr><tr><td>4</td><td data-label="Emprego">Garçom</td><td data-label="Nível">4</td><td data-label="Salário por turno">R$ 270</td></tr><tr><td>5</td><td data-label="Emprego">Motorista</td><td data-label="Nível">5</td><td data-label="Salário por turno">R$ 320</td></tr><tr><td>6</td><td data-label="Emprego">Cozinheiro</td><td data-label="Nível">7</td><td data-label="Salário por turno">R$ 400</td></tr><tr><td>7</td><td data-label="Emprego">Segurança</td><td data-label="Nível">9</td><td data-label="Salário por turno">R$ 480</td></tr><tr><td>8</td><td data-label="Emprego">Mecânico</td><td data-label="Nível">11</td><td data-label="Salário por turno">R$ 580</td></tr><tr><td>9</td><td data-label="Emprego">Eletricista</td><td data-label="Nível">13</td><td data-label="Salário por turno">R$ 700</td></tr><tr><td>10</td><td data-label="Emprego">Técnico</td><td data-label="Nível">15</td><td data-label="Salário por turno">R$ 850</td></tr><tr><td>11</td><td data-label="Emprego">Programador</td><td data-label="Nível">18</td><td data-label="Salário por turno">R$ 1.000</td></tr><tr><td>12</td><td data-label="Emprego">Enfermeiro</td><td data-label="Nível">21</td><td data-label="Salário por turno">R$ 1.200</td></tr><tr><td>13</td><td data-label="Emprego">Contador</td><td data-label="Nível">24</td><td data-label="Salário por turno">R$ 1.450</td></tr><tr><td>14</td><td data-label="Emprego">Engenheiro</td><td data-label="Nível">27</td><td data-label="Salário por turno">R$ 1.750</td></tr><tr><td>15</td><td data-label="Emprego">Advogado</td><td data-label="Nível">30</td><td data-label="Salário por turno">R$ 2.100</td></tr><tr><td>16</td><td data-label="Emprego">Médico</td><td data-label="Nível">34</td><td data-label="Salário por turno">R$ 2.500</td></tr><tr><td>17</td><td data-label="Emprego">Arquiteto</td><td data-label="Nível">38</td><td data-label="Salário por turno">R$ 3.000</td></tr><tr><td>18</td><td data-label="Emprego">Supervisor</td><td data-label="Nível">42</td><td data-label="Salário por turno">R$ 3.600</td></tr><tr><td>19</td><td data-label="Emprego">Gerente</td><td data-label="Nível">47</td><td data-label="Salário por turno">R$ 4.300</td></tr><tr><td>20</td><td data-label="Emprego">Diretor</td><td data-label="Nível">53</td><td data-label="Salário por turno">R$ 5.200</td></tr><tr><td>21</td><td data-label="Emprego">Executivo</td><td data-label="Nível">60</td><td data-label="Salário por turno">R$ 6.300</td></tr><tr><td>22</td><td data-label="Emprego">Presidente</td><td data-label="Nível">70</td><td data-label="Salário por turno">R$ 7.800</td></tr><tr><td>23</td><td data-label="Emprego">Magnata</td><td data-label="Nível">85</td><td data-label="Salário por turno">R$ 10.000</td></tr></tbody></table></div><p>O salário é pago por turno de <code>/trabalhar</code>, e o turno repete a cada 1 hora.</p><h2 id="como-subir-de-nivel"><a class="anchor" href="#como-subir-de-nivel" aria-label="Link para esta seção">#</a>Como subir de nível</h2><p>O nível vem de XP, e o XP vem de quase tudo que você faz:</p><ul><li><strong>trabalhar</strong>: 25 de XP por turno;</li><li><strong>missões diárias</strong>: 85 de XP se fizer as 3;</li><li><strong>crime</strong>: de 30 a 80 de XP por crime que dá certo;</li><li><strong>duelos</strong>: 30 de XP para quem vence.</li></ul><aside class="callout tip"><p class="callout-title">Dica</p><p>O nível máximo é <strong>100</strong>. O Magnata libera no nível 85.</p></aside><h2 id="proximo-passo"><a class="anchor" href="#proximo-passo" aria-label="Link para esta seção">#</a>Próximo passo</h2><ul class="cards"><li><a href="../earning-money/"><b>Ganhar dinheiro</b><span>As formas de ganhar dinheiro dentro da lei, quanto cada uma rende e de quanto em quanto tempo.</span></a></li><li><a href="../../economy/market/"><b>Bolsa</b><span>O mercado do servidor: o índice que mexe nos preços da loja e o item em alta que paga mais na venda.</span></a></li></ul>
+    </article>
+    <nav class="pager" aria-label="Outras páginas"><a class="prev" href="../earning-money/"><small>Anterior</small><b>Ganhar dinheiro</b></a><a class="next" href="../../economy/market/"><small>Próxima</small><b>Bolsa</b></a></nav>
+  </main>
+
+  <nav class="wiki-toc" aria-label="Nesta página"><h2>Nesta página</h2><ol><li class="l2"><a href="#como-trocar-de-emprego">Como trocar de emprego</a></li><li class="l2"><a href="#todos-os-empregos">Todos os empregos</a></li><li class="l2"><a href="#como-subir-de-nivel">Como subir de nível</a></li><li class="l2"><a href="#proximo-passo">Próximo passo</a></li></ol></nav>
+
+</div>
+
+<footer class="wiki-foot">
+  <div class="wrap">
+    <ul>
+      <li><a href="../../../">Site</a></li>
+      <li><a href="../../../terms/">Termos de uso</a></li>
+      <li><a href="../../../privacy/">Privacidade</a></li>
+      <li><a href="https://vsync.lat/tfe6pdxk" data-link="support" target="_blank" rel="noopener">Servidor oficial</a></li>
+    </ul>
+    <p>A Helena é um projeto independente feito para a VSync. Os valores desta wiki saem do próprio bot quando ela é gerada.</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Primeiros passos | Wiki da Helena</title>
+<meta name="description" content="Do convite ao primeiro daily, o que fazer nos primeiros minutos com a Helena.">
+<meta name="theme-color" content="#0d0613">
+<link rel="icon" href="../../../assets/img/favicon.png">
+<link rel="apple-touch-icon" href="../../../assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../../css/tokens.css">
+<link rel="stylesheet" href="../../../css/base.css">
+<link rel="stylesheet" href="../../../css/components.css">
+<link rel="stylesheet" href="../../../css/wiki.css">
+<script defer src="../../../js/config.js"></script>
+<script defer src="../../../js/util.js"></script>
+<script defer src="../../../js/nav.js"></script>
+<script defer src="../../search-index.js"></script>
+<script defer src="../../../js/wiki.js"></script>
+</head>
+<body class="wiki-page" data-wiki-root="../../">
+<a class="skip" href="#content">Pular para o conteúdo</a>
+
+<header class="top" id="top-bar">
+  <div class="wrap">
+    <a class="brand" href="../../../" aria-label="Helena, voltar ao site">
+      <img src="../../../assets/img/helena-avatar.webp" alt="" width="36" height="36">
+      <b>Helena</b><small>ヘレナ</small>
+    </a>
+    <span class="wiki-tag">Wiki</span>
+    <div class="actions">
+      <button class="btn wiki-menu-btn" id="wiki-menu-btn" type="button" aria-expanded="false" aria-controls="wiki-side" hidden>Menu</button>
+      <a class="btn" href="../../../">Voltar ao site</a>
+    </div>
+  </div>
+</header>
+
+<div class="wiki">
+
+  <aside class="wiki-side" id="wiki-side" aria-label="Menu da wiki">
+    <form class="wiki-search" id="wiki-search-box" role="search" hidden>
+      <label class="sr" for="wiki-search">Buscar na wiki</label>
+      <input id="wiki-search" type="search" placeholder="Buscar na wiki" autocomplete="off">
+      <ul id="wiki-results" hidden></ul>
+    </form>
+    <nav class="wiki-nav" aria-label="Seções da wiki">
+      <a class="side-home" href="../../">Início da wiki</a><section><h2>Comece por aqui</h2><ul><li><a href="./" aria-current="page">Primeiros passos</a></li><li><a href="../earning-money/">Ganhar dinheiro</a></li><li><a href="../jobs/">Escolha seu emprego</a></li></ul></section><section><h2>Economia</h2><ul><li><a href="../../economy/market/">Bolsa</a></li></ul></section>
+    </nav>
+  </aside>
+
+  <main class="wiki-main" id="content">
+    <nav class="crumbs" aria-label="Você está em"><a href="../../">Wiki</a><span>Comece por aqui</span></nav>
+    <article class="wiki-doc">
+      <header>
+        <h1>Primeiros passos</h1>
+        <p class="lede">Do convite ao primeiro daily, o que fazer nos primeiros minutos com a Helena.</p>
+      </header>
+      <p>A Helena roda dentro do servidor onde ela foi adicionada. Você não precisa se cadastrar em lugar nenhum: o primeiro comando que você usa já abre a sua conta ali.</p><h2 id="adicione-a-helena-ao-servidor"><a class="anchor" href="#adicione-a-helena-ao-servidor" aria-label="Link para esta seção">#</a>Adicione a Helena ao servidor</h2><p>Use o botão <strong>Adicionar à VSync</strong> no <a href="../../../">site da Helena</a>. Se você não pode adicionar bots no seu servidor, peça para quem administra.</p><h2 id="sua-conta-abre-sozinha"><a class="anchor" href="#sua-conta-abre-sozinha" aria-label="Link para esta seção">#</a>Sua conta abre sozinha</h2><p>No primeiro comando, a Helena cria o seu perfil naquele servidor com:</p><ul><li><strong>R$ 0</strong> na carteira e no banco;</li><li><strong>nível 1</strong> e <strong>100 pontos de energia</strong>;</li><li>o emprego de <strong>Entregador</strong>, que paga R$ 150 por turno.</li></ul><aside class="callout note"><p class="callout-title">Nota</p><p>Dinheiro, nível, itens, crime e casamento valem <strong>por servidor</strong>. Só as <strong>gemas</strong> e o nome que a Helena guarda de você valem em todos os servidores.</p></aside><h2 id="como-dar-comandos"><a class="anchor" href="#como-dar-comandos" aria-label="Link para esta seção">#</a>Como dar comandos</h2><p>Todo comando funciona de duas formas. Escolha a que preferir:</p><div class="table-wrap stack"><table><thead><tr><th>Forma</th><th>Exemplo</th><th>Como é</th></tr></thead><tbody><tr><td>Comando de barra</td><td data-label="Exemplo"><code>/daily</code></td><td data-label="Como é">Digite <code>/</code> e escolha o comando na lista da VSync.</td></tr><tr><td>Prefixo <code>h</code></td><td data-label="Exemplo"><code>hdaily</code></td><td data-label="Como é">Escreva <code>h</code> colado no nome do comando, no chat.</td></tr></tbody></table></div><p>Quando o comando pede informações, no prefixo você escreve na ordem, separando por espaço, ou usa <code>nome:valor</code>:</p><pre><code>hdepositar 100
+hajuda categoria:economia</code></pre><p>Quantias são sempre em <strong>reais inteiros</strong> (<code>500</code>, não <code>500,50</code>). Para usar tudo o que você tem, escreva <code>tudo</code> ou <code>all</code>.</p><aside class="callout tip"><p class="callout-title">Dica</p><p>Muitos comandos têm atalhos, como <code>/store</code> para <code>/loja</code>. Aqui na wiki, os atalhos aparecem ao lado de cada comando.</p></aside><h2 id="seus-primeiros-cinco-minutos"><a class="anchor" href="#seus-primeiros-cinco-minutos" aria-label="Link para esta seção">#</a>Seus primeiros cinco minutos</h2><ol><li><strong><code>/daily</code></strong> para pegar a recompensa do dia (R$ 500).</li><li><strong><code>/trabalhar</code></strong> para fazer o primeiro turno: o salário de R$ 150, mais 25 de XP. Gasta 10 de energia e só dá para repetir depois de 1 hora.</li><li><strong><code>/saldo</code></strong> para ver o que você tem. Os botões dessa tela depositam, sacam e transferem.</li><li><strong><code>/depositar</code></strong> para guardar o dinheiro no banco.</li><li><strong><code>/perfil</code></strong> para ver o seu cartão de perfil.</li></ol><aside class="callout warning"><p class="callout-title">Atenção</p><p>O dinheiro que fica na <strong>carteira</strong> pode ser roubado por outros jogadores. O dinheiro no <strong>banco</strong> não pode. Se não vai usar agora, deposite.</p></aside><h2 id="nao-sabe-o-que-fazer-a-seguir"><a class="anchor" href="#nao-sabe-o-que-fazer-a-seguir" aria-label="Link para esta seção">#</a>Não sabe o que fazer a seguir?</h2><ul class="cards"><li><a href="../earning-money/"><b>Ganhar dinheiro</b><span>As formas de ganhar dinheiro dentro da lei, quanto cada uma rende e de quanto em quanto tempo.</span></a></li><li><a href="../jobs/"><b>Escolha seu emprego</b><span>A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.</span></a></li></ul>
+    </article>
+    <nav class="pager" aria-label="Outras páginas"><span></span><a class="next" href="../earning-money/"><small>Próxima</small><b>Ganhar dinheiro</b></a></nav>
+  </main>
+
+  <nav class="wiki-toc" aria-label="Nesta página"><h2>Nesta página</h2><ol><li class="l2"><a href="#adicione-a-helena-ao-servidor">Adicione a Helena ao servidor</a></li><li class="l2"><a href="#sua-conta-abre-sozinha">Sua conta abre sozinha</a></li><li class="l2"><a href="#como-dar-comandos">Como dar comandos</a></li><li class="l2"><a href="#seus-primeiros-cinco-minutos">Seus primeiros cinco minutos</a></li><li class="l2"><a href="#nao-sabe-o-que-fazer-a-seguir">Não sabe o que fazer a seguir?</a></li></ol></nav>
+
+</div>
+
+<footer class="wiki-foot">
+  <div class="wrap">
+    <ul>
+      <li><a href="../../../">Site</a></li>
+      <li><a href="../../../terms/">Termos de uso</a></li>
+      <li><a href="../../../privacy/">Privacidade</a></li>
+      <li><a href="https://vsync.lat/tfe6pdxk" data-link="support" target="_blank" rel="noopener">Servidor oficial</a></li>
+    </ul>
+    <p>A Helena é um projeto independente feito para a VSync. Os valores desta wiki saem do próprio bot quando ela é gerada.</p>
+  </div>
+</footer>
+
+</body>
+</html>
