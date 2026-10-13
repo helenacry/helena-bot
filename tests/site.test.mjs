@@ -30,15 +30,25 @@ function embedded() {
 // ARQUIVOS
 // ==========================================
 
-test("tudo o que o index.html carrega existe", () => {
-    const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
-        .map(match => match[1])
-        .filter(ref => !/^(https?:|mailto:|#|data:)/.test(ref));
+test("tudo o que as páginas carregam existe", () => {
+    // [arquivo, pasta de onde os caminhos relativos partem]
+    for (const [page, folder] of [["index.html", ""], ["conta/index.html", "conta"]]) {
+        const refs = [...read(page).matchAll(/(?:src|href)="([^"]+)"/g)]
+            .map(match => match[1])
+            .filter(ref => !/^(https?:|mailto:|#|data:)/.test(ref))
+            .map(ref => ref.replace(/[?#].*$/, ""));
 
-    assert.ok(refs.length > 10, "achou os links locais");
+        assert.ok(refs.length > 5, `achou os links locais de ${page}`);
 
-    for (const ref of refs) {
-        assert.ok(existsSync(join(SITE, ref)), `site/${ref} não existe`);
+        for (const ref of refs) {
+            const path = join(SITE, folder, ref);
+
+            // um link para uma pasta (conta/) vale se ela tem index.html
+            assert.ok(
+                existsSync(path) && (!path.endsWith("/") && !path.endsWith("\\") || existsSync(join(path, "index.html"))),
+                `${page} aponta para ${ref}, que não existe`
+            );
+        }
     }
 });
 
@@ -175,6 +185,49 @@ test("as cores ficam nos tokens: nenhum CSS fora de tokens.css tem cor solta", (
             .filter(color => !/^rgba\((0, 0, 0|255, 255, 255),/.test(color));
 
         assert.deepEqual(loose, [], `css/${file} tem cor fora dos tokens`);
+    }
+});
+
+// ==========================================
+// PAINEL DA CONTA
+// ==========================================
+
+test("a página do painel existe, não vai para buscadores e carrega os scripts na ordem", () => {
+    const page = read("conta/index.html");
+
+    assert.match(page, /<meta name="robots" content="noindex">/);
+    assert.match(page, /<title>Painel da Helena<\/title>/);
+
+    const order = [...page.matchAll(/<script defer src="([^"]+)">/g)].map(m => m[1]);
+
+    assert.deepEqual(order, ["../js/config.js", "../js/util.js", "../js/account.js"]);
+
+    // o painel e a caixa do desafio anti-robô têm lugar fixo na página
+    assert.match(page, /id="account"/);
+    assert.match(page, /id="acc-captcha-box"[^>]*hidden/);
+    assert.match(page, /id="acc-captcha"/);
+});
+
+test("o painel vem escondido: sem apiUrl o link não aparece no menu", () => {
+    assert.match(html, /<a href="conta\/" data-account hidden>Painel<\/a>/);
+
+    const config = read("js/config.js");
+
+    for (const field of ["apiUrl", "clientId", "turnstileSiteKey"]) {
+        assert.match(config, new RegExp(field + ":"), `config.js tem ${field}`);
+    }
+
+    // o ID do aplicativo é o do link de convite (é público)
+    assert.match(config, /clientId: "235205613573263360"/);
+});
+
+test("nenhum segredo vai para o site (só a chave pública do Turnstile)", () => {
+    const files = ["index.html", "conta/index.html", "js/config.js", "js/account.js", "js/nav.js"];
+
+    for (const file of files) {
+        const text = read(file);
+
+        assert.doesNotMatch(text, /client_secret|clientSecret|HELENA_TURNSTILE_SECRET|VSYNC_BOT_TOKEN|Bot [A-Za-z0-9_-]{20,}/, file);
     }
 });
 

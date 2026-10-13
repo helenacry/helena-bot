@@ -24,6 +24,11 @@
     $$('[data-link="' + pair[0] + '"]').forEach(function (a) { setLink(a, pair[1]); });
   });
 
+  // ---------- painel da conta (só aparece com a API configurada) ----------
+  if (H.config.apiUrl) {
+    $$("[data-account]").forEach(function (a) { a.hidden = false; });
+  }
+
   // ---------- menu no celular ----------
   var menuBtn = $("#menu-btn");
   var nav = $("#nav");

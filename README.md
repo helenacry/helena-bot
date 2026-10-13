@@ -188,12 +188,14 @@ A pasta `site/` tem a página de divulgação da Helena. É HTML, CSS e JS puros
 ```
 site/
   index.html          só marcação
-  css/                tokens, base, components, sections, motion
-  js/                 config, util, nav, render, commands, copy, petals, motion
+  conta/index.html    painel da conta (daily e gemas), escondido até haver API
+  css/                tokens, base, components, sections, motion, conta
+  js/                 config, util, nav, render, commands, copy, petals, motion, account
   data/site-data.js   gerado por `npm run site:data` (não edite à mão)
   assets/img/         imagens derivadas da arte em assets/ (veja abaixo)
   data-source.mjs     lê o bot e devolve os dados do site
   build-data.mjs      grava data/site-data.js
+  build-card.mjs      gera o cartão de exemplo do herói (`npm run site:card`)
 ```
 
 Os scripts são clássicos (não módulos) e dividem o objeto `window.Helena`, para a página abrir direto do disco.

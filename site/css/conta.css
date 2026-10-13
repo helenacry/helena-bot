@@ -1,0 +1,109 @@
+/* Painel da conta (site/conta/). Usa os mesmos tokens do resto do site. */
+
+.acc-page { padding-block: clamp(28px, 6vw, 72px) 96px; }
+
+.acc-box {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  min-width: 0;
+}
+
+.acc-small { color: var(--muted); font-size: 0.9rem; }
+
+/* ---------- entrar ---------- */
+.acc-login, .acc-notice, .acc-captcha { max-width: 640px; margin-inline: auto; }
+.acc-captcha { margin-bottom: 20px; display: grid; gap: 12px; }
+
+.acc-login { display: grid; gap: 16px; justify-items: start; }
+.acc-login h1 {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(1.9rem, 4.2vw, 2.7rem); line-height: 1.1;
+}
+.acc-lede { color: var(--muted); font-size: 1.05rem; max-width: 54ch; }
+
+.acc-facts { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.acc-facts li { padding-left: 14px; border-left: 2px solid var(--line-2); color: var(--muted); font-size: 0.92rem; }
+
+.acc-notice { display: grid; gap: 10px; justify-items: start; }
+.acc-notice h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; }
+.acc-notice p { color: var(--muted); }
+
+.acc-warn {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);
+  border-radius: 10px; padding: 10px 14px; font-size: 0.94rem;
+}
+
+/* ---------- painel ---------- */
+.acc-grid {
+  display: grid; gap: clamp(20px, 3vw, 32px); align-items: start;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.7fr);
+}
+@media (max-width: 860px) { .acc-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.acc-side { display: grid; gap: 16px; }
+@media (min-width: 861px) { .acc-side { position: sticky; top: 92px; } }
+
+.acc-me { display: grid; gap: 6px; justify-items: start; }
+.acc-me h1 { font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; line-height: 1.15; margin-top: 6px; overflow-wrap: anywhere; }
+.acc-me .btn { margin-top: 12px; padding: 9px 16px; font-size: 0.9rem; }
+
+.acc-avatar { display: block; border-radius: 50%; object-fit: cover; background: var(--bg-3); border: 2px solid var(--line-2); flex: none; }
+.acc-me .acc-avatar { width: 72px; height: 72px; }
+.acc-server-head .acc-avatar { width: 44px; height: 44px; }
+.acc-initial { display: grid; place-items: center; font: 800 1.2rem var(--font-display); color: var(--brand-hi); }
+.acc-me .acc-initial { font-size: 1.8rem; }
+
+/* gemas */
+.acc-gems { display: grid; gap: 10px; justify-items: start; }
+.acc-balance { display: grid; gap: 2px; }
+.acc-balance b { font-family: var(--font-display); font-weight: 800; font-size: 3.2rem; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; }
+.acc-balance span { color: var(--dim); font: 400 0.76rem var(--font-mono); letter-spacing: 0.04em; }
+
+/* servidores */
+.acc-main { display: grid; gap: 14px; }
+.acc-main-head { display: grid; gap: 6px; margin-bottom: 4px; }
+.acc-main-head h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; line-height: 1.15; }
+
+.acc-server { display: grid; gap: 14px; justify-items: start; }
+.acc-server-head { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.acc-server-head > div { display: grid; min-width: 0; }
+.acc-server-head h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; overflow-wrap: anywhere; }
+
+/* os 7 dias do ciclo: coletado, o de hoje e os que faltam; o 7º (bônus) é quadrado */
+.acc-pips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.pip {
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  font: 500 0.8rem var(--font-mono); color: var(--dim);
+  border: 1px solid var(--line-2);
+}
+.pip.weekly { border-radius: 10px; }
+.pip.done {
+  color: var(--green);
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+}
+.pip.next {
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 20%, transparent);
+}
+
+.acc-reward { color: var(--muted); }
+.acc-reward b { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+.acc-wait { color: var(--muted); font-size: 0.95rem; }
+.acc-clock { font-family: var(--font-mono); font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
+
+button[aria-busy="true"] { opacity: 0.6; cursor: progress; }
+
+/* resultado da última ação */
+.acc-say { min-height: 1.6em; margin-top: 20px; font-weight: 600; }
+.acc-say.ok { color: var(--green); }
+.acc-say.bad { color: var(--red); }
+
+.acc-privacy { color: var(--dim); font-size: 0.84rem; max-width: 64ch; margin-top: 36px; }
+.acc-actions .btn { padding: 9px 16px; font-size: 0.9rem; }
