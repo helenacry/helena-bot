@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Duelos | Wiki da Helena</title>
+<meta name="description" content="Como desafiar, aceitar e vencer um duelo, quem pode duelar e o que muda depois.">
+<meta name="theme-color" content="#0d0613">
+<link rel="icon" href="../../../assets/img/favicon.png">
+<link rel="apple-touch-icon" href="../../../assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../../css/tokens.css">
+<link rel="stylesheet" href="../../../css/base.css">
+<link rel="stylesheet" href="../../../css/components.css">
+<link rel="stylesheet" href="../../../css/wiki.css">
+<script defer src="../../../js/config.js"></script>
+<script defer src="../../../js/util.js"></script>
+<script defer src="../../../js/nav.js"></script>
+<script defer src="../../search-index.js"></script>
+<script defer src="../../../js/wiki.js"></script>
+</head>
+<body class="wiki-page" data-wiki-root="../../">
+<a class="skip" href="#content">Pular para o conteúdo</a>
+
+<header class="top" id="top-bar">
+  <div class="wrap">
+    <a class="brand" href="../../../" aria-label="Helena, voltar ao site">
+      <img src="../../../assets/img/helena-avatar.webp" alt="" width="36" height="36">
+      <b>Helena</b><small>ヘレナ</small>
+    </a>
+    <span class="wiki-tag">Wiki</span>
+    <div class="actions">
+      <button class="btn wiki-menu-btn" id="wiki-menu-btn" type="button" aria-expanded="false" aria-controls="wiki-side" hidden>Menu</button>
+      <a class="btn" href="../../../">Voltar ao site</a>
+    </div>
+  </div>
+</header>
+
+<div class="wiki">
+
+  <aside class="wiki-side" id="wiki-side" aria-label="Menu da wiki">
+    <form class="wiki-search" id="wiki-search-box" role="search" hidden>
+      <label class="sr" for="wiki-search">Buscar na wiki</label>
+      <input id="wiki-search" type="search" placeholder="Buscar na wiki" autocomplete="off">
+      <ul id="wiki-results" hidden></ul>
+    </form>
+    <nav class="wiki-nav" aria-label="Seções da wiki">
+      <a class="side-home" href="../../">Início da wiki</a><section><h2>Comece por aqui</h2><ul><li><a href="../../start/first-steps/">Primeiros passos</a></li><li><a href="../../start/earning-money/">Ganhar dinheiro</a></li><li><a href="../../start/jobs/">Escolha seu emprego</a></li></ul></section><section><h2>Economia</h2><ul><li><a href="../../economy/market/">Bolsa</a></li></ul></section><section><h2>Combate</h2><ul><li><a href="./" aria-current="page">Duelos</a></li><li><a href="../weapons/">Armas</a></li><li><a href="../health-and-gear/">Vida, colete e munição</a></li></ul></section><section><h2>Crime e segurança</h2><ul><li><a href="../../crime/getting-started/">Crime: por onde começar</a></li><li><a href="../../crime/robbery/">Roubar jogadores</a></li><li><a href="../../crime/laundering/">Lavagem de dinheiro</a></li><li><a href="../../crime/wanted-and-prison/">Polícia, procurados e prisão</a></li><li><a href="../../crime/prison-escape/">Fuga da prisão</a></li></ul></section>
+    </nav>
+  </aside>
+
+  <main class="wiki-main" id="content">
+    <nav class="crumbs" aria-label="Você está em"><a href="../../">Wiki</a><span>Combate</span></nav>
+    <article class="wiki-doc">
+      <header>
+        <h1>Duelos</h1>
+        <p class="lede">Como desafiar, aceitar e vencer um duelo, quem pode duelar e o que muda depois.</p>
+      </header>
+      <p>O duelo é uma luta entre dois jogadores do mesmo servidor. Não vale dinheiro: o que está em jogo é a vida, o XP e a sua fama.</p><h2 id="resumo"><a class="anchor" href="#resumo" aria-label="Link para esta seção">#</a>Resumo</h2><div class="table-wrap stack"><table><thead><tr><th>O quê</th><th>Como é</th></tr></thead><tbody><tr><td>Desafiar</td><td data-label="Como é"><code>/atacar usuario:@pessoa</code></td></tr><tr><td>Aceitar ou recusar</td><td data-label="Como é"><code>/aceitarduelo</code> ou <code>/recusarduelo</code></td></tr><tr><td>O desafio vale</td><td data-label="Como é">10 minutos</td></tr><tr><td>Vida mínima</td><td data-label="Como é">20, dos dois lados</td></tr><tr><td>Espera entre duelos</td><td data-label="Como é">5 minutos</td></tr><tr><td>Quem vence ganha</td><td data-label="Como é">30 de XP</td></tr></tbody></table></div><h2 id="como-acontece"><a class="anchor" href="#como-acontece" aria-label="Link para esta seção">#</a>Como acontece</h2><ol><li>Você desafia alguém com <strong><code>/atacar</code></strong>.</li><li>A pessoa tem 10 minutos para usar <strong><code>/aceitarduelo</code></strong>. Se não quiser, usa <code>/recusarduelo</code>.</li><li>Quando ela aceita, o duelo <strong>é resolvido na hora</strong>: os dois golpeiam ao mesmo tempo.</li></ol><aside class="callout note"><p class="callout-title">Nota</p><p>A Helena não usa sorte no duelo. O resultado vem <strong>só das armas e da vida</strong> de cada um. Quem causa mais dano termina com mais vida e vence.</p></aside><h2 id="o-dano"><a class="anchor" href="#o-dano" aria-label="Link para esta seção">#</a>O dano</h2><p>Cada um causa o dano da arma que tem equipada:</p><ul><li><strong>sem arma</strong>, o golpe vale 5;</li><li><strong>com arma</strong>, vale o dano dela (as armas que não definem o próprio dano valem 10). A tabela está em <a href="../weapons/">Armas</a>;</li><li>o <strong>colete</strong> também entra na conta do dano, até um limite de pontos. Veja em <a href="../health-and-gear/">Vida, colete e munição</a>.</li></ul><p>A <strong>arma de fogo</strong> gasta <strong>1 munição</strong> por duelo e <strong>toda arma</strong> gasta <strong>1 ponto de durabilidade</strong>. Arma de fogo sem munição, ou arma sem durabilidade, impede o duelo: nada é gasto, e o desafio continua esperando.</p><h2 id="quem-vence"><a class="anchor" href="#quem-vence" aria-label="Link para esta seção">#</a>Quem vence</h2><p>Vence quem termina com <strong>mais vida</strong>. Empatou, <strong>ninguém vence</strong>: nenhum dos dois ganha XP, vitória ou derrota. O vencedor soma 1 vitória, o perdedor soma 1 derrota, e o duelo vai para o histórico.</p><aside class="callout tip"><p class="callout-title">Dica</p><p>Entre no duelo com a vida cheia. Um ferimento de crime ou de roubo, ou um duelo recente, deixa você com menos vida do que o adversário, e o resultado só depende dos números.</p></aside><h2 id="o-que-impede-um-duelo"><a class="anchor" href="#o-que-impede-um-duelo" aria-label="Link para esta seção">#</a>O que impede um duelo</h2><ul><li>Algum dos dois está com <strong>menos de 20 de vida</strong>.</li><li>Algum dos dois está com <strong>proteção do hospital</strong> (veja <a href="../health-and-gear/">Vida, colete e munição</a>).</li><li>Um dos dois <strong>duelou há menos de 5 minutos</strong>.</li><li>Já existe <strong>um desafio pendente</strong> envolvendo qualquer um dos dois.</li><li>Você tentou desafiar a si mesmo.</li><li>Você está <strong>preso</strong>: <code>/atacar</code> e <code>/aceitarduelo</code> ficam bloqueados na cadeia.</li></ul><h2 id="acompanhe-os-seus-numeros"><a class="anchor" href="#acompanhe-os-seus-numeros" aria-label="Link para esta seção">#</a>Acompanhe os seus números</h2><ul><li><strong><code>/statuscombate</code></strong>: vida, vitórias, derrotas, munição, defesa e durabilidade.</li><li><strong><code>/historico</code></strong>: os últimos 5 duelos em que você lutou.</li><li><strong><code>/protecaopvp</code></strong>: quanto falta da proteção do hospital.</li></ul><h2 id="proximo-passo"><a class="anchor" href="#proximo-passo" aria-label="Link para esta seção">#</a>Próximo passo</h2><ul class="cards"><li><a href="../weapons/"><b>Armas</b><span>As armas da loja, o dano de cada uma, como equipar e como elas gastam munição e durabilidade.</span></a></li><li><a href="../health-and-gear/"><b>Vida, colete e munição</b><span>Como a vida funciona, quanto custa se curar no hospital, o que é a proteção contra duelos e como cuidar do equipamento.</span></a></li></ul>
+    </article>
+    <nav class="pager" aria-label="Outras páginas"><a class="prev" href="../../economy/market/"><small>Anterior</small><b>Bolsa</b></a><a class="next" href="../weapons/"><small>Próxima</small><b>Armas</b></a></nav>
+  </main>
+
+  <nav class="wiki-toc" aria-label="Nesta página"><h2>Nesta página</h2><ol><li class="l2"><a href="#resumo">Resumo</a></li><li class="l2"><a href="#como-acontece">Como acontece</a></li><li class="l2"><a href="#o-dano">O dano</a></li><li class="l2"><a href="#quem-vence">Quem vence</a></li><li class="l2"><a href="#o-que-impede-um-duelo">O que impede um duelo</a></li><li class="l2"><a href="#acompanhe-os-seus-numeros">Acompanhe os seus números</a></li><li class="l2"><a href="#proximo-passo">Próximo passo</a></li></ol></nav>
+
+</div>
+
+<footer class="wiki-foot">
+  <div class="wrap">
+    <ul>
+      <li><a href="../../../">Site</a></li>
+      <li><a href="../../../terms/">Termos de uso</a></li>
+      <li><a href="../../../privacy/">Privacidade</a></li>
+      <li><a href="https://vsync.lat/tfe6pdxk" data-link="support" target="_blank" rel="noopener">Servidor oficial</a></li>
+    </ul>
+    <p>A Helena é um projeto independente feito para a VSync. Os valores desta wiki saem do próprio bot quando ela é gerada.</p>
+  </div>
+</footer>
+
+</body>
+</html>

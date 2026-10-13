@@ -16,6 +16,11 @@ export const NAV = [
         pages: ["market"]
     },
     {
+        id: "combat",
+        title: "Combate",
+        pages: ["duels", "weapons", "health-and-gear"]
+    },
+    {
         id: "crime",
         title: "Crime e segurança",
         pages: ["getting-started", "robbery", "laundering", "wanted-and-prison", "prison-escape"]

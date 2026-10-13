@@ -276,7 +276,8 @@ export async function collectWikiBot() {
             maxAmmo: String(ARMORY_RULES.maxAmmoPerPurchase),
             vestPrice: reais(ARMORY_RULES.vestPrice),
             vestDefense: String(ARMORY_RULES.vestDefense),
-            repairPrice: reais(ARMORY_RULES.repairPrice)
+            repairPrice: reais(ARMORY_RULES.repairPrice),
+            maxDurability: String(ARMORY_RULES.maxDurability)
         },
 
         site: {
@@ -304,7 +305,7 @@ export async function collectWikiBot() {
     tables.weapons = table(
         ["Arma", "Tipo", "Dano", "Preço de tabela", "Chance no roubo"],
         weapons.map(item => [
-            `${item.emoji} ${item.name}`,
+            `${item.emoji} ${item.name} ${code(item.id)}`,
             item.weaponType === "firearm" ? "Fogo" : "Branca",
             String(item.damage || DUEL_RULES.defaultWeaponDamage),
             reais(item.buyPrice),

@@ -18,6 +18,12 @@ Esta wiki explica cada parte do jogo. Os valores (preços, salários, tempos de 
 
 {{cards: economy/market}}
 
+## Combate
+
+Duelos entre jogadores: quem pode lutar, com o quê, e como se recuperar depois.
+
+{{cards: combat/duels, combat/weapons, combat/health-and-gear}}
+
 ## Crime e segurança
 
 Dinheiro rápido, risco alto. Aqui está o que dá certo, o que dá cadeia e como lavar o que você ganhou.
