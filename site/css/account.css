@@ -27,7 +27,7 @@
 .acc-facts li { padding-left: 14px; border-left: 2px solid var(--line-2); color: var(--muted); font-size: 0.92rem; }
 
 .acc-notice { display: grid; gap: 10px; justify-items: start; }
-.acc-notice h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; }
+.acc-notice h1, .acc-notice h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; }
 .acc-notice p { color: var(--muted); }
 
 .acc-warn {

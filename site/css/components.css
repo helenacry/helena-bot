@@ -14,10 +14,10 @@
 .top .wrap { display: flex; align-items: center; gap: 20px; min-height: 64px; transition: min-height 0.25s var(--ease); }
 .top.scrolled .wrap { min-height: 56px; }
 
-.brand { display: flex; align-items: center; gap: 10px; color: var(--text); }
+.brand { display: flex; align-items: center; flex: none; gap: 10px; color: var(--text); }
 .brand:hover { text-decoration: none; }
 .brand img { width: 36px; height: 36px; border-radius: 50%; }
-.brand b { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; letter-spacing: 0.02em; }
+.brand b { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; letter-spacing: 0.02em; white-space: nowrap; }
 .brand small { font-family: var(--font-display); color: var(--brand-hi); font-size: 0.8rem; }
 
 .nav { display: flex; gap: 4px; margin-inline: auto; }
@@ -28,6 +28,7 @@
 .top .actions { display: flex; gap: 10px; }
 .top .actions .btn { padding: 9px 16px; font-size: 0.9rem; }
 .top .btn { white-space: nowrap; }
+.top .btn .short { display: none; }
 .menu-btn { display: none; margin-left: auto; padding: 9px 12px; }
 
 @media (max-width: 920px) {
@@ -48,6 +49,13 @@
   .brand small { display: none; }
   .top .wrap { gap: 10px; }
   .top .actions .btn { padding: 9px 12px; font-size: 0.85rem; }
+}
+/* Em telas estreitas o nome, o convite e o Menu não cabem juntos com o texto inteiro. */
+@media (max-width: 420px) {
+  .top .btn .long { display: none; }
+  .top .btn .short { display: inline; }
+  .top .wrap { gap: 8px; }
+  .menu-btn { padding: 9px 10px; }
 }
 
 /* ---------- balão da Helena ---------- */
@@ -70,7 +78,7 @@
   padding: 12px 16px; border-bottom: 1px solid var(--line);
   color: var(--muted); font: 500 0.82rem var(--font-mono);
 }
-.chat-bar span:last-child { color: var(--dim); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.chat-bar span:last-child { color: var(--dim); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .chat-log { padding: 20px 16px; display: grid; gap: 26px; }
 
 .msg { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; }
@@ -79,7 +87,7 @@
 .msg .meta { font-size: 0.9rem; color: var(--muted); line-height: 1.4; }
 .msg .meta b { color: var(--text); }
 .msg .slash { color: var(--brand-hi); font-family: var(--font-mono); font-size: 0.86rem; }
-.msg .bot { background: var(--brand); color: #fff; font: 700 0.6rem var(--font-body); letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 2px; }
+.msg .bot { background: var(--brand); color: #fff; font: 700 0.75rem var(--font-body); letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 2px; }
 
 .embed {
   margin-top: 8px; max-width: 540px;
@@ -92,8 +100,8 @@
 .embed dl .wide { grid-column: 1 / -1; }
 .embed dt { font-weight: 700; font-size: 0.82rem; }
 .embed dd { margin: 2px 0 0; font-size: 0.82rem; color: var(--embed-text); white-space: pre-line; }
-.embed .foot { font-size: 0.72rem; color: var(--dim); }
-.embed code { font-size: 0.9em; background: var(--embed-code); padding: 1px 5px; border-radius: 4px; }
+.embed .foot { font-size: 0.75rem; color: var(--dim); }
+.embed code { font-size: max(0.9em, 12px); background: var(--embed-code); padding: 1px 5px; border-radius: 4px; }
 .embed .live { font-variant-numeric: tabular-nums; }
 
 .comp { display: grid; gap: 6px; margin-top: 8px; max-width: 540px; }
@@ -138,7 +146,7 @@ details[open] > summary .pm::before { content: "−"; }
 .tablewrap { overflow-x: auto; border-top: 1px solid var(--line); }
 table { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
 th, td { text-align: left; padding: 11px 22px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { color: var(--dim); font-weight: 500; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; }
+th { color: var(--dim); font-weight: 500; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
 tr:last-child td { border-bottom: 0; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.pay { color: var(--gold); }

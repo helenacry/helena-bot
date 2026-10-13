@@ -123,7 +123,7 @@
 
 /* recibo do /trabalhar */
 .receipt { font-family: var(--font-mono); font-size: 0.8rem; border: 1px dashed var(--line-2); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; background: var(--sunk); }
-.receipt .t { color: var(--dim); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.7rem; }
+.receipt .t { color: var(--dim); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.75rem; }
 .receipt div { display: flex; justify-content: space-between; gap: 12px; }
 .receipt .plus { color: var(--green); }
 .receipt .minus { color: var(--red); }
@@ -133,9 +133,9 @@
 .streak .day { display: flex; flex-direction: column; justify-content: flex-end; gap: 5px; height: 100%; }
 .streak .day i { display: block; height: calc(var(--h) * 0.68%); background: var(--line-2); border-radius: 4px 4px 0 0; transform-origin: bottom; }
 .streak .day.last i { background: var(--gold); }
-.streak .day span { font: 500 0.66rem var(--font-mono); color: var(--muted); text-align: center; }
-.streak .day em { font: 400 0.62rem var(--font-mono); color: var(--dim); text-align: center; font-style: normal; }
-.cap { color: var(--dim); font: 400 0.74rem var(--font-mono); }
+.streak .day span { font: 500 0.75rem var(--font-mono); color: var(--muted); text-align: center; }
+.streak .day em { font: 400 0.75rem var(--font-mono); color: var(--dim); text-align: center; font-style: normal; }
+.cap { color: var(--dim); font: 400 0.75rem var(--font-mono); }
 
 /* carteira exposta x banco protegido */
 .expo { display: grid; gap: 8px; font-size: 0.9rem; }
@@ -162,7 +162,7 @@
 .ach.rare { --rc: var(--r-rare); }
 .ach.epic { --rc: var(--r-epic); }
 .ach.legendary { --rc: var(--r-legendary); }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--dim); font: 400 0.74rem var(--font-mono); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--dim); font: 400 0.75rem var(--font-mono); }
 .legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--rc, var(--r-common)); }
 
 /* ==================== VEJA FUNCIONANDO ==================== */
@@ -216,9 +216,9 @@
 .bar span { display: block; width: 100%; height: var(--h); background: var(--line-2); border-radius: 4px 4px 0 0; transform-origin: bottom; transition: background 0.15s; }
 .bar:hover span, .bar:focus-visible span { background: var(--brand); }
 .bar[aria-pressed="true"] span { background: var(--gold); }
-.axis { display: flex; gap: 6px; min-width: 640px; margin-top: 8px; font: 400 0.68rem var(--font-mono); color: var(--dim); }
+.axis { display: flex; gap: 6px; min-width: 640px; margin-top: 8px; font: 400 0.75rem var(--font-mono); color: var(--dim); }
 .axis span { flex: 1; text-align: center; }
-.axis-cap { color: var(--dim); font: 400 0.74rem var(--font-mono); margin-top: 6px; }
+.axis-cap { color: var(--dim); font: 400 0.75rem var(--font-mono); margin-top: 6px; }
 
 details.all { margin-top: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-2); }
 details.all > summary { padding: 16px 22px; font-weight: 600; }
@@ -296,7 +296,7 @@ footer::before {
 }
 footer .cols { display: grid; gap: 32px; grid-template-columns: 1.4fr repeat(2, 1fr); padding-block: 48px 28px; }
 @media (max-width: 760px) { footer .cols { grid-template-columns: minmax(0, 1fr); } }
-footer h4 { margin: 0 0 12px; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+footer h4 { margin: 0 0 12px; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
 footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 footer li a { color: var(--muted); font-size: 0.94rem; }
 footer li a:hover { color: var(--text); }

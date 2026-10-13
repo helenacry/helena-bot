@@ -269,9 +269,11 @@
     if (captchaBox) captchaBox.hidden = !visible;
   }
 
-  function notice(title, text, action) {
+  // Aviso que ocupa a página inteira é o título dela (h1); dentro do painel
+  // já logado o título é o nome da pessoa, então o aviso fica em h2.
+  function notice(title, text, action, page) {
     var box = el("section", { "class": "acc-box acc-notice" }, [
-      el("h2", { text: title }),
+      el(page ? "h1" : "h2", { text: title }),
       el("p", { text: text })
     ]);
 
@@ -382,7 +384,7 @@
       return;
     }
 
-    show([notice("Entrando…", "Falando com a VSync.")]);
+    show([notice("Entrando…", "Falando com a VSync.", null, true)]);
 
     api("/api/auth/login", {
       method: "POST",
@@ -417,7 +419,7 @@
 
   // ---------- painel ----------
   function load(quiet) {
-    if (!quiet) show([notice("Carregando…", "Buscando os seus servidores.")]);
+    if (!quiet) show([notice("Carregando…", "Buscando os seus servidores.", null, true)]);
 
     api("/api/me").then(function (result) {
       if (result.status === 401) {
@@ -438,7 +440,7 @@
 
         setCaptchaVisible(false);
 
-        show([notice("Fora do ar", textFor(result), button("Tentar de novo", "primary", refresh))]);
+        show([notice("Fora do ar", textFor(result), button("Tentar de novo", "primary", refresh), true)]);
 
         return;
       }
@@ -693,7 +695,9 @@
 
       show([notice(
         "Painel indisponível",
-        "O painel da conta ainda não foi ligado. Enquanto isso, resgate o daily com o comando /daily, direto na VSync."
+        "O painel da conta ainda não foi ligado. Enquanto isso, resgate o daily com o comando /daily, direto na VSync.",
+        null,
+        true
       )]);
 
       return;

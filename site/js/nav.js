@@ -12,7 +12,18 @@
     anchor.target = "_blank";
     anchor.rel = "noopener";
     anchor.hidden = false;
-    anchor.textContent = anchor.getAttribute("data-on") || anchor.textContent;
+
+    var text = anchor.getAttribute("data-on") || anchor.textContent;
+    var short = anchor.getAttribute("data-on-short");
+
+    // No cabeçalho do celular não cabe o texto inteiro: o CSS escolhe qual dos dois mostrar.
+    if (short) {
+      anchor.textContent = "";
+      anchor.appendChild(H.el("span", { "class": "long", text: text }));
+      anchor.appendChild(H.el("span", { "class": "short", text: short }));
+    } else {
+      anchor.textContent = text;
+    }
   }
 
   $$('[data-cta="invite"]').forEach(function (a) {

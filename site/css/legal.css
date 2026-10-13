@@ -27,7 +27,7 @@
 @media (min-width: 861px) { .legal-toc { position: sticky; top: 88px; } }
 
 .legal-toc h2 {
-  font: 500 0.74rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase;
+  font: 500 0.75rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--dim); margin-bottom: 10px;
 }
 .legal-toc ol {
@@ -37,6 +37,9 @@
 .legal-toc li { counter-increment: toc; }
 .legal-toc a {
   display: flex; gap: 10px; padding: 5px 0; color: var(--muted); font-size: 0.9rem; line-height: 1.35;
+}
+@media (max-width: 860px), (pointer: coarse) {
+  .legal-toc a { align-items: center; min-height: 40px; }
 }
 .legal-toc a::before {
   content: counter(toc, decimal-leading-zero); flex: none; width: 1.6rem;
@@ -99,7 +102,7 @@
   .legal-table td:first-child { font-weight: 600; margin-bottom: 4px; }
   .legal-table td[data-label]::before {
     content: attr(data-label); display: block; margin-top: 6px;
-    color: var(--dim); font: 500 0.7rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--dim); font: 500 0.75rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase;
   }
 }
 
