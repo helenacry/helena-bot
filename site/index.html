@@ -31,7 +31,7 @@
 
 <header class="top" id="top-bar">
   <div class="wrap">
-    <a class="brand" href="#topo" aria-label="Helena, início">
+    <a class="brand" href="#" aria-label="Helena, início">
       <img src="assets/img/helena-avatar.webp" alt="" width="36" height="36">
       <b>Helena</b><small>ヘレナ</small>
     </a>
@@ -59,14 +59,17 @@
   <canvas id="petals" aria-hidden="true"></canvas>
   <!-- ヘレナ escrito traço a traço (ヘ: 1 traço, レ: 1 traço, ナ: 2 traços). O desenho
        completo é o estado normal; a animação só roda a partir de css/motion.css. -->
-  <svg class="kanji draw" viewBox="0 0 100 300" aria-hidden="true" focusable="false">
+  <!-- Os 4 traços, uma vez só: o desenho vertical da margem (telas de 1280 px ou
+       mais) e o horizontal do topo do texto (telas menores) usam os dois. -->
+  <svg class="kanji-defs" width="0" height="0" aria-hidden="true" focusable="false">
     <defs>
       <path id="k-he" pathLength="1" d="M10 62 L38 38 Q46 31 54 38 L90 70"/>
       <path id="k-re" pathLength="1" d="M28 116 L28 176 Q28 184 36 180 Q62 168 80 130"/>
       <path id="k-na1" pathLength="1" d="M12 240 L88 236"/>
       <path id="k-na2" pathLength="1" d="M50 212 L50 246 Q48 274 16 290"/>
     </defs>
-
+  </svg>
+  <svg class="kanji draw" viewBox="0 0 100 300" aria-hidden="true" focusable="false">
     <g class="ghost">
       <use href="#k-he"/><use href="#k-re"/><use href="#k-na1"/><use href="#k-na2"/>
     </g>
@@ -88,6 +91,22 @@
   </svg>
   <div class="wrap hero-grid">
     <div class="hero-copy">
+      <!-- ヘレナ na horizontal, para quando a margem não comporta o desenho vertical.
+           Mesmos traços e mesma ordem; cada letra desliza para a sua casa (100 x 100). -->
+      <svg class="kanji-h draw" viewBox="0 0 300 100" aria-hidden="true" focusable="false">
+        <g class="ghost">
+          <use href="#k-he"/>
+          <use href="#k-re" transform="translate(100 -100)"/>
+          <use href="#k-na1" transform="translate(200 -200)"/>
+          <use href="#k-na2" transform="translate(200 -200)"/>
+        </g>
+        <g class="ink">
+          <use href="#k-he" style="--d:0.5s;--t:0.8s"/>
+          <use href="#k-re" transform="translate(100 -100)" style="--d:1.3s;--t:0.9s"/>
+          <use href="#k-na1" transform="translate(200 -200)" style="--d:2.2s;--t:0.5s"/>
+          <use href="#k-na2" transform="translate(200 -200)" style="--d:2.7s;--t:0.8s"/>
+        </g>
+      </svg>
       <span class="eyebrow">Bot de economia e RPG para a VSync</span>
       <h1>
         <span class="line" style="--i:0"><span>Sua identidade,</span></span>
@@ -580,7 +599,7 @@ Enquanto estiver preso, você não pode trabalhar, comprar nem movimentar dinhei
   <div class="wrap">
     <div class="cols">
       <div>
-        <a class="brand" href="#topo"><img src="assets/img/helena-avatar.webp" alt="" width="36" height="36"><b>Helena</b><small>ヘレナ</small></a>
+        <a class="brand" href="#"><img src="assets/img/helena-avatar.webp" alt="" width="36" height="36"><b>Helena</b><small>ヘレナ</small></a>
         <p class="about">Bot de economia e RPG para a VSync. Sua identidade, sua história.</p>
       </div>
       <div>

@@ -18,8 +18,21 @@
   user-select: none;
 }
 @media (min-width: 1280px) { .kanji { display: block; } }
-.kanji .ghost use { stroke: rgba(var(--hi-rgb), 0.2); stroke-width: 6; }
-.kanji .ink use {
+
+/* Os 4 traços moram num SVG de tamanho zero; os dois desenhos só os reusam. */
+.kanji-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* Telas menores que 1280 px não têm margem para o desenho vertical, então o
+   ヘレナ vem na horizontal, no topo do texto do herói. */
+.kanji-h {
+  display: block; width: 132px; height: 44px; margin-bottom: 18px; overflow: visible;
+  fill: none; stroke-linecap: round; stroke-linejoin: round;
+  user-select: none;
+}
+@media (min-width: 1280px) { .kanji-h { display: none; } }
+
+.kanji .ghost use, .kanji-h .ghost use { stroke: rgba(var(--hi-rgb), 0.2); stroke-width: 6; }
+.kanji .ink use, .kanji-h .ink use {
   stroke: var(--brand-hi); stroke-width: 6;
   stroke-dasharray: 1; stroke-dashoffset: 0;
   filter: drop-shadow(0 0 5px rgba(var(--hi-rgb), 0.55));

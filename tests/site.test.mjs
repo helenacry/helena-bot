@@ -143,6 +143,15 @@ test("cada categoria tem comandos, empregos crescem e as conquistas têm raridad
 // VISUAL
 // ==========================================
 
+test("o logo leva ao topo da página, não a uma âncora mais abaixo", () => {
+    // #topo é o <main>: clicar nele rola uns 70 px (a altura do cabeçalho) e a página
+    // fica diferente de quando foi aberta. href="#" volta ao começo de verdade.
+    const brands = [...html.matchAll(/<a class="brand" href="([^"]*)"/g)].map(m => m[1]);
+
+    assert.equal(brands.length, 2, "o do menu e o do rodapé");
+    assert.deepEqual(brands, ["#", "#"]);
+});
+
 test("a linha da rotina fica atrás dos números (z-index fixado)", () => {
     const css = read("css/sections.css");
 
@@ -174,14 +183,75 @@ test("o ヘレナ é um desenho em SVG com os 4 traços, escrito na ordem", () =
     const motion = read("css/motion.css");
 
     assert.match(motion, /@keyframes ink\s*\{\s*from\s*\{\s*stroke-dashoffset:\s*1/);
-    assert.match(read("css/sections.css"), /\.kanji \.ink use\s*\{[^}]*stroke-dashoffset:\s*0/);
+    assert.match(read("css/sections.css"), /\.kanji \.ink use,\s*\.kanji-h \.ink use\s*\{[^}]*stroke-dashoffset:\s*0/);
+});
+
+test("no celular o ヘレナ aparece na horizontal, com os mesmos traços, cada letra na sua casa", () => {
+    // os 4 traços moram num SVG de tamanho zero, reusado pelos dois desenhos
+    const defs = html.match(/<svg class="kanji-defs"[\s\S]*?<\/svg>/)?.[0];
+
+    assert.ok(defs, "SVG com os traços");
+
+    const paths = Object.fromEntries(
+        [...defs.matchAll(/<path id="(k-[a-z0-9]+)" pathLength="1" d="([^"]+)"\/>/g)].map(m => [m[1], m[2]])
+    );
+
+    assert.deepEqual(Object.keys(paths), ["k-he", "k-re", "k-na1", "k-na2"]);
+
+    // o desenho horizontal vem no topo do texto do herói, antes do "eyebrow"
+    const horizontal = html.match(/<svg class="kanji-h draw"[\s\S]*?<\/svg>/)?.[0];
+
+    assert.ok(horizontal, "o SVG horizontal existe");
+    assert.match(horizontal, /viewBox="0 0 300 100"/);
+    assert.ok(html.indexOf(horizontal) < html.indexOf('<span class="eyebrow">Bot de economia'), "fica acima do texto");
+
+    const vertical = html.match(/<svg class="kanji draw"[\s\S]*?<\/svg>/)[0];
+
+    const inks = svg => [...svg.match(/<g class="ink">[\s\S]*?<\/g>/)[0].matchAll(/<use href="#(k-[a-z0-9]+)"(?: transform="translate\((-?\d+) (-?\d+)\)")? style="--d:([\d.]+)s;--t:([\d.]+)s"\/>/g)]
+        .map(m => ({ id: m[1], dx: Number(m[2] ?? 0), dy: Number(m[3] ?? 0), delay: m[4], time: m[5] }));
+
+    const written = inks(horizontal);
+    const reference = inks(vertical);
+
+    assert.deepEqual(written.map(s => s.id), ["k-he", "k-re", "k-na1", "k-na2"], "mesma ordem");
+
+    // a escrita tem a mesma cadência nos dois desenhos
+    assert.deepEqual(written.map(s => [s.delay, s.time]), reference.map(s => [s.delay, s.time]));
+
+    // a sombra fixa (ghost) tem os mesmos deslocamentos da tinta
+    const ghost = [...horizontal.match(/<g class="ghost">[\s\S]*?<\/g>/)[0].matchAll(/<use href="#(k-[a-z0-9]+)"(?: transform="translate\((-?\d+) (-?\d+)\)")?\/>/g)]
+        .map(m => [m[1], Number(m[2] ?? 0), Number(m[3] ?? 0)]);
+
+    assert.deepEqual(ghost, written.map(s => [s.id, s.dx, s.dy]));
+
+    // cada letra cabe na sua casa de 100 x 100: ヘ, レ e ナ (os dois traços) da esquerda para a direita
+    const cell = { "k-he": 0, "k-re": 1, "k-na1": 2, "k-na2": 2 };
+
+    for (const stroke of written) {
+        const numbers = paths[stroke.id].match(/-?\d+(?:\.\d+)?/g).map(Number);
+
+        for (let i = 0; i < numbers.length; i += 2) {
+            const x = numbers[i] + stroke.dx;
+            const y = numbers[i + 1] + stroke.dy;
+
+            assert.ok(x >= cell[stroke.id] * 100 && x <= cell[stroke.id] * 100 + 100, `${stroke.id}: x=${x} fora da casa ${cell[stroke.id]}`);
+            assert.ok(y >= 0 && y <= 100, `${stroke.id}: y=${y} fora do desenho`);
+        }
+    }
+
+    // só um dos dois aparece: o vertical a partir de 1280 px, o horizontal nas telas menores
+    const css = read("css/sections.css");
+
+    assert.match(css, /\.kanji-h\s*\{[^}]*display:\s*block/);
+    assert.match(css, /@media \(min-width: 1280px\) \{ \.kanji-h \{ display: none; \} \}/);
+    assert.match(css, /@media \(min-width: 1280px\) \{ \.kanji \{ display: block; \} \}/);
 });
 
 test("o ヘレナ continua se escrevendo com movimento reduzido (exceção documentada)", () => {
     const motion = read("css/motion.css");
     const reduced = motion.slice(motion.indexOf("@media (prefers-reduced-motion: reduce)"));
 
-    assert.match(reduced, /\.kanji\.draw \.ink use\s*\{[^}]*animation:\s*ink/);
+    assert.match(reduced, /\.kanji\.draw \.ink use,\s*\.kanji-h\.draw \.ink use\s*\{[^}]*animation:\s*ink/);
 
     // o resto da página continua parado nesse modo
     assert.match(reduced, /\*,\s*\*::before,\s*\*::after\s*\{[^}]*animation:\s*none\s*!important/);

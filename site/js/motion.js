@@ -25,13 +25,14 @@
 
   // ---------- ヘレナ se escreve de novo quando o mouse passa ----------
   // (vale também com movimento reduzido: ver a exceção em css/motion.css)
-  var kanji = $(".kanji");
-
-  if (kanji && H.finePointer) {
-    kanji.addEventListener("pointerenter", function () {
-      kanji.classList.remove("draw");
-      void kanji.getBoundingClientRect(); // força o navegador a reiniciar a animação
-      kanji.classList.add("draw");
+  // (o vertical da margem e o horizontal do celular, que só um dos dois aparece)
+  if (H.finePointer) {
+    H.$$(".kanji, .kanji-h").forEach(function (kanji) {
+      kanji.addEventListener("pointerenter", function () {
+        kanji.classList.remove("draw");
+        void kanji.getBoundingClientRect(); // força o navegador a reiniciar a animação
+        kanji.classList.add("draw");
+      });
     });
   }
 
