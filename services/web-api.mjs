@@ -815,11 +815,14 @@ export function createWebApi(config, deps = {}) {
         }
     }
 
-    // Apaga as sessões vencidas e os contadores antigos.
+    // Apaga as sessões vencidas, o registro de coletas antigo e os contadores.
     function cleanup() {
         const time = now();
 
         db.prepare("DELETE FROM web_sessions WHERE expires_at <= ?").run(time);
+
+        db.prepare("DELETE FROM web_claim_log WHERE created_at <= ?")
+            .run(time - WEB_CONFIG.claimLogDays * 24 * 60 * 60);
 
         const longest = Math.max(
             ...Object.values(WEB_CONFIG.limits).map(rule => rule.windowSeconds)

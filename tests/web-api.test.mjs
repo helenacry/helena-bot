@@ -514,6 +514,43 @@ test("a limpeza apaga só as sessões vencidas", async () => {
     });
 });
 
+test("a limpeza apaga o registro de coletas depois de 90 dias, e só ele", async () => {
+    assert.equal(WEB_CONFIG.claimLogDays, 90, "a política de privacidade do site diz 90 dias");
+
+    await withApi({}, async ctx => {
+        const day = 24 * 60 * 60;
+
+        await loggedIn(ctx);
+
+        ctx.state.now = T0 + 60 * day;
+        await loggedIn(ctx);
+
+        assert.equal(get("SELECT COUNT(*) c FROM web_claim_log").c, 2);
+
+        const gameBefore = get("SELECT (SELECT COUNT(*) FROM players) p, (SELECT COALESCE(SUM(gems), 0) FROM global_users) g");
+
+        // 89 dias depois da primeira entrada: nada some do registro
+        ctx.state.now = T0 + 89 * day;
+        ctx.api.cleanup();
+
+        assert.equal(get("SELECT COUNT(*) c FROM web_claim_log").c, 2, "ainda dentro do prazo");
+
+        // 91 dias: a primeira (T0) sai, a de 60 dias fica
+        ctx.state.now = T0 + 91 * day;
+        ctx.api.cleanup();
+
+        assert.deepEqual(
+            db.prepare("SELECT created_at FROM web_claim_log").all().map(r => r.created_at),
+            [T0 + 60 * day]
+        );
+
+        // o jogo em si (jogadores, gemas) não é tocado pela limpeza
+        const gameAfter = get("SELECT (SELECT COUNT(*) FROM players) p, (SELECT COALESCE(SUM(gems), 0) FROM global_users) g");
+
+        assert.deepEqual({ ...gameAfter }, { ...gameBefore });
+    });
+});
+
 // ==========================================
 // PAINEL (/api/me)
 // ==========================================

@@ -27,6 +27,11 @@ export const WEB_CONFIG = Object.freeze({
     // Tempo máximo esperando a VSync ou a Cloudflare, em milissegundos.
     upstreamTimeoutMs: 10_000,
 
+    // Quantos dias o registro de entradas e coletas (web_claim_log, com IP e
+    // navegador) fica guardado. A política de privacidade do site cita este
+    // prazo: se mudar aqui, mude lá (site/privacy/index.html).
+    claimLogDays: 90,
+
     // Quantos servidores aparecem no painel.
     maxGuilds: 100,
 
