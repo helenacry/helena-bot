@@ -4,21 +4,27 @@
 .hero { position: relative; overflow: hidden; isolation: isolate; padding-block: clamp(40px, 7vw, 88px) clamp(48px, 7vw, 96px); }
 .hero::before {
   content: ""; position: absolute; inset: 0; z-index: -2;
-  background: radial-gradient(48% 70% at 80% 35%, rgba(135, 85, 218, 0.2), transparent);
+  background: radial-gradient(48% 70% at 80% 35%, rgba(var(--glow-rgb), 0.2), transparent);
 }
 #petals { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 
-/* texto vertical na margem, como o ヘレナ do cartão de perfil */
+/* ヘレナ na margem, como no cartão de perfil, escrito traço a traço */
 .kanji {
   display: none;
-  position: absolute; z-index: -1; top: 120px;
-  left: clamp(6px, calc((100vw - 1120px) / 2 - 76px), 140px);
-  writing-mode: vertical-rl;
-  font-family: var(--font-display); font-weight: 800; font-size: 3.4rem; letter-spacing: 0.25em;
-  color: transparent; -webkit-text-stroke: 1px rgba(182, 156, 246, 0.38);
+  position: absolute; z-index: -1; top: 118px;
+  left: clamp(6px, calc((100vw - 1120px) / 2 - 86px), 140px);
+  width: 78px; height: 234px; overflow: visible;
+  fill: none; stroke-linecap: round; stroke-linejoin: round;
   user-select: none;
 }
 @media (min-width: 1280px) { .kanji { display: block; } }
+.kanji .ghost use { stroke: rgba(var(--hi-rgb), 0.2); stroke-width: 6; }
+.kanji .ink use {
+  stroke: var(--brand-hi); stroke-width: 6;
+  stroke-dasharray: 1; stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 5px rgba(var(--hi-rgb), 0.55));
+}
+.kanji .tip { fill: #fff; opacity: 0; filter: drop-shadow(0 0 5px var(--brand-hi)); }
 
 .hero-grid { display: grid; gap: 44px; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: center; }
 @media (max-width: 920px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }
@@ -38,7 +44,7 @@
 .card-shot { position: relative; margin: 0; min-width: 0; }
 .card-shot::before {
   content: ""; position: absolute; inset: 8% 4% -4%; z-index: -1;
-  background: radial-gradient(closest-side, rgba(135, 85, 218, 0.55), transparent);
+  background: radial-gradient(closest-side, rgba(var(--glow-rgb), 0.55), transparent);
   filter: blur(28px);
 }
 .tilt {
@@ -93,7 +99,7 @@
 /* foco de luz que segue o mouse */
 .cell::before {
   content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; pointer-events: none;
-  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%), rgba(135, 85, 218, 0.17), transparent 70%);
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%), rgba(var(--glow-rgb), 0.17), transparent 70%);
   transition: opacity 0.3s;
 }
 .cell:hover::before { opacity: 1; }
@@ -103,7 +109,7 @@
 .cell .grow { flex: 1; }
 
 /* recibo do /trabalhar */
-.receipt { font-family: var(--font-mono); font-size: 0.8rem; border: 1px dashed var(--line-2); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; background: #0b0716; }
+.receipt { font-family: var(--font-mono); font-size: 0.8rem; border: 1px dashed var(--line-2); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; background: var(--sunk); }
 .receipt .t { color: var(--dim); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.7rem; }
 .receipt div { display: flex; justify-content: space-between; gap: 12px; }
 .receipt .plus { color: var(--green); }
@@ -120,7 +126,7 @@
 
 /* carteira exposta x banco protegido */
 .expo { display: grid; gap: 8px; font-size: 0.9rem; }
-.expo div { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #0b0716; }
+.expo div { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--sunk); }
 .expo .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .expo .dot.red { background: var(--red); }
 .expo .dot.blue { background: var(--blue); }
@@ -153,12 +159,15 @@
 .notes span { color: var(--muted); font-size: 0.94rem; }
 
 /* ==================== ROTINA ==================== */
-.steps { --p: 0; list-style: none; margin: 0; padding: 0; position: relative; display: grid; }
-.steps::before, .steps::after { content: ""; position: absolute; left: 25px; top: 30px; width: 2px; border-radius: 2px; }
+/* Ordem das camadas fixada de propósito: a linha (z-index 0) fica atrás dos
+   itens (z-index 1) mesmo quando a animação de entrada faz cada item virar
+   um bloco próprio, senão a linha dourada passa por cima dos números. */
+.steps { --p: 0; list-style: none; margin: 0; padding: 0; position: relative; isolation: isolate; display: grid; }
+.steps::before, .steps::after { content: ""; position: absolute; z-index: 0; left: 25px; top: 30px; width: 2px; border-radius: 2px; }
 .steps::before { bottom: 30px; background: var(--line); }
 .steps::after { height: calc((100% - 60px) * var(--p)); background: var(--gold); }
 .steps li {
-  position: relative; counter-increment: step;
+  position: relative; z-index: 1; counter-increment: step;
   display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 8px 20px; align-items: center;
   padding-block: 18px;
 }
@@ -204,7 +213,7 @@ details.all > summary { padding: 16px 22px; font-weight: 600; }
 /* ==================== CRIME ==================== */
 .dark { position: relative; overflow: hidden; isolation: isolate; }
 .dark .wrap { position: relative; }
-.dark::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 50% at 85% 0%, rgba(251, 113, 133, 0.1), transparent), var(--bg); }
+.dark::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 50% at 85% 0%, rgba(var(--red-rgb), 0.1), transparent), var(--bg); }
 .stamp {
   position: absolute; right: var(--gutter); top: 4px;
   font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: 0.14em;
@@ -215,12 +224,12 @@ details.all > summary { padding: 16px 22px; font-weight: 600; }
 .dossier { position: relative; }
 .files { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 760px) { .files { grid-template-columns: minmax(0, 1fr); } }
-.file { background: #0b0714; border: 1px solid #2a1633; border-radius: var(--radius); padding: 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.file { background: var(--crime-bg); border: 1px solid var(--crime-line); border-radius: var(--radius); padding: 22px; display: grid; gap: 14px; align-content: start; min-width: 0; }
 .file header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .file h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; }
 .file p { color: var(--muted); font-size: 0.95rem; }
-dl.facts { margin: 0; display: grid; border-top: 1px solid #2a1633; }
-dl.facts div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px dashed #2a1633; font-size: 0.9rem; }
+dl.facts { margin: 0; display: grid; border-top: 1px solid var(--crime-line); }
+dl.facts div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px dashed var(--crime-line); font-size: 0.9rem; }
 dl.facts dt { color: var(--dim); }
 dl.facts dd { margin: 0; font-family: var(--font-mono); font-size: 0.84rem; text-align: right; color: var(--text); }
 dl.facts dd.bad { color: var(--red); }

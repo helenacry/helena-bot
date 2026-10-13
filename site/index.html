@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Helena para VSync</title>
 <meta name="description" content="Helena é um bot de economia e RPG para a VSync: trabalho, banco, loja, duelos, casamento, crime com lavagem de dinheiro e um cartão de perfil com a sua cara.">
-<meta name="theme-color" content="#09060f">
+<meta name="theme-color" content="#0d0613">
 <link rel="icon" href="assets/img/favicon.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700;800&display=swap">
@@ -55,7 +56,35 @@
 <!-- ================= HERÓI ================= -->
 <section class="hero">
   <canvas id="petals" aria-hidden="true"></canvas>
-  <span class="kanji" aria-hidden="true">ヘレナ</span>
+  <!-- ヘレナ escrito traço a traço (ヘ: 1 traço, レ: 1 traço, ナ: 2 traços). O desenho
+       completo é o estado normal; a animação só roda a partir de css/motion.css. -->
+  <svg class="kanji draw" viewBox="0 0 100 300" aria-hidden="true" focusable="false">
+    <defs>
+      <path id="k-he" pathLength="1" d="M10 62 L38 38 Q46 31 54 38 L90 70"/>
+      <path id="k-re" pathLength="1" d="M28 116 L28 176 Q28 184 36 180 Q62 168 80 130"/>
+      <path id="k-na1" pathLength="1" d="M12 240 L88 236"/>
+      <path id="k-na2" pathLength="1" d="M50 212 L50 246 Q48 274 16 290"/>
+    </defs>
+
+    <g class="ghost">
+      <use href="#k-he"/><use href="#k-re"/><use href="#k-na1"/><use href="#k-na2"/>
+    </g>
+
+    <g class="ink">
+      <use href="#k-he" style="--d:0.5s;--t:0.8s"/>
+      <use href="#k-re" style="--d:1.3s;--t:0.9s"/>
+      <use href="#k-na1" style="--d:2.2s;--t:0.5s"/>
+      <use href="#k-na2" style="--d:2.7s;--t:0.8s"/>
+    </g>
+
+    <!-- ponta luminosa que acompanha o pincel -->
+    <g class="tips">
+      <circle class="tip" r="4.5" style="--d:0.5s;--t:0.8s;offset-path:path('M10 62 L38 38 Q46 31 54 38 L90 70')"/>
+      <circle class="tip" r="4.5" style="--d:1.3s;--t:0.9s;offset-path:path('M28 116 L28 176 Q28 184 36 180 Q62 168 80 130')"/>
+      <circle class="tip" r="4.5" style="--d:2.2s;--t:0.5s;offset-path:path('M12 240 L88 236')"/>
+      <circle class="tip" r="4.5" style="--d:2.7s;--t:0.8s;offset-path:path('M50 212 L50 246 Q48 274 16 290')"/>
+    </g>
+  </svg>
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <span class="eyebrow">Bot de economia e RPG para a VSync</span>

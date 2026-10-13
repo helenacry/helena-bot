@@ -19,6 +19,13 @@
   var wind = 0;
   var lastY = window.scrollY;
 
+  // as cores vêm do CSS (css/tokens.css), para a paleta ficar em um lugar só
+  var styles = getComputedStyle(document.documentElement);
+  var colors = [
+    styles.getPropertyValue("--petal-1").trim() || "#e29be0",
+    styles.getPropertyValue("--petal-2").trim() || "#f4acce"
+  ];
+
   function resize() {
     var box = canvas.getBoundingClientRect();
 
@@ -69,7 +76,7 @@
       ctx.translate(p.x, p.y);
       ctx.rotate(p.angle);
       ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.pink ? "#f0abfc" : "#c4a8ff";
+      ctx.fillStyle = p.pink ? colors[1] : colors[0];
       ctx.beginPath();
       ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, 6.2832);
       ctx.fill();

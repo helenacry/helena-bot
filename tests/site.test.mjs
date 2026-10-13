@@ -117,6 +117,68 @@ test("cada categoria tem comandos, empregos crescem e as conquistas têm raridad
 });
 
 // ==========================================
+// VISUAL
+// ==========================================
+
+test("a linha da rotina fica atrás dos números (z-index fixado)", () => {
+    const css = read("css/sections.css");
+
+    // a linha (z-index 0) precisa ficar abaixo dos itens (z-index 1), senão a
+    // animação de entrada dos itens faz a linha dourada passar por cima dos números
+    assert.match(css, /\.steps::before,\s*\.steps::after\s*\{[^}]*z-index:\s*0/);
+    assert.match(css, /\.steps li\s*\{[^}]*z-index:\s*1/);
+    assert.match(css, /\.steps\s*\{[^}]*isolation:\s*isolate/);
+});
+
+test("o ヘレナ é um desenho em SVG com os 4 traços, escrito na ordem", () => {
+    const svg = html.match(/<svg class="kanji draw"[\s\S]*?<\/svg>/)?.[0];
+
+    assert.ok(svg, "o SVG do ヘレナ existe");
+
+    // ヘ (1 traço), レ (1 traço), ナ (2 traços)
+    const inks = [...svg.matchAll(/<use href="#(k-[a-z0-9]+)" style="--d:([\d.]+)s;--t:([\d.]+)s"\/>/g)];
+
+    assert.deepEqual(inks.map(m => m[1]), ["k-he", "k-re", "k-na1", "k-na2"]);
+
+    // cada traço começa depois de o anterior terminar
+    for (let i = 1; i < inks.length; i++) {
+        const previousEnd = Number(inks[i - 1][2]) + Number(inks[i - 1][3]);
+
+        assert.ok(Number(inks[i][2]) >= previousEnd - 0.01, `${inks[i][1]} começa depois de ${inks[i - 1][1]}`);
+    }
+
+    // o desenho completo é o estado normal: a animação só parte de "from"
+    const motion = read("css/motion.css");
+
+    assert.match(motion, /@keyframes ink\s*\{\s*from\s*\{\s*stroke-dashoffset:\s*1/);
+    assert.match(read("css/sections.css"), /\.kanji \.ink use\s*\{[^}]*stroke-dashoffset:\s*0/);
+});
+
+test("o ヘレナ continua se escrevendo com movimento reduzido (exceção documentada)", () => {
+    const motion = read("css/motion.css");
+    const reduced = motion.slice(motion.indexOf("@media (prefers-reduced-motion: reduce)"));
+
+    assert.match(reduced, /\.kanji\.draw \.ink use\s*\{[^}]*animation:\s*ink/);
+
+    // o resto da página continua parado nesse modo
+    assert.match(reduced, /\*,\s*\*::before,\s*\*::after\s*\{[^}]*animation:\s*none\s*!important/);
+});
+
+test("as cores ficam nos tokens: nenhum CSS fora de tokens.css tem cor solta", () => {
+    for (const file of readdirSync(join(SITE, "css")).filter(f => f !== "tokens.css")) {
+        const css = read(`css/${file}`);
+
+        // só branco e preto puros (texto sobre botão, sombras e máscaras) e rgba(var(--canal))
+        const loose = [...css.matchAll(/#[0-9a-fA-F]{3,8}\b|rgba?\((?!var\()[^)]*\)/g)]
+            .map(m => m[0])
+            .filter(color => !/^(#fff|#000|#ffffff|#000000)$/i.test(color))
+            .filter(color => !/^rgba\((0, 0, 0|255, 255, 255),/.test(color));
+
+        assert.deepEqual(loose, [], `css/${file} tem cor fora dos tokens`);
+    }
+});
+
+// ==========================================
 // LINKS
 // ==========================================
 

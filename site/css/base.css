@@ -90,7 +90,7 @@ section { scroll-margin-top: 76px; }
 }
 .btn:hover { background: var(--bg-3); border-color: var(--brand); text-decoration: none; }
 .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
-.btn.primary:hover { background: #9a6ee6; border-color: #9a6ee6; }
+.btn.primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
 .btn.big { padding: 14px 26px; font-size: 1rem; }
 .btn:active { transform: translateY(1px); }
 
@@ -119,7 +119,7 @@ section { scroll-margin-top: 76px; }
   justify-self: start;
   font: 500 0.84rem/1 var(--font-mono);
   color: var(--brand-hi);
-  background: #0b0716;
+  background: var(--sunk);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px 11px;
