@@ -507,7 +507,7 @@ test("a política cobre todas as tabelas do banco que guardam dados de pessoas",
     };
 
     // tabelas sem nada de pessoa (só IDs técnicos e ajustes do bot)
-    const technical = ["processed_interactions", "developer_settings"];
+    const technical = ["processed_interactions", "developer_settings", "market_state"];
 
     const tables = db
         .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")

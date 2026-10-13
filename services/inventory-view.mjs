@@ -14,6 +14,12 @@ import {
 import { getEquippedWeapon } from "./equipment.mjs";
 
 import {
+    getMarket,
+    sellPriceOf,
+    isHot
+} from "./market.mjs";
+
+import {
     createEmbed,
     HELENA_COLORS
 } from "../utils/embed.mjs";
@@ -73,6 +79,8 @@ export function buildInventoryView({
 
     const equipped = getEquippedWeapon(guildId, userId)?.id ?? null;
 
+    const market = getMarket(guildId);
+
     const shelves = inventoryShelves(inventory);
 
     // Prateleira que ficou vazia (por exemplo, depois de vender tudo)
@@ -122,8 +130,10 @@ export function buildInventoryView({
 
         const mark = entry.item_id === equipped ? "🟢 " : "";
 
+        // O preço de venda de agora (mercado do servidor); 🔥 = item em alta.
         const sells = entry.item?.sellable
-            ? ` • 💵 ${formatMoney(entry.item.sellPrice)}`
+            ? ` • 💵 ${formatMoney(sellPriceOf(entry.item, market))}` +
+                (isHot(entry.item, market) ? " 🔥" : "")
             : "";
 
         lines.push(

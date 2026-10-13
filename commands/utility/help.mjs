@@ -22,6 +22,7 @@ const CATEGORIES = {
             ["perfil", "Consulte seu perfil econômico."],
             ["ranking", "Veja a classificação dos jogadores."],
             ["loja", "Abra a loja: compre e venda itens pelos botões."],
+            ["bolsa", "Veja o índice do mercado e o item em alta (muda os preços)."],
             ["inventario", "Veja, organize e descarte seus itens."],
             ["usaritem", "Coma, beba (repõe energia) ou equipe uma arma."],
             ["descartar", "Destrua itens do inventário (sem reembolso)."]

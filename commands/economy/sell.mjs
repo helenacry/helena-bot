@@ -12,6 +12,11 @@ import {
 } from "../../services/shop.mjs";
 
 import {
+    marketLine,
+    formatPercent
+} from "../../services/market.mjs";
+
+import {
     createEmbed,
     embedResponse,
     errorEmbed,
@@ -98,6 +103,19 @@ export default {
                                 "**",
                             inline: true
                         },
+                        ...(result.market ? [{
+                            name: "📈 Mercado",
+                            value:
+                                formatMoney(result.unitPrice) +
+                                " cada • " +
+                                marketLine(result.market) +
+                                (result.hot
+                                    ? "\n🔥 **Em alta:** +" +
+                                        formatPercent(result.market.hotBonusBp) +
+                                        " nesta venda"
+                                    : ""),
+                            inline: false
+                        }] : []),
                         {
                             name: "👛 Carteira atual",
                             value: "**" +

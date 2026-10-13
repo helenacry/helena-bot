@@ -73,7 +73,8 @@ export default {
                 : buildShopHome({
                     ownerId: userId,
                     wallet: context.wallet,
-                    gems: context.gems
+                    gems: context.gems,
+                    market: context.market
                 });
 
             const response = embedResponse(view.embed);

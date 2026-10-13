@@ -15,6 +15,13 @@ import {
     getItemQuantity
 } from "./inventory.mjs";
 
+import {
+    getMarket,
+    buyPriceOf,
+    sellPriceOf,
+    isHot
+} from "./market.mjs";
+
 const MAX_CENTS = 100_000_000_000_000;
 const MAX_QUANTITY = 99;
 
@@ -96,11 +103,14 @@ function record(
 // COMPRAR ITEM
 // ==========================================
 
+// O preço é o do mercado do servidor na hora de confirmar (veja
+// services/market.mjs), não o que estava na tela quando a compra foi aberta.
 export function buyItem(
     guildId,
     userId,
     itemId,
-    requestedQuantity = 1
+    requestedQuantity = 1,
+    { now } = {}
 ) {
     const quantity = validateQuantity(
         requestedQuantity
@@ -123,7 +133,11 @@ export function buyItem(
         );
     }
 
-    const total = item.buyPrice * quantity;
+    const market = getMarket(guildId, now);
+
+    const unitPrice = buyPriceOf(item, market);
+
+    const total = unitPrice * quantity;
 
     if (!Number.isSafeInteger(total)) {
         throw new Error(
@@ -196,6 +210,8 @@ export function buyItem(
             item,
             quantity,
             total,
+            unitPrice,
+            market,
             wallet: player.wallet - total,
             inventoryQuantity: inventoryResult.quantity
         };
@@ -210,7 +226,8 @@ export function sellItem(
     guildId,
     userId,
     itemId,
-    requestedQuantity = 1
+    requestedQuantity = 1,
+    { now } = {}
 ) {
     const quantity = validateQuantity(
         requestedQuantity
@@ -234,7 +251,11 @@ export function sellItem(
         );
     }
 
-    const total = item.sellPrice * quantity;
+    const market = getMarket(guildId, now);
+
+    const unitPrice = sellPriceOf(item, market);
+
+    const total = unitPrice * quantity;
 
     if (!Number.isSafeInteger(total)) {
         throw new Error(
@@ -305,6 +326,9 @@ export function sellItem(
             item,
             quantity,
             total,
+            unitPrice,
+            hot: isHot(item, market),
+            market,
             wallet: player.wallet + total,
             inventoryQuantity: inventoryResult.quantity
         };

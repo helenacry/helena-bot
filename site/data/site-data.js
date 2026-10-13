@@ -2,8 +2,8 @@
 window.Helena = window.Helena || {};
 window.Helena.data = {
  "stats": {
-  "commands": 52,
-  "aliases": 26,
+  "commands": 53,
+  "aliases": 27,
   "jobs": 23,
   "shopItems": 20,
   "weapons": 14,
@@ -15,6 +15,13 @@ window.Helena.data = {
    "label": "Economia",
    "emoji": "💰",
    "commands": [
+    {
+     "name": "bolsa",
+     "aliases": [
+      "mercado"
+     ],
+     "description": "Veja o índice do mercado, o item em alta e os preços de agora"
+    },
     {
      "name": "comprar",
      "aliases": [],

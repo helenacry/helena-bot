@@ -19,6 +19,10 @@ process.env.HELENA_DATABASE_PATH = join(
 
 process.env.VSYNC_BOT_TOKEN = "token-de-teste";
 
+// A bolsa sorteia preços ao acaso. Nos testes ela começa desligada, para a
+// loja valer o preço de tabela; tests/market.test.mjs liga e controla o sorteio.
+process.env.HELENA_MARKET = "off";
+
 // Sem os contadores do servidor de suporte nem edição ao vivo rápida
 // demais: os testes controlam o tempo por conta própria.
 delete process.env.HELENA_SUPPORT_GUILD_ID;
@@ -31,7 +35,8 @@ const migrations = [
     ["../services/player-names.mjs", "runPlayerNamesMigrations"],
     ["../database/achievement-migrations.mjs", "runAchievementMigrations"],
     ["../database/crime-migrations.mjs", "runCrimeMigrations"],
-    ["../database/web-migrations.mjs", "runWebMigrations"]
+    ["../database/web-migrations.mjs", "runWebMigrations"],
+    ["../database/market-migrations.mjs", "runMarketMigrations"]
 ];
 
 // Silencia o log das migrações.

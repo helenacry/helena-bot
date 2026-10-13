@@ -11,6 +11,14 @@ import { formatMoney, getPlayer } from "../database/economy.mjs";
 import { getInventory } from "./inventory.mjs";
 
 import {
+    getMarket,
+    buyPriceOf,
+    priceItem,
+    marketLine,
+    formatPercent
+} from "./market.mjs";
+
+import {
     createEmbed,
     HELENA_COLORS
 } from "../utils/embed.mjs";
@@ -79,7 +87,7 @@ export function buyableItems(category = ALL_CATEGORIES) {
 
 // Categorias que têm itens à venda, com a contagem e o menor preço
 // de cada uma. A primeira é sempre "Todas".
-export function shopCategories() {
+export function shopCategories(market = null) {
     const all = ITEMS.filter(isBuyable);
 
     const entry = (value, label, emoji, items) => ({
@@ -88,7 +96,7 @@ export function shopCategories() {
         emoji,
         count: items.length,
         minPrice: items.length
-            ? Math.min(...items.map(item => item.buyPrice))
+            ? Math.min(...items.map(item => buyPriceOf(item, market)))
             : 0
     });
 
@@ -126,9 +134,14 @@ export function shopContext(guildId, userId) {
     return {
         wallet: player.wallet,
         gems: player.gems ?? 0,
-        owned
+        owned,
+        market: getMarket(guildId)
     };
 }
+
+// A linha do mercado no topo da loja (nada com a bolsa desligada). O
+// detalhe do índice e do item em alta está no /bolsa.
+const marketLines = market => market ? [marketLine(market)] : [];
 
 const plural = (count, one, many) =>
     `${count} ${count === 1 ? one : many}`;
@@ -173,14 +186,14 @@ export function affordability(item, wallet, owned = 0) {
 // COMPONENTES COMUNS
 // ==========================================
 
-function categoryMenu(ownerId, selected) {
+function categoryMenu(ownerId, selected, market = null) {
     return row({
         type: "select",
         customId: `loja:cat:${ownerId}`,
         placeholder: "📂 Escolha uma prateleira",
         minValues: 1,
         maxValues: 1,
-        options: shopCategories().map(entry => ({
+        options: shopCategories(market).map(entry => ({
             label: `${entry.emoji} ${entry.label} (${entry.count})`,
             value: entry.value,
             description: `A partir de ${formatMoney(entry.minPrice)}`,
@@ -202,9 +215,10 @@ const toolButtons = ownerId => [
 export function buildShopHome({
     ownerId,
     wallet = 0,
-    gems = 0
+    gems = 0,
+    market = null
 }) {
-    const categories = shopCategories();
+    const categories = shopCategories(market);
 
     const total = categories[0].count;
 
@@ -213,6 +227,7 @@ export function buildShopHome({
 
         description: [
             walletLine(wallet, gems),
+            ...marketLines(market),
             "",
             "Bem-vindo! Escolha uma prateleira no menu abaixo " +
             "ou toque em **Ver tudo**."
@@ -250,7 +265,7 @@ export function buildShopHome({
         embed,
 
         components: [
-            categoryMenu(ownerId, null),
+            categoryMenu(ownerId, null, market),
 
             row(
                 button(
@@ -294,9 +309,10 @@ export function buildShopView({
     page = 1,
     wallet = 0,
     gems = 0,
-    owned = {}
+    owned = {},
+    market = null
 }) {
-    const items = buyableItems(category);
+    const items = buyableItems(category).map(item => priceItem(item, market));
 
     const pages = Math.max(1, Math.ceil(items.length / SHOP_PAGE_SIZE));
 
@@ -330,7 +346,11 @@ export function buildShopView({
         const have = owned[item.id] ?? 0;
 
         const sell = item.sellable
-            ? formatMoney(item.sellPrice)
+            ? formatMoney(item.sellPrice) + (
+                item.hot
+                    ? ` 🔥 em alta (+${formatPercent(market.hotBonusBp)})`
+                    : ""
+            )
             : "indisponível";
 
         const stack = Number.isFinite(item.maxStack)
@@ -373,6 +393,7 @@ export function buildShopView({
 
         description: [
             walletLine(wallet, gems),
+            ...marketLines(market),
             `📂 **Prateleira:** ${emoji} ${label} • ` +
             plural(items.length, "item", "itens"),
             "",
@@ -393,7 +414,7 @@ export function buildShopView({
     // COMPONENTES
     // ==================================
 
-    const rows = [categoryMenu(ownerId, category)];
+    const rows = [categoryMenu(ownerId, category, market)];
 
     if (slice.length > 0) {
         rows.push(row(

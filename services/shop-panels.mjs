@@ -5,6 +5,12 @@ import { formatMoney, getPlayer } from "../database/economy.mjs";
 
 import { getItemQuantity } from "./inventory.mjs";
 
+import {
+    getMarket,
+    buyPriceOf,
+    priceItem
+} from "./market.mjs";
+
 import { prisonBlock } from "./prison.mjs";
 
 import { safeText } from "./user-lookup.mjs";
@@ -73,12 +79,12 @@ function shopScreen(interaction, ownerId, category, page) {
 }
 
 function shopHome(interaction, ownerId) {
-    const { wallet, gems } = shopContext(
+    const { wallet, gems, market } = shopContext(
         interaction.guildId,
         interaction.user.id
     );
 
-    return update(buildShopHome({ ownerId, wallet, gems }));
+    return update(buildShopHome({ ownerId, wallet, gems, market }));
 }
 
 function inventoryScreen(interaction, ownerId, category, page) {
@@ -229,7 +235,7 @@ export function handleShopClick(interaction) {
         const item = getItem(a);
 
         return item && isBuyable(item)
-            ? buyItemModal(item)
+            ? buyItemModal(priceItem(item, getMarket(interaction.guildId)))
             : warn("Item indisponível", "Esse item não está mais à venda.");
     }
 
@@ -275,7 +281,7 @@ async function buy(interaction, comandos, item, quantityText) {
 
         quantity = Math.min(
             MAX_PURCHASE,
-            Math.floor(wallet / item.buyPrice),
+            Math.floor(wallet / buyPriceOf(item, getMarket(guildId))),
             item.maxStack - owned
         );
 

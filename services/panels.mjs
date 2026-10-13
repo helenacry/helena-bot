@@ -25,6 +25,8 @@ import {
     handleUseModal
 } from "./use-panel.mjs";
 
+import { handleMarketClick } from "./market-panel.mjs";
+
 import {
     button,
     row,
@@ -49,6 +51,7 @@ import { LAUNDERING_CONFIG } from "../config/crime.mjs";
 //   bio:editar:<dono>                        /bio
 //   loja:...                                 /loja        (shop-panels.mjs)
 //   inv:...                                  /inventario  (shop-panels.mjs)
+//   bolsa:atualizar|fechar:<dono>            /bolsa       (market-panel.mjs)
 //
 // O ID do dono vai no customId: os botões pessoais só funcionam
 // para quem abriu o painel. O envio do modal leva o customId do
@@ -106,6 +109,10 @@ export function handlePanelClick(interaction) {
 
     if (area === "uso") {
         return handleUseClick(interaction);
+    }
+
+    if (area === "bolsa") {
+        return handleMarketClick(interaction);
     }
 
     const userId = interaction.user?.id;

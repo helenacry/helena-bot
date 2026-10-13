@@ -65,6 +65,10 @@ import {
     runWebMigrations
 } from "./database/web-migrations.mjs";
 
+import {
+    runMarketMigrations
+} from "./database/market-migrations.mjs";
+
 import { guildIds } from "./services/guild-registry.mjs";
 
 import {
@@ -411,6 +415,7 @@ runPlayerNamesMigrations();
 runAchievementMigrations();
 runCrimeMigrations();
 runWebMigrations();
+runMarketMigrations();
 
 // ==========================================
 // CARREGAR E REGISTRAR COMANDOS
