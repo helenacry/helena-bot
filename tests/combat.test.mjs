@@ -156,13 +156,10 @@ test("arma sem durabilidade não luta", () => {
     assert.throws(() => accept(g, B), /sem durabilidade/);
 });
 
-// BUG CONHECIDO (services/combat.mjs, attack): o código desconta o colete de quem
-// ATACA (gear.vest do próprio atacante), então o colete enfraquece o seu golpe em vez
-// de proteger. Este teste descreve o comportamento certo, o que a descrição do /colete
-// promete ("pontos de defesa"), e fica como pendente (todo) até alguém decidir corrigir.
-test("o colete de quem apanha tira dano do golpe, até 15 pontos, e o dano nunca fica abaixo de 1", {
-    todo: "o colete hoje reduz o dano de quem tem o colete, e não o de quem o enfrenta"
-}, () => {
+// O colete protege quem o veste: tira pontos do golpe que essa pessoa recebe. (Antes de
+// 2026-10-13 o código descontava o colete do próprio atacante, enfraquecendo o golpe de
+// quem o comprava; o teste logo abaixo garante que isso não volta.)
+test("o colete de quem apanha tira dano do golpe, até 15 pontos, e o dano nunca fica abaixo de 1", () => {
     const g = guild();
 
     player(g, A, { weapon: "revolver" });   // dano 20
@@ -183,6 +180,23 @@ test("o colete de quem apanha tira dano do golpe, até 15 pontos, e o dano nunca
     gear(g, A, { vest: 10 });
 
     assert.equal(duel(g).targetDamage, 1, "5 menos o colete de 10 de A, no mínimo 1");
+});
+
+test("o colete de quem ataca não enfraquece o próprio golpe, e protege só de quem o enfrenta", () => {
+    const g = guild();
+
+    player(g, A, { weapon: "revolver" });   // dano 20
+    player(g, B, { weapon: "pocket_knife" });   // dano 8
+
+    gear(g, A, { ammo: 3, vest: 10 });
+
+    const result = duel(g);
+
+    assert.equal(result.senderDamage, 20, "A tem colete, mas o golpe de A continua valendo 20");
+    assert.equal(result.targetDamage, 1, "o golpe de B (8) contra o colete de 10 de A cai para o mínimo");
+
+    assert.deepEqual([result.senderHp, result.targetHp], [99, 80], "o colete protegeu A, não B");
+    assert.equal(result.winner, A);
 });
 
 // ==========================================

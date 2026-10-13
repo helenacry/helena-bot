@@ -36,7 +36,12 @@ Quem se cura no hospital ganha **{{v:hospital.protection}} de proteção**: ness
 
 ## Colete
 
-O **`/colete`** custa **{{v:armory.vestPrice}}** e dá **{{v:armory.vestDefense}} pontos de defesa**. Comprar de novo substitui o colete que você tem. Na conta do duelo, a defesa tira dano do golpe, até um limite de pontos.
+O **`/colete`** custa **{{v:armory.vestPrice}}** e dá **{{v:armory.vestDefense}} pontos de defesa**. Comprar de novo substitui o colete que você tem.
+
+Num duelo, o colete tira os pontos de defesa de **cada golpe que você recebe**, até **{{v:duel.vestCap}} pontos** por golpe, e o golpe nunca cai abaixo de 1. Ele protege só você: o **seu** golpe continua valendo o dano inteiro da sua arma. O colete não se desgasta com o uso.
+
+> [!EXAMPLE]
+> Um adversário com {{v:duel.exampleWeapon}} (dano {{v:duel.exampleWeaponDamage}}) acerta você. Com o colete de {{v:armory.vestDefense}} pontos, o golpe passa a valer {{v:duel.exampleVest}}. Se ele estivesse sem arma, o golpe valeria {{v:duel.unarmed}} e cairia para {{v:duel.exampleUnarmedVest}}.
 
 ## Munição e conserto
 

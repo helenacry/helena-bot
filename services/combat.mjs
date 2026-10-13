@@ -352,7 +352,9 @@ export function accept(guildId, targetId) {
         // CALCULAR ATAQUE
         // ==============================
 
-        const attack = (weapon, gear) => {
+        // Quem ataca gasta a própria munição e durabilidade (gear); o colete
+        // que reduz o golpe é o de quem apanha (opponent).
+        const attack = (weapon, gear, opponent) => {
             let damage = weapon
                 ? Number(weapon.damage || DUEL_RULES.defaultWeaponDamage)
                 : DUEL_RULES.unarmedDamage;
@@ -401,18 +403,20 @@ export function accept(guildId, targetId) {
 
             return Math.max(
                 1,
-                damage - Math.min(DUEL_RULES.vestCap, gear.vest)
+                damage - Math.min(DUEL_RULES.vestCap, opponent.vest)
             );
         };
 
         const senderDamage = attack(
             senderWeapon,
-            sender
+            sender,
+            target
         );
 
         const targetDamage = attack(
             targetWeapon,
-            target
+            target,
+            sender
         );
 
         // ==============================

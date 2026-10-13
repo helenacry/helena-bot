@@ -31,7 +31,7 @@ Cada um causa o dano da arma que tem equipada:
 
 - **sem arma**, o golpe vale {{v:duel.unarmed}};
 - **com arma**, vale o dano dela (as armas que não definem o próprio dano valem {{v:duel.defaultDamage}}). A tabela está em [Armas](wiki:combat/weapons);
-- o **colete** também entra na conta do dano, até um limite de pontos. Veja em [Vida, colete e munição](wiki:combat/health-and-gear).
+- o **colete de quem apanha** tira pontos do golpe recebido, até **{{v:duel.vestCap}} pontos** por golpe, e o dano nunca fica abaixo de 1. O colete protege só quem o veste: o golpe dele continua valendo o dano inteiro da arma. Veja em [Vida, colete e munição](wiki:combat/health-and-gear).
 
 A **arma de fogo** gasta **1 munição** por duelo e **toda arma** gasta **1 ponto de durabilidade**. Arma de fogo sem munição, ou arma sem durabilidade, impede o duelo: nada é gasto, e o desafio continua esperando.
 

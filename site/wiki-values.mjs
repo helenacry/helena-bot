@@ -281,7 +281,14 @@ export async function collectWikiBot() {
             minHp: String(DUEL_RULES.minHp),
             winXp: String(DUEL_RULES.winXp),
             unarmed: String(DUEL_RULES.unarmedDamage),
-            defaultDamage: String(DUEL_RULES.defaultWeaponDamage)
+            defaultDamage: String(DUEL_RULES.defaultWeaponDamage),
+            vestCap: String(DUEL_RULES.vestCap),
+
+            // exemplo do colete: um revólver, e um golpe sem arma, contra o colete da loja
+            exampleWeapon: getItem("revolver").name.toLowerCase(),
+            exampleWeaponDamage: String(getItem("revolver").damage),
+            exampleVest: String(Math.max(1, getItem("revolver").damage - Math.min(DUEL_RULES.vestCap, ARMORY_RULES.vestDefense))),
+            exampleUnarmedVest: String(Math.max(1, DUEL_RULES.unarmedDamage - Math.min(DUEL_RULES.vestCap, ARMORY_RULES.vestDefense)))
         },
 
         hospital: {
