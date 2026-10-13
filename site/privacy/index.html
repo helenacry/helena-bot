@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Política de privacidade da Helena</title>
+<meta name="description" content="Quais dados a Helena guarda, por que, por quanto tempo e como você pede para apagar ou corrigir.">
+<meta name="theme-color" content="#0d0613">
+<link rel="icon" href="../assets/img/favicon.png">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/components.css">
+<link rel="stylesheet" href="../css/legal.css">
+<script defer src="../js/config.js"></script>
+<script defer src="../js/util.js"></script>
+<script defer src="../js/nav.js"></script>
+</head>
+<body>
+
+<header class="top" id="top-bar">
+  <div class="wrap">
+    <a class="brand" href="../" aria-label="Helena, voltar ao site">
+      <img src="../assets/img/helena-avatar.webp" alt="" width="36" height="36">
+      <b>Helena</b><small>ヘレナ</small>
+    </a>
+    <div class="actions">
+      <a class="btn" href="../">Voltar ao site</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap legal">
+
+  <header class="legal-head">
+    <span class="eyebrow">Política de privacidade</span>
+    <h1>O que a Helena guarda sobre você</h1>
+    <p class="lede">Quais dados ficam no banco do bot, o que o painel do site registra, por que, por quanto tempo e como você pede para apagar ou corrigir.</p>
+    <ul class="legal-meta">
+      <li>Versão 1.0</li>
+      <li>Em vigor desde 13 de outubro de 2026</li>
+    </ul>
+  </header>
+
+  <div class="legal-grid">
+
+    <nav class="legal-toc" aria-label="Neste documento">
+      <h2>Neste documento</h2>
+      <ol>
+        <li><a href="#responsavel">Quem é responsável</a></li>
+        <li><a href="#escopo">O que isto cobre</a></li>
+        <li><a href="#bot">Dados no bot</a></li>
+        <li><a href="#jogo">Dados do jogo</a></li>
+        <li><a href="#site">Site e painel</a></li>
+        <li><a href="#terceiros">Serviços de terceiros</a></li>
+        <li><a href="#bases">Por que usamos</a></li>
+        <li><a href="#prazos">Por quanto tempo</a></li>
+        <li><a href="#direitos">Seus direitos</a></li>
+        <li><a href="#seguranca">Segurança</a></li>
+        <li><a href="#menores">Crianças e adolescentes</a></li>
+        <li><a href="#exterior">Fora do Brasil</a></li>
+        <li><a href="#cookies">Cookies e armazenamento</a></li>
+        <li><a href="#mudancas">Mudanças</a></li>
+        <li><a href="#contato">Contato</a></li>
+      </ol>
+    </nav>
+
+    <article class="legal-body">
+
+      <section class="legal-sum" aria-labelledby="resumo">
+        <h2 id="resumo">Resumo em poucas linhas</h2>
+        <ul>
+          <li>O bot guarda o que o jogo precisa: seu ID da VSync, o nome de exibição e o seu progresso (dinheiro, itens, nível, crime, casamento).</li>
+          <li>Mensagens que não são comandos não são guardadas.</li>
+          <li>As páginas do site não usam cookies nem estatísticas de visita. O painel guarda a sua sessão no navegador e um registro de segurança, com IP e navegador, por <strong data-fact="claim-log-days">90</strong> dias.</li>
+          <li>Não vendemos dados e não usamos para publicidade.</li>
+          <li>Você pode pedir para ver, corrigir ou apagar o que guardamos sobre você.</li>
+        </ul>
+        <p class="note">Este resumo ajuda a ler. O que vale é o texto completo abaixo.</p>
+      </section>
+
+      <section id="responsavel">
+        <h2><span class="n">01</span> Quem é responsável</h2>
+        <p>O responsável pelos dados (o "controlador", na Lei Geral de Proteção de Dados, a LGPD) é o desenvolvedor independente que mantém a Helena. Para falar com ele, use o <a href="https://github.com/matheustonon1" data-link="contact" target="_blank" rel="noopener">perfil do desenvolvedor no GitHub</a> ou o <a href="https://vsync.lat/tfe6pdxk" data-link="support" target="_blank" rel="noopener">servidor oficial</a>. Não há e-mail público.</p>
+      </section>
+
+      <section id="escopo">
+        <h2><span class="n">02</span> O que isto cobre</h2>
+        <p>Esta política vale para o bot, para este site e para o painel da conta. Ela não cobre a VSync, a Cloudflare, o GitHub nem o Google, que têm as próprias políticas e tratam os dados por conta própria (seção 6).</p>
+      </section>
+
+      <section id="bot">
+        <h2><span class="n">03</span> Dados que o bot recebe</h2>
+        <p>Quando você usa um comando, aperta um botão ou envia um formulário do bot, a VSync entrega à Helena:</p>
+        <ul>
+          <li>o seu ID de usuário, o nome de exibição (ou o nome de usuário) e se você é um bot;</li>
+          <li>o ID do servidor e do canal onde você usou o comando;</li>
+          <li>o que você escolheu ou digitou no comando, no botão ou no formulário.</li>
+        </ul>
+        <p>Nos servidores onde a Helena está, a VSync entrega a ela as mensagens do canal. A Helena só olha o começo do texto, para ver se é um comando com o prefixo <code>h</code>. Se não for, a mensagem é descartada na hora e <strong>não é guardada</strong>.</p>
+        <p>O <code>/userinfo</code> consulta o perfil público de quem você escolher na VSync. Guardamos só a contagem de quantas vezes o perfil de cada pessoa foi consultado, ligada ao ID dela.</p>
+      </section>
+
+      <section id="jogo">
+        <h2><span class="n">04</span> Dados do jogo</h2>
+        <p>Isto fica no banco de dados do bot, ligado ao seu ID:</p>
+        <h3>Por servidor</h3>
+        <ul>
+          <li>carteira, banco, dinheiro sujo, XP, nível, energia, daily e sequência do daily;</li>
+          <li>inventário e itens equipados;</li>
+          <li>missões, conquistas e títulos;</li>
+          <li>ficha de crime, prisão e lavagem de dinheiro;</li>
+          <li>combate: vida, vitórias e derrotas, histórico de duelos, munição, colete e durabilidade;</li>
+          <li>casamento e pedidos de casamento;</li>
+          <li>a bio do perfil (até 160 caracteres).</li>
+        </ul>
+        <h3>Para toda a conta</h3>
+        <ul>
+          <li>gemas e a hora da última coleta do bônus de gemas;</li>
+          <li>o nome de exibição, guardado para os rankings e as menções (até 80 caracteres, atualizado quando você usa um comando).</li>
+        </ul>
+        <h3>Histórico e registros</h3>
+        <ul>
+          <li>transferências e outras movimentações de dinheiro: quem enviou, quem recebeu, quanto e quando;</li>
+          <li>ajustes feitos por administradores, como saldo, XP, itens e zeragens, com quem fez e quando;</li>
+          <li>a lista de pessoas bloqueadas da Helena, com o motivo, e o registro das ações do dono do bot.</li>
+        </ul>
+      </section>
+
+      <section id="site">
+        <h2><span class="n">05</span> Site e painel</h2>
+        <p><strong>As páginas</strong> (início, termos e privacidade) não usam cookies nem rastreadores próprios, e não fazemos estatística de visitas.</p>
+        <p><strong>O painel</strong> existe para você coletar o daily e as gemas pelo navegador. Ao clicar em "Entrar com a VSync", você autoriza a Helena a ler o seu nome de usuário, o nome de exibição, a foto e a lista de servidores onde você está. Mostramos só os que a Helena também conhece.</p>
+        <ul>
+          <li><strong>Sessão.</strong> Guardamos o seu ID, o nome, a foto, a lista de servidores em comum, o IP e o navegador, por até <strong data-fact="session-hours">6 horas</strong>. O código da sessão não fica guardado: só um hash dele, que não serve para entrar na sua sessão.</li>
+          <li><strong>Registro de segurança.</strong> Cada entrada, saída, coleta e recusa grava o seu ID, o tipo, o servidor, o resultado, o IP, o navegador e a data. Serve para impedir fraude e resolver reclamações.</li>
+          <li><strong>Verificação anti-robô.</strong> Ao coletar, a Cloudflare (Turnstile) analisa o seu navegador e o seu IP. A Helena só recebe o resultado: passou ou não.</li>
+        </ul>
+        <p>A Helena usa o acesso que a VSync dá no login só para ler essas informações e logo depois o devolve (revoga). Ela não lê as suas mensagens nem age em seu nome na VSync.</p>
+      </section>
+
+      <section id="terceiros">
+        <h2><span class="n">06</span> Serviços de terceiros</h2>
+        <ul>
+          <li><strong>VSync.</strong> É onde você usa o bot e faz o login do painel. Recebe e envia os dados da seção 3.</li>
+          <li><strong>Cloudflare.</strong> Verifica que quem coleta no painel não é um robô (Turnstile).</li>
+          <li><strong>GitHub.</strong> Hospeda estas páginas. Recebe o IP e o navegador de quem as abre, como em qualquer site.</li>
+          <li><strong>Google Fonts.</strong> As fontes das páginas vêm do Google, que recebe o IP e o navegador de quem abre uma página.</li>
+          <li><strong>Conexão do painel.</strong> O serviço que publica a API do painel na internet (um túnel ou um servidor) enxerga o tráfego entre o seu navegador e a API.</li>
+        </ul>
+        <p>Não vendemos dados, não usamos para publicidade e não passamos para mais ninguém, a não ser por ordem legal.</p>
+      </section>
+
+      <section id="bases">
+        <h2><span class="n">07</span> Por que usamos</h2>
+        <div class="legal-table">
+          <table>
+            <thead>
+              <tr><th>Para quê</th><th>Dados</th><th>Base na LGPD</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Fazer o jogo funcionar</td><td data-label="Dados">ID, nome, servidor, comandos e dados do jogo</td><td data-label="Base na LGPD">Execução do serviço que você pediu (art. 7º, V)</td></tr>
+              <tr><td>Entrar no painel e coletar</td><td data-label="Dados">Identidade e servidores da VSync</td><td data-label="Base na LGPD">Consentimento, quando você clica em entrar (art. 7º, I)</td></tr>
+              <tr><td>Segurança e combate a fraude</td><td data-label="Dados">Registro do painel, IP, navegador, bloqueios, ajustes de administradores</td><td data-label="Base na LGPD">Legítimo interesse (art. 7º, IX)</td></tr>
+              <tr><td>Suporte e reclamações</td><td data-label="Dados">O que você nos contar e o histórico ligado ao seu ID</td><td data-label="Base na LGPD">Legítimo interesse (art. 7º, IX)</td></tr>
+              <tr><td>Cumprir a lei</td><td data-label="Dados">O que uma ordem legal exigir</td><td data-label="Base na LGPD">Obrigação legal (art. 7º, II)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="prazos">
+        <h2><span class="n">08</span> Por quanto tempo</h2>
+        <div class="legal-table">
+          <table>
+            <thead>
+              <tr><th>Dado</th><th>Quanto tempo</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Dados do jogo, gemas e nome guardado</td><td data-label="Quanto tempo">Enquanto o jogo existir, ou até você pedir a exclusão. Não há apagamento automático.</td></tr>
+              <tr><td>Histórico de transferências, de duelos e a contagem do <code>/userinfo</code></td><td data-label="Quanto tempo">Sem prazo automático. Saem quando você pede a exclusão.</td></tr>
+              <tr><td>Registros de administradores e do dono do bot</td><td data-label="Quanto tempo">Pelo tempo em que forem úteis para resolver disputas.</td></tr>
+              <tr><td>Sessão do painel</td><td data-label="Quanto tempo">Até <strong data-fact="session-hours">6 horas</strong>. Depois de vencida, é apagada automaticamente em poucos minutos.</td></tr>
+              <tr><td>Registro de segurança do painel</td><td data-label="Quanto tempo"><strong data-fact="claim-log-days">90</strong> dias. Depois, é apagado automaticamente.</td></tr>
+              <tr><td>Mensagens que não são comandos</td><td data-label="Quanto tempo">Não são guardadas.</td></tr>
+              <tr><td>Cópias de segurança do banco</td><td data-label="Quanto tempo">Cópias feitas à mão podem ainda ter dados que já saíram do banco principal. Elas são apagadas quando deixam de ser úteis.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="direitos">
+        <h2><span class="n">09</span> Seus direitos</h2>
+        <p>Pela LGPD, você pode pedir:</p>
+        <ul>
+          <li>confirmação de que tratamos dados seus e acesso a eles;</li>
+          <li>correção de dados incompletos, errados ou desatualizados;</li>
+          <li>anonimização, bloqueio ou eliminação de dados desnecessários ou tratados fora da lei;</li>
+          <li>eliminação dos dados tratados com o seu consentimento;</li>
+          <li>informação sobre com quem os dados são compartilhados;</li>
+          <li>a retirada do consentimento, o que no painel você faz saindo e deixando de usá-lo.</li>
+        </ul>
+        <p><strong>Como pedir.</strong> Fale com o desenvolvedor pelo contato da seção 15, de preferência com a mesma conta da VSync a que os dados pertencem, para confirmarmos que o pedido é seu. Hoje não existe um comando para apagar tudo sozinho: o pedido é tratado à mão, e a resposta vem pelo mesmo canal, o mais rápido que der.</p>
+        <p><strong>O que acontece.</strong> Ao pedir a exclusão, apagamos ou anonimizamos os dados de jogo, as gemas, o nome guardado, as sessões e os registros do painel ligados ao seu ID. Podemos manter o mínimo para cumprir a lei ou nos defender, como o registro de um bloqueio por abuso. O seu nome pode seguir aparecendo em mensagens antigas que já estão na VSync, porque elas não ficam com a Helena.</p>
+        <p>Se você achar que tratamos seus dados de forma errada, pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
+      </section>
+
+      <section id="seguranca">
+        <h2><span class="n">10</span> Segurança</h2>
+        <ul>
+          <li>O login do painel é feito pela VSync. A Helena não vê nem guarda senha.</li>
+          <li>O código da sessão é guardado só como hash.</li>
+          <li>A API do painel limita as tentativas por IP e por pessoa e só libera o uso pelo navegador a partir do site oficial.</li>
+          <li>Os segredos (como o token do bot e a chave secreta do Turnstile) ficam só no servidor, nunca no site.</li>
+          <li>O banco de dados fica no servidor onde o bot roda, e só o desenvolvedor tem acesso.</li>
+        </ul>
+        <p>Nenhum sistema é totalmente seguro. Se houver um incidente que traga risco a você, avisamos no servidor oficial e, quando a lei exigir, a ANPD.</p>
+      </section>
+
+      <section id="menores">
+        <h2><span class="n">11</span> Crianças e adolescentes</h2>
+        <p>A Helena é para quem pode ter conta na VSync. Não perguntamos a sua idade e não coletamos de propósito nada além do que o jogo usa. Se você responde por uma criança ou um adolescente e quer apagar os dados dele, peça pelo contato da seção 15. Tratamos esses pedidos pensando no melhor interesse do menor.</p>
+      </section>
+
+      <section id="exterior">
+        <h2><span class="n">12</span> Fora do Brasil</h2>
+        <p>Cloudflare, GitHub e Google têm servidores fora do Brasil, então o IP e o navegador de quem usa o site passam por lá. Cada um tem as próprias garantias; veja as políticas deles. O banco de dados do bot fica no servidor do desenvolvedor.</p>
+      </section>
+
+      <section id="cookies">
+        <h2><span class="n">13</span> Cookies e armazenamento</h2>
+        <div class="legal-table">
+          <table>
+            <thead>
+              <tr><th>Onde</th><th>O que é</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Páginas do site</td><td data-label="O que é">Nenhum cookie próprio.</td></tr>
+              <tr><td>Painel: <code>helena.session</code> (localStorage)</td><td data-label="O que é">O código da sua sessão e a hora em que ela vence. Sair do painel apaga.</td></tr>
+              <tr><td>Painel: <code>helena.oauth</code> (sessionStorage)</td><td data-label="O que é">Dois códigos temporários do login com a VSync. Apagados assim que o login termina.</td></tr>
+              <tr><td>Painel: desafio anti-robô</td><td data-label="O que é">A Cloudflare pode guardar cookies ou dados próprios do navegador para o Turnstile funcionar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="mudancas">
+        <h2><span class="n">14</span> Mudanças</h2>
+        <p>Podemos atualizar esta política. A versão e a data ficam no topo da página, e mudanças importantes são avisadas no servidor oficial.</p>
+      </section>
+
+      <section id="contato">
+        <h2><span class="n">15</span> Contato</h2>
+        <p>Para qualquer pedido ou dúvida sobre dados, use o <a href="https://github.com/matheustonon1" data-link="contact" target="_blank" rel="noopener">perfil do desenvolvedor no GitHub</a> ou o <a href="https://vsync.lat/tfe6pdxk" data-link="support" target="_blank" rel="noopener">servidor oficial</a>.</p>
+      </section>
+
+    </article>
+  </div>
+</main>
+
+<footer class="legal-foot">
+  <div class="wrap">
+    <ul>
+      <li><a href="../">Site</a></li>
+      <li><a href="../terms/">Termos de uso</a></li>
+      <li><a href="./" aria-current="page">Privacidade</a></li>
+    </ul>
+    <p>A Helena é um projeto independente feito para a VSync, sem ligação oficial com ela.</p>
+  </div>
+</footer>
+
+</body>
+</html>

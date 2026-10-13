@@ -179,7 +179,7 @@ O painel permite coletar o **daily** e um **bônus de gemas** pelo navegador, en
 4. Crie uma chave gratuita do [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile): a chave **secreta** vai em `HELENA_TURNSTILE_SECRET` e a chave **do site** em `site/js/config.js`.
 5. Preencha `apiUrl`, `clientId` e `turnstileSiteKey` em `site/js/config.js`. Com `apiUrl` vazio, o painel fica escondido no site.
 
-**Segurança.** CORS só para as origens listadas (nunca `*`) e sem cookies; limites de tentativas por IP e por pessoa; corpo máximo de 8 KB; o endereço de retorno do login precisa ser um dos cadastrados; cada entrada, coleta e recusa fica em `web_claim_log` com data, IP e navegador (o site avisa isso). Automação para coletar não é permitida.
+**Segurança.** CORS só para as origens listadas (nunca `*`) e sem cookies; limites de tentativas por IP e por pessoa; corpo máximo de 8 KB; o endereço de retorno do login precisa ser um dos cadastrados; cada entrada, coleta e recusa fica em `web_claim_log` com data, IP e navegador (o site avisa isso) e é apagada depois de `claimLogDays` dias (90, em `config/web.mjs`), junto com as sessões vencidas, na limpeza que roda a cada 10 minutos. Automação para coletar não é permitida.
 
 ## Site
 
@@ -189,7 +189,9 @@ A pasta `site/` tem a página de divulgação da Helena. É HTML, CSS e JS puros
 site/
   index.html          só marcação
   account/index.html  painel da conta (daily e gemas), escondido até haver API
-  css/                tokens, base, components, sections, motion, account
+  terms/index.html    termos de uso
+  privacy/index.html  política de privacidade
+  css/                tokens, base, components, sections, motion, account, legal
   js/                 config, util, nav, render, commands, copy, petals, motion, account
   data/site-data.js   gerado por `npm run site:data` (não edite à mão)
   assets/img/         imagens derivadas da arte em assets/ (veja abaixo)
@@ -202,6 +204,7 @@ Os scripts são clássicos (não módulos) e dividem o objeto `window.Helena`, p
 
 - **No ar:** https://helenacry.github.io/helena-bot/. O workflow `.github/workflows/pages.yml` publica a pasta `site/` no GitHub Pages a cada mudança nela na `main` (e dá para rodar à mão na aba Actions). Os scripts `.mjs` de `site/` não vão para o ar.
 - **Links:** o convite do bot e o servidor oficial ficam em `site/js/config.js`. `codeUrl` (link do repositório) está vazio e o item some do rodapé enquanto não for preenchido.
+- **Termos e privacidade:** `site/terms/` e `site/privacy/` são texto escrito à mão para a Helena (a estrutura segue o que sites de bots costumam ter, mas o texto é próprio). O contato público é o perfil do GitHub em `contactUrl` (`site/js/config.js`), sem e-mail. Os prazos citados (sessão de 6 horas, até 5 sessões, 90 dias do registro) vêm de `config/web.mjs` e o `npm test` confere. O teste também falha se surgir uma tabela nova no banco sem ser descrita na política, e se uma página do site passar a falar com um domínio que a política não cita. Ao mudar o que o bot guarda, mude o texto e o número da versão no topo das duas páginas. Não é aconselhamento jurídico: vale uma revisão de quem entende de LGPD antes de depender disso.
 - **Números e comandos:** rode `npm run site:data` depois de criar, renomear ou remover comandos, empregos, itens ou conquistas. O script lê o bot de verdade (com um banco temporário, sem tocar em `data/`). Comandos de `admin/` e `dev/` não aparecem. O `npm test` falha se `site/data/site-data.js` ficar para trás.
 - **O que não é automático:** os valores escritos nos textos (prêmio do `/daily`, custos e chances do crime, retornos da lavagem, tempos da prisão, e os textos das simulações de conversa) vêm de `config/` e dos comandos, mas foram copiados à mão. Se mudar esses valores no bot, atualize a página.
 - **Animações:** tudo nasce no estado final e visível; o JS só adiciona a classe `in` pouco antes de o elemento entrar na tela (veja `css/motion.css` e `js/motion.js`). Sem JS ou com `prefers-reduced-motion`, nada se mexe e a página está completa. A única exceção é o `ヘレナ` da margem do herói (só aparece em telas de 1280 px ou mais), que continua se escrevendo traço a traço, porque é curto, não desloca nada na tela e é a marca da página; ele também se escreve de novo quando o mouse passa por cima.

@@ -19,7 +19,7 @@
     if (H.config.inviteUrl) setLink(a, H.config.inviteUrl);
   });
 
-  [["support", H.config.supportUrl], ["code", H.config.codeUrl]].forEach(function (pair) {
+  [["support", H.config.supportUrl], ["code", H.config.codeUrl], ["contact", H.config.contactUrl]].forEach(function (pair) {
     if (!pair[1]) return;
     $$('[data-link="' + pair[0] + '"]').forEach(function (a) { setLink(a, pair[1]); });
   });
@@ -30,30 +30,36 @@
   }
 
   // ---------- menu no celular ----------
+  // As páginas de termos e privacidade usam este mesmo script só para os
+  // links, e não têm menu nem seções: o que falta lá é simplesmente pulado.
   var menuBtn = $("#menu-btn");
   var nav = $("#nav");
 
-  menuBtn.addEventListener("click", function () {
-    var open = nav.classList.toggle("open");
-    menuBtn.setAttribute("aria-expanded", String(open));
-  });
+  if (menuBtn && nav) {
+    menuBtn.addEventListener("click", function () {
+      var open = nav.classList.toggle("open");
+      menuBtn.setAttribute("aria-expanded", String(open));
+    });
 
-  nav.addEventListener("click", function (event) {
-    if (event.target.tagName === "A") {
-      nav.classList.remove("open");
-      menuBtn.setAttribute("aria-expanded", "false");
-    }
-  });
+    nav.addEventListener("click", function (event) {
+      if (event.target.tagName === "A") {
+        nav.classList.remove("open");
+        menuBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
 
   // ---------- cabeçalho encolhe ao rolar ----------
   var bar = $("#top-bar");
 
-  function onScroll() {
-    bar.classList.toggle("scrolled", window.scrollY > 24);
-  }
+  if (bar) {
+    var onScroll = function () {
+      bar.classList.toggle("scrolled", window.scrollY > 24);
+    };
 
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  }
 
   // ---------- destaca a seção que está na tela ----------
   var links = $$(".nav a");

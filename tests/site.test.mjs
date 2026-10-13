@@ -1,12 +1,14 @@
-import "./helpers.mjs";
+import { db } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import vm from "node:vm";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { join, dirname } from "node:path";
 
 const { collectSiteData } = await import("../site/data-source.mjs");
+const { WEB_CONFIG } = await import("../config/web.mjs");
 
 const SITE = fileURLToPath(new URL("../site/", import.meta.url));
 
@@ -32,7 +34,12 @@ function embedded() {
 
 test("tudo o que as páginas carregam existe", () => {
     // [arquivo, pasta de onde os caminhos relativos partem]
-    for (const [page, folder] of [["index.html", ""], ["account/index.html", "account"]]) {
+    for (const [page, folder] of [
+        ["index.html", ""],
+        ["account/index.html", "account"],
+        ["terms/index.html", "terms"],
+        ["privacy/index.html", "privacy"]
+    ]) {
         const refs = [...read(page).matchAll(/(?:src|href)="([^"]+)"/g)]
             .map(match => match[1])
             .filter(ref => !/^(https?:|mailto:|#|data:)/.test(ref))
@@ -246,4 +253,286 @@ test("os links do convite e do servidor oficial estão preenchidos", () => {
 
     assert.match(config, /inviteUrl: "https:\/\/vsync\.lat\/oauth2\/authorize\?client_id=\d+&scope=bot/);
     assert.match(config, /supportUrl: "https:\/\/vsync\.lat\/\w+"/);
+});
+
+// ==========================================
+// TERMOS E PRIVACIDADE
+// ==========================================
+
+const terms = read("terms/index.html");
+const privacy = read("privacy/index.html");
+
+const LEGAL = [["terms", terms], ["privacy", privacy]];
+
+// texto da página sem tags, em minúsculas e sem acento
+const plainText = page => page
+    .replace(/<[^>]+>/g, " ")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+test("termos e privacidade: o sumário bate com as seções, na ordem e numeradas", () => {
+    for (const [name, page] of LEGAL) {
+        const toc = [...page.matchAll(/<li><a href="#([a-z-]+)">/g)].map(m => m[1]);
+        const sections = [...page.matchAll(/<section id="([a-z-]+)">/g)].map(m => m[1]);
+        const numbers = [...page.matchAll(/<span class="n">(\d\d)<\/span>/g)].map(m => Number(m[1]));
+
+        assert.ok(toc.length >= 12, `${name}: achou o sumário`);
+        assert.deepEqual(sections, toc, `${name}: cada item do sumário aponta para uma seção, na mesma ordem`);
+        assert.deepEqual(numbers, toc.map((_, index) => index + 1), `${name}: seções numeradas 01, 02, 03...`);
+
+        assert.match(page, /<li>Versão \d+\.\d+<\/li>/, name);
+        assert.match(page, /<li>Em vigor desde \d{1,2} de \w+ de 20\d\d<\/li>/, name);
+    }
+});
+
+test("as tabelas da política empilham no celular: cada célula tem o nome da sua coluna", () => {
+    const tables = [...privacy.matchAll(/<table>([\s\S]*?)<\/table>/g)].map(m => m[1]);
+
+    assert.equal(tables.length, 3, "bases legais, prazos e cookies");
+
+    for (const table of tables) {
+        const heads = [...table.matchAll(/<th>([\s\S]*?)<\/th>/g)].map(m => m[1].trim());
+
+        for (const row of table.match(/<tr>(?:(?!<\/tr>)[\s\S])*<td>[\s\S]*?<\/tr>/g)) {
+            const cells = [...row.matchAll(/<td( data-label="([^"]*)")?>/g)];
+
+            assert.equal(cells.length, heads.length, `uma célula por coluna em ${row.slice(0, 60)}`);
+            assert.equal(cells[0][1], undefined, "a primeira célula é o título da linha");
+
+            cells.slice(1).forEach((cell, index) => {
+                assert.equal(cell[2], heads[index + 1], "data-label igual ao cabeçalho da coluna");
+            });
+        }
+    }
+
+    assert.match(read("css/legal.css"), /td\[data-label\]::before\s*\{[^}]*content:\s*attr\(data-label\)/);
+});
+
+test("termos e privacidade: cada 'seção N' citada no texto leva ao assunto certo", () => {
+    // para onde cada número aponta hoje; se as seções mudarem de lugar, o texto também precisa mudar
+    const target = {
+        terms: { 5: "regras", 15: "contato" },
+        privacy: { 3: "bot", 6: "terceiros", 15: "contato" }
+    };
+
+    for (const [name, page] of LEGAL) {
+        const toc = [...page.matchAll(/<li><a href="#([a-z-]+)">/g)].map(m => m[1]);
+        const refs = [...page.matchAll(/seção (\d+)/g)].map(m => Number(m[1]));
+
+        assert.ok(refs.length > 0, `${name} cita seções`);
+
+        for (const number of refs) {
+            assert.ok(target[name][number], `${name}: "seção ${number}" não está no mapa do teste`);
+            assert.equal(toc[number - 1], target[name][number], `${name}: "seção ${number}" deveria ser ${target[name][number]}`);
+        }
+    }
+});
+
+test("termos e privacidade: os prazos e limites do texto vêm da configuração do painel", () => {
+    const expected = {
+        "session-hours": `${WEB_CONFIG.sessionTtl / 3600} horas`,
+        "session-max": String(WEB_CONFIG.maxSessionsPerUser),
+        "claim-log-days": String(WEB_CONFIG.claimLogDays)
+    };
+
+    const found = page => [...page.matchAll(/data-fact="([a-z-]+)">([^<]+)</g)];
+
+    for (const [name, page] of LEGAL) {
+        for (const [, key, text] of found(page)) {
+            assert.equal(text, expected[key], `${name}: data-fact="${key}"`);
+        }
+    }
+
+    const keys = page => new Set(found(page).map(match => match[1]));
+
+    assert.deepEqual([...keys(terms)].sort(), ["session-hours", "session-max"]);
+    assert.deepEqual([...keys(privacy)].sort(), ["claim-log-days", "session-hours"]);
+
+    // o prazo do registro é de verdade: o painel o apaga (veja web-api.test.mjs)
+    assert.ok(WEB_CONFIG.claimLogDays > 0);
+});
+
+test("o contato e o servidor oficial dos textos são os do config.js, e sem e-mail", () => {
+    const config = read("js/config.js");
+
+    const contact = config.match(/contactUrl: "([^"]+)"/)?.[1];
+    const support = config.match(/supportUrl: "([^"]+)"/)?.[1];
+
+    assert.match(contact, /^https:\/\/github\.com\/[A-Za-z0-9-]+$/, "contato público é o perfil do GitHub");
+
+    for (const [name, page] of LEGAL) {
+        const links = [...page.matchAll(/<a href="([^"]+)" data-link="(contact|support)"/g)];
+
+        for (const kind of ["contact", "support"]) {
+            const hrefs = links.filter(link => link[2] === kind).map(link => link[1]);
+
+            assert.ok(hrefs.length >= 1, `${name}: tem link de ${kind}`);
+
+            for (const href of hrefs) {
+                assert.equal(href, kind === "contact" ? contact : support, `${name}: link de ${kind}`);
+            }
+        }
+
+        assert.doesNotMatch(page, /mailto:|[\w.+-]+@[\w-]+\.[a-z]{2,}/i, `${name}: o contato público não tem e-mail`);
+    }
+});
+
+test("termos e privacidade: carregam só config, util e nav, e abrem sem menu", () => {
+    for (const [name, page] of LEGAL) {
+        const order = [...page.matchAll(/<script defer src="([^"]+)">/g)].map(m => m[1]);
+
+        assert.deepEqual(order, ["../js/config.js", "../js/util.js", "../js/nav.js"], name);
+        assert.doesNotMatch(page, /noindex/, `${name}: política pública, pode aparecer em buscas`);
+    }
+
+    // nav.js também serve a essas páginas: sem #menu-btn, #nav e #top-bar ele não pode quebrar
+    const anchors = { contact: fakeAnchor(), support: fakeAnchor(), code: fakeAnchor() };
+
+    const document = {
+        querySelector: () => null,
+        querySelectorAll: selector => {
+            const kind = selector.match(/data-link="(\w+)"/)?.[1];
+
+            return kind && anchors[kind] ? [anchors[kind]] : [];
+        },
+        getElementById: () => null
+    };
+
+    const window = {
+        document,
+        scrollY: 0,
+        matchMedia: () => ({ matches: false }),
+        addEventListener: () => {}
+    };
+
+    const context = { window, document };
+
+    for (const file of ["js/config.js", "js/util.js", "js/nav.js"]) {
+        vm.runInNewContext(read(file), context);
+    }
+
+    const config = window.Helena.config;
+
+    assert.equal(anchors.contact.href, config.contactUrl);
+    assert.equal(anchors.support.href, config.supportUrl);
+    assert.equal(anchors.contact.hidden, false);
+
+    // sem codeUrl, o link do código continua escondido
+    assert.equal(anchors.code.hidden, true);
+
+    function fakeAnchor() {
+        return { href: "", hidden: true, target: "", rel: "", textContent: "texto", getAttribute: () => null };
+    }
+});
+
+test("o site, o painel e as duas páginas se ligam entre si", () => {
+    assert.match(html, /<a href="terms\/">Termos de uso<\/a>/);
+    assert.match(html, /<a href="privacy\/">Privacidade<\/a>/);
+
+    const account = read("account/index.html");
+
+    assert.match(account, /<a href="\.\.\/terms\/">/);
+    assert.match(account, /<a href="\.\.\/privacy\/">/);
+
+    assert.match(terms, /<a href="\.\.\/privacy\/">Política de Privacidade<\/a>/);
+    assert.match(privacy, /<a href="\.\.\/terms\/">Termos de uso<\/a>/);
+
+    for (const [name, page] of LEGAL) {
+        assert.match(page, /<a class="brand" href="\.\.\/"/, `${name}: o logo volta para o site`);
+        assert.match(page, /<link rel="stylesheet" href="\.\.\/css\/legal\.css">/, name);
+    }
+});
+
+test("a política diz que não há cookies nem rastreadores, e o site não tem", () => {
+    // domínios que as páginas e os scripts podem chamar; todos aparecem na política (seção 6)
+    const allowed = new Set([
+        "fonts.googleapis.com", "fonts.gstatic.com",   // fontes (Google)
+        "vsync.lat",                                    // convite, login e servidor oficial
+        "github.com",                                   // contato do desenvolvedor
+        "challenges.cloudflare.com"                     // verificação anti-robô do painel
+    ]);
+
+    const files = [
+        "index.html", "account/index.html", "terms/index.html", "privacy/index.html",
+        ...readdirSync(join(SITE, "js")).map(file => `js/${file}`)
+    ];
+
+    for (const file of files) {
+        const text = read(file);
+
+        assert.doesNotMatch(text, /document\.cookie/, `${file} mexe em cookies`);
+        assert.doesNotMatch(text, /gtag\(|googletagmanager|google-analytics|plausible|hotjar|matomo|clarity\.ms|facebook\.net/i, `${file} tem rastreador`);
+
+        for (const [, host] of text.matchAll(/https?:\/\/([a-z0-9.-]+)/gi)) {
+            assert.ok(allowed.has(host), `${file} fala com ${host}, que a política não cita`);
+        }
+    }
+
+    const policy = plainText(privacy);
+
+    for (const owner of ["vsync", "cloudflare", "github", "google fonts"]) {
+        assert.ok(policy.includes(owner), `a política cita ${owner}`);
+    }
+});
+
+test("a política cobre todas as tabelas do banco que guardam dados de pessoas", () => {
+    // tabela -> uma expressão que a política usa para descrevê-la (sem acento, em minúsculas)
+    const covered = {
+        players: "carteira",
+        global_users: "gemas",
+        transactions: "transferencias",
+        player_names: "nome de exibicao",
+        crime_players: "ficha de crime",
+        prison_players: "prisao",
+        laundering_jobs: "lavagem",
+        combat_players: "vitorias e derrotas",
+        combat_challenges: "duelos",
+        combat_gear: "municao",
+        combat_history: "historico de duelos",
+        combat_admin_log: "ajustes feitos por administradores",
+        developer_blacklist: "bloqueadas",
+        developer_logs: "acoes do dono",
+        mission_progress: "missoes",
+        inventory: "inventario",
+        equipped_items: "itens equipados",
+        marriages: "casamento",
+        marriage_requests: "pedidos de casamento",
+        player_achievements: "conquistas",
+        player_titles: "titulos",
+        daily_streaks: "sequencia do daily",
+        web_sessions: "sessao",
+        web_claim_log: "registro de seguranca"
+    };
+
+    // tabelas sem nada de pessoa (só IDs técnicos e ajustes do bot)
+    const technical = ["processed_interactions", "developer_settings"];
+
+    const tables = db
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+        .all()
+        .map(row => row.name);
+
+    const known = new Set([...Object.keys(covered), ...technical]);
+
+    assert.deepEqual(
+        tables.filter(table => !known.has(table)),
+        [],
+        "tabela nova no banco: descreva na política (site/privacy/index.html, seção 4) o que ela guarda e ponha aqui"
+    );
+
+    const policy = plainText(privacy);
+
+    for (const [table, phrase] of Object.entries(covered)) {
+        assert.ok(tables.includes(table), `${table} não existe mais: tire do mapa`);
+        assert.ok(policy.includes(phrase), `a política não descreve ${table} (procurei "${phrase}")`);
+    }
+
+    // o que o texto afirma que fica em cada tabela de sessão e de registro
+    for (const table of ["web_sessions", "web_claim_log"]) {
+        const columns = db.prepare(`PRAGMA table_info(${table})`).all().map(column => column.name);
+
+        assert.ok(columns.includes("ip") && columns.includes("user_agent"), `${table} guarda IP e navegador`);
+    }
 });

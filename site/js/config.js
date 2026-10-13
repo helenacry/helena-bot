@@ -11,6 +11,11 @@
     supportUrl: "https://vsync.lat/tfe6pdxk",
     codeUrl: "", // repositório do código (opcional)
 
+    // Contato público das páginas de termos e privacidade: o perfil do
+    // desenvolvedor no GitHub (de propósito, sem e-mail). Nunca deixe vazio:
+    // a política precisa dizer como falar com quem cuida dos dados.
+    contactUrl: "https://github.com/matheustonon1",
+
     // ---- Painel da conta (login com a VSync + coleta do daily e das gemas) ----
     // Endereço público da API da Helena (a porta HELENA_WEB_PORT do bot, publicada
     // com HTTPS), sem barra no fim. Vazio = painel escondido.
