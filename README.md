@@ -152,6 +152,15 @@ Alguns comandos mostram botões que abrem formulários (modais) da VSync, no est
 - O envio do formulário roda o comando de sempre com as opções preenchidas, então limites, recargas e a prisão continuam valendo (preso não deposita, nem por modal).
 - Para criar um painel: `services/modals.mjs` (`textField`, `openModal`, `readFields`) e `services/panels.mjs` (botões, clique e envio).
 
+## Site
+
+A pasta `site/` tem a página de divulgação da Helena: um `index.html` único (CSS, JS e dados embutidos) e as imagens em `site/assets/`. Não precisa de build nem de servidor: dá para abrir o arquivo direto no navegador ou publicar a pasta em qualquer hospedagem estática (GitHub Pages, Netlify, Cloudflare Pages...).
+
+- **Links:** o convite do bot e o servidor oficial ficam no objeto `CONFIG`, no fim de `site/index.html`. `codeUrl` (link do repositório) está vazio e o item some do rodapé enquanto não for preenchido.
+- **Números e comandos:** rode `npm run site:data` depois de criar, renomear ou remover comandos, empregos, itens ou conquistas. O script lê o bot de verdade (com um banco temporário, sem tocar em `data/`) e regrava o bloco entre `<!-- helena:data:start -->` e `<!-- helena:data:end -->`. Comandos de `admin/` e `dev/` não aparecem.
+- **O que não é automático:** os valores escritos nos textos das seções *O jogo*, *Rotina* e *O outro lado* (prêmio do `/daily`, custos e chances do crime, retornos da lavagem, tempos da prisão...) vêm de `config/` e de `commands/economy/daily.mjs`, mas foram copiados à mão. Se mudar esses valores no bot, atualize o texto da página.
+- **Imagens:** foram recortadas de `assets/helena-profile.png` (cartão de exemplo, avatar redondo, favicon e a faixa do templo usada no rodapé).
+
 ## Testes
 
 ```bash
