@@ -62,6 +62,9 @@ async function apiGet(path) {
     return response.json();
 }
 
+// "raw" guarda o membro como a API devolveu (insígnias, Pulse,
+// Prisma+, datas...), para comandos como /userinfo mostrarem mais
+// que o nome sem chamar a API de novo.
 function toUser(member) {
     return {
         id: String(member.id),
@@ -69,7 +72,8 @@ function toUser(member) {
         displayName: String(member.displayName ?? ""),
         nickname: String(member.nickname ?? ""),
         avatarUrl: member.avatarUrl ?? null,
-        bot: Boolean(member.bot)
+        bot: Boolean(member.bot),
+        raw: member
     };
 }
 

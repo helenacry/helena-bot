@@ -8,6 +8,13 @@ import {
     incrementUserinfoViews
 } from "../../services/userinfo-views.mjs";
 
+import {
+    resolveUser,
+    lookupProblem
+} from "../../services/user-lookup.mjs";
+
+import { warningEmbed } from "../../utils/embed.mjs";
+
 const COLOR = "#8755DA";
 const MAX_FIELD = 1024;
 const UNKNOWN = "Não informado pela API";
@@ -47,51 +54,59 @@ function errorResponse(message) {
     };
 }
 
-function optionId(interaction) {
-    const options = interaction.data?.options;
+// De quem são as informações? Sem argumento, de quem usou o comando.
+// Com texto, procura a pessoa no servidor só pelo @usuário (que é
+// único) ou por menção/ID: apelidos e nomes de exibição das
+// plataformas não entram na busca, como no /perfil.
+//
+// Devolve { user, self } ou { response } com o aviso a mostrar.
+async function findTarget(interaction) {
+    const query = String(
+        interaction.data?.options?.usuario ?? ""
+    ).trim();
 
-    if (Array.isArray(options)) {
-        const option = options.find(item =>
-            ["usuario", "usuário", "user"].includes(item.name)
-        );
-
-        return option?.value?.id ??
-            option?.value ??
-            null;
+    if (!query) {
+        return { user: interaction.user, self: true };
     }
 
-    return options?.usuario?.id ??
-        options?.usuario ??
-        options?.user?.id ??
-        options?.user ??
-        null;
-}
-
-function targetUser(interaction) {
-    const id = optionId(interaction);
-
-    if (!id) {
-        return interaction.user;
+    if (!interaction.guildId) {
+        return {
+            response: warningEmbed(
+                "Indisponível",
+                "Procurar outra pessoa só funciona em um servidor."
+            )
+        };
     }
 
-    const resolved = interaction.data?.resolved?.users;
+    const found = await resolveUser(
+        interaction.guildId,
+        query,
+        { by: "username" }
+    );
 
-    const user = resolved?.[String(id)] ??
-        (
-            Array.isArray(resolved)
-                ? resolved.find(item =>
-                    String(item.id) === String(id)
-                )
-                : null
-        );
+    const problem = lookupProblem(
+        found,
+        query,
+        { by: "username" }
+    );
 
-    if (user) {
-        return user;
+    if (problem) {
+        return {
+            response: warningEmbed(problem.title, problem.message)
+        };
     }
 
-    return String(interaction.user?.id) === String(id)
-        ? interaction.user
-        : null;
+    // Se a busca achou você mesmo, segue como as suas informações.
+    if (found.user.id === String(interaction.user?.id)) {
+        return { user: interaction.user, self: true };
+    }
+
+    // A busca já trouxe o membro completo (insígnias, Pulse,
+    // Prisma+, datas), sem precisar de outra chamada à API.
+    return {
+        user: { ...found.user, ...found.user.raw },
+        self: false
+    };
 }
 
 function first(object, keys) {
@@ -194,8 +209,9 @@ export default {
     options: [
         {
             name: "usuario",
-            description: "Usuário a consultar",
-            type: "user",
+            description:
+                "@usuário ou @menção de quem você quer ver (vazio = você)",
+            type: "string",
             required: false
         }
     ],
@@ -205,7 +221,13 @@ export default {
             // ==================================
             // IDENTIFICAÇÃO
             // ==================================
-            const user = targetUser(interaction);
+            const target = await findTarget(interaction);
+
+            if (target.response) {
+                return target.response;
+            }
+
+            const { user, self } = target;
 
             if (!user?.id) {
                 return errorResponse(
@@ -392,7 +414,11 @@ export default {
             return {
                 type: "message",
                 data: {
-                    body: "",
+                    // A mensagem menciona o dono das informações: você,
+                    // nas suas, ou a pessoa pesquisada, nas de outra.
+                    body: self
+                        ? "<@" + user.id + ">"
+                        : "Informações de <@" + user.id + ">",
                     embeds: [embed]
                 }
             };
