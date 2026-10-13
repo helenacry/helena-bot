@@ -38,4 +38,41 @@
   H.finePointer = window.matchMedia("(pointer: fine)").matches;
 
   H.data = H.data || {};
+
+  // Aberto direto do disco (file://), o navegador não abre o index.html de uma
+  // pasta: o link "pasta/" vira uma listagem de arquivos. Online, "pasta/" é o
+  // endereço limpo e funciona, então só aqui o link passa a dizer o arquivo.
+  H.localHref = function (href) {
+    var path = /^[^?#]*/.exec(href)[0];
+
+    if (/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(href) || path.slice(-1) !== "/") return href;
+
+    return path + "index.html" + href.slice(path.length);
+  };
+
+  if (window.location && window.location.protocol === "file:") {
+    var fixLinks = function (root) {
+      var links = root.nodeName === "A" ? [root] : [];
+
+      if (root.querySelectorAll) links = links.concat(Array.prototype.slice.call(root.querySelectorAll("a[href]")));
+
+      links.forEach(function (a) {
+        var href = a.getAttribute("href");
+        var fixed = href === null ? href : H.localHref(href);
+
+        if (fixed !== href) a.setAttribute("href", fixed);
+      });
+    };
+
+    fixLinks(document);
+
+    // links que os scripts criam depois (resultados da busca da wiki)
+    new MutationObserver(function (records) {
+      records.forEach(function (record) {
+        Array.prototype.forEach.call(record.addedNodes, function (node) {
+          if (node.nodeType === 1) fixLinks(node);
+        });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
 })();

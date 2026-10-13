@@ -116,3 +116,34 @@ test("a página 404 funciona em qualquer profundidade: parte do endereço do sit
     assert.match(page, /href="\.\/"/);
     assert.match(page, /href="wiki\/"/);
 });
+
+test("aberto direto do disco (file://), os links de pasta apontam para o index.html; online nada muda", async () => {
+    const vm = await import("node:vm");
+
+    // sem window.location (como aqui) o script não toca em nenhum link
+    const context = { window: { matchMedia: () => ({ matches: false }) } };
+
+    vm.runInNewContext(read("js/util.js"), context);
+
+    const { localHref } = context.window.Helena;
+
+    assert.equal(localHref("economy/market/"), "economy/market/index.html");
+    assert.equal(localHref("./"), "./index.html");
+    assert.equal(localHref("../"), "../index.html");
+    assert.equal(localHref("wiki/"), "wiki/index.html");
+    assert.equal(localHref("wiki/#faq"), "wiki/index.html#faq");
+    assert.equal(localHref("./combat/duels/?q=1"), "./combat/duels/index.html?q=1");
+
+    // o que já é arquivo, âncora ou endereço de fora fica como está
+    for (const href of ["", "#topo", "page.html", "../css/base.css", "https://vsync.lat/x/", "mailto:a@b.c", "//cdn.example.com/x/"]) {
+        assert.equal(localHref(href), href, href);
+    }
+
+    // o ajuste só liga em file: (online "pasta/" é o endereço limpo e funciona)
+    assert.match(read("js/util.js"), /window\.location\.protocol === "file:"/);
+
+    // toda página do site carrega o util.js, que é onde o ajuste mora
+    for (const page of ["index.html", "terms/index.html", "privacy/index.html", "account/index.html", "wiki/index.html", "wiki/economy/market/index.html"]) {
+        assert.match(read(page), /<script defer src="(\.\.\/)*(\.\.\/)?js\/util\.js"><\/script>/, page);
+    }
+});
