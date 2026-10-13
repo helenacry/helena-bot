@@ -16,7 +16,15 @@ Esta wiki explica cada parte do jogo. Os valores (preços, salários, tempos de 
 
 ## Economia
 
-{{cards: economy/market}}
+Carteira, banco, loja, o mercado do servidor, gemas e o ranking.
+
+{{cards: economy/bank-and-transfers, economy/shop-and-inventory, economy/market, economy/gems, economy/rankings}}
+
+## Personagem
+
+Energia, nível, conquistas, perfil e casamento.
+
+{{cards: character/energy, character/levels-and-xp, character/achievements-and-titles, character/profile, character/marriage}}
 
 ## Combate
 
@@ -30,8 +38,12 @@ Dinheiro rápido, risco alto. Aqui está o que dá certo, o que dá cadeia e com
 
 {{cards: crime/getting-started, crime/robbery, crime/laundering, crime/wanted-and-prison, crime/prison-escape}}
 
+## Ajuda e referência
+
+{{cards: help/faq, help/commands, help/cooldowns}}
+
 ## Como achar o que você procura
 
 - Use a busca no topo do menu (no teclado, aperte `/`).
 - Cada página termina com um link para a próxima da sequência.
-- Dúvida sobre um comando específico? Use `/ajuda` no próprio servidor.
+- Dúvida sobre um comando específico? Use `/ajuda` no próprio servidor, ou veja a lista em [Comandos](wiki:help/commands).

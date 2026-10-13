@@ -18,6 +18,7 @@ O **ID** (o código na primeira coluna) é o que você usa para equipar.
 - **`/comprar`** ou a `/loja` (prateleira **Armas**) para comprar.
 - **`/equipar item:revolver`** equipa a arma pelo ID. Também dá para equipar pelo menu do **`/usaritem`**.
 - **`/desequipar`** guarda a arma de volta no inventário.
+- **`/armas`** mostra a arma que você tem equipada e os atributos dela.
 
 Só uma arma fica equipada por vez, e ela precisa estar no seu inventário. **Armas não podem ser vendidas.**
 

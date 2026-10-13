@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Banco e transferências | Wiki da Helena</title>
+<meta name="description" content="A diferença entre carteira e banco, como depositar, sacar e transferir dinheiro e o que o saldo mostra.">
+<meta name="theme-color" content="#0d0613">
+<link rel="icon" href="../../../assets/img/favicon.png">
+<link rel="apple-touch-icon" href="../../../assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../../css/tokens.css">
+<link rel="stylesheet" href="../../../css/base.css">
+<link rel="stylesheet" href="../../../css/components.css">
+<link rel="stylesheet" href="../../../css/wiki.css">
+<script defer src="../../../js/config.js"></script>
+<script defer src="../../../js/util.js"></script>
+<script defer src="../../../js/nav.js"></script>
+<script defer src="../../search-index.js"></script>
+<script defer src="../../../js/wiki.js"></script>
+</head>
+<body class="wiki-page" data-wiki-root="../../">
+<a class="skip" href="#content">Pular para o conteúdo</a>
+
+<header class="top" id="top-bar">
+  <div class="wrap">
+    <a class="brand" href="../../../" aria-label="Helena, voltar ao site">
+      <img src="../../../assets/img/helena-avatar.webp" alt="" width="36" height="36">
+      <b>Helena</b><small>ヘレナ</small>
+    </a>
+    <span class="wiki-tag">Wiki</span>
+    <div class="actions">
+      <button class="btn wiki-menu-btn" id="wiki-menu-btn" type="button" aria-expanded="false" aria-controls="wiki-side" hidden>Menu</button>
+      <a class="btn" href="../../../">Voltar ao site</a>
+    </div>
+  </div>
+</header>
+
+<div class="wiki">
+
+  <aside class="wiki-side" id="wiki-side" aria-label="Menu da wiki">
+    <form class="wiki-search" id="wiki-search-box" role="search" hidden>
+      <label class="sr" for="wiki-search">Buscar na wiki</label>
+      <input id="wiki-search" type="search" placeholder="Buscar na wiki" autocomplete="off">
+      <ul id="wiki-results" hidden></ul>
+    </form>
+    <nav class="wiki-nav" aria-label="Seções da wiki">
+      <a class="side-home" href="../../">Início da wiki</a><section><h2>Comece por aqui</h2><ul><li><a href="../../start/first-steps/">Primeiros passos</a></li><li><a href="../../start/earning-money/">Ganhar dinheiro</a></li><li><a href="../../start/jobs/">Escolha seu emprego</a></li></ul></section><section><h2>Economia</h2><ul><li><a href="./" aria-current="page">Banco e transferências</a></li><li><a href="../shop-and-inventory/">Loja e inventário</a></li><li><a href="../market/">Bolsa</a></li><li><a href="../gems/">Gemas</a></li><li><a href="../rankings/">Ranking</a></li></ul></section><section><h2>Personagem</h2><ul><li><a href="../../character/energy/">Energia</a></li><li><a href="../../character/levels-and-xp/">Níveis e XP</a></li><li><a href="../../character/achievements-and-titles/">Conquistas e títulos</a></li><li><a href="../../character/profile/">Perfil e bio</a></li><li><a href="../../character/marriage/">Casamento</a></li></ul></section><section><h2>Combate</h2><ul><li><a href="../../combat/duels/">Duelos</a></li><li><a href="../../combat/weapons/">Armas</a></li><li><a href="../../combat/health-and-gear/">Vida, colete e munição</a></li></ul></section><section><h2>Crime e segurança</h2><ul><li><a href="../../crime/getting-started/">Crime: por onde começar</a></li><li><a href="../../crime/robbery/">Roubar jogadores</a></li><li><a href="../../crime/laundering/">Lavagem de dinheiro</a></li><li><a href="../../crime/wanted-and-prison/">Polícia, procurados e prisão</a></li><li><a href="../../crime/prison-escape/">Fuga da prisão</a></li></ul></section><section><h2>Ajuda e referência</h2><ul><li><a href="../../help/faq/">Perguntas frequentes</a></li><li><a href="../../help/commands/">Comandos</a></li><li><a href="../../help/cooldowns/">Tempos de espera</a></li></ul></section>
+    </nav>
+  </aside>
+
+  <main class="wiki-main" id="content">
+    <nav class="crumbs" aria-label="Você está em"><a href="../../">Wiki</a><span>Economia</span></nav>
+    <article class="wiki-doc">
+      <header>
+        <h1>Banco e transferências</h1>
+        <p class="lede">A diferença entre carteira e banco, como depositar, sacar e transferir dinheiro e o que o saldo mostra.</p>
+      </header>
+      <p>Seu dinheiro fica em dois lugares, e a diferença entre eles é a regra mais importante da economia da Helena.</p><div class="table-wrap stack"><table><thead><tr><th>Onde</th><th>Para que serve</th><th>Risco</th></tr></thead><tbody><tr><td><strong>Carteira</strong></td><td data-label="Para que serve">gasta na loja, paga multa e recebe o salário</td><td data-label="Risco">pode ser <strong>roubada</strong> por outros jogadores</td></tr><tr><td><strong>Banco</strong></td><td data-label="Para que serve">guarda o dinheiro</td><td data-label="Risco"><strong>não pode ser roubado</strong></td></tr></tbody></table></div><aside class="callout warning"><p class="callout-title">Atenção</p><p>Salário, daily e prêmios caem na <strong>carteira</strong>. Se não vai gastar agora, deposite. Veja como os ladrões agem em <a href="../../crime/robbery/">Roubar jogadores</a>.</p></aside><h2 id="ver-o-que-voce-tem-saldo"><a class="anchor" href="#ver-o-que-voce-tem-saldo" aria-label="Link para esta seção">#</a>Ver o que você tem: <code>/saldo</code></h2><p>O <code>/saldo</code> (atalhos <code>/bal</code> e <code>/carteira</code>) mostra carteira, banco, gemas, nível e XP, e o dinheiro sujo se você tiver. Os botões da tela abrem formulários para <strong>Depositar</strong>, <strong>Sacar</strong> e <strong>Transferir</strong>.</p><h2 id="depositar-e-sacar"><a class="anchor" href="#depositar-e-sacar" aria-label="Link para esta seção">#</a>Depositar e sacar</h2><div class="table-wrap stack"><table><thead><tr><th>Comando</th><th>Atalho</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/depositar quantia:500</code></td><td data-label="Atalho"><code>/dep</code></td><td data-label="O que faz">tira da carteira e põe no banco</td></tr><tr><td><code>/sacar quantia:500</code></td><td data-label="Atalho"></td><td data-label="O que faz">tira do banco e põe na carteira</td></tr></tbody></table></div><p>No prefixo: <code>hdepositar 500</code> ou <code>hsacar tudo</code>.</p><h2 id="transferir-para-outro-jogador"><a class="anchor" href="#transferir-para-outro-jogador" aria-label="Link para esta seção">#</a>Transferir para outro jogador</h2><p><strong><code>/transferir usuario:@pessoa quantia:200</code></strong> (atalho <code>/pagar</code>) manda dinheiro <strong>da sua carteira</strong> para a carteira de outro jogador do servidor.</p><ul><li>Não tem <strong>taxa</strong>: quem recebe leva o valor inteiro.</li><li>Não dá para transferir para si mesmo.</li><li>Pelo botão <strong>Transferir</strong> do <code>/saldo</code>, você pode informar a pessoa por nome, @menção ou ID.</li></ul><h2 id="como-informar-a-quantia"><a class="anchor" href="#como-informar-a-quantia" aria-label="Link para esta seção">#</a>Como informar a quantia</h2><ul><li>Sempre em <strong>reais inteiros</strong>: <code>500</code>, não <code>500,50</code>.</li><li><code>tudo</code> ou <code>all</code> usa todo o saldo disponível.</li><li>Valor maior do que você tem dá erro e não muda nada.</li></ul><h2 id="dinheiro-sujo-e-a-parte"><a class="anchor" href="#dinheiro-sujo-e-a-parte" aria-label="Link para esta seção">#</a>Dinheiro sujo é à parte</h2><p>O dinheiro de crime e de roubo não passa pelo banco: ele fica numa conta separada até ser <a href="../../crime/laundering/">lavado</a>.</p><h2 id="preso-o-banco-fecha"><a class="anchor" href="#preso-o-banco-fecha" aria-label="Link para esta seção">#</a>Preso, o banco fecha</h2><p><code>/depositar</code>, <code>/sacar</code> e <code>/transferir</code> ficam <strong>bloqueados na cadeia</strong>. Consultar o <code>/saldo</code> continua liberado.</p><aside class="callout tip"><p class="callout-title">Dica</p><p>Os depósitos contam para uma das <a href="../../start/earning-money/">missões diárias</a> (depositar duas vezes).</p></aside><h2 id="proximo-passo"><a class="anchor" href="#proximo-passo" aria-label="Link para esta seção">#</a>Próximo passo</h2><ul class="cards"><li><a href="../shop-and-inventory/"><b>Loja e inventário</b><span>O que a loja vende, como comprar e vender pelos botões, como usar os itens e como organizar o inventário.</span></a></li><li><a href="../rankings/"><b>Ranking</b><span>Os três rankings do servidor, como a posição é calculada e o que significa o número do seu cartão de perfil.</span></a></li></ul>
+    </article>
+    <nav class="pager" aria-label="Outras páginas"><a class="prev" href="../../start/jobs/"><small>Anterior</small><b>Escolha seu emprego</b></a><a class="next" href="../shop-and-inventory/"><small>Próxima</small><b>Loja e inventário</b></a></nav>
+  </main>
+
+  <nav class="wiki-toc" aria-label="Nesta página"><h2>Nesta página</h2><ol><li class="l2"><a href="#ver-o-que-voce-tem-saldo">Ver o que você tem: /saldo</a></li><li class="l2"><a href="#depositar-e-sacar">Depositar e sacar</a></li><li class="l2"><a href="#transferir-para-outro-jogador">Transferir para outro jogador</a></li><li class="l2"><a href="#como-informar-a-quantia">Como informar a quantia</a></li><li class="l2"><a href="#dinheiro-sujo-e-a-parte">Dinheiro sujo é à parte</a></li><li class="l2"><a href="#preso-o-banco-fecha">Preso, o banco fecha</a></li><li class="l2"><a href="#proximo-passo">Próximo passo</a></li></ol></nav>
+
+</div>
+
+<footer class="wiki-foot">
+  <div class="wrap">
+    <ul>
+      <li><a href="../../../">Site</a></li>
+      <li><a href="../../../terms/">Termos de uso</a></li>
+      <li><a href="../../../privacy/">Privacidade</a></li>
+      <li><a href="https://vsync.lat/tfe6pdxk" data-link="support" target="_blank" rel="noopener">Servidor oficial</a></li>
+    </ul>
+    <p>A Helena é um projeto independente feito para a VSync. Os valores desta wiki saem do próprio bot quando ela é gerada.</p>
+  </div>
+</footer>
+
+</body>
+</html>

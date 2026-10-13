@@ -274,6 +274,51 @@ test("todo link e arquivo carregado pelas páginas existe, e as âncoras também
     }
 });
 
+test("todo comando público do bot é citado em alguma página, fora da lista geral", async () => {
+    const { collectSiteData } = await import("../site/data-source.mjs");
+
+    const { categories } = await collectSiteData();
+
+    const names = categories.flatMap(category => category.commands.map(command => command.name));
+
+    assert.ok(names.length > 40);
+
+    // o texto de todas as páginas, menos a lista gerada de comandos (que cita todos por construção)
+    const prose = [...files]
+        .filter(([file]) => file.endsWith(".html") && file !== "help/commands/index.html")
+        .map(([, html]) => html.replace(/<[^>]+>/g, " "))
+        .join("\n");
+
+    const missing = names.filter(name => !new RegExp(`/${name}(?![a-z])`).test(prose));
+
+    assert.deepEqual(missing, [], "comando novo sem página na wiki: escreva sobre ele em wiki/ e rode npm run wiki:build");
+});
+
+test("os atalhos de cada comando que a wiki cita existem de verdade", async () => {
+    const { collectSiteData } = await import("../site/data-source.mjs");
+
+    const { categories } = await collectSiteData();
+
+    const all = new Map(categories.flatMap(category => category.commands.map(command => [command.name, command])));
+
+    const aliases = new Set([...all.values()].flatMap(command => command.aliases));
+
+    let checked = 0;
+
+    // atalhos que as páginas escrevem à mão, no formato (atalho `/x`) ou (atalhos `/x` e `/y`)
+    for (const [file, html] of files) {
+        for (const [, group] of html.matchAll(/atalhos? ((?:<code>\/[a-z]+<\/code>(?:,| e )? ?)+)/g)) {
+            for (const [, alias] of group.matchAll(/<code>\/([a-z]+)<\/code>/g)) {
+                assert.ok(aliases.has(alias) || all.has(alias), `${file}: o atalho /${alias} não existe`);
+
+                checked++;
+            }
+        }
+    }
+
+    assert.ok(checked >= 10, `só ${checked} atalhos conferidos: o formato do texto mudou?`);
+});
+
 test("o menu lateral lista todas as páginas, na ordem, com a atual marcada", () => {
     const expected = NAV.flatMap(section => section.pages.map(page => `${section.id}/${page}`));
 

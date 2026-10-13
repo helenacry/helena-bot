@@ -226,6 +226,32 @@ Os scripts são clássicos (não módulos) e dividem o objeto `window.Helena`, p
 - **Imagens:** `assets/helena_pfp.png` gera o avatar da navbar e do site, o favicon e o ícone do celular; `assets/helena-profile.png` gera só a faixa do templo do rodapé (com o matiz levemente girado para combinar com a paleta). O cartão de exemplo do herói NÃO é uma imagem desenhada à mão: `npm run site:card` o gera com o mesmo gerador do `/perfil` (`services/profile-card.mjs`), com uma jogadora fictícia e a foto da Helena, então o site nunca fica diferente do cartão real. Rode de novo quando o desenho do cartão mudar. Os originais não são alterados; as versões do site ficam em `site/assets/img/`.
 - **Skill de front:** `.claude/skills/front-sem-cara-de-ia/SKILL.md` reúne o que evitar para a página não parecer feita por IA, receitas para fazer diferente e um checklist. O Claude Code a usa ao mexer no site; também dá para chamar com `/front-sem-cara-de-ia`. A pasta `.claude/` está no `.gitignore`, então a skill fica só na sua máquina.
 
+## Wiki
+
+A wiki fica em `wiki/` (um `.md` por página, no estilo da wiki da Alfacusa) e é publicada junto com o site, em `/wiki/`. O `npm run wiki:build` converte os `.md` em páginas HTML dentro de `site/wiki/`, que **é inteira gerada: não edite nada lá à mão**. O `npm test` falha se `site/wiki/` ficar para trás.
+
+```
+wiki/
+  nav.mjs             o menu: seções e páginas, na ordem
+  index.md            a página inicial
+  <seção>/<página>.md uma página (cabeçalho com title e description)
+site/
+  wiki-markdown.mjs   o conversor de Markdown (títulos, listas, tabelas, avisos, cartões)
+  wiki-values.mjs     os números e tabelas que vêm do bot
+  wiki-pages.mjs      a moldura de cada página, o menu e o índice da busca
+  wiki-generate.mjs   junta tudo (usado pelo build e pelos testes)
+  build-wiki.mjs      grava site/wiki/
+```
+
+- **Números do bot.** Nunca escreva à mão um valor que existe no código. Use `{{v:crime.cooldown}}` no texto ou uma tabela como `{{table:jobs}}`, e o valor sai do bot quando a página é gerada. Os nomes disponíveis estão em `site/wiki-values.mjs`; um nome que não existe faz o build falhar.
+- **Avisos e cartões.** `> [!TIP]`, `> [!NOTE]`, `> [!WARNING]`, `> [!MONEY]` e `> [!EXAMPLE]` viram caixas coloridas. `{{cards: seção/página, ...}}` monta os cartões de navegação.
+- **Links.** `[texto](wiki:seção/página#âncora)` leva a outra página da wiki e `[texto](site:terms/)` leva a uma página do site. Link ou âncora que não existe faz o build falhar.
+- **Nova página.** Crie o `.md`, ponha o nome em `wiki/nav.mjs` e rode `npm run wiki:build`. Os nomes de arquivo e de pasta são em inglês, em kebab-case, como no resto do projeto.
+- **O teste de cobertura.** Todo comando público do bot precisa ser citado em alguma página. Criou um comando? O `npm test` falha até a wiki falar dele.
+- **O que a wiki não cobre ainda.** O painel da conta do site e as páginas de administração (`/admin*`, `/dev*`) não entram: o painel só vai à wiki quando for ligado.
+
+O visual vem de `site/css/wiki.css`; a busca (tecla `/`) e a gaveta de menu do celular, de `site/js/wiki.js`. Sem JavaScript, a wiki continua inteira: o menu fica no topo da página e a busca nem aparece.
+
 ## Testes
 
 ```bash

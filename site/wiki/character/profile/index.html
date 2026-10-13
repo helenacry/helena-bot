@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perfil e bio | Wiki da Helena</title>
+<meta name="description" content="O cartão de perfil, como ler cada parte, como mudar a bio e como ver o perfil de outra pessoa.">
+<meta name="theme-color" content="#0d0613">
+<link rel="icon" href="../../../assets/img/favicon.png">
+<link rel="apple-touch-icon" href="../../../assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../../css/tokens.css">
+<link rel="stylesheet" href="../../../css/base.css">
+<link rel="stylesheet" href="../../../css/components.css">
+<link rel="stylesheet" href="../../../css/wiki.css">
+<script defer src="../../../js/config.js"></script>
+<script defer src="../../../js/util.js"></script>
+<script defer src="../../../js/nav.js"></script>
+<script defer src="../../search-index.js"></script>
+<script defer src="../../../js/wiki.js"></script>
+</head>
+<body class="wiki-page" data-wiki-root="../../">
+<a class="skip" href="#content">Pular para o conteúdo</a>
+
+<header class="top" id="top-bar">
+  <div class="wrap">
+    <a class="brand" href="../../../" aria-label="Helena, voltar ao site">
+      <img src="../../../assets/img/helena-avatar.webp" alt="" width="36" height="36">
+      <b>Helena</b><small>ヘレナ</small>
+    </a>
+    <span class="wiki-tag">Wiki</span>
+    <div class="actions">
+      <button class="btn wiki-menu-btn" id="wiki-menu-btn" type="button" aria-expanded="false" aria-controls="wiki-side" hidden>Menu</button>
+      <a class="btn" href="../../../">Voltar ao site</a>
+    </div>
+  </div>
+</header>
+
+<div class="wiki">
+
+  <aside class="wiki-side" id="wiki-side" aria-label="Menu da wiki">
+    <form class="wiki-search" id="wiki-search-box" role="search" hidden>
+      <label class="sr" for="wiki-search">Buscar na wiki</label>
+      <input id="wiki-search" type="search" placeholder="Buscar na wiki" autocomplete="off">
+      <ul id="wiki-results" hidden></ul>
+    </form>
+    <nav class="wiki-nav" aria-label="Seções da wiki">
+      <a class="side-home" href="../../">Início da wiki</a><section><h2>Comece por aqui</h2><ul><li><a href="../../start/first-steps/">Primeiros passos</a></li><li><a href="../../start/earning-money/">Ganhar dinheiro</a></li><li><a href="../../start/jobs/">Escolha seu emprego</a></li></ul></section><section><h2>Economia</h2><ul><li><a href="../../economy/bank-and-transfers/">Banco e transferências</a></li><li><a href="../../economy/shop-and-inventory/">Loja e inventário</a></li><li><a href="../../economy/market/">Bolsa</a></li><li><a href="../../economy/gems/">Gemas</a></li><li><a href="../../economy/rankings/">Ranking</a></li></ul></section><section><h2>Personagem</h2><ul><li><a href="../energy/">Energia</a></li><li><a href="../levels-and-xp/">Níveis e XP</a></li><li><a href="../achievements-and-titles/">Conquistas e títulos</a></li><li><a href="./" aria-current="page">Perfil e bio</a></li><li><a href="../marriage/">Casamento</a></li></ul></section><section><h2>Combate</h2><ul><li><a href="../../combat/duels/">Duelos</a></li><li><a href="../../combat/weapons/">Armas</a></li><li><a href="../../combat/health-and-gear/">Vida, colete e munição</a></li></ul></section><section><h2>Crime e segurança</h2><ul><li><a href="../../crime/getting-started/">Crime: por onde começar</a></li><li><a href="../../crime/robbery/">Roubar jogadores</a></li><li><a href="../../crime/laundering/">Lavagem de dinheiro</a></li><li><a href="../../crime/wanted-and-prison/">Polícia, procurados e prisão</a></li><li><a href="../../crime/prison-escape/">Fuga da prisão</a></li></ul></section><section><h2>Ajuda e referência</h2><ul><li><a href="../../help/faq/">Perguntas frequentes</a></li><li><a href="../../help/commands/">Comandos</a></li><li><a href="../../help/cooldowns/">Tempos de espera</a></li></ul></section>
+    </nav>
+  </aside>
+
+  <main class="wiki-main" id="content">
+    <nav class="crumbs" aria-label="Você está em"><a href="../../">Wiki</a><span>Personagem</span></nav>
+    <article class="wiki-doc">
+      <header>
+        <h1>Perfil e bio</h1>
+        <p class="lede">O cartão de perfil, como ler cada parte, como mudar a bio e como ver o perfil de outra pessoa.</p>
+      </header>
+      <p>O <strong><code>/perfil</code></strong> (atalho <code>/profile</code>) mostra o seu cartão de perfil: uma imagem com o resumo de quem você é no servidor.</p><h2 id="o-que-o-cartao-mostra"><a class="anchor" href="#o-que-o-cartao-mostra" aria-label="Link para esta seção">#</a>O que o cartão mostra</h2><ul><li><strong>RANK</strong>: a sua posição no ranking de patrimônio (veja <a href="../../economy/rankings/">Ranking</a>);</li><li>o <strong>estado civil</strong>, solteiro(a) ou casado(a) (veja <a href="../marriage/">Casamento</a>);</li><li>o <strong>nível</strong>, num anel que mostra quanto falta para o próximo;</li><li>a sua <strong>foto</strong>, o <strong>nome</strong> e o <strong>título</strong> equipado;</li><li>a <strong>bio</strong>;</li><li>o <strong>banco</strong>, a <strong>carteira</strong> e as <strong>gemas</strong>;</li><li>a <strong>arma equipada</strong> (com o dano) e o <strong>emprego atual</strong>.</li></ul><h2 id="ver-o-perfil-de-outra-pessoa"><a class="anchor" href="#ver-o-perfil-de-outra-pessoa" aria-label="Link para esta seção">#</a>Ver o perfil de outra pessoa</h2><p>Use a opção <code>usuario</code> com o nome, uma @menção ou o ID: <code>/perfil usuario:@pessoa</code>, ou <code>hperfil @pessoa</code> no prefixo.</p><h2 id="mudar-a-bio"><a class="anchor" href="#mudar-a-bio" aria-label="Link para esta seção">#</a>Mudar a bio</h2><p>A bio é o texto que aparece no cartão. Ela tem <strong>até 160 caracteres</strong>.</p><ul><li><strong><code>/bio texto:Seu texto aqui</code></strong> troca na hora.</li><li><strong><code>/bio</code></strong> sem texto abre um editor, com o botão <strong>Editar bio</strong>, já preenchido com a bio atual.</li></ul><aside class="callout warning"><p class="callout-title">Atenção</p><p>A bio aparece para qualquer pessoa que veja o seu perfil. Os <a href="../../../terms/">termos de uso</a> pedem que ela não tenha conteúdo ilegal, ofensivo ou que exponha dados de outras pessoas.</p></aside><h2 id="perfil-da-vsync-userinfo"><a class="anchor" href="#perfil-da-vsync-userinfo" aria-label="Link para esta seção">#</a>Perfil da VSync: <code>/userinfo</code></h2><p>O <code>/userinfo</code> (atalho <code>/ui</code>) é outra coisa: mostra as <strong>informações e insígnias de um usuário da VSync</strong>, não do jogo. Funciona com qualquer pessoa, mesmo que ela nunca tenha jogado a Helena.</p><h2 id="proximo-passo"><a class="anchor" href="#proximo-passo" aria-label="Link para esta seção">#</a>Próximo passo</h2><ul class="cards"><li><a href="../achievements-and-titles/"><b>Conquistas e títulos</b><span>As conquistas que dá para desbloquear, o título que cada uma dá e como equipar o seu no perfil.</span></a></li><li><a href="../marriage/"><b>Casamento</b><span>Como pedir alguém em casamento, aceitar ou recusar um pedido e o que muda no perfil.</span></a></li></ul>
+    </article>
+    <nav class="pager" aria-label="Outras páginas"><a class="prev" href="../achievements-and-titles/"><small>Anterior</small><b>Conquistas e títulos</b></a><a class="next" href="../marriage/"><small>Próxima</small><b>Casamento</b></a></nav>
+  </main>
+
+  <nav class="wiki-toc" aria-label="Nesta página"><h2>Nesta página</h2><ol><li class="l2"><a href="#o-que-o-cartao-mostra">O que o cartão mostra</a></li><li class="l2"><a href="#ver-o-perfil-de-outra-pessoa">Ver o perfil de outra pessoa</a></li><li class="l2"><a href="#mudar-a-bio">Mudar a bio</a></li><li class="l2"><a href="#perfil-da-vsync-userinfo">Perfil da VSync: /userinfo</a></li><li class="l2"><a href="#proximo-passo">Próximo passo</a></li></ol></nav>
+
+</div>
+
+<footer class="wiki-foot">
+  <div class="wrap">
+    <ul>
+      <li><a href="../../../">Site</a></li>
+      <li><a href="../../../terms/">Termos de uso</a></li>
+      <li><a href="../../../privacy/">Privacidade</a></li>
+      <li><a href="https://vsync.lat/tfe6pdxk" data-link="support" target="_blank" rel="noopener">Servidor oficial</a></li>
+    </ul>
+    <p>A Helena é um projeto independente feito para a VSync. Os valores desta wiki saem do próprio bot quando ela é gerada.</p>
+  </div>
+</footer>
+
+</body>
+</html>

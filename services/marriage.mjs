@@ -2,7 +2,13 @@
 import { db } from "../database/connection.mjs";
 import { getPlayer } from "../database/economy.mjs";
 
-const REQUEST_EXPIRY = 24 * 60 * 60;
+// Regras do casamento (a wiki lê este valor).
+export const MARRIAGE_RULES = Object.freeze({
+    // Quanto tempo um pedido vale, em segundos.
+    requestTtl: 24 * 60 * 60
+});
+
+const REQUEST_EXPIRY = MARRIAGE_RULES.requestTtl;
 
 function nowSeconds() {
     return Math.floor(Date.now() / 1000);

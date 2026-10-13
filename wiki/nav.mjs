@@ -13,7 +13,12 @@ export const NAV = [
     {
         id: "economy",
         title: "Economia",
-        pages: ["market"]
+        pages: ["bank-and-transfers", "shop-and-inventory", "market", "gems", "rankings"]
+    },
+    {
+        id: "character",
+        title: "Personagem",
+        pages: ["energy", "levels-and-xp", "achievements-and-titles", "profile", "marriage"]
     },
     {
         id: "combat",
@@ -24,5 +29,10 @@ export const NAV = [
         id: "crime",
         title: "Crime e segurança",
         pages: ["getting-started", "robbery", "laundering", "wanted-and-prison", "prison-escape"]
+    },
+    {
+        id: "help",
+        title: "Ajuda e referência",
+        pages: ["faq", "commands", "cooldowns"]
     }
 ];

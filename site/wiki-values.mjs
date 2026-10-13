@@ -43,6 +43,18 @@ export function duration(seconds) {
     return plural(seconds, "segundo", "segundos");
 }
 
+// 30000 -> "8 h 20 min"
+export function hoursMinutes(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const rest = Math.round((seconds % 3600) / 60);
+
+    if (hours === 0) {
+        return `${rest} min`;
+    }
+
+    return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+}
+
 // 270 -> "4,5 minutos"
 export const minutes = seconds =>
     `${(seconds / 60).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} minutos`;
@@ -90,6 +102,7 @@ export async function collectWikiBot() {
     const { HOSPITAL_RULES } = await import("../services/hospital.mjs");
     const { ARMORY_RULES } = await import("../services/armory.mjs");
     const { robberyCap } = await import("../services/robbery.mjs");
+    const { MARRIAGE_RULES } = await import("../services/marriage.mjs");
     const { collectSiteData } = await import("./data-source.mjs");
 
     const { CRIME_CONFIG, CRIME_FINE, LAUNDERING_CONFIG, ROBBERY_CONFIG, ESCAPE_CONFIG } = crime;
@@ -130,7 +143,9 @@ export async function collectWikiBot() {
         energy: {
             max: String(ENERGY_CONFIG.max),
             regen: duration(ENERGY_CONFIG.regenSeconds),
-            workCost: String(ENERGY_CONFIG.workCost)
+            workCost: String(ENERGY_CONFIG.workCost),
+            full: hoursMinutes(ENERGY_CONFIG.max * ENERGY_CONFIG.regenSeconds),
+            perHour: String(3600 / ENERGY_CONFIG.regenSeconds)
         },
 
         xp: {
@@ -215,6 +230,10 @@ export async function collectWikiBot() {
             injuries: ROBBERY_CONFIG.injuryLevels
                 .map(level => `${level.name} (${level.hp} de vida, em ${percent(level.weight / ROBBERY_CONFIG.injuryLevels.reduce((sum, item) => sum + item.weight, 0))} dos casos)`)
                 .join(", ")
+        },
+
+        marriage: {
+            requestTtl: duration(MARRIAGE_RULES.requestTtl)
         },
 
         prison: {
@@ -313,14 +332,32 @@ export async function collectWikiBot() {
         ])
     );
 
+    // armas têm tabela própria (tables.weapons); aqui, o resto da loja
     tables.shop = table(
-        ["Item", "Prateleira", "Compra", "Venda"],
+        ["Item", "Compra", "Venda", "Para que serve"],
         ITEMS.filter(item => item.buyPrice > 0 && item.category !== "weapon").map(item => [
-            `${item.emoji} ${item.name}`,
-            getCategoryName(item.category),
+            `${item.emoji} ${item.name} (${getCategoryName(item.category)}, até ${item.maxStack})`,
             reais(item.buyPrice),
-            item.sellable ? reais(item.sellPrice) : "Não vende"
+            item.sellable ? reais(item.sellPrice) : "Não vende",
+            item.description
         ])
+    );
+
+    const energyItems = ITEMS.filter(item => item.use?.energy);
+
+    tables["energy-items"] = table(
+        ["Item", "Repõe", "Preço"],
+        energyItems.map(item => [`${item.emoji} ${item.name}`, `${item.use.energy} de energia`, reais(item.buyPrice)])
+    );
+
+    tables["energy-costs"] = table(
+        ["Ação", "Custo em energia"],
+        [
+            [`Trabalhar (${code("/trabalhar")})`, String(ENERGY_CONFIG.workCost)],
+            [`Crime (${code("/crime")})`, String(CRIME_CONFIG.energyCost)],
+            [`Roubar (${code("/roubar")})`, String(ROBBERY_CONFIG.energyCost)],
+            [`Lavar dinheiro (${code("/lavagem")})`, String(LAUNDERING_CONFIG.energyCost)]
+        ]
     );
 
     tables.missions = table(
@@ -334,11 +371,12 @@ export async function collectWikiBot() {
     );
 
     tables.achievements = table(
-        ["Conquista", "Raridade", "Como conseguir"],
+        ["Conquista", "Raridade", "Como conseguir", "Título e identificador"],
         achievements.getAllAchievements().map(achievement => [
             `${achievement.emoji} ${achievement.name}`,
             achievements.ACHIEVEMENT_RARITIES[achievement.rarity].name,
-            achievement.description
+            achievement.description,
+            `${achievement.titleEmoji ?? ""} ${achievement.title} ${code(achievement.id)}`.trim()
         ])
     );
 
