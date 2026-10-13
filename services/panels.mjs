@@ -28,6 +28,11 @@ import {
 import { handleMarketClick } from "./market-panel.mjs";
 
 import {
+    handleHelpClick,
+    handleHelpModal
+} from "./help-panel.mjs";
+
+import {
     button,
     row,
     warn,
@@ -52,6 +57,7 @@ import { LAUNDERING_CONFIG } from "../config/crime.mjs";
 //   loja:...                                 /loja        (shop-panels.mjs)
 //   inv:...                                  /inventario  (shop-panels.mjs)
 //   bolsa:atualizar|fechar:<dono>            /bolsa       (market-panel.mjs)
+//   ajuda:...                                /ajuda       (help-panel.mjs)
 //
 // O ID do dono vai no customId: os botões pessoais só funcionam
 // para quem abriu o painel. O envio do modal leva o customId do
@@ -113,6 +119,10 @@ export function handlePanelClick(interaction) {
 
     if (area === "bolsa") {
         return handleMarketClick(interaction);
+    }
+
+    if (area === "ajuda") {
+        return handleHelpClick(interaction);
     }
 
     const userId = interaction.user?.id;
@@ -235,7 +245,7 @@ export async function handleModalSubmit(interaction, comandos) {
         interaction.data?.customId || ""
     ).split(":");
 
-    if (!["banco", "lavagem", "bio", "loja", "inv", "uso"].includes(area)) {
+    if (!["banco", "lavagem", "bio", "loja", "inv", "uso", "ajuda"].includes(area)) {
         return null;
     }
 
@@ -263,6 +273,10 @@ export async function handleModalSubmit(interaction, comandos) {
         return action === "varios"
             ? handleUseModal(interaction)
             : warn("Formulário desconhecido", "Esse formulário não é reconhecido.");
+    }
+
+    if (area === "ajuda") {
+        return handleHelpModal(interaction);
     }
 
     const fields = readFields(interaction);

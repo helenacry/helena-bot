@@ -7,43 +7,16 @@
 
 import { readdir } from "node:fs/promises";
 
+import {
+    COMMAND_CATEGORIES,
+    categoryOf,
+    isHiddenCommand
+} from "../config/command-categories.mjs";
+
 const COMMANDS_DIR = new URL("../commands/", import.meta.url);
 
-// Pastas que não aparecem no site: são só do dono do bot.
-const HIDDEN_FOLDERS = new Set(["admin", "dev"]);
-
-// Comandos de teste interno.
-const HIDDEN_COMMANDS = new Set(["testembed"]);
-
-const CATEGORIES = [
-    { id: "economia", label: "Economia", emoji: "💰" },
-    { id: "crime", label: "Crime", emoji: "🕵️" },
-    { id: "combate", label: "Combate", emoji: "⚔️" },
-    { id: "progresso", label: "Progresso", emoji: "🏆" },
-    { id: "social", label: "Social", emoji: "💍" },
-    { id: "utilidades", label: "Utilidades", emoji: "⚙️" }
-];
-
-// A pasta não diz tudo (o combate mora em crime/ e os duelos em
-// social/), então os casos especiais ficam aqui, por nome.
-const CATEGORY_BY_COMMAND = {
-    crime: "crime", roubar: "crime", lavagem: "crime",
-    lavageminfo: "crime", prisao: "crime", procurados: "crime",
-
-    atacar: "combate", aceitarduelo: "combate", recusarduelo: "combate",
-    historico: "combate", hospital: "combate", curar: "combate",
-    colete: "combate", municao: "combate", reparar: "combate",
-    recarregar: "combate", equipar: "combate", desequipar: "combate",
-    statuscombate: "combate", protecaopvp: "combate", armas: "combate"
-};
-
-const CATEGORY_BY_FOLDER = {
-    economy: "economia",
-    progress: "progresso",
-    social: "social",
-    utility: "utilidades",
-    crime: "crime"
-};
+// As categorias, as pastas escondidas e os comandos de teste estão em
+// config/command-categories.mjs, o mesmo lugar de onde a central de ajuda (/ajuda) lê.
 
 export async function collectSiteData() {
     const { carregarComandos } = await import("../command-registry.mjs");
@@ -87,21 +60,18 @@ export async function collectSiteData() {
         }
     }
 
-    const byCategory = new Map(CATEGORIES.map(c => [c.id, []]));
+    const byCategory = new Map(COMMAND_CATEGORIES.map(c => [c.id, []]));
 
     let aliasCount = 0;
 
     for (const command of loaded.values()) {
         const folder = folderOf.get(command.name);
 
-        if (HIDDEN_FOLDERS.has(folder) || HIDDEN_COMMANDS.has(command.name)) {
+        if (isHiddenCommand(command.name, folder)) {
             continue;
         }
 
-        const category =
-            CATEGORY_BY_COMMAND[command.name] ??
-            CATEGORY_BY_FOLDER[folder] ??
-            "utilidades";
+        const category = categoryOf(command.name, folder);
 
         aliasCount += command.aliases?.length ?? 0;
 
@@ -112,7 +82,7 @@ export async function collectSiteData() {
         });
     }
 
-    const categories = CATEGORIES
+    const categories = COMMAND_CATEGORIES
         .map(category => ({
             ...category,
             commands: byCategory.get(category.id)

@@ -105,6 +105,15 @@ export function resolverComando(comandos, nome) {
     return comandos.get(nome) ?? aliasesPorComandos.get(comandos)?.get(nome);
 }
 
+// O que o último carregarComandos() leu: os comandos e o arquivo de cada um
+// (nome -> "pasta/arquivo.mjs"). A central de ajuda lê daqui, então ela lista
+// o que o bot tem de verdade e nunca fica desatualizada.
+let ultimaCarga = null;
+
+export function comandosCarregados() {
+    return ultimaCarga;
+}
+
 export async function carregarComandos() {
     const comandos = new Map();
 
@@ -154,6 +163,8 @@ export async function carregarComandos() {
         [...porPasta].map(([pasta, total]) => `${pasta}: ${total}`).join(" | ") +
         ` | aliases: ${aliases.size}`
     );
+
+    ultimaCarga = { comandos, origem };
 
     return comandos;
 }

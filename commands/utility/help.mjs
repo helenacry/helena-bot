@@ -1,97 +1,42 @@
 
 import {
-    createEmbed,
     embedResponse,
-    errorEmbed,
-    HELENA_COLORS
+    errorEmbed
 } from "../../utils/embed.mjs";
 
-// ==========================================
-// CONFIGURAÇÕES
-// ==========================================
+import { COMMAND_CATEGORIES } from "../../config/command-categories.mjs";
 
-const PREFIX = "h";
+import { HELP_CONFIG } from "../../config/help.mjs";
 
-const CATEGORIES = {
-    economia: {
-        emoji: "💰",
-        name: "Economia",
-        description: "Gerencie seu dinheiro e desenvolva sua conta.",
-        commands: [
-            ["daily", "Resgate sua recompensa diária."],
-            ["perfil", "Consulte seu perfil econômico."],
-            ["ranking", "Veja a classificação dos jogadores."],
-            ["loja", "Abra a loja: compre e venda itens pelos botões."],
-            ["bolsa", "Veja o índice do mercado e o item em alta (muda os preços)."],
-            ["inventario", "Veja, organize e descarte seus itens."],
-            ["usaritem", "Coma, beba (repõe energia) ou equipe uma arma."],
-            ["descartar", "Destrua itens do inventário (sem reembolso)."]
-        ]
-    },
+import {
+    getCatalog,
+    findCommand,
+    searchCommands
+} from "../../services/command-catalog.mjs";
 
-    progresso: {
-        emoji: "🏆",
-        name: "Progresso",
-        description: "Acompanhe sua evolução e desbloqueie recompensas.",
-        commands: [
-            ["conquistas", "Consulte conquistas e seus requisitos."],
-            ["titulos", "Veja os títulos disponíveis para você."],
-            ["equipartitulo", "Equipe um título desbloqueado."],
-            ["desequipartitulo", "Remova seu título atual."]
-        ]
-    },
-
-    combate: {
-        emoji: "⚔️",
-        name: "Combate",
-        description: "Desafie jogadores e desenvolva sua carreira PvP.",
-        commands: [
-            // Adicione aqui os nomes exatos dos comandos
-            // existentes na sua pasta commands/.
-        ]
-    },
-
-    crime: {
-        emoji: "🕵️",
-        name: "Crime",
-        description: "Arrisque a sorte, lave o dinheiro e evite a cadeia.",
-        commands: [
-            ["crime", "Cometa um crime e ganhe dinheiro sujo."],
-            ["roubar", "Roube a carteira de outro jogador (precisa de arma)."],
-            ["lavagem", "Lave o dinheiro sujo e receba-o limpo."],
-            ["lavageminfo", "Veja o tempo da lavagem em andamento."],
-            ["procurados", "Veja quem tem ficha criminal no servidor."],
-            ["prisao", "Consulte sua pena. Preso, tente a fuga pelo botão."]
-        ]
-    },
-
-    social: {
-        emoji: "💍",
-        name: "Social",
-        description: "Interaja com outros jogadores.",
-        commands: [
-            // Adicione aqui os comandos sociais existentes.
-        ]
-    },
-
-    outros: {
-        emoji: "⚙️",
-        name: "Outros",
-        description: "Informações e recursos adicionais.",
-        commands: [
-            ["ajuda", "Abra esta central de ajuda."]
-        ]
-    }
-};
+import {
+    buildHelpHome,
+    buildHelpCategory,
+    buildHelpCommand,
+    buildHelpSearch
+} from "../../services/help-view.mjs";
 
 // ==========================================
-// UTILITÁRIOS
+// COMANDO /AJUDA
 // ==========================================
+
+// A central de ajuda é um painel (services/help-panel.mjs): o início tem o menu
+// de categorias e a busca. A lista de comandos vem dos comandos que o bot
+// carregou (services/command-catalog.mjs), então não fica desatualizada.
+//
+//   /ajuda                       o início
+//   /ajuda categoria:combate     direto numa categoria
+//   /ajuda comando:daily         direto no detalhe de um comando
 
 function getOption(interaction, name) {
     const options = interaction.data?.options;
 
-    // Compatibilidade com opções em formato de objeto.
+    // Opções em formato de objeto.
     if (options && !Array.isArray(options)) {
         const option = options[name];
 
@@ -102,179 +47,101 @@ function getOption(interaction, name) {
         return option ?? null;
     }
 
-    // Compatibilidade com opções em formato de array.
+    // Opções em formato de lista.
     if (Array.isArray(options)) {
-        return options.find(
-            option => option.name === name
-        )?.value ?? null;
+        return options.find(option => option.name === name)?.value ?? null;
     }
 
     return null;
 }
 
-function formatCommand(command) {
-    const [name, description] = command;
+function reply(view) {
+    const response = embedResponse(view.embed);
 
-    return (
-        "**`" + PREFIX + name + "`**\n" +
-        description
-    );
+    // Só quem abriu o painel mexe nos botões e menus.
+    response.data.components = view.components;
+
+    return response;
 }
-
-function createMainHelp() {
-    const fields = Object.entries(CATEGORIES).map(
-        ([id, category]) => ({
-            name:
-                category.emoji +
-                " " +
-                category.name,
-
-            value:
-                category.description +
-                "\n`hajuda categoria:" +
-                id +
-                "`",
-
-            inline: false
-        })
-    );
-
-    return createEmbed({
-        title: "📖 Helena • Central de Ajuda",
-
-        description: [
-            "Bem-vindo à **Helena**!",
-            "",
-            "Explore os sistemas do bot e descubra",
-            "os comandos disponíveis em cada categoria.",
-            "",
-            "**Como utilizar:**",
-            "Use `hajuda` para abrir este menu ou",
-            "`hajuda categoria:economia` para ver os comandos",
-            "de uma categoria específica."
-        ].join("\n"),
-
-        color: HELENA_COLORS.primary,
-
-        fields,
-
-        footer:
-            "Helena • Sua jornada começa aqui."
-    });
-}
-
-function createCategoryHelp(categoryId) {
-    const category = CATEGORIES[categoryId];
-
-    if (!category) {
-        return null;
-    }
-
-    const commandsText = category.commands.length
-        ? category.commands
-            .map(formatCommand)
-            .join("\n\n")
-        : "Os comandos desta categoria serão adicionados em breve.";
-
-    return createEmbed({
-        title:
-            category.emoji +
-            " Helena • " +
-            category.name,
-
-        description: [
-            category.description,
-            "",
-            commandsText,
-            "",
-            "Use `/ajuda` para voltar ao menu principal."
-        ].join("\n"),
-
-        color: HELENA_COLORS.primary,
-
-        footer:
-            "Helena • Central de Ajuda"
-    });
-}
-
-// ==========================================
-// COMANDO /AJUDA
-// ==========================================
 
 export default {
     name: "ajuda",
     aliases: ["help", "comandos"],
 
-    description:
-        "Consulte os comandos e sistemas da Helena.",
+    description: "Consulte os comandos e sistemas da Helena",
 
     options: [
         {
             name: "categoria",
-            description:
-                "Escolha a categoria de comandos que deseja consultar.",
+            description: "Abrir já numa categoria de comandos",
 
             type: "string",
             required: false,
 
-            choices: [
-                {
-                    name: "💰 Economia",
-                    value: "economia"
-                },
-                {
-                    name: "🏆 Progresso",
-                    value: "progresso"
-                },
-                {
-                    name: "⚔️ Combate",
-                    value: "combate"
-                },
-                {
-                    name: "🕵️ Crime",
-                    value: "crime"
-                },
-                {
-                    name: "💍 Social",
-                    value: "social"
-                },
-                {
-                    name: "⚙️ Outros",
-                    value: "outros"
-                }
-            ]
+            choices: COMMAND_CATEGORIES.map(category => ({
+                name: `${category.emoji} ${category.label}`,
+                value: category.id
+            }))
+        },
+        {
+            name: "comando",
+            description: "Ver os detalhes de um comando (ex.: daily)",
+
+            type: "string",
+            required: false
         }
     ],
 
     async execute(interaction) {
         try {
-            const selectedCategory = getOption(
-                interaction,
-                "categoria"
-            );
+            const ownerId = interaction.user?.id ?? "0";
 
-            // Exibir menu principal.
-            if (!selectedCategory) {
-                return embedResponse(
-                    createMainHelp()
-                );
-            }
+            const catalog = getCatalog();
 
-            const categoryId = String(
-                selectedCategory
-            ).trim().toLowerCase();
-
-            // Validar categoria.
-            if (!CATEGORIES[categoryId]) {
+            if (!catalog) {
                 return errorEmbed(
-                    "Categoria inválida. Utilize `/ajuda` para consultar as opções disponíveis."
+                    "Não foi possível carregar a lista de comandos agora."
                 );
             }
 
-            // Exibir comandos da categoria.
-            return embedResponse(
-                createCategoryHelp(categoryId)
-            );
+            const commandText = getOption(interaction, "comando");
+
+            // /ajuda comando:daily abre o detalhe; se não achar, mostra a busca.
+            if (commandText) {
+                const entry = findCommand(catalog, commandText);
+
+                if (entry) {
+                    return reply(buildHelpCommand({ ownerId, catalog, entry }));
+                }
+
+                return reply(buildHelpSearch({
+                    ownerId,
+                    catalog,
+                    query: commandText,
+                    results: searchCommands(catalog, commandText, HELP_CONFIG.searchLimit)
+                }));
+            }
+
+            const selected = getOption(interaction, "categoria");
+
+            if (!selected) {
+                return reply(buildHelpHome({ ownerId, catalog }));
+            }
+
+            // Os nomes antigos (como "outros") ainda funcionam.
+            const typed = String(selected).trim().toLowerCase();
+
+            const categoryId = HELP_CONFIG.legacyCategories[typed] ?? typed;
+
+            const view = buildHelpCategory({ ownerId, catalog, categoryId, page: 1 });
+
+            if (!view) {
+                return errorEmbed(
+                    "Categoria inválida. Use `/ajuda` para ver as opções."
+                );
+            }
+
+            return reply(view);
 
         } catch (error) {
             console.error("[AJUDA]", error);
