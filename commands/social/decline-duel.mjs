@@ -5,7 +5,9 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { refuse } from "../../services/combat.mjs";
+import { refuse, pendingChallenge } from "../../services/combat.mjs";
+
+import { mention } from "../../services/mentions.mjs";
 
 // ==========================================
 // COMANDO /RECUSARDUELO
@@ -33,17 +35,24 @@ export default {
             // RECUSAR DESAFIO
             // ==================================
 
+            // Quem desafiou, lido antes de apagar o desafio, para avisar a pessoa.
+            const challenger = pendingChallenge(guildId, userId)?.senderId;
+
             const recusado = await refuse(
                 guildId,
                 userId
             );
 
+            const description = !recusado
+                ? "❌ Você não possui nenhum desafio pendente."
+                : challenger
+                    ? `✅ Você recusou o desafio de ${mention(challenger)}.`
+                    : "✅ Desafio recusado com sucesso.";
+
             const embed = createEmbed({
                 title: "⚔️ Desafio PvP",
 
-                description: recusado
-                    ? "✅ Desafio recusado com sucesso."
-                    : "❌ Você não possui nenhum desafio pendente.",
+                description,
 
                 color: HELENA_COLORS.primary
             });
@@ -52,7 +61,8 @@ export default {
                 type: "message",
 
                 data: {
-                    body: "",
+                    // quem desafiou é avisado pelo texto da mensagem
+                    body: recusado && challenger ? mention(challenger) : "",
                     embeds: [embed]
                 }
             };

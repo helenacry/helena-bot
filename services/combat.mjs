@@ -225,6 +225,37 @@ export function challenge(guildId, senderId, targetId) {
 }
 
 // ==========================================
+// DESAFIO PENDENTE
+// ==========================================
+
+// Quem desafiou targetId e ainda espera resposta, ou null se não há desafio
+// ou ele já venceu. Só consulta: não apaga nada (quem apaga é refuse/accept).
+export function pendingChallenge(
+    guildId,
+    targetId,
+    timestamp = now()
+) {
+    const row = db.prepare(`
+        SELECT sender_id, created_at
+        FROM combat_challenges
+        WHERE guild_id = ?
+          AND target_id = ?
+    `).get(guildId, targetId);
+
+    if (
+        !row ||
+        row.created_at < timestamp - CHALLENGE_EXPIRATION
+    ) {
+        return null;
+    }
+
+    return {
+        senderId: row.sender_id,
+        createdAt: row.created_at
+    };
+}
+
+// ==========================================
 // RECUSAR DESAFIO
 // ==========================================
 

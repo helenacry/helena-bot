@@ -18,9 +18,9 @@ O duelo é uma luta entre dois jogadores do mesmo servidor. Não vale dinheiro: 
 
 ## Como acontece
 
-1. Você desafia alguém com **`/atacar`**.
-2. A pessoa tem {{v:duel.requestTtl}} para usar **`/aceitarduelo`**. Se não quiser, usa `/recusarduelo`.
-3. Quando ela aceita, o duelo **é resolvido na hora**: os dois golpeiam ao mesmo tempo.
+1. Você desafia alguém com **`/atacar`**. A Helena **marca a pessoa** na mensagem do desafio, então ela é avisada.
+2. A pessoa tem {{v:duel.requestTtl}} para usar **`/aceitarduelo`**. Se não quiser, usa `/recusarduelo`, e quem desafiou é avisado da recusa.
+3. Quando ela aceita, o duelo **é resolvido na hora**: os dois golpeiam ao mesmo tempo, e a mensagem do resultado marca os dois.
 
 > [!NOTE]
 > A Helena não usa sorte no duelo. O resultado vem **só das armas e da vida** de cada um. Quem causa mais dano termina com mais vida e vence.

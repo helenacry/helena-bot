@@ -5,7 +5,9 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { accept } from "../../services/combat.mjs";
+import { accept, DUEL_RULES } from "../../services/combat.mjs";
+
+import { mention, mentionAll } from "../../services/mentions.mjs";
 
 export default {
     name: "aceitarduelo",
@@ -32,11 +34,11 @@ export default {
             }
 
             const description = [
-                `<@${result.sender}>: ${result.senderHp} HP (causou ${result.senderDamage} de dano)`,
-                `<@${result.target}>: ${result.targetHp} HP (causou ${result.targetDamage} de dano)`,
+                `${mention(result.sender)}: ${result.senderHp} HP (causou ${result.senderDamage} de dano)`,
+                `${mention(result.target)}: ${result.targetHp} HP (causou ${result.targetDamage} de dano)`,
                 "",
                 result.winner
-                    ? `🏆 Vencedor: <@${result.winner}> (+35 XP)`
+                    ? `🏆 Vencedor: ${mention(result.winner)} (+${DUEL_RULES.winXp} XP)`
                     : "🤝 Empate!"
             ].join("\n");
 
@@ -49,7 +51,8 @@ export default {
             return {
                 type: "message",
                 data: {
-                    body: "",
+                    // quem desafiou precisa saber que o duelo aconteceu
+                    body: mentionAll([result.sender, result.target]),
                     embeds: [embed]
                 }
             };

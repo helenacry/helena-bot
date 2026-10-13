@@ -5,7 +5,12 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { challenge } from "../../services/combat.mjs";
+import { challenge, DUEL_RULES } from "../../services/combat.mjs";
+
+import { mention } from "../../services/mentions.mjs";
+
+// Quanto o desafio vale, escrito para o jogador (o prazo vem de DUEL_RULES).
+const REQUEST_MINUTES = Math.round(DUEL_RULES.requestTtl / 60);
 
 export default {
     name: "atacar",
@@ -52,7 +57,7 @@ export default {
                 title: "⚔️ Desafio enviado",
 
                 description:
-                    `<@${targetId}> tem 2 minutos para usar ` +
+                    `${mention(targetId)} tem ${REQUEST_MINUTES} minutos para usar ` +
                     "`/aceitarduelo` ou `/recusarduelo`.\n" +
                     "Nenhum dinheiro será perdido.",
 
@@ -63,7 +68,9 @@ export default {
                 type: "message",
 
                 data: {
-                    body: "",
+                    // Menção só avisa quem é citada no texto da mensagem; dentro
+                    // do embed ela vira apenas um chip (veja services/mentions.mjs).
+                    body: mention(targetId),
                     embeds: [embed]
                 }
             };
