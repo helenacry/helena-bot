@@ -2,6 +2,8 @@
 // CENTRAL DE AJUDA (/ajuda)
 // ==========================================
 
+import { WIKI_URL } from "./site.mjs";
+
 // A lista de comandos NÃO fica aqui: a ajuda lê os comandos carregados pelo bot
 // (services/command-catalog.mjs), então ela nunca fica desatualizada. Aqui só
 // ficam o texto de cada categoria e os ajustes da tela.
@@ -13,8 +15,8 @@ export const HELP_CONFIG = Object.freeze({
     // Quantos resultados a busca mostra.
     searchLimit: 10,
 
-    // Onde está a wiki (a página inicial). Mude aqui se o endereço do site mudar.
-    wikiUrl: "https://helenacry.github.io/helena-bot/wiki/",
+    // Onde está a wiki (a página inicial). O endereço do site fica em config/site.mjs.
+    wikiUrl: WIKI_URL,
 
     // O que cada categoria cobre, em uma frase (as categorias estão em
     // config/command-categories.mjs).
