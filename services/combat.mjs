@@ -21,10 +21,33 @@ import {
 // CONFIGURAÇÕES
 // ==========================================
 
-const DUEL_COOLDOWN = 300;
-const CHALLENGE_EXPIRATION = 600;
-const MINIMUM_HP = 20;
-const WINNER_XP = 30;
+// Regras do duelo. A wiki (site/wiki-values.mjs) lê estes valores, então
+// o texto dela acompanha o que o bot faz de verdade.
+export const DUEL_RULES = Object.freeze({
+    // Espera entre dois duelos, em segundos.
+    cooldown: 300,
+
+    // Quanto tempo um desafio vale, em segundos.
+    requestTtl: 600,
+
+    // Vida mínima dos dois lados.
+    minHp: 20,
+
+    // XP de quem vence.
+    winXp: 30,
+
+    // Dano sem arma, e de arma que não define o próprio dano.
+    unarmedDamage: 5,
+    defaultWeaponDamage: 10,
+
+    // Quanto do colete entra na conta (limite de pontos).
+    vestCap: 15
+});
+
+const DUEL_COOLDOWN = DUEL_RULES.cooldown;
+const CHALLENGE_EXPIRATION = DUEL_RULES.requestTtl;
+const MINIMUM_HP = DUEL_RULES.minHp;
+const WINNER_XP = DUEL_RULES.winXp;
 
 export const now = () =>
     Math.floor(Date.now() / 1000);
@@ -331,8 +354,8 @@ export function accept(guildId, targetId) {
 
         const attack = (weapon, gear) => {
             let damage = weapon
-                ? Number(weapon.damage || 10)
-                : 5;
+                ? Number(weapon.damage || DUEL_RULES.defaultWeaponDamage)
+                : DUEL_RULES.unarmedDamage;
 
             if (weapon?.weaponType === "firearm") {
                 if (gear.ammo <= 0) {
@@ -378,7 +401,7 @@ export function accept(guildId, targetId) {
 
             return Math.max(
                 1,
-                damage - Math.min(15, gear.vest)
+                damage - Math.min(DUEL_RULES.vestCap, gear.vest)
             );
         };
 

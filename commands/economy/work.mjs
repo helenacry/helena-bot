@@ -19,6 +19,10 @@ import {
 } from "../../config/jobs.mjs";
 
 import {
+    WORK_CONFIG
+} from "../../config/work.mjs";
+
+import {
     consumeEnergy,
     ENERGY_CONFIG
 } from "../../services/energy.mjs";
@@ -31,11 +35,7 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-const CONFIG = {
-    cooldown: 60 * 60,
-    xp: 25,
-    maxWallet: 100_000_000_000_000
-};
+const CONFIG = WORK_CONFIG;
 
 function formatTime(seconds) {
     const value = Math.max(0, Math.floor(seconds));
