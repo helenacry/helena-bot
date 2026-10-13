@@ -1,1 +1,0 @@
-export const COMBAT = Object.freeze({ maxHp: 100, duelCooldown: 3600, requestTtl: 600, winXp: 35, loseXp: 5, protectionSeconds: 900, hospitalCost: 10000, ammoPack: 12, ammoPrice: 2400, vestPrice: 15000, repairPrice: 5000, maxAmmo: 120, maxVest: 100 });
