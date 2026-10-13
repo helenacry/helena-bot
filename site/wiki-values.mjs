@@ -71,6 +71,7 @@ export async function collectWikiBot() {
     const { COOLDOWNS } = await import("../config/cooldowns.mjs");
     const { WORK_CONFIG } = await import("../config/work.mjs");
     const { LIVE_CONFIG } = await import("../config/live.mjs");
+    const { ANTI_SPAM } = await import("../config/anti-spam.mjs");
 
     const achievements = await import("../config/achievements.mjs");
 
@@ -156,6 +157,10 @@ export async function collectWikiBot() {
             min: String(GEM_BONUS.min),
             max: String(GEM_BONUS.max),
             cooldown: duration(GEM_BONUS.cooldown)
+        },
+
+        antiSpam: {
+            interval: duration(ANTI_SPAM.commandCooldownSeconds)
         },
 
         market: {

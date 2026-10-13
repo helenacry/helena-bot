@@ -18,6 +18,8 @@ import { resolverComando } from "../command-registry.mjs";
 
 import { prisonBlock } from "./prison.mjs";
 
+import { commandGate, antiSpamText } from "./anti-spam.mjs";
+
 import { startLiveUpdate } from "./live-embed.mjs";
 
 import { LIVE_CONFIG } from "../config/live.mjs";
@@ -71,7 +73,8 @@ export async function processarPrefixo({
     message,
     comandos,
     send,
-    edit
+    edit,
+    gate = commandGate
 }) {
     const body = String(message.body ?? "").trim();
 
@@ -135,6 +138,21 @@ export async function processarPrefixo({
 
             return true;
         }
+    }
+
+    // Intervalo entre comandos. Vem antes de qualquer trabalho (nome no
+    // banco, comando) para o spam sair barato, e só conta comando de verdade:
+    // conversa que começa com "h" nunca chega aqui.
+    const espera = gate.check(actorId);
+
+    if (!espera.allowed) {
+        // Só o primeiro aviso da janela vira mensagem; as outras tentativas
+        // são ignoradas, senão o próprio aviso seria spam no canal.
+        if (espera.firstWarning) {
+            await send(message, { body: antiSpamText(espera.remainingMs) });
+        }
+
+        return true;
     }
 
     savePlayerName(user);

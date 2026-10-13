@@ -44,6 +44,11 @@ import {
 } from "./services/prefix.mjs";
 
 import {
+    commandGate,
+    antiSpamText
+} from "./services/anti-spam.mjs";
+
+import {
     startSupportStats,
     stopSupportStats
 } from "./services/support-stats.mjs";
@@ -1193,6 +1198,26 @@ function conectarGateway() {
 
                     mensagemErro(
                         "❌ Este comando não está disponível."
+                    )
+                );
+
+                return;
+            }
+
+            // ==================================
+            // INTERVALO ENTRE COMANDOS
+            // ==================================
+
+            // Mesmo intervalo do prefixo h (um só por pessoa). Vem antes
+            // da prisão e do /perfil, que gera imagem e é o mais pesado.
+            // A interação precisa de resposta: avisa só para a pessoa.
+            const espera = commandGate.check(actorId);
+
+            if (!espera.allowed) {
+                await responderInteracao(
+                    interaction,
+                    mensagemErro(
+                        antiSpamText(espera.remainingMs)
                     )
                 );
 

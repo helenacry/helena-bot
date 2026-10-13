@@ -44,6 +44,12 @@ Hoje, para liberar a **lavanderia privada**. Elas valem em todos os servidores. 
 - Está com **pouca vida**? Crime e roubo pedem {{v:crime.minHp}} de vida, e o duelo pede {{v:duel.minHp}}. Use `/curar`.
 - Está no **tempo de espera**? Veja [Tempos de espera](wiki:help/cooldowns).
 
+### O bot respondeu "Devagar!" e não fez o comando. Por quê?
+
+A Helena espera **{{v:antiSpam.interval}}** entre um comando seu e o seguinte, para não ficar sobrecarregada. Vale para os comandos de barra e para o prefixo `h`, em qualquer servidor. O comando que chega antes disso **não é executado** (nada é gasto nem acontece): espere o tempo que o aviso mostra e mande de novo.
+
+Os botões e menus das mensagens não contam, e o aviso aparece só uma vez por rodada: se você insistir, as outras tentativas são ignoradas em silêncio. Veja também [Tempos de espera](wiki:help/cooldowns).
+
 ### O bot não responde. Como sei se ele está no ar?
 
 Use **`/ping`** (ou `hping`): se o bot estiver funcionando, ele responde na hora. Se nem o `/ping` responde, o bot está fora do ar ou reiniciando, e não há nada a fazer do seu lado além de tentar de novo mais tarde.

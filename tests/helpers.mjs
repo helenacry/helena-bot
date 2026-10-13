@@ -23,6 +23,11 @@ process.env.VSYNC_BOT_TOKEN = "token-de-teste";
 // loja valer o preço de tabela; tests/market.test.mjs liga e controla o sorteio.
 process.env.HELENA_MARKET = "off";
 
+// O intervalo entre comandos barraria os testes, que usam vários comandos
+// seguidos com a mesma pessoa. Começa desligado; tests/anti-spam.test.mjs cria
+// o seu próprio com relógio controlado (createPrefixRunner aceita { gate }).
+process.env.HELENA_ANTI_SPAM = "off";
+
 // Sem os contadores do servidor de suporte nem edição ao vivo rápida
 // demais: os testes controlam o tempo por conta própria.
 delete process.env.HELENA_SUPPORT_GUILD_ID;
@@ -97,7 +102,8 @@ export async function createPrefixRunner({
     channelId = "900000000000000099",
     author,
     send,
-    edit
+    edit,
+    gate
 }) {
     const { carregarComandos } = await import("../command-registry.mjs");
     const { processarPrefixo } = await import("../services/prefix.mjs");
@@ -131,7 +137,10 @@ export async function createPrefixRunner({
                 return { message: { id: "msg" + sequence } };
             }),
 
-            edit
+            edit,
+
+            // sem gate, vale o padrão do bot (desligado nos testes)
+            gate
         });
 
         const first = sent[0] ?? {};

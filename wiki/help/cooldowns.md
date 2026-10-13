@@ -16,6 +16,10 @@ O `/cooldowns` (atalho `/cd`) mostra o tempo que falta para o **daily**, o **tra
 > [!NOTE]
 > O `/cooldowns` não mostra tudo desta tabela. Duelos, fugas, a coleta de gemas e o sorteio da bolsa têm a espera tratada em outro lugar: veja a página de cada um.
 
+## O intervalo entre comandos
+
+Separado de tudo isso, a Helena espera **{{v:antiSpam.interval}}** entre um comando seu e o próximo, seja de barra ou com o prefixo `h`. É só para ela não ficar sobrecarregada: o comando que chega cedo demais é ignorado e o aviso diz quanto falta. Mais em [Perguntas frequentes](wiki:help/faq).
+
 ## Detalhes que pegam gente de surpresa
 
 - **Crime e roubo** gastam a espera mesmo quando a tentativa **dá errado**.
