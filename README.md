@@ -169,6 +169,7 @@ site/
 
 Os scripts são clássicos (não módulos) e dividem o objeto `window.Helena`, para a página abrir direto do disco.
 
+- **No ar:** https://helenacry.github.io/helena-bot/. O workflow `.github/workflows/pages.yml` publica a pasta `site/` no GitHub Pages a cada mudança nela na `main` (e dá para rodar à mão na aba Actions). Os scripts `.mjs` de `site/` não vão para o ar.
 - **Links:** o convite do bot e o servidor oficial ficam em `site/js/config.js`. `codeUrl` (link do repositório) está vazio e o item some do rodapé enquanto não for preenchido.
 - **Números e comandos:** rode `npm run site:data` depois de criar, renomear ou remover comandos, empregos, itens ou conquistas. O script lê o bot de verdade (com um banco temporário, sem tocar em `data/`). Comandos de `admin/` e `dev/` não aparecem. O `npm test` falha se `site/data/site-data.js` ficar para trás.
 - **O que não é automático:** os valores escritos nos textos (prêmio do `/daily`, custos e chances do crime, retornos da lavagem, tempos da prisão, e os textos das simulações de conversa) vêm de `config/` e dos comandos, mas foram copiados à mão. Se mudar esses valores no bot, atualize a página.
