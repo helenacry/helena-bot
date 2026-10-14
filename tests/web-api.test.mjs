@@ -560,6 +560,82 @@ test("atrás de um proxy confiável, cada IP real tem o seu limite", async () =>
     });
 });
 
+// Login errado, que só consome o limite. "extra" são cabeçalhos a mais.
+const badLogin = (ctx, extra) => call(ctx, "POST", "/api/auth/login", {
+    body: { code: "x", codeVerifier: VERIFIER, redirectUri: REDIRECT },
+    headers: extra
+});
+
+test("atrás de um proxy, o IP é o último do X-Forwarded-For: o primeiro, que o visitante forja, não vale", async () => {
+    await withApi({ trustProxy: true }, async ctx => {
+        // o proxy (que a gente confia) escreve 203.0.113.9 no fim; o resto vem do visitante
+        for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
+            await badLogin(ctx, { "X-Forwarded-For": `198.51.100.${i + 1}, 203.0.113.9` });
+        }
+
+        // um "IP" novo na frente não escapa do limite do IP de verdade
+        const forged = await badLogin(ctx, { "X-Forwarded-For": "198.51.100.200, 203.0.113.9" });
+
+        assert.equal(forged.status, 429, "forjar o primeiro valor não burla o limite");
+
+        // e outra pessoa de verdade (outro último valor) não é afetada
+        assert.equal((await badLogin(ctx, { "X-Forwarded-For": "198.51.100.1, 203.0.113.10" })).status, 401);
+    });
+});
+
+test("CF-Connecting-IP e X-Forwarded-For são ignorados fora de proxy confiável, e o CF-Connecting-IP nunca entra", async () => {
+    // sem proxy confiável: vale a conexão, não importa o que o visitante mande
+    await withApi({ trustProxy: false }, async ctx => {
+        for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
+            await badLogin(ctx, { "X-Forwarded-For": `198.51.100.${i + 1}` });
+        }
+
+        assert.equal((await badLogin(ctx, { "X-Forwarded-For": "198.51.100.250" })).status, 429);
+    });
+
+    // com proxy confiável, o CF-Connecting-IP (forjável fora da Cloudflare) também não vale
+    await withApi({ trustProxy: true }, async ctx => {
+        for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
+            await badLogin(ctx, { "CF-Connecting-IP": `198.51.100.${i + 1}` });
+        }
+
+        assert.equal((await badLogin(ctx, { "CF-Connecting-IP": "198.51.100.250" })).status, 429);
+    });
+});
+
+test("HELENA_WEB_DEBUG_IP mostra o que a API enxergou, uma vez por IP, e só quando ligado", async () => {
+    assert.equal(loadWebConfig({ HELENA_WEB_PORT: "3000", HELENA_WEB_ORIGINS: SITE, HELENA_OAUTH_REDIRECTS: REDIRECT, HELENA_OAUTH_CLIENT_ID: "app-id" }).debugIp, false);
+    assert.equal(loadWebConfig({ HELENA_WEB_PORT: "3000", HELENA_WEB_ORIGINS: SITE, HELENA_OAUTH_REDIRECTS: REDIRECT, HELENA_OAUTH_CLIENT_ID: "app-id", HELENA_WEB_DEBUG_IP: "1" }).debugIp, true);
+
+    const capture = async config => {
+        const lines = [];
+        const original = console.log;
+
+        console.log = (...args) => { lines.push(args.join(" ")); };
+
+        try {
+            await withApi(config, async ctx => {
+                await badLogin(ctx, { "X-Forwarded-For": "1.1.1.1, 203.0.113.9", "X-Real-IP": "203.0.113.9" });
+                await badLogin(ctx, { "X-Forwarded-For": "1.1.1.1, 203.0.113.9" });
+                await badLogin(ctx, { "X-Forwarded-For": "1.1.1.1, 203.0.113.77" });
+            });
+        } finally {
+            console.log = original;
+        }
+
+        return lines.filter(line => line.includes("[WEB] IP visto"));
+    };
+
+    const on = await capture({ trustProxy: true, debugIp: true });
+
+    assert.equal(on.length, 2, "uma linha por IP diferente (203.0.113.9 e 203.0.113.77)");
+    assert.match(on[0], /IP visto: 203\.0\.113\.9 /);
+    assert.match(on[0], /x-forwarded-for="1\.1\.1\.1, 203\.0\.113\.9"/);
+    assert.match(on[0], /x-real-ip="203\.0\.113\.9"/);
+
+    assert.deepEqual(await capture({ trustProxy: true, debugIp: false }), [], "desligado, não escreve nada");
+});
+
 // ==========================================
 // SESSÃO
 // ==========================================

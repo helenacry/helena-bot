@@ -84,6 +84,9 @@ export function loadWebConfig(env = process.env) {
         turnstileSecret: String(env.HELENA_TURNSTILE_SECRET ?? "").trim() || null,
         trustProxy: ["1", "true", "sim"].includes(
             String(env.HELENA_WEB_TRUST_PROXY ?? "").trim().toLowerCase()
+        ),
+        debugIp: ["1", "true", "sim"].includes(
+            String(env.HELENA_WEB_DEBUG_IP ?? "").trim().toLowerCase()
         )
     };
 }
@@ -161,18 +164,44 @@ export function createWebApi(config, deps = {}) {
     // utilidades
     // ----------------------------------
 
+    // Atrás de um proxy (HELENA_WEB_TRUST_PROXY=1), o IP é o ÚLTIMO valor de
+    // X-Forwarded-For: o endereço que o proxy mais próximo viu. O primeiro valor
+    // quem manda é o próprio visitante (com um IP novo a cada pedido ele nunca
+    // chegaria ao limite), e CF-Connecting-IP só vale atrás da Cloudflare; nenhum
+    // dos dois entra na conta. Sem o cabeçalho, vale o endereço da conexão.
     function clientIp(req) {
+        let ip = req.socket.remoteAddress ?? "";
+
         if (config.trustProxy) {
-            const forwarded =
-                req.headers["cf-connecting-ip"] ??
-                String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim();
+            const hops = String(req.headers["x-forwarded-for"] ?? "").split(",");
+            const forwarded = hops[hops.length - 1].trim();
 
             if (forwarded) {
-                return String(forwarded).slice(0, 64);
+                ip = forwarded.slice(0, 64);
             }
         }
 
-        return req.socket.remoteAddress ?? "";
+        debugIpOnce(req, ip);
+
+        return ip;
+    }
+
+    // HELENA_WEB_DEBUG_IP=1 mostra no log, uma vez por IP (no máximo 20), o que a
+    // API enxergou: serve para conferir, na hospedagem, se o IP real está chegando.
+    const seenIps = new Set();
+
+    function debugIpOnce(req, ip) {
+        if (!config.debugIp || seenIps.has(ip) || seenIps.size >= 20) {
+            return;
+        }
+
+        seenIps.add(ip);
+
+        console.log(
+            `[WEB] IP visto: ${ip} | conexão=${req.socket.remoteAddress ?? ""} | ` +
+            `x-forwarded-for="${String(req.headers["x-forwarded-for"] ?? "").slice(0, 120)}" | ` +
+            `x-real-ip="${String(req.headers["x-real-ip"] ?? "").slice(0, 64)}"`
+        );
     }
 
     function limit(key, rule) {
