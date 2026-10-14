@@ -2,8 +2,8 @@
 window.Helena = window.Helena || {};
 window.Helena.data = {
  "stats": {
-  "commands": 53,
-  "aliases": 27,
+  "commands": 54,
+  "aliases": 28,
   "jobs": 23,
   "shopItems": 20,
   "weapons": 14,
@@ -21,6 +21,13 @@ window.Helena.data = {
       "mercado"
      ],
      "description": "Veja o índice do mercado, o item em alta e os preços de agora"
+    },
+    {
+     "name": "coletargemas",
+     "aliases": [
+      "bonusgemas"
+     ],
+     "description": "Colete seu bônus de gemas (vale em todos os servidores)"
     },
     {
      "name": "comprar",

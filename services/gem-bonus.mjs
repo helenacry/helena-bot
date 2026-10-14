@@ -7,8 +7,9 @@ import { GEM_BONUS } from "../config/gems.mjs";
 // BÔNUS DE GEMAS
 // ==========================================
 
-// Coleta de gemas pelo painel do site. As gemas são da conta (valem em
-// todos os servidores), então a recarga também é da conta.
+// Coleta de gemas pelo comando /coletargemas e pelo painel do site, com a
+// mesma recarga. As gemas são da conta (valem em todos os servidores), então
+// a recarga também é da conta.
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 

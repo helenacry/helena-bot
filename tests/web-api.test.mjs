@@ -1,4 +1,4 @@
-import { db, getPlayer, set, get } from "./helpers.mjs";
+import { db, getPlayer, set, get, createPrefixRunner } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -1047,6 +1047,170 @@ test("as coletas também têm limite de tentativas por pessoa", async () => {
 // ==========================================
 // SERVIDOR DE VERDADE (LIGAR E DESLIGAR)
 // ==========================================
+
+// ==========================================
+// BOT E SITE SE FALAM
+// ==========================================
+
+// O daily e as gemas podem ser coletados pelo comando do bot ou pelo painel do
+// site, e os dois lados dividem o mesmo estado: coletou em um, o outro já mostra
+// a recarga e não paga de novo. Aqui os dois lados rodam de verdade, no mesmo banco.
+
+const PERSON = { id: USER, username: "jogadora", displayName: "Jogadora" };
+
+const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+const gemsOf = () => get("SELECT gems FROM global_users WHERE user_id = ?", USER)?.gems ?? 0;
+const walletOf = () => get("SELECT wallet w FROM players WHERE guild_id=? AND user_id=?", G1, USER)?.w ?? 0;
+const dailyPayments = () => get("SELECT COUNT(*) c FROM transactions WHERE type='daily'").c;
+
+// O comando usa a hora de verdade e a API do teste usa um relógio nosso: antes de
+// cada chamada à API, o relógio dela anda para a hora real, e as duas contam igual.
+const syncClock = ctx => { ctx.state.now = nowSeconds(); };
+
+test("daily: coletou no site, o comando já mostra a recarga e não paga de novo", async () => {
+    await withApi({}, async ctx => {
+        syncClock(ctx);
+
+        const token = await loggedIn(ctx);
+        const run = await createPrefixRunner({ guildId: G1, author: PERSON });
+
+        const site = await call(ctx, "POST", "/api/claim/daily", { token, body: { guildId: G1 } });
+
+        assert.equal(site.status, 200);
+        assert.equal(site.json.status, "claimed");
+
+        const bot = await run("hdaily");
+
+        assert.equal(bot.title, "⏳ Helena Daily", "o comando vê a coleta feita no site");
+        assert.match(bot.text, /Próximo resgate/);
+
+        assert.equal(walletOf(), 50_000, "pagou uma vez só");
+        assert.equal(dailyPayments(), 1);
+    });
+});
+
+test("daily: coletou pelo comando, o site já mostra a recarga e não paga de novo", async () => {
+    await withApi({}, async ctx => {
+        const run = await createPrefixRunner({ guildId: G1, author: PERSON });
+
+        const bot = await run("hdaily");
+
+        assert.equal(bot.title, "🎁 Helena Daily", "o comando pagou");
+        assert.equal(walletOf(), 50_000);
+
+        syncClock(ctx);
+
+        const token = await loggedIn(ctx);
+
+        // o painel já mostra o daily como coletado...
+        const me = await call(ctx, "GET", "/api/me", { token });
+        const guild = me.json.guilds.find(g => g.id === G1);
+
+        assert.equal(guild.daily.available, false);
+
+        // ...e a coleta pelo site é recusada com a recarga e a sequência certas
+        const site = await call(ctx, "POST", "/api/claim/daily", { token, body: { guildId: G1 } });
+
+        assert.equal(site.status, 409);
+        assert.equal(site.json.error, "cooldown");
+        assert.equal(site.json.streak, 1);
+        assert.ok(site.json.remaining > 24 * 3600 - 10 && site.json.remaining <= 24 * 3600, String(site.json.remaining));
+
+        assert.equal(walletOf(), 50_000, "o site não pagou de novo");
+        assert.equal(dailyPayments(), 1);
+    });
+});
+
+test("gemas: coletou no site, o comando já mostra a recarga e o /gemas mostra a espera", async () => {
+    await withApi({}, async ctx => {
+        syncClock(ctx);
+
+        const token = await loggedIn(ctx);
+        const run = await createPrefixRunner({ guildId: G1, author: PERSON });
+
+        const site = await call(ctx, "POST", "/api/claim/gems", { token, body: {} });
+
+        assert.equal(site.status, 200);
+        assert.equal(site.json.status, "claimed");
+
+        const earned = gemsOf();
+
+        assert.equal(earned, site.json.amount);
+
+        const bot = await run("hcoletargemas");
+
+        assert.equal(bot.title, "⏳ Helena Gems", "o comando vê a coleta feita no site");
+        assert.match(bot.text, /Próxima coleta/);
+        assert.equal(gemsOf(), earned, "o comando não pagou de novo");
+
+        // o /gemas conta a mesma história
+        const view = await run("hgemas");
+
+        assert.match(view.text, /Próxima coleta em/);
+        assert.doesNotMatch(view.text, /Disponível!/);
+    });
+});
+
+test("gemas: coletou pelo comando, o site já mostra a recarga e não paga de novo", async () => {
+    await withApi({}, async ctx => {
+        const run = await createPrefixRunner({ guildId: G1, author: PERSON });
+
+        // antes de coletar, o /gemas avisa que o bônus está disponível e diz como coletar
+        const before = await run("hgemas");
+
+        assert.match(before.text, /Disponível!/);
+        assert.match(before.text, /\/coletargemas/);
+
+        const bot = await run("hcoletargemas");
+
+        assert.equal(bot.title, "💎 Helena Gems", "o comando pagou");
+
+        const earned = gemsOf();
+
+        assert.ok(earned >= GEM_BONUS.min && earned <= GEM_BONUS.max, `ganhou ${earned}`);
+        assert.match(bot.text, new RegExp(`\\+${earned} 💎`));
+
+        syncClock(ctx);
+
+        const token = await loggedIn(ctx);
+
+        // o painel mostra a espera...
+        const me = await call(ctx, "GET", "/api/me", { token });
+
+        assert.equal(me.json.gems.available, false);
+        assert.equal(me.json.gems.balance, earned);
+
+        // ...e a coleta pelo site é recusada com a recarga certa, sem pagar de novo
+        const site = await call(ctx, "POST", "/api/claim/gems", { token, body: {} });
+
+        assert.equal(site.status, 409);
+        assert.equal(site.json.error, "cooldown");
+        assert.equal(site.json.balance, earned);
+        assert.ok(site.json.remaining > GEM_BONUS.cooldown - 10 && site.json.remaining <= GEM_BONUS.cooldown, String(site.json.remaining));
+
+        assert.equal(gemsOf(), earned, "o site não pagou de novo");
+
+        // o apelido também funciona e vê a mesma espera
+        const alias = await run("hbonusgemas");
+
+        assert.equal(alias.title, "⏳ Helena Gems");
+    });
+});
+
+test("gemas: a espera é da conta, então vale para todos os servidores", async () => {
+    await withApi({}, async () => {
+        const inOne = await createPrefixRunner({ guildId: G1, author: PERSON });
+        const inTwo = await createPrefixRunner({ guildId: G2, author: PERSON });
+
+        assert.equal((await inOne("hcoletargemas")).title, "💎 Helena Gems");
+
+        const earned = gemsOf();
+
+        assert.equal((await inTwo("hcoletargemas")).title, "⏳ Helena Gems", "outro servidor, mesma conta, mesma espera");
+        assert.equal(gemsOf(), earned);
+    });
+});
 
 test("startWebApi liga pela configuração do ambiente e stopWebApi desliga", async () => {
     assert.equal(await startWebApi({}), null, "sem HELENA_WEB_PORT, nada sobe");

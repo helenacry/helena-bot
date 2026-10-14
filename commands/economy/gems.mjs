@@ -3,6 +3,10 @@ import {
     getPlayer
 } from "../../database/economy.mjs";
 
+import { getGemBonusStatus } from "../../services/gem-bonus.mjs";
+
+import { formatDuration } from "../../utils/time.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -37,6 +41,9 @@ export default {
 
             const gems = Number(player.gems ?? 0);
 
+            // A mesma recarga do /coletargemas e do painel do site (é da conta).
+            const bonus = getGemBonusStatus(String(userId));
+
             return embedResponse(
                 createEmbed({
                     title: "💎 Helena Gems",
@@ -61,6 +68,15 @@ export default {
                             name: "🌐 Saldo global",
                             value:
                                 "Suas gemas acompanham sua conta em todos os servidores.",
+                            inline: false
+                        },
+                        {
+                            name: "🎁 Bônus de gemas",
+                            value: bonus.available
+                                ? "**Disponível!** Use `/coletargemas` para coletar."
+                                : "Próxima coleta em **" +
+                                  formatDuration(bonus.remaining) +
+                                  "**.",
                             inline: false
                         }
                     ],

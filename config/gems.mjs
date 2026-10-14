@@ -1,11 +1,12 @@
 
 // ==========================================
-// BÔNUS DE GEMAS (COLETA NO SITE)
+// BÔNUS DE GEMAS (COMANDO E SITE)
 // ==========================================
 
-// As gemas são da conta e valem em todos os servidores. Hoje só o
-// administrador dá gemas; este bônus é a forma de ganhar pelo painel do
-// site (services/gem-bonus.mjs). Ajuste os números aqui, sem mexer na lógica.
+// As gemas são da conta e valem em todos os servidores. Fora a administração,
+// este bônus é a forma de ganhar: pelo comando /coletargemas ou pelo painel do
+// site. Os dois usam o mesmo serviço (services/gem-bonus.mjs) e a mesma recarga,
+// então coletar em um já vale no outro. Ajuste os números aqui, sem mexer na lógica.
 
 export const GEM_BONUS = Object.freeze({
     // Quantas gemas cada coleta rende (sorteio inclusivo).
