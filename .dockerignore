@@ -1,0 +1,20 @@
+# Segredos e dados: nunca entram na imagem (as variaveis vem da hospedagem e o
+# banco fica no volume).
+.env
+.env.*
+data
+generated
+public
+
+# Nada disto roda no bot
+.git
+.github
+.claude
+node_modules
+tests
+site
+wiki
+README.md
+Dockerfile
+.dockerignore
+.gitattributes

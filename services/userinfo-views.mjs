@@ -11,9 +11,10 @@ import { join } from "node:path";
 // CONFIGURAÇÕES
 // ==========================================
 
+// Na nuvem, aponte HELENA_GENERATED_DIR para o volume (ex.: /data/generated),
+// senão o contador volta ao zero a cada deploy. Sem a variável, ./generated.
 const DIR = join(
-    process.cwd(),
-    "generated",
+    process.env.HELENA_GENERATED_DIR || join(process.cwd(), "generated"),
     "userinfo"
 );
 

@@ -2,9 +2,14 @@
   "name": "helena",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "start": "node --env-file=.env helena.mjs",
     "start:test": "node --env-file=.env.test helena.mjs",
+    "start:cloud": "node helena.mjs",
+    "db:export": "node --disable-warning=ExperimentalWarning scripts/export-db.mjs",
     "test": "node --test \"tests/*.test.mjs\"",
     "site:data": "node --disable-warning=ExperimentalWarning site/build-data.mjs",
     "site:card": "node --disable-warning=ExperimentalWarning site/build-card.mjs",

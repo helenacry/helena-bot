@@ -6,7 +6,7 @@ import { dirname } from "node:path";
 // Caminho do banco. Cada ambiente (produção e testes)
 // define o seu em HELENA_DATABASE_PATH; sem a variável,
 // usa o banco padrão da produção.
-const DATABASE_PATH =
+export const DATABASE_PATH =
     process.env.HELENA_DATABASE_PATH || "data/helena.db";
 
 mkdirSync(dirname(DATABASE_PATH), { recursive: true });
