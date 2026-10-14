@@ -416,8 +416,14 @@ test("as edições saem na ordem, mesmo com respostas lentas", async () => {
     await clock.advance(2500);          // corredor abre (edição 1, lenta)
     clickExit(G, U, 1);                 // etapa 2 (edição 2, rápida)
 
-    await new Promise(r => setTimeout(r, 80));
+    // Espera as duas edições terminarem, sem contar com um tempo fixo: com a
+    // máquina ocupada (a suíte roda vários arquivos ao mesmo tempo) os timers
+    // atrasam, e 80 ms fixos às vezes não bastavam.
+    for (let i = 0; i < 300 && order.length < 2; i++) {
+        await new Promise(r => setTimeout(r, 10));
+    }
 
+    assert.equal(order.length, 2, "as duas edições terminaram");
     assert.match(order[0], /O corredor abriu/);
     assert.match(order[1], /de olho/);
 });
