@@ -192,6 +192,19 @@ export function createWebApi(config, deps = {}) {
         });
     }
 
+    // O nome do erro que a VSync devolve ({ "error": "invalid_grant" }), só para
+    // o log. Nunca lança e só deixa passar letras e "_", então nada de
+    // dentro da resposta vai parar no log.
+    async function vsyncError(response) {
+        try {
+            const error = (await response.json())?.error;
+
+            return typeof error === "string" && /^[a-z_]{1,40}$/.test(error) ? error : "";
+        } catch {
+            return "";
+        }
+    }
+
     function logClaim({ userId, kind, guildId = null, ok, detail = "", req }) {
         db.prepare(`
             INSERT INTO web_claim_log (
@@ -409,6 +422,25 @@ export function createWebApi(config, deps = {}) {
             });
 
             if (!response.ok) {
+                const reason = await vsyncError(response);
+                const shown = reason || `HTTP ${response.status}`;
+
+                // 429 e 5xx: o problema é da VSync, não da pessoa. Vale tentar depois.
+                if (response.status === 429 || response.status >= 500) {
+                    console.warn(`[WEB] VSync com problema na troca do código: ${shown}`);
+
+                    throw new HttpError(502, "vsync_unavailable");
+                }
+
+                // invalid_grant é o normal (código vencido ou já usado: a pessoa entra de
+                // novo). Qualquer outro nome é erro NOSSO e a pessoa não tem como resolver.
+                console.warn(
+                    `[WEB] VSync recusou a troca do código: ${shown}` +
+                    (reason && reason !== "invalid_grant"
+                        ? " (confira HELENA_OAUTH_CLIENT_ID, HELENA_OAUTH_CLIENT_SECRET e HELENA_OAUTH_REDIRECTS)"
+                        : "")
+                );
+
                 throw new HttpError(401, "login_failed");
             }
 
@@ -461,14 +493,27 @@ export function createWebApi(config, deps = {}) {
 
         } finally {
             // 4. não precisamos mais do acesso da VSync: devolvemos já.
-            //    A sessão da Helena vale por conta própria.
+            //    A sessão da Helena vale por conta própria. A revogação também
+            //    exige o cliente (client_id e, se houver, client_secret), como a troca.
             for (const token of [accessToken, tokens?.refresh_token]) {
                 if (typeof token === "string" && token) {
+                    const revoke = new URLSearchParams({ token, client_id: config.clientId });
+
+                    if (config.clientSecret) {
+                        revoke.set("client_secret", config.clientSecret);
+                    }
+
                     upstream(`${WEB_CONFIG.vsyncApi}/oauth2/token/revoke`, {
                         method: "POST",
                         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: new URLSearchParams({ token })
-                    }).catch(() => {});
+                        body: revoke
+                    })
+                        .then(async response => {
+                            if (!response.ok) {
+                                console.warn(`[WEB] VSync não revogou o acesso: ${await vsyncError(response) || `HTTP ${response.status}`}`);
+                            }
+                        })
+                        .catch(() => {});
                 }
             }
         }

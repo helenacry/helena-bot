@@ -80,7 +80,10 @@ function makeUpstream() {
         }
 
         if (u.endsWith("/oauth2/token/revoke")) {
-            return reply(200, {});
+            // como a VSync de verdade: a revogação exige o cliente (client_id)
+            return params.get("client_id") === "app-id"
+                ? reply(200, {})
+                : reply(401, { error: "invalid_client" });
         }
 
         if (u.includes("challenges.cloudflare.com")) {
@@ -94,14 +97,20 @@ function makeUpstream() {
 }
 
 // Sobe a API num servidor próprio, numa porta livre, com relógio controlável.
-async function startApi(overrides = {}, { random = () => 0.5 } = {}) {
+async function startApi(overrides = {}, { random = () => 0.5, intercept } = {}) {
     const upstream = makeUpstream();
 
     const state = { now: T0 };
 
+    // intercept(url, init) pode devolver a resposta no lugar da VSync simulada
+    // (para fazer a VSync errar); sem devolver nada, vale a simulada.
+    const fetchImpl = intercept
+        ? async (url, init) => (await intercept(String(url), init)) ?? upstream.fetch(url, init)
+        : upstream.fetch;
+
     const api = createWebApi(
         { ...BASE_CONFIG, ...overrides },
-        { fetch: upstream.fetch, now: () => state.now, random }
+        { fetch: fetchImpl, now: () => state.now, random }
     );
 
     const server = http.createServer((req, res) => api.handle(req, res));
@@ -300,6 +309,12 @@ test("o login troca o código, devolve a sessão e a VSync fica sem acesso", asy
 
         assert.deepEqual(revoked, ["vsat_abc", "vsrt_abc"]);
 
+        // a revogação também identifica o cliente (a doc da VSync exige), sem segredo se não há
+        for (const call of ctx.upstream.calls.filter(c => c.url.endsWith("/oauth2/token/revoke"))) {
+            assert.equal(call.params.get("client_id"), "app-id");
+            assert.equal(call.params.get("client_secret"), null);
+        }
+
         // só o hash do token fica no banco
         const row = get("SELECT * FROM web_sessions");
 
@@ -325,7 +340,111 @@ test("com segredo configurado, ele vai junto na troca", async () => {
         const exchange = ctx.upstream.calls.find(c => c.url.endsWith("/oauth2/token"));
 
         assert.equal(exchange.params.get("client_secret"), "segredo-do-app");
+
+        // e na revogação também
+        const revokes = ctx.upstream.calls.filter(c => c.url.endsWith("/oauth2/token/revoke"));
+
+        assert.equal(revokes.length, 2);
+
+        for (const call of revokes) {
+            assert.equal(call.params.get("client_id"), "app-id");
+            assert.equal(call.params.get("client_secret"), "segredo-do-app");
+        }
     });
+});
+
+// Junta o que a API escreveu com console.warn durante a função.
+async function warnings(fn) {
+    const lines = [];
+    const original = console.warn;
+
+    console.warn = (...args) => { lines.push(args.join(" ")); };
+
+    try {
+        await fn();
+    } finally {
+        console.warn = original;
+    }
+
+    return lines;
+}
+
+const answer = (status, body) => ({ ok: status < 300, status, json: async () => body });
+
+test("a VSync recusa por erro nosso (invalid_client): a pessoa vê login_failed e o log diz o que conferir", async () => {
+    const intercept = url => url.endsWith("/oauth2/token") ? answer(401, { error: "invalid_client", error_description: "texto qualquer" }) : undefined;
+
+    await withApi({}, async ctx => {
+        const lines = await warnings(async () => {
+            const result = await login(ctx);
+
+            assert.equal(result.status, 401);
+            assert.equal(result.json.error, "login_failed");
+        });
+
+        assert.equal(lines.length, 1);
+        assert.match(lines[0], /invalid_client/);
+        assert.match(lines[0], /HELENA_OAUTH_CLIENT_SECRET/);
+        assert.doesNotMatch(lines[0], /texto qualquer/, "só o nome do erro vai para o log");
+    }, { intercept });
+});
+
+test("código vencido ou já usado (invalid_grant) é normal: login_failed, sem mandar conferir a configuração", async () => {
+    await withApi({}, async ctx => {
+        const lines = await warnings(async () => {
+            const result = await call(ctx, "POST", "/api/auth/login", {
+                body: { code: "codigo-usado", codeVerifier: VERIFIER, redirectUri: REDIRECT }
+            });
+
+            assert.equal(result.status, 401);
+            assert.equal(result.json.error, "login_failed");
+        });
+
+        assert.equal(lines.length, 1);
+        assert.match(lines[0], /invalid_grant/);
+        assert.doesNotMatch(lines[0], /HELENA_OAUTH/);
+    });
+});
+
+test("a VSync com problema (429 ou 5xx) na troca vira vsync_unavailable, não 'não deu para entrar'", async () => {
+    for (const [status, body] of [[503, { error: "server_error" }], [500, null], [429, { error: "rate_limited" }]]) {
+        const intercept = url => url.endsWith("/oauth2/token") ? answer(status, body) : undefined;
+
+        await withApi({}, async ctx => {
+            const lines = await warnings(async () => {
+                const result = await login(ctx);
+
+                assert.equal(result.status, 502, String(status));
+                assert.equal(result.json.error, "vsync_unavailable", String(status));
+            });
+
+            assert.equal(lines.length, 1);
+            assert.match(lines[0], new RegExp(body?.error ?? `HTTP ${status}`));
+            assert.equal(get("SELECT COUNT(*) c FROM web_sessions").c, 0);
+        }, { intercept });
+    }
+});
+
+test("se a VSync recusar a revogação, o login funciona e o aviso aparece no log", async () => {
+    const intercept = url => url.endsWith("/oauth2/token/revoke") ? answer(401, { error: "invalid_client" }) : undefined;
+
+    await withApi({}, async ctx => {
+        const lines = await warnings(async () => {
+            const result = await login(ctx);
+
+            assert.equal(result.status, 200, "a recusa da revogação não derruba o login");
+
+            // a revogação roda sem ninguém esperar por ela
+            await new Promise(resolve => setTimeout(resolve, 50));
+        });
+
+        assert.equal(lines.length, 2, "uma linha para o access_token e outra para o refresh_token");
+
+        for (const line of lines) {
+            assert.match(line, /não revogou/);
+            assert.match(line, /invalid_client/);
+        }
+    }, { intercept });
 });
 
 test("login recusado: endereço de retorno fora da lista, verifier ruim, código errado", async () => {
