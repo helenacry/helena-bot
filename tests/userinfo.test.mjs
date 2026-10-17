@@ -212,6 +212,66 @@ test("sem argumento (ou o próprio @usuário) mostra as suas informações", asy
     }
 });
 
+// A mensagem do prefixo (MESSAGE_CREATE) traz só o autor, sem member nem joinedAt (a
+// documentação da VSync só põe member nas interações). Por isso o /userinfo da própria
+// pessoa pelo prefixo precisa buscar o membro na API para saber quando ela entrou.
+test("hui (prefixo) sem argumento mostra quando você entrou no servidor, buscando o membro na API", async () => {
+    const r = await run("hui");
+    const fields = fieldsOf(embedOf(r));
+
+    assert.match(fields["📅 Entrou no servidor em"], /20 de janeiro de 2025/, fields["📅 Entrou no servidor em"]);
+    assert.notEqual(fields["📅 Entrou no servidor em"], UNKNOWN);
+    assert.match(fields["📅 Conta criada em"], /10 de maio de 2024/, "a data da conta também vem do membro");
+
+    assert.deepEqual(calls.filter(call => call.includes("/members/")), ["GET /guilds/" + G + "/members/" + ME.id], "uma chamada, na rota de membro");
+});
+
+test("o próprio @usuário, por nome, menção ou ID, também mostra a data de entrada", async () => {
+    for (const text of ["hui eu", "hui @eu", `hui <@${ME.id}>`, `hui ${ME.id}`]) {
+        const fields = fieldsOf(embedOf(await run(text)));
+
+        assert.match(fields["📅 Entrou no servidor em"], /20 de janeiro de 2025/, text);
+    }
+});
+
+test("no comando de barra a data de entrada vem da própria interação, sem chamar a API", async () => {
+    const comandos = await carregarComandos();
+
+    const userinfo = comandos.get("userinfo");
+
+    const result = await userinfo.execute({
+        guildId: G,
+        channelId: "900000000000000099",
+        user: { id: ME.id, username: "eu", displayName: "Eu Mesmo", createdAt: Date.UTC(2024, 4, 10, 15, 30) },
+        member: { joinedAt: Date.UTC(2023, 2, 3, 12, 0), nickname: null, roleIds: [], pulsingSince: null, timeoutUntil: null },
+        data: { options: {} }
+    });
+
+    const fields = fieldsOf(result.data.embeds[0]);
+
+    assert.match(fields["📅 Entrou no servidor em"], /3 de março de 2023/);
+    assert.deepEqual(calls.filter(call => call.includes("/members/")), [], "a interação já trazia o membro");
+});
+
+test("se a API falhar, o /userinfo da própria pessoa ainda responde, com a data como não informada", async () => {
+    failMembers = true;
+
+    const warn = console.warn;
+
+    console.warn = () => {};
+
+    try {
+        const r = await run("hui");
+        const fields = fieldsOf(embedOf(r));
+
+        assert.equal(r.body, `<@${ME.id}>`);
+        assert.match(embedOf(r).author.name, /Eu Mesmo \(eu\)/);
+        assert.equal(fields["📅 Entrou no servidor em"], UNKNOWN);
+    } finally {
+        console.warn = warn;
+    }
+});
+
 test("olhar as informações de alguém não cria registro de jogador", async () => {
     const before = players();
 

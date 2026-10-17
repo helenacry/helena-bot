@@ -59,6 +59,45 @@ function errorResponse(message) {
 // único) ou por menção/ID: apelidos e nomes de exibição das
 // plataformas não entram na busca, como no /perfil.
 //
+// As informações de quem usou o comando. O comando de barra traz o membro na
+// própria interação (joinedAt, apelido...), mas a mensagem do prefixo traz só o
+// autor: sem data de entrada, e sem insígnias nem datas da conta. Nesse caso busca
+// o membro na API (GET /guilds/:g/members/:id), a mesma rota das outras pessoas.
+// Se a API falhar, segue com o que já tem (a data aparece como não informada).
+async function selfProfile(interaction) {
+    const base = interaction.user;
+    const member = interaction.member;
+
+    // Só a data: o resto do membro tem campos de SERVIDOR com o mesmo nome de
+    // campos da CONTA (como pulsingSince), e misturar tudo trocaria um pelo outro.
+    if (member?.joinedAt !== undefined && member?.joinedAt !== null) {
+        return { ...base, joinedAt: member.joinedAt };
+    }
+
+    if (!interaction.guildId || !base?.id) {
+        return base;
+    }
+
+    try {
+        const found = await resolveUser(
+            interaction.guildId,
+            String(base.id)
+        );
+
+        if (found.status === "found") {
+            return { ...base, ...found.user, ...found.user.raw };
+        }
+
+    } catch (error) {
+        console.warn(
+            "[USERINFO] Não consegui buscar o seu membro na API:",
+            error.message
+        );
+    }
+
+    return base;
+}
+
 // Devolve { user, self } ou { response } com o aviso a mostrar.
 async function findTarget(interaction) {
     const query = String(
@@ -66,7 +105,7 @@ async function findTarget(interaction) {
     ).trim();
 
     if (!query) {
-        return { user: interaction.user, self: true };
+        return { user: await selfProfile(interaction), self: true };
     }
 
     if (!interaction.guildId) {
@@ -98,7 +137,7 @@ async function findTarget(interaction) {
 
     // Se a busca achou você mesmo, segue como as suas informações.
     if (found.user.id === String(interaction.user?.id)) {
-        return { user: interaction.user, self: true };
+        return { user: await selfProfile(interaction), self: true };
     }
 
     // A busca já trouxe o membro completo (insígnias, Pulse,
@@ -253,11 +292,7 @@ export default {
             // ==================================
             const createdAt = dateField(user.createdAt);
 
-            const joinedAt = dateField(
-                String(user.id) === String(interaction.user?.id)
-                    ? interaction.member?.joinedAt ?? user.joinedAt
-                    : user.joinedAt
-            );
+            const joinedAt = dateField(user.joinedAt);
 
             // ==================================
             // PRISMA+
