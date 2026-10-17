@@ -22,6 +22,8 @@ import { commandGate, antiSpamText } from "./anti-spam.mjs";
 
 import { startLiveUpdate } from "./live-embed.mjs";
 
+import { deliverMessage } from "./v2-delivery.mjs";
+
 import { LIVE_CONFIG } from "../config/live.mjs";
 
 export const PREFIX = "h";
@@ -226,11 +228,19 @@ export async function processarPrefixo({
 
         const data = result.data;
 
-        const sent = await send(message, {
-            body: data.body ?? "",
-            ...(data.embeds ? { embeds: data.embeds } : {}),
-            ...(data.components ? { components: data.components } : {}),
-            ...(data.attachments ? { attachments: data.attachments } : {})
+        // Com HELENA_V2 ligado o embed sai como layout V2; se a VSync recusar, sai o
+        // clássico. A resposta com atualização ao vivo (live) fica sempre no clássico,
+        // porque as edições seguintes são feitas com embed.
+        const sent = await deliverMessage({
+            data: {
+                body: data.body ?? "",
+                ...(data.embeds ? { embeds: data.embeds } : {}),
+                ...(data.components ? { components: data.components } : {}),
+                ...(data.attachments ? { attachments: data.attachments } : {})
+            },
+            userId: actorId,
+            skip: Boolean(result.live),
+            send: payload => send(message, payload)
         });
 
         iniciarAoVivo(result.live, sent, message, edit);

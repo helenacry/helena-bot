@@ -118,6 +118,10 @@ import {
     cardFontAvailable
 } from "./services/profile-card.mjs";
 
+import {
+    deliverCallback
+} from "./services/v2-delivery.mjs";
+
 // ==========================================
 // CONFIGURAÇÕES
 // ==========================================
@@ -151,18 +155,29 @@ async function responderInteracao(
     // "live" é só para o bot: não pode ir no corpo enviado à API.
     const { live, ...payload } = resultado ?? {};
 
-    const callback = await fetch(
-        `${API}/interactions/${interaction.id}/${interaction.token}/callback`,
-        {
-            method: "POST",
+    // As telas da fuga da prisão são editadas depois com embeds (editarRespostaOriginal),
+    // como a contagem ao vivo: ficam no clássico, sem misturar os dois formatos.
+    const manterClassico =
+        Boolean(live) ||
+        String(interaction.data?.customId ?? "").startsWith("fuga:");
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+    const callback = await deliverCallback({
+        payload,
+        userId: interaction.user?.id,
+        skip: manterClassico,
+        post: body => fetch(
+            `${API}/interactions/${interaction.id}/${interaction.token}/callback`,
+            {
+                method: "POST",
 
-            body: JSON.stringify(payload)
-        }
-    );
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(body)
+            }
+        )
+    });
 
     if (!callback.ok) {
         console.error(
@@ -1114,15 +1129,12 @@ function conectarGateway() {
             // LOG DA INTERAÇÃO
             // ==================================
 
-            console.dir(
-                {
-                    ...interaction,
-                    token: "[OCULTO]"
-                },
-                {
-                    depth: 6,
-                    colors: true
-                }
+            console.log(
+                `[INTERAÇÃO] ${interaction.type}` +
+                ` ${interaction.type === "command"
+                    ? "/" + interaction.data?.name
+                    : interaction.data?.customId ?? ""}` +
+                ` usuário=${actorId} servidor=${interaction.guildId ?? "-"}`
             );
 
             // ==================================
@@ -1331,15 +1343,9 @@ function conectarGateway() {
             // RESPONDER À INTERAÇÃO
             // ==================================
 
-            console.dir(
-                {
-                    comando: comando.name,
-                    resposta: resultado
-                },
-                {
-                    depth: 6,
-                    colors: true
-                }
+            console.log(
+                `[RESPOSTA] /${comando.name} -> ${resultado.type}` +
+                (resultado.data?.ephemeral ? " (privada)" : "")
             );
 
             await responderInteracao(

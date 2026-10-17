@@ -58,6 +58,7 @@ Para montar o ambiente de testes:
 | `HELENA_DATABASE_PATH` | Caminho do banco SQLite. Padrão: `./data/helena.db`. |
 | `HELENA_SUPPORT_GUILD_ID`, `HELENA_USERS_CHANNEL_ID`, `HELENA_CLUSTERS_CHANNEL_ID` | Contadores do servidor de suporte. Se algum estiver vazio, ficam desligados. |
 | `HELENA_CLUSTER_TOTAL`, `HELENA_STATS_INTERVAL` | Total de clusters e intervalo de atualização (ms) dos contadores. |
+| `HELENA_V2` | Layout V2 da VSync no lugar dos embeds: `off` (padrão), `owner` (só nas respostas do dono, para testar em produção) ou `on` (todos). Veja "Componentes V2". |
 | `HELENA_LIVE_INTERVAL_MS` | Intervalo das contagens ao vivo, como o tempo da prisão. Padrão 10000, mínimo 2000. |
 | `BADGE_OUTPUT_DIR`, `BADGE_PUBLIC_BASE_URL` | Imagem de insígnias do `/userinfo` (opcional). |
 
@@ -164,6 +165,15 @@ Alguns comandos mostram botões que abrem formulários (modais) da VSync, no est
 - Os botões pessoais só funcionam para quem abriu o painel. O botão da loja serve a todos, e cada um compra para si.
 - O envio do formulário roda o comando de sempre com as opções preenchidas, então limites, recargas e a prisão continuam valendo (preso não deposita, nem por modal).
 - Para criar um painel: `services/modals.mjs` (`textField`, `openModal`, `readFields`) e `services/panels.mjs` (botões, clique e envio).
+
+## Componentes V2
+
+A VSync aceita blocos de layout nas mensagens de bots (`text`, `separator`, `section` com miniatura, `container` com barra de cor), misturados com as linhas de botões e menus. Com `HELENA_V2` ligada, o embed de cada resposta sai como um container (`utils/components-v2.mjs`): título e descrição viram texto, os campos viram "**nome** + valor", a cor do embed vira a barra do container, os botões e menus ficam dentro dele e o rodapé sai em letra pequena. Com miniatura (`/userinfo`), os primeiros textos viram uma seção com a miniatura ao lado.
+
+- **Nunca é a única chance.** A doc não diz tudo (como o V2 convive com texto, anexo, mensagem privada e atualização). Se a VSync recusar, a mesma resposta sai de novo como embed e o log mostra `[V2] A VSync recusou o layout (...)`. Antes de enviar, o layout é conferido contra as regras da doc (40 componentes, container sem container, `customId` único), e uma resposta que não cabe nelas fica no clássico.
+- **Fica no clássico, de propósito:** resposta com texto no `body` (é ele que notifica quem foi mencionado), com anexo (o cartão do `/perfil`), com imagem no embed (o layout não tem bloco de imagem), com mais de um embed, e as mensagens com atualização ao vivo (a contagem da prisão e a fuga), que o bot edita depois com embeds.
+- **Como ligar:** variável `HELENA_V2=owner` no Discloud (aba Variáveis, depois Commit ou Rebuild) para ver só nas suas respostas; `on` para todos; apagar a variável (ou `off`) volta tudo ao clássico, sem mexer no código.
+- O comando `/devv2` (só o dono) manda mensagens de teste em cada modo (`puro`, `corpo`, `embed`, `tudo`, `privado`) para ver o que a API aceita.
 
 ## Intervalo entre comandos
 
