@@ -573,7 +573,8 @@ test("a política cobre todas as tabelas do banco que guardam dados de pessoas",
         player_titles: "titulos",
         daily_streaks: "sequencia do daily",
         web_sessions: "sessao",
-        web_claim_log: "registro de seguranca"
+        web_claim_log: "registro de seguranca",
+        userinfo_views: "contagem de quantas vezes o perfil de cada pessoa foi consultado"
     };
 
     // tabelas sem nada de pessoa (só IDs técnicos e ajustes do bot)

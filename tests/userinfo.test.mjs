@@ -2,12 +2,12 @@ import { db, createPrefixRunner } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, existsSync, readFileSync } from "node:fs";
+import { mkdtempSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-// O contador de visualizações grava em generated/userinfo/ a partir da
-// pasta atual: o teste usa uma pasta temporária para não sujar o projeto.
+// O contador de visualizações fica no banco, e o teste confere que nenhum arquivo é
+// criado. Roda numa pasta temporária para qualquer arquivo perdido não sujar o projeto.
 const workDir = mkdtempSync(join(tmpdir(), "helena-userinfo-"));
 
 process.chdir(workDir);
@@ -62,6 +62,9 @@ const MEMBERS = [
 
 const calls = [];
 
+// liga para simular a VSync fora do ar na rota de membro
+let failMembers = false;
+
 // API simulada: lista de membros e membro por ID.
 globalThis.fetch = async (url, init = {}) => {
     const u = String(url);
@@ -77,6 +80,8 @@ globalThis.fetch = async (url, init = {}) => {
     let m;
 
     if ((m = u.match(/\/guilds\/[^/]+\/members\/([^/]+)$/))) {
+        if (failMembers) return reply(500, {});
+
         const found = MEMBERS.find(x => x.id === decodeURIComponent(m[1]));
 
         return found ? reply(200, { member: found }) : reply(404, {});
@@ -100,6 +105,7 @@ const players = () => db.prepare("SELECT COUNT(*) c FROM players").get().c;
 test.beforeEach(() => {
     clearUserLookupCache();
     calls.length = 0;
+    failMembers = false;
 });
 
 // ==========================================
@@ -226,11 +232,9 @@ test("o contador de visualizações é da pessoa consultada", async () => {
     assert.match(footer(await run("hui carlos")), /Visualizações: 2 •/);
     assert.match(footer(await run("hui paula")), /Visualizações: 1 •/, "cada pessoa tem o seu");
 
-    // gravou na pasta temporária, nunca no projeto
-    const file = join(workDir, "generated", "userinfo", "views.json");
-
-    assert.ok(existsSync(file));
-    assert.equal(JSON.parse(readFileSync(file, "utf8"))["200000000000000006"], 2);
+    // a contagem fica no banco do bot, e nenhum arquivo é criado
+    assert.equal(db.prepare("SELECT views FROM userinfo_views WHERE user_id = ?").get("200000000000000006").views, 2);
+    assert.deepEqual(readdirSync(workDir), [], "o contador não grava arquivo nenhum");
 });
 
 // ==========================================

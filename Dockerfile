@@ -18,7 +18,6 @@ COPY . .
 # e sobrevivem aos deploys. A API do site escuta em todas as interfaces do
 # container (a hospedagem decide o que fica publico); a porta vem de HELENA_WEB_PORT.
 ENV HELENA_DATABASE_PATH=/data/helena.db
-ENV HELENA_GENERATED_DIR=/data/generated
 ENV HELENA_WEB_HOST=0.0.0.0
 
 CMD ["node", "helena.mjs"]

@@ -7,8 +7,7 @@ const { db } = await import("./helpers.mjs");
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { readFileSync, readdirSync, statSync, existsSync, mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -45,7 +44,7 @@ test("o Dockerfile: Node 24, instala só o necessário, não depende do .env e u
 
     // o volume da hospedagem é montado em /data: banco e dados gerados ficam lá
     assert.match(file, /^ENV HELENA_DATABASE_PATH=\/data\/helena\.db$/m);
-    assert.match(file, /^ENV HELENA_GENERATED_DIR=\/data\/generated$/m);
+    assert.doesNotMatch(file, /HELENA_GENERATED_DIR/, "não há mais pasta de dados gerados: tudo fica no banco");
 
     // a API tem de aceitar conexões vindas de fora do container
     assert.match(file, /^ENV HELENA_WEB_HOST=0\.0\.0\.0$/m);
@@ -200,19 +199,18 @@ test("o /devbackup grava ao lado do banco (na nuvem, no volume) e só o dono usa
     assert.ok(db);
 });
 
-test("o contador de visualizações do /userinfo segue HELENA_GENERATED_DIR (na nuvem, no volume)", async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), "helena-generated-"));
+test("o bot não grava dados em arquivos soltos: o que precisa durar vive no banco (o único arquivo que se faz backup)", () => {
+    // a pasta generated/ só aparece em services/userinfo-views.mjs, e só para LER o JSON antigo
+    const mentions = [];
 
-    process.env.HELENA_GENERATED_DIR = dir;
+    for (const file of walk(["helena.mjs", "command-registry.mjs", "commands", "services", "config", "database", "utils"])) {
+        if (/generated/.test(readFileSync(file, "utf8"))) mentions.push(path.relative(ROOT, file).replaceAll("\\", "/"));
+    }
 
-    const views = await import("../services/userinfo-views.mjs");
+    assert.deepEqual(mentions, ["services/userinfo-views.mjs"]);
 
-    await views.incrementUserinfoViews("4242");
-    await views.incrementUserinfoViews("4242");
+    const views = read("services/userinfo-views.mjs");
 
-    const file = path.join(dir, "userinfo", "views.json");
-
-    assert.ok(existsSync(file), "gravou na pasta pedida, não em ./generated");
-    assert.equal(JSON.parse(readFileSync(file, "utf8"))["4242"], 2);
-    assert.equal(await views.getUserinfoViews("4242"), 2);
+    assert.doesNotMatch(views, /writeFile|mkdir|appendFile/, "o contador não escreve arquivo");
+    assert.match(views, /CREATE TABLE IF NOT EXISTS userinfo_views/);
 });

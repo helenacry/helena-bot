@@ -74,6 +74,10 @@ import {
     runMarketMigrations
 } from "./database/market-migrations.mjs";
 
+import {
+    importLegacyViews
+} from "./services/userinfo-views.mjs";
+
 import { guildIds } from "./services/guild-registry.mjs";
 
 import {
@@ -421,6 +425,18 @@ runAchievementMigrations();
 runCrimeMigrations();
 runWebMigrations();
 runMarketMigrations();
+
+// Traz o contador antigo do /userinfo (JSON) para o banco, uma vez.
+// O arquivo vira views.json.imported; sem ele, não faz nada.
+{
+    const legado = importLegacyViews();
+
+    if (legado.imported !== undefined) {
+        console.log(
+            `[USERINFO] Contador antigo importado para o banco: ${legado.imported} pessoas.`
+        );
+    }
+}
 
 // ==========================================
 // CARREGAR E REGISTRAR COMANDOS

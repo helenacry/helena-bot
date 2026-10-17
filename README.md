@@ -56,7 +56,6 @@ Para montar o ambiente de testes:
 | `HELENA_MARKET` | `off` (ou `0`, `false`, `no`) desliga a bolsa e deixa todos os preços na tabela. Padrão: ligada. |
 | `HELENA_ANTI_SPAM` | `off` (ou `0`, `false`, `no`) desliga o intervalo de 3 segundos entre comandos. Padrão: ligado. |
 | `HELENA_DATABASE_PATH` | Caminho do banco SQLite. Padrão: `./data/helena.db`. |
-| `HELENA_GENERATED_DIR` | Pasta dos dados gerados (o contador de visualizações do `/userinfo`). Padrão: `./generated`. Na nuvem, aponte para o volume. |
 | `HELENA_SUPPORT_GUILD_ID`, `HELENA_USERS_CHANNEL_ID`, `HELENA_CLUSTERS_CHANNEL_ID` | Contadores do servidor de suporte. Se algum estiver vazio, ficam desligados. |
 | `HELENA_CLUSTER_TOTAL`, `HELENA_STATS_INTERVAL` | Total de clusters e intervalo de atualização (ms) dos contadores. |
 | `HELENA_LIVE_INTERVAL_MS` | Intervalo das contagens ao vivo, como o tempo da prisão. Padrão 10000, mínimo 2000. |
@@ -76,7 +75,6 @@ utils/                   Embeds, tempo, IDs e utilitários
 scripts/                 Ferramentas de linha de comando (npm run db:export)
 Dockerfile               Imagem para a nuvem (veja "Hospedagem na nuvem")
 tests/                   Testes automáticos (npm test)
-generated/               Dados gerados em execução (ex.: contador de visualizações do /userinfo)
 assets/                  Imagens: insígnias, selos Pulse e base do cartão de perfil
 ```
 
@@ -237,8 +235,8 @@ O bot pode rodar no Railway em vez do computador de quem o mantém. A imagem vem
 Só um bot pode ficar ligado por vez: dois respondem cada comando em dobro e a VSync limita as conexões por bot. Por isso a ordem importa:
 
 1. No Railway, em Settings, Deploy, ponha **Custom Start Command** = `sleep infinity` e faça o deploy: o contêiner sobe com o volume, mas sem ligar o bot.
-2. No computador, **pare o bot** e exporte: `npm run db:export -- helena-export.db` (mostra quantos jogadores foram). O que acontecer depois da cópia não vai junto.
-3. Envie para o volume com a CLI do Railway (`railway login`, `railway link`; o `railway ssh` registra a chave SSH na primeira vez): `scp helena-export.db <domínio-do-serviço>@ssh.railway.com:/data/helena.db`. Para manter o contador do `/userinfo`, crie a pasta (`railway ssh -- mkdir -p /data/generated/userinfo`) e envie também `generated/userinfo/views.json`.
+2. No computador, **pare o bot** e exporte: `npm run db:export -- helena-export.db` (mostra quantos jogadores foram). O que acontecer depois da cópia não vai junto. O contador do `/userinfo` também mora no banco: se o bot ainda rodava com a versão antiga (que guardava num JSON), ligue-o uma vez com a nova antes, para ele importar o JSON antigo, e só então pare e exporte.
+3. Envie para o volume com a CLI do Railway (`railway login`, `railway link`; o `railway ssh` registra a chave SSH na primeira vez): `scp helena-export.db <domínio-do-serviço>@ssh.railway.com:/data/helena.db`.
 4. Confira os números lá dentro: `railway ssh -- node scripts/export-db.mjs /tmp/conferencia.db`.
 5. Apague o Custom Start Command e faça o deploy: o bot sobe com o banco migrado. Mantenha o do computador **desligado**. Se algo der errado, o banco do computador não foi tocado e dá para ligá-lo de novo (perdendo o que aconteceu na nuvem).
 

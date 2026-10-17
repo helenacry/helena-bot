@@ -18,6 +18,9 @@ node_modules/
 *.sqlite3-wal
 *.sqlite3-shm
 
+# Dados antigos do contador do /userinfo (hoje fica no banco; o JSON só é importado uma vez)
+generated/
+
 # Logs
 *.log
 logs/

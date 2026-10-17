@@ -1,125 +1,67 @@
-import {
-    mkdir,
-    readFile,
-    writeFile,
-    rename
-} from "node:fs/promises";
-
+import { existsSync, readFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
 
-// ==========================================
-// CONFIGURAÇÕES
-// ==========================================
-
-// Na nuvem, aponte HELENA_GENERATED_DIR para o volume (ex.: /data/generated),
-// senão o contador volta ao zero a cada deploy. Sem a variável, ./generated.
-const DIR = join(
-    process.env.HELENA_GENERATED_DIR || join(process.cwd(), "generated"),
-    "userinfo"
-);
-
-const FILE = join(
-    DIR,
-    "views.json"
-);
-
-let queue = Promise.resolve();
+import { db } from "../database/connection.mjs";
 
 // ==========================================
-// CARREGAR CONTADOR
+// CONTADOR DE VISUALIZAÇÕES DO /USERINFO
 // ==========================================
 
-async function loadViews() {
-    try {
-        const content = await readFile(
-            FILE,
-            "utf8"
-        );
+// O "Visualizações: N" do rodapé do /userinfo: quantas vezes o perfil de cada
+// pessoa foi consultado, ligado ao ID dela.
+//
+// Fica no banco do bot, junto de todo o resto: um lugar só para fazer backup,
+// migrar para a nuvem e apagar os dados de alguém. Cada consulta é UMA instrução
+// atômica, sem fila em memória. Antes isto era um JSON (generated/userinfo/views.json),
+// reescrito inteiro a cada consulta e versionado no Git por engano, com IDs de
+// pessoas num repositório público. importLegacyViews() traz o que havia nele.
 
-        const parsed = JSON.parse(content);
+db.exec(`
+    CREATE TABLE IF NOT EXISTS userinfo_views (
+        user_id TEXT PRIMARY KEY,
+        views INTEGER NOT NULL DEFAULT 0
+            CHECK(views >= 0)
+    )
+`);
 
-        if (
-            !parsed ||
-            typeof parsed !== "object" ||
-            Array.isArray(parsed)
-        ) {
-            return {};
-        }
+// IDs da VSync têm 18 dígitos ou 36 caracteres (UUID); o limite só barra lixo.
+const MAX_ID_LENGTH = 64;
 
-        return parsed;
+const increment = db.prepare(`
+    INSERT INTO userinfo_views (user_id, views)
+    VALUES (?, 1)
+    ON CONFLICT(user_id) DO UPDATE SET views = views + 1
+    RETURNING views
+`);
 
-    } catch (error) {
-        if (error.code !== "ENOENT") {
-            console.warn(
-                "[USERINFO VIEWS] Não foi possível ler o contador:",
-                error.message
-            );
-        }
+const select = db.prepare(`
+    SELECT views
+    FROM userinfo_views
+    WHERE user_id = ?
+`);
 
-        return {};
+function cleanId(userId) {
+    const id = String(userId ?? "").trim();
+
+    if (!id) {
+        throw new Error("ID do usuário não informado.");
     }
-}
 
-// ==========================================
-// SALVAR CONTADOR
-// ==========================================
+    if (id.length > MAX_ID_LENGTH) {
+        throw new Error("ID do usuário grande demais.");
+    }
 
-async function saveViews(data) {
-    await mkdir(DIR, {
-        recursive: true
-    });
-
-    const temporaryFile =
-        FILE + "." + process.pid + ".tmp";
-
-    await writeFile(
-        temporaryFile,
-        JSON.stringify(data, null, 2),
-        "utf8"
-    );
-
-    await rename(
-        temporaryFile,
-        FILE
-    );
+    return id;
 }
 
 // ==========================================
 // INCREMENTAR VISUALIZAÇÕES
 // ==========================================
 
-export function incrementUserinfoViews(userId) {
-    const id = String(userId ?? "").trim();
-
-    if (!id) {
-        return Promise.reject(
-            new Error("ID do usuário não informado.")
-        );
-    }
-
-    const task = queue
-        .catch(() => {})
-        .then(async () => {
-            const data = await loadViews();
-
-            const current = Number(data[id]);
-
-            const views = Number.isSafeInteger(current)
-                ? Math.max(0, current) + 1
-                : 1;
-
-            data[id] = views;
-
-            await saveViews(data);
-
-            return views;
-        });
-
-    // Uma falha não deve bloquear os próximos
-    // incrementos da fila.
-    queue = task.catch(() => {});
-
-    return task;
+// Devolve a contagem nova. Uma falha aqui não derruba o /userinfo (o comando
+// só avisa no log e segue sem o contador).
+export async function incrementUserinfoViews(userId) {
+    return increment.get(cleanId(userId)).views;
 }
 
 // ==========================================
@@ -129,18 +71,82 @@ export function incrementUserinfoViews(userId) {
 export async function getUserinfoViews(userId) {
     const id = String(userId ?? "").trim();
 
-    if (!id) {
+    if (!id || id.length > MAX_ID_LENGTH) {
         return 0;
     }
 
-    // Aguarda gravações anteriores.
-    await queue;
+    return select.get(id)?.views ?? 0;
+}
 
-    const data = await loadViews();
+// ==========================================
+// IMPORTAR O JSON ANTIGO
+// ==========================================
 
-    const views = Number(data[id]);
+// Traz para o banco o que o contador antigo guardou em generated/userinfo/views.json
+// e renomeia o arquivo para views.json.imported (nada é apagado). É chamada no
+// início do bot (helena.mjs) e NUNCA ao carregar este módulo: assim os testes, que
+// carregam o módulo, não consomem o arquivo de verdade.
+//
+// Segura de repetir: com MAX(), importar duas vezes (ou depois de o banco já ter
+// contagens novas) nunca soma em dobro nem diminui nada.
+//
+// Devolve { imported, file } ou { skipped: motivo }.
+export function importLegacyViews(
+    file = join(process.cwd(), "generated", "userinfo", "views.json")
+) {
+    if (!existsSync(file)) {
+        return { skipped: "sem arquivo antigo" };
+    }
 
-    return Number.isSafeInteger(views)
-        ? Math.max(0, views)
-        : 0;
+    let parsed;
+
+    try {
+        parsed = JSON.parse(readFileSync(file, "utf8"));
+    } catch (error) {
+        console.warn("[USERINFO] Contador antigo ilegível, nada foi importado:", error.message);
+
+        return { skipped: "arquivo ilegível" };
+    }
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return { skipped: "formato inesperado" };
+    }
+
+    const rows = Object.entries(parsed).filter(([id, views]) =>
+        id.trim() !== "" &&
+        id.length <= MAX_ID_LENGTH &&
+        Number.isSafeInteger(views) &&
+        views >= 0
+    );
+
+    const insert = db.prepare(`
+        INSERT INTO userinfo_views (user_id, views)
+        VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET views = MAX(views, excluded.views)
+    `);
+
+    db.exec("BEGIN");
+
+    try {
+        for (const [id, views] of rows) {
+            insert.run(id.trim(), views);
+        }
+
+        db.exec("COMMIT");
+
+    } catch (error) {
+        db.exec("ROLLBACK");
+
+        throw error;
+    }
+
+    // Só depois de gravar com sucesso. Se não der para renomear (disco só de
+    // leitura), a importação já está feita e repetir é inofensivo.
+    try {
+        renameSync(file, file + ".imported");
+    } catch (error) {
+        console.warn("[USERINFO] Importado, mas não consegui renomear o arquivo antigo:", error.message);
+    }
+
+    return { imported: rows.length, file };
 }
