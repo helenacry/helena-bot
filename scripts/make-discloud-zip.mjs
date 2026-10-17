@@ -65,7 +65,8 @@ export function validId(id) {
 //          vez, quieto, em vez de ficar reiniciando; o zip normal (sem --first) que
 //          vem depois liga o AUTORESTART de volta e já ativa as variáveis.
 function adjustConfig(config, { id, first } = {}) {
-    let result = config;
+    // LF sempre: um CR no fim da linha ficaria dentro do valor (VERSION=latest\r)
+    let result = config.replace(/\r\n/g, "\n");
 
     if (id !== undefined) {
         if (!validId(id)) {

@@ -178,6 +178,26 @@ test("--id troca só o subdomínio dentro do zip e recusa um ID inválido", () =
     assert.ok(validId("helena-bot") && validId("ab") && validId("a".repeat(20)));
 });
 
+test("o config vai no zip sempre com LF, mesmo que o arquivo do projeto esteja com CRLF (o Git no Windows pode converter)", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "helena-crlf-"));
+
+    writeFileSync(path.join(root, ".discloudignore"), ".git\r\n");
+    writeFileSync(path.join(root, "helena.mjs"), "// bot\n");
+    writeFileSync(path.join(root, "discloud.config"), "NAME=Helena\r\nTYPE=site\r\nMAIN=helena.mjs\r\nRAM=512\r\nVERSION=latest\r\nID=helena-bot\r\nSTART=node helena.mjs\r\nAUTORESTART=true\r\n");
+
+    const inside = readZip(buildZip(collectEntries({ root })))["discloud.config"];
+
+    assert.ok(!inside.includes(13), "nenhum CR dentro do config do zip");
+    assert.match(inside.toString("utf8"), /^VERSION=latest$/m);
+    assert.match(inside.toString("utf8"), /^AUTORESTART=true$/m);
+
+    // e o .gitattributes fixa LF nos dois arquivos do projeto
+    const attributes = text(".gitattributes");
+
+    assert.match(attributes, /^discloud\.config text eol=lf$/m);
+    assert.match(attributes, /^\.discloudignore text eol=lf$/m);
+});
+
 test("--first sobe sem reinício automático (o bot cai uma vez sem token, quieto); o zip normal liga de volta", () => {
     const first = readZip(buildZip(collectEntries({ first: true })))["discloud.config"].toString("utf8");
     const normal = readZip(buildZip(collectEntries()))["discloud.config"].toString("utf8");
