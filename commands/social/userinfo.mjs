@@ -337,19 +337,10 @@ export default {
             const joinedAt = dateField(user.joinedAt);
 
             // ==================================
-            // PRISMA+
-            // ==================================
-            const prismaSince = user.prismaActive
-                ? dateField(user.prismaSince)
-                : "Não é assinante Prisma+.";
-
-            // ==================================
             // PULSER
             // ==================================
-            const pulserSince = user.pulsing
-                ? dateField(pulseStartOf(user))
-                : "Não possui Pulse ativo.";
-
+            // O Prisma+ e o Pulse só entram no cartão para quem tem: sem eles, os
+            // campos ficam de fora em vez de mostrar "não é assinante" e "não informado".
             const pulseStart = Number(user.pulsingSince);
             const currentLevel = Number(user.pulseBadge?.months);
             const currentLevelAt = pulseStart + currentLevel * PULSE_MONTH;
@@ -430,41 +421,45 @@ export default {
 
             add(fields, "📅 Entrou no servidor em", joinedAt);
 
-            add(
-                fields,
-                "💎 Assinante Prisma+ desde",
-                prismaSince,
-                true
-            );
+            if (user.prismaActive) {
+                add(
+                    fields,
+                    "💎 Assinante Prisma+ desde",
+                    dateField(user.prismaSince),
+                    true
+                );
+            }
 
-            add(
-                fields,
-                "✨ Pulser desde",
-                "**" + pulserSince + "**",
-                true
-            );
+            if (user.pulsing) {
+                add(
+                    fields,
+                    "✨ Pulser desde",
+                    "**" + dateField(pulseStartOf(user)) + "**",
+                    true
+                );
 
-            fields.push({
-                name: "\u200b",
-                value: "\u200b",
-                inline: false
-            });
+                fields.push({
+                    name: "\u200b",
+                    value: "\u200b",
+                    inline: false
+                });
 
-            add(
-                fields,
-                "🏅 Insígnia de Pulser atual",
-                (PULSE_EMOJIS[user.pulseBadge?.months] ?? "") +
-                " │ **" + (currentPulseBadge ?? UNKNOWN) + "**",
-                true
-            );
+                add(
+                    fields,
+                    "🏅 Insígnia de Pulser atual",
+                    (PULSE_EMOJIS[user.pulseBadge?.months] ?? "") +
+                    " │ **" + (currentPulseBadge ?? UNKNOWN) + "**",
+                    true
+                );
 
-            add(
-                fields,
-                "⏭️ Próxima insígnia de Pulser",
-                (PULSE_EMOJIS[user.nextPulseBadge?.months] ?? "") +
-                " │ **" + (nextPulseBadge ?? UNKNOWN) + "**",
-                true
-            );
+                add(
+                    fields,
+                    "⏭️ Próxima insígnia de Pulser",
+                    (PULSE_EMOJIS[user.nextPulseBadge?.months] ?? "") +
+                    " │ **" + (nextPulseBadge ?? UNKNOWN) + "**",
+                    true
+                );
+            }
 
             // ==================================
             // EMBED FINAL

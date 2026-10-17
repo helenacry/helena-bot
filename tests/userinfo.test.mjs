@@ -78,6 +78,11 @@ const MEMBERS = [
         pulsing: true, pulsingSince: null,
         pulseBadge: { id: "PULSE_24", months: 24 },
         nextPulseBadge: null
+    }),
+    member("200000000000000011", "soprisma", "Só Prisma", {
+        flags: ["BADGE_SHOW_PRISMA"],
+        prismaActive: true,
+        prismaSince: Date.UTC(2025, 5, 1, 9, 0)
     })
 ];
 
@@ -252,12 +257,69 @@ test("no comando de barra, se a interação já trouxe o Pulse, não há chamada
     assert.deepEqual(calls.filter(call => call.includes("/members/")), []);
 });
 
-test("quem não tem Prisma+ nem Pulse aparece como tal", async () => {
-    const fields = fieldsOf(embedOf(await run("hui ana")));
+const PRISMA = "💎 Assinante Prisma+ desde";
+const PULSE_FIELDS = ["✨ Pulser desde", "🏅 Insígnia de Pulser atual", "⏭️ Próxima insígnia de Pulser"];
+
+test("quem não tem Prisma+ nem Pulse fica com o cartão limpo: sem esses campos, sem 'não informado'", async () => {
+    const embed = embedOf(await run("hui ana"));
+    const fields = fieldsOf(embed);
 
     assert.equal(fields["🏅 Insígnias"], "Nenhuma");
-    assert.equal(fields["💎 Assinante Prisma+ desde"], "Não é assinante Prisma+.");
-    assert.match(fields["✨ Pulser desde"], /Não possui Pulse ativo/);
+    assert.match(fields["📅 Conta criada em"], /10 de maio de 2024/);
+    assert.match(fields["📅 Entrou no servidor em"], /20 de janeiro de 2025/);
+
+    for (const name of [PRISMA, ...PULSE_FIELDS]) {
+        assert.ok(!(name in fields), `${name} não deveria aparecer`);
+    }
+
+    // nem o espaçador que separava os campos do Pulse
+    assert.ok(!embed.fields.some(field => field.name === "​"), "sobrou o campo vazio");
+
+    const text = JSON.stringify(embed);
+
+    assert.doesNotMatch(text, /Não é assinante|Não possui Pulse|Não informado/);
+
+    assert.deepEqual(
+        embed.fields.map(field => field.name),
+        ["👤 Menção", "🏷️ Tag", "🪪 ID", "🏅 Insígnias", "📅 Conta criada em", "📅 Entrou no servidor em"]
+    );
+});
+
+test("só Prisma+: mostra o Prisma+ e nenhum campo de Pulse", async () => {
+    const embed = embedOf(await run("hui soprisma"));
+    const fields = fieldsOf(embed);
+
+    assert.match(fields[PRISMA], /1 de junho de 2025/);
+
+    for (const name of PULSE_FIELDS) {
+        assert.ok(!(name in fields), `${name} não deveria aparecer`);
+    }
+
+    assert.ok(!embed.fields.some(field => field.name === "​"));
+});
+
+test("só Pulse: mostra o bloco do Pulse e nenhum campo de Prisma+", async () => {
+    const embed = embedOf(await run("hui pulsaaqui"));
+    const fields = fieldsOf(embed);
+
+    assert.ok(!(PRISMA in fields));
+
+    for (const name of PULSE_FIELDS) {
+        assert.ok(name in fields, `${name} faltou`);
+    }
+
+    // o espaçador continua separando "Pulser desde" das duas insígnias
+    assert.ok(embed.fields.some(field => field.name === "​"));
+});
+
+test("Prisma+ e Pulse juntos: os dois blocos aparecem, como antes", async () => {
+    const fields = fieldsOf(embedOf(await run("hui mariasilva")));
+
+    assert.match(fields[PRISMA], /5 de setembro de 2024/);
+
+    for (const name of PULSE_FIELDS) {
+        assert.ok(name in fields, `${name} faltou`);
+    }
 });
 
 test("@usuário com @, em maiúsculas, menção, ID e o alias ui", async () => {
