@@ -135,7 +135,7 @@ Escreva uma `description` clara (até 100 caracteres, é o que a VSync mostra na
 
 ## Perfil e quantias
 
-O cartão do `/perfil` é uma imagem 1600×1200 (`services/profile-card.mjs`, SVG convertido pelo `sharp`, sem gravar nada em disco): lateral com o **RANK**, chip do estado civil com o cônjuge, anel do nível, foto em pentágono, nome e título, bio e cinco cartões (banco, gemas, carteira, arma e emprego). O RANK é a posição no ranking de patrimônio do `/ranking` (`services/player-rank.mjs`). A fonte é a primeira instalada da lista Poppins, Nunito, Segoe UI, DejaVu Sans; sem nenhuma, o sistema usa uma fonte com serifa.
+O cartão do `/perfil` é uma imagem 1600×1200 (`services/profile-card.mjs`, SVG convertido pelo `sharp`, sem gravar nada em disco): lateral com o **RANK**, chip do estado civil com o cônjuge, anel do nível, foto em pentágono, nome e título, bio e cinco cartões (banco, gemas, carteira, arma e emprego). O RANK é a posição no ranking de patrimônio do `/ranking` (`services/player-rank.mjs`). A fonte é o **Poppins**, que vai no próprio projeto (`assets/fonts/`, licença OFL; o `services/card-fonts.mjs` aponta o fontconfig para essa pasta), então o cartão sai igual no PC e na nuvem. Se ele falhar, valem Nunito, Segoe UI e DejaVu Sans, e o log de início avisa (`[CARTÃO] Fonte Poppins carregada.` ou o aviso de que não foi achada). Emojis, bandeiras, tons de pele e caracteres invisíveis são **tirados** de nome, título, bio, cônjuge, emprego e arma: o desenho não tem como mostrar emoji colorido, e deixá-los viraria quadradinhos.
 
 - `/perfil` mostra o seu cartão. `/perfil usuario:<@usuário>` (ou `hperfil maria`, `hperfil @maria`, `hperfil <@menção>`) mostra o de outra pessoa do servidor. A busca é só pelo **@usuário** (o nome de usuário, que é único, sem diferenciar maiúsculas) ou por menção: apelidos e nomes de exibição das plataformas não entram. A mensagem menciona a pessoa e, se não achar ninguém, avisa que não encontrou. O cartão é enviado direto para a VSync, sem gravar nada em disco.
 - `/userinfo` (alias `ui`) funciona igual: `/userinfo usuario:<@usuário>` (ou `hui maria`, `hui @maria`, `hui <@menção>`) mostra as insígnias, datas, Prisma+ e Pulse de outra pessoa do servidor. Também só pelo **@usuário exato** ou menção, a mensagem menciona a pessoa e, se não achar ninguém, avisa. Os dados vêm da própria lista de membros da VSync, sem chamada extra. Sem argumento mostra os seus. Bots também têm informações. O contador de visualizações segue em `generated/userinfo/views.json`.
@@ -228,7 +228,7 @@ O bot e a API do painel rodam **juntos** num app `TYPE=site` do Discloud (plano 
 | Variáveis | as da aba Variáveis do painel viram variáveis de ambiente de verdade, mas só valem depois de um **rebuild ou deploy** |
 | Endereço | `https://<ID>.discloud.dev`, com HTTPS válido (a documentação cita `.discloud.app`, que **não resolve**); o app escuta na **porta 8080, em 0.0.0.0** |
 | IP do visitante | o Discloud fica atrás da Cloudflare: `X-Forwarded-For` e `X-Real-IP` chegam com o IP da **borda**, e o IP real vem em `CF-Connecting-IP` (forjar esse é barrado com 403). Use `HELENA_WEB_TRUST_PROXY=cloudflare` |
-| Fontes do cartão | texto latino com acentos renderiza (DejaVu Sans), mas **japonês, coreano e emojis viram quadradinhos** no cartão de perfil |
+| Fontes do cartão | o Poppins vai no projeto (`assets/fonts/`) e o cartão o usa; emojis são tirados do texto; **japonês e coreano** continuam virando quadradinhos (as fontes do sistema são só as do contêiner, DejaVu) |
 | Backups | no plano Diamond há backup automático diário de cada app, guardado por uns 7 dias |
 
 O projeto traz o `discloud.config` (site, `helena.mjs`, 512 MB, `START=node helena.mjs`, reinício automático) e o `.discloudignore` (a lista do que **não** vai: `.env`, banco local, testes, site, wiki...). O zip é montado por `npm run discloud:zip`, que lê essa lista, confere que nenhum segredo entrou e nunca leva banco sozinho.
@@ -251,7 +251,7 @@ O projeto traz o `discloud.config` (site, `helena.mjs`, 512 MB, `START=node hele
 
 **Conferir o IP real:** ligue `HELENA_WEB_DEBUG_IP=1` (e faça Rebuild), abra `https://<ID>.discloud.dev/api/health` e veja no log a linha `IP visto`: deve ser o seu IP, vindo do `CF-Connecting-IP`. Desligue depois.
 
-**Limites conhecidos:** nomes e bios com japonês, coreano ou emoji aparecem como quadradinhos no cartão de perfil (a lista `APT` do Discloud só instala pacotes de um conjunto fixo, sem fontes CJK nem de emoji; seria preciso levar as fontes no projeto e apontar o fontconfig para elas). O `.discloud.app` que o painel mostra nos detalhes do app não funciona: vale só o `.discloud.dev`.
+**Limites conhecidos:** nomes e bios com japonês ou coreano aparecem como quadradinhos no cartão de perfil (a lista `APT` do Discloud só instala pacotes de um conjunto fixo, sem fontes CJK; seria preciso levar uma fonte CJK no projeto, em `assets/fonts/`, que o `fonts.conf` já enxerga). Emojis não aparecem: são tirados do texto. O `.discloud.app` que o painel mostra nos detalhes do app não funciona: vale só o `.discloud.dev`.
 
 ## Hospedagem na nuvem (alternativa: Railway)
 

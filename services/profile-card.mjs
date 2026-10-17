@@ -1,4 +1,8 @@
 
+// Primeiro: põe as Poppins do projeto à vista do fontconfig, antes de o sharp
+// desenhar qualquer texto.
+import "./card-fonts.mjs";
+
 import sharp from "sharp";
 
 // ==========================================
@@ -15,9 +19,10 @@ import sharp from "sharp";
 const W = 1600;
 const H = 1200;
 
-// A primeira fonte instalada vence. As redondas ficam na frente; o Segoe UI
-// (Windows) e o DejaVu Sans (Linux) são as reservas. Sem nenhuma delas o
-// sistema cai numa fonte com serifa, que funciona mas não é a ideal.
+// A primeira fonte instalada vence. O Poppins vai junto no projeto (assets/fonts);
+// o resto é reserva para quando ele falhar: o Segoe UI (Windows) e o DejaVu Sans
+// (Linux). Sem nenhuma delas o sistema cai numa fonte com serifa, que funciona
+// mas não é a ideal.
 const FONT = "Poppins, Nunito, Segoe UI, DejaVu Sans, Arial, sans-serif";
 
 const LILAC = "#b97cff";
@@ -36,12 +41,17 @@ function esc(value) {
         .replaceAll("'", "&apos;");
 }
 
-function short(value, max = 60) {
-    const text = String(value ?? "");
+// Conta e corta por caractere (não por unidade UTF-16): cortar no meio de um
+// caractere "grande", como as letras matemáticas de nomes estilizados, deixaria
+// um símbolo quebrado no cartão.
+const chars = value => Array.from(String(value ?? ""));
 
-    return text.length > max
-        ? text.slice(0, max - 1) + "…"
-        : text;
+function short(value, max = 60) {
+    const letters = chars(value);
+
+    return letters.length > max
+        ? letters.slice(0, max - 1).join("") + "…"
+        : letters.join("");
 }
 
 function money(value) {
@@ -52,11 +62,29 @@ function money(value) {
 }
 
 // O SVG não desenha emoji colorido: tira os emojis do texto (o título
-// equipado costuma começar com um) e deixa só as letras.
+// equipado costuma começar com um) e deixa só as letras. Sai tudo que forma
+// um emoji, não só a figura: teclas (1️⃣), bandeiras (duas letras regionais),
+// tons de pele, e os caracteres invisíveis que costuram os emojis compostos
+// (ZWJ, seletores de variação, etiquetas) e que de outra forma sobrariam como
+// quadradinhos. ©, ® e ™ ficam, a não ser que venham pedindo a versão emoji.
+const EMOJI = new RegExp(
+    [
+        "[0-9#*]\\uFE0F?\\u20E3",
+        "[\\u00A9\\u00AE\\u2122]\\uFE0F",
+        "(?![\\u00A9\\u00AE\\u2122])\\p{Extended_Pictographic}",
+        "\\p{Regional_Indicator}",
+        "\\p{Emoji_Modifier}",
+        "[\\uFE0E\\uFE0F\\u20E3]",
+        "\\p{Cf}"
+    ].join("|"),
+    "gu"
+);
+
 export function plain(value) {
     return String(value ?? "")
-        .replace(/[\p{Extended_Pictographic}‍️]/gu, "")
+        .replace(EMOJI, "")
         .replace(/\s+/g, " ")
+        .replace(/\p{Cc}/gu, "")
         .trim();
 }
 
@@ -67,20 +95,24 @@ export function wrap(text, max, maxLines) {
     const lines = [];
     let line = "";
 
-    for (let word of String(text ?? "").split(/\s+/).filter(Boolean)) {
-        while (word.length > max) {
+    for (const piece of String(text ?? "").split(/\s+/).filter(Boolean)) {
+        let letters = chars(piece);
+
+        while (letters.length > max) {
             if (line) {
                 lines.push(line);
                 line = "";
             }
 
-            lines.push(word.slice(0, max));
-            word = word.slice(max);
+            lines.push(letters.slice(0, max).join(""));
+            letters = letters.slice(max);
         }
+
+        const word = letters.join("");
 
         if (!line) {
             line = word;
-        } else if ((line + " " + word).length <= max) {
+        } else if (chars(line + " " + word).length <= max) {
             line += " " + word;
         } else {
             lines.push(line);
@@ -327,9 +359,11 @@ export async function profileSvg(data = {}) {
     // Identidade
     const name = short(plain(data.name) || "Jogador", 20);
 
-    const nameSize = name.length <= 12
+    const nameLength = chars(name).length;
+
+    const nameSize = nameLength <= 12
         ? 58
-        : Math.max(34, 58 - (name.length - 12) * 3);
+        : Math.max(34, 58 - (nameLength - 12) * 3);
 
     const title = plain(data.title);
 
@@ -337,9 +371,10 @@ export async function profileSvg(data = {}) {
 
     const bioLines = wrap(bio, 27, 7);
 
-    const spouse = data.spouseName
-        ? "@" + String(data.spouseName).replace(/^@+/, "")
-        : "";
+    // Só emoji no nome da pessoa: sobra "" e o cartão mostra o traço.
+    const spouseName = plain(String(data.spouseName ?? "").replace(/^@+/, ""));
+
+    const spouse = spouseName ? "@" + spouseName : "";
 
     const married = Boolean(data.married);
 
@@ -406,7 +441,7 @@ export async function profileSvg(data = {}) {
         ${txt(1060, 656, name, nameSize, "#ffffff", 800, 'text-anchor="middle"')}
 
         ${title
-            ? star(1060 - title.length * 6.2 - 22, 690, 8, "#d6b4ff", 0.9) +
+            ? star(1060 - chars(short(title, 30)).length * 8.1 - 26, 690, 8, "#d6b4ff", 0.9) +
               txt(1060, 698, short(title, 30), 24, "#d6b4ff", 600, 'text-anchor="middle"')
             : txt(1060, 698, "Sem título equipado", 22, "#8f78c4", 500, 'text-anchor="middle"')}
 
@@ -434,7 +469,7 @@ export async function profileSvg(data = {}) {
         ${icon("heart", 278, 83, 0.9, "#ffffff", married)}
 
         ${txt(337, 80, married ? "Casado(a)" : "Solteiro(a)", 36, "#ffffff", 700)}
-        ${txt(337, 112, married ? short(spouse, 24) : "sem cônjuge", 21, "#b5a2e0", 500)}
+        ${txt(337, 112, married ? short(spouse || "—", 24) : "sem cônjuge", 21, "#b5a2e0", 500)}
 
         <!-- ANEL DO NÍVEL -->
 
@@ -525,4 +560,21 @@ export async function renderProfileCard(data = {}) {
     )
         .png()
         .toBuffer();
+}
+
+// O Poppins foi achado de verdade? Desenha a mesma palavra com ele e com uma
+// família que não existe: se saírem iguais, o sistema usou a fonte reserva nos dois.
+// Serve para o log de inicialização avisar, em vez de o cartão sair com outra fonte
+// sem ninguém perceber.
+export async function cardFontAvailable() {
+    const draw = family => sharp(Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="90"><text x="8" y="64" font-family="${family}" font-size="56" font-weight="700">Hamburgefons</text></svg>`
+    )).raw().toBuffer();
+
+    const [poppins, missing] = await Promise.all([
+        draw("Poppins"),
+        draw("Helena Fonte Inexistente")
+    ]);
+
+    return !poppins.equals(missing);
 }

@@ -3,11 +3,14 @@ import { db, set } from "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import path from "node:path";
 
 import sharp from "sharp";
 
 const { profileSvg, renderProfileCard, wrap, plain } = await import("../services/profile-card.mjs");
 const { getPlayerRank } = await import("../services/player-rank.mjs");
+const { useBundledFonts, FONTS_DIR, FONTS_CONF } = await import("../services/card-fonts.mjs");
+const { cardFontAvailable } = await import("../services/profile-card.mjs");
 
 const SAMPLE = Object.freeze({
     name: "Educado",
@@ -120,6 +123,74 @@ test("emoji sai do texto (o SVG não desenha emoji colorido)", async () => {
     assert.equal(plain("  a   b \n c "), "a b c");
 });
 
+test("plain tira bandeira, tom de pele, tecla, emoji composto e bandeira de região", () => {
+    assert.equal(plain("Brasil 🇧🇷"), "Brasil");
+    assert.equal(plain("ok 👍🏽 ok"), "ok ok");
+    assert.equal(plain("passo 1️⃣ e 2️⃣"), "passo e");
+    assert.equal(plain("#️⃣ *️⃣ 0⃣"), "");
+    assert.equal(plain("fogo ❤️‍🔥 família 👨‍👩‍👧"), "fogo família");
+    assert.equal(plain("Reino 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Unido"), "Reino Unido");
+    assert.equal(plain("sol ☀️ e ✨"), "sol e");
+
+    // nada de caractere invisível ou de controle sobrando
+    assert.equal(plain("a​b‮c\u0000d"), "abcd");
+
+    // texto de verdade fica: acento, ©, ®, ™ e números
+    assert.equal(plain("Ação © Nº 5 ™ ®"), "Ação © Nº 5 ™ ®");
+    assert.equal(plain("©️"), "");
+});
+
+test("nenhum resto de emoji sobra no cartão, em campo nenhum", async () => {
+    const svg = await profileSvg({
+        ...SAMPLE,
+        name: "Ana 🌸 Silva 🇧🇷",
+        title: "👑 Magnata 👍🏽",
+        bio: "Oi! 🔥💜 1️⃣ ❤️‍🔥 👨‍👩‍👧 fim",
+        job: "☕ Barista 🛵",
+        weapon: "🔫 Revólver",
+        spouseName: "@maria_🐱💜"
+    });
+
+    const leftovers = textsOf(svg)
+        .flatMap(text => [...text])
+        .filter(letter => /[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Modifier}\p{Cf}️⃣]/u.test(letter));
+
+    assert.deepEqual(leftovers, []);
+
+    const texts = textsOf(svg);
+
+    assert.ok(texts.includes("Ana Silva"));
+    assert.ok(texts.includes("@maria_"));
+});
+
+test("o cônjuge com só emoji no nome aparece como traço, sem '@' solto", async () => {
+    const texts = textsOf(await profileSvg({ ...SAMPLE, spouseName: "🐱💜" }));
+
+    assert.ok(texts.includes("—"));
+    assert.ok(!texts.includes("@"));
+});
+
+test("cortar nome e bio não parte um caractere grande ao meio", async () => {
+    // letras matemáticas (nomes estilizados) ocupam 2 unidades UTF-16 cada
+    const fancy = "𝓗𝓮𝓵𝓮𝓷𝓪".repeat(8);
+
+    const lone = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+
+    const svg = await profileSvg({ ...SAMPLE, name: fancy, bio: fancy.repeat(3) });
+
+    for (const text of textsOf(svg)) {
+        assert.doesNotMatch(text, lone);
+    }
+
+    for (const line of wrap(fancy, 7, 5)) {
+        assert.doesNotMatch(line, lone);
+        assert.ok(Array.from(line).length <= 7);
+    }
+
+    // continua uma imagem válida
+    await sharp(Buffer.from(svg)).png().toBuffer();
+});
+
 test("texto vindo do usuário não vira marcação do SVG", async () => {
     const svg = await profileSvg({
         ...SAMPLE,
@@ -156,6 +227,51 @@ test("usa o dano antigo ('Tipo: ... • Dano: 20') se vier só o texto", async (
     }));
 
     assert.ok(texts.includes("Dano 35"));
+});
+
+// ==========================================
+// FONTE (POPPINS VAI NO PROJETO)
+// ==========================================
+
+test("as cinco Poppins e o fonts.conf vão no projeto, e o conf aponta para a própria pasta", () => {
+    for (const file of ["Poppins-Regular.ttf", "Poppins-Italic.ttf", "Poppins-Medium.ttf", "Poppins-MediumItalic.ttf", "Poppins-Bold.ttf"]) {
+        const buffer = readFileSync(path.join(FONTS_DIR, file));
+
+        // arquivo TrueType de verdade (não um texto de erro salvo com o nome da fonte)
+        assert.ok(buffer.length > 100_000, file);
+        assert.equal(buffer.readUInt32BE(0), 0x00010000, file);
+    }
+
+    const conf = readFileSync(FONTS_CONF, "utf8");
+
+    // relativo: o caminho do projeto muda de máquina para máquina (PC, Discloud, Docker)
+    assert.match(conf, /<dir prefix="relative">\.<\/dir>/);
+    assert.match(conf, /\/etc\/fonts\/fonts\.conf/);
+    assert.match(conf, /WINDOWSFONTDIR/);
+});
+
+test("useBundledFonts liga o fonts.conf do projeto, mas respeita quem já definiu o FONTCONFIG_FILE", () => {
+    const empty = {};
+
+    assert.equal(useBundledFonts(empty), true);
+    assert.equal(empty.FONTCONFIG_FILE, FONTS_CONF);
+
+    const chosen = { FONTCONFIG_FILE: "/outro/fonts.conf" };
+
+    assert.equal(useBundledFonts(chosen), false);
+    assert.equal(chosen.FONTCONFIG_FILE, "/outro/fonts.conf");
+});
+
+test("o Poppins é achado de verdade (e a checagem do log de início sabe diferenciar da fonte reserva)", async (t) => {
+    // No Windows o fontconfig não lê a variável definida de dentro do processo:
+    // lá vale o Poppins instalado na máquina, que o teste não pode exigir.
+    if (process.platform === "win32") {
+        t.skip("no Windows depende do Poppins instalado na máquina");
+
+        return;
+    }
+
+    assert.equal(await cardFontAvailable(), true);
 });
 
 // ==========================================

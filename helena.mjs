@@ -114,6 +114,10 @@ import {
     LIVE_CONFIG
 } from "./config/live.mjs";
 
+import {
+    cardFontAvailable
+} from "./services/profile-card.mjs";
+
 // ==========================================
 // CONFIGURAÇÕES
 // ==========================================
@@ -456,6 +460,19 @@ console.log(
 console.log(
     "[PREFIXO] Sistema de comandos h preparado."
 );
+
+// O cartão do /perfil é desenhado em Poppins: avisa logo na subida se a fonte
+// não foi achada (o cartão sairia com a fonte reserva, sem ninguém notar).
+cardFontAvailable()
+    .then(found => console.log(
+        found
+            ? "[CARTÃO] Fonte Poppins carregada."
+            : "[CARTÃO] ⚠️ Fonte Poppins não encontrada: o cartão do /perfil vai usar a fonte reserva."
+    ))
+    .catch(error => console.warn(
+        "[CARTÃO] Não consegui conferir a fonte:",
+        error?.message ?? error
+    ));
 
 // Credita as lavagens concluídas e avisa o canal onde
 // foram iniciadas.
