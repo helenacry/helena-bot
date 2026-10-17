@@ -216,9 +216,46 @@ O painel permite coletar o **daily** e um **bônus de gemas** pelo navegador, en
 
 **Segurança.** CORS só para as origens listadas (nunca `*`) e sem cookies; limites de tentativas por IP e por pessoa; corpo máximo de 8 KB; o endereço de retorno do login precisa ser um dos cadastrados; cada entrada, coleta e recusa fica em `web_claim_log` com data, IP e navegador (o site avisa isso) e é apagada depois de `claimLogDays` dias (90, em `config/web.mjs`), junto com as sessões vencidas, na limpeza que roda a cada 10 minutos. Automação para coletar não é permitida.
 
-## Hospedagem na nuvem (Railway)
+## Hospedagem no Discloud
 
-O bot pode rodar no Railway em vez do computador de quem o mantém. A imagem vem do `Dockerfile` (Node 24, as fontes do cartão de perfil e o comando `node helena.mjs`, sem `.env`). O que muda de ambiente para ambiente vem das **variáveis do serviço**; o banco e os dados gerados ficam no **volume** (`/data`) e sobrevivem aos deploys. Valores de preço (Hobby: US$ 5 por mês, com US$ 5 de uso incluso; pagamento por cartão pós-pago) são da página de planos do Railway em outubro de 2026: confira antes de assinar.
+O bot e a API do painel rodam **juntos** num app `TYPE=site` do Discloud (plano Platinum ou superior; o Diamond serve). O que está abaixo foi **conferido num app de teste de verdade**, e não só lido na documentação:
+
+| O quê | Resultado |
+|---|---|
+| Node | `VERSION=latest` entrega o Node 24 (v24.22.0 no teste), com o `node:sqlite` |
+| Banco | arquivos gravados em `/home/node`, como `data/helena.db`, **sobrevivem aos commits**, mesmo com o contêiner recriado |
+| Gateway | a conexão WebSocket com `wss://api.vsync.lat/gateway` abre (o `hello` chega em menos de 0,4 s) |
+| Variáveis | as da aba Variáveis do painel viram variáveis de ambiente de verdade, mas só valem depois de um **rebuild ou deploy** |
+| Endereço | `https://<ID>.discloud.dev`, com HTTPS válido (a documentação cita `.discloud.app`, que **não resolve**); o app escuta na **porta 8080, em 0.0.0.0** |
+| IP do visitante | o Discloud fica atrás da Cloudflare: `X-Forwarded-For` e `X-Real-IP` chegam com o IP da **borda**, e o IP real vem em `CF-Connecting-IP` (forjar esse é barrado com 403). Use `HELENA_WEB_TRUST_PROXY=cloudflare` |
+| Fontes do cartão | texto latino com acentos renderiza (DejaVu Sans), mas **japonês, coreano e emojis viram quadradinhos** no cartão de perfil |
+| Backups | no plano Diamond há backup automático diário de cada app, guardado por uns 7 dias |
+
+O projeto traz o `discloud.config` (site, `helena.mjs`, 512 MB, `START=node helena.mjs`, reinício automático) e o `.discloudignore` (a lista do que **não** vai: `.env`, banco local, testes, site, wiki...). O zip é montado por `npm run discloud:zip`, que lê essa lista, confere que nenhum segredo entrou e nunca leva banco sozinho.
+
+### Subir pela primeira vez (com o banco)
+
+1. **Subdomínio:** no painel, Domínios, "+ Criar subdomínio" (2 a 20 letras minúsculas, números e hífens). O padrão do projeto é `helena-bot`; para outro nome, use `--id=nome` abaixo.
+2. **Pare o bot do computador** (dois bots ligados respondem tudo em dobro) e exporte o banco: `npm run db:export -- helena-export.db`.
+3. **Monte o zip:** `npm run discloud:zip -- --first --seed-db=helena-export.db`. Ele sai ao lado da pasta do projeto, em `helena-discloud.zip`.
+4. **Criar o app:** Aplicações, "+ Upload", Upload ZIP, arraste o zip e "Criar aplicação". Com `--first` o app sobe **sem reinício automático**: como ainda não há token, o bot cai uma vez e fica parado, quieto.
+5. **Variáveis:** na aba Variáveis do app, "Colar .env" com as de baixo e "Salvar" (os segredos você cola direto lá, nunca em arquivo).
+6. **Segundo zip, o normal:** `npm run discloud:zip -- --force` (sem `--first` e **sem `--seed-db`**) e envie na aba **Commit** do app. O commit é um deploy: ativa as variáveis, liga o reinício automático e o bot sobe com o banco já migrado.
+7. Confira o log do app: `[COMANDOS] 70 comandos carregados` e `Aguardando comandos`. Mantenha o bot do computador **desligado**.
+
+**Nunca use `--seed-db` em atualizações:** ele sobrescreveria o banco que está no ar com o do dia da migração.
+
+**Variáveis do painel do Discloud:** as do seu `.env` (`VSYNC_BOT_TOKEN`, `HELENA_OWNER_ID`, `HELENA_ADMIN_IDS`...) mais, para o painel do site: `HELENA_WEB_PORT=8080`, `HELENA_WEB_HOST=0.0.0.0`, `HELENA_WEB_TRUST_PROXY=cloudflare`, `HELENA_WEB_ORIGINS=https://helenacry.github.io`, `HELENA_OAUTH_REDIRECTS=https://helenacry.github.io/helena-bot/account/`, `HELENA_OAUTH_CLIENT_ID` e `HELENA_TURNSTILE_SECRET`. O `HELENA_DATABASE_PATH` fica sem definir (o padrão `data/helena.db` já cai em `/home/node/data`, no disco que sobrevive). Em `site/js/config.js`, `apiUrl` recebe `https://<ID>.discloud.dev`.
+
+**Atualizar o bot depois:** `npm run discloud:zip -- --force` e envie na aba Commit. Se mudar só uma variável, salve e faça **Rebuild** (a aba avisa).
+
+**Conferir o IP real:** ligue `HELENA_WEB_DEBUG_IP=1` (e faça Rebuild), abra `https://<ID>.discloud.dev/api/health` e veja no log a linha `IP visto`: deve ser o seu IP, vindo do `CF-Connecting-IP`. Desligue depois.
+
+**Limites conhecidos:** nomes e bios com japonês, coreano ou emoji aparecem como quadradinhos no cartão de perfil (a lista `APT` do Discloud só instala pacotes de um conjunto fixo, sem fontes CJK nem de emoji; seria preciso levar as fontes no projeto e apontar o fontconfig para elas). O `.discloud.app` que o painel mostra nos detalhes do app não funciona: vale só o `.discloud.dev`.
+
+## Hospedagem na nuvem (alternativa: Railway)
+
+O bot pode rodar no Railway em vez do computador de quem o mantém. A imagem vem do `Dockerfile` (Node 24, as fontes do cartão de perfil e o comando `node helena.mjs`, sem `.env`). O que muda de ambiente para ambiente vem das **variáveis do serviço**; o banco fica no **volume** (`/data`) e sobrevive aos deploys. Valores de preço (Hobby: US$ 5 por mês, com US$ 5 de uso incluso; pagamento por cartão pós-pago) são da página de planos do Railway em outubro de 2026: confira antes de assinar.
 
 **O que a nuvem precisa:** processo sempre ligado (hospedagem que "dorme" não serve), volume para o SQLite e um endereço HTTPS para a API do painel. Redeploy de um serviço com volume tem uma pequena parada (o bot reconecta em segundos).
 
