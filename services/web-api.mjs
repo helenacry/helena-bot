@@ -47,6 +47,21 @@ const list = value => String(value ?? "")
     .map(item => item.trim())
     .filter(Boolean);
 
+// Como o IP do visitante chega atrás de um proxy (HELENA_WEB_TRUST_PROXY):
+//   "cloudflare"       o IP vem em CF-Connecting-IP (Discloud e outras hospedagens
+//                      atrás da Cloudflare)
+//   "1", "true", "sim" o IP é o último valor de X-Forwarded-For (outros proxies)
+//   vazio              sem proxy: vale o endereço da conexão
+export function trustProxyMode(value) {
+    const text = String(value ?? "").trim().toLowerCase();
+
+    if (text === "cloudflare") {
+        return "cloudflare";
+    }
+
+    return ["1", "true", "sim"].includes(text);
+}
+
 // Devolve { enabled: false, reason } ou { enabled: true, ... }.
 export function loadWebConfig(env = process.env) {
     const port = String(env.HELENA_WEB_PORT ?? "").trim();
@@ -82,9 +97,7 @@ export function loadWebConfig(env = process.env) {
         clientId,
         clientSecret: String(env.HELENA_OAUTH_CLIENT_SECRET ?? "").trim() || null,
         turnstileSecret: String(env.HELENA_TURNSTILE_SECRET ?? "").trim() || null,
-        trustProxy: ["1", "true", "sim"].includes(
-            String(env.HELENA_WEB_TRUST_PROXY ?? "").trim().toLowerCase()
-        ),
+        trustProxy: trustProxyMode(env.HELENA_WEB_TRUST_PROXY),
         debugIp: ["1", "true", "sim"].includes(
             String(env.HELENA_WEB_DEBUG_IP ?? "").trim().toLowerCase()
         )
@@ -164,15 +177,31 @@ export function createWebApi(config, deps = {}) {
     // utilidades
     // ----------------------------------
 
-    // Atrás de um proxy (HELENA_WEB_TRUST_PROXY=1), o IP é o ÚLTIMO valor de
-    // X-Forwarded-For: o endereço que o proxy mais próximo viu. O primeiro valor
-    // quem manda é o próprio visitante (com um IP novo a cada pedido ele nunca
-    // chegaria ao limite), e CF-Connecting-IP só vale atrás da Cloudflare; nenhum
-    // dos dois entra na conta. Sem o cabeçalho, vale o endereço da conexão.
+    // O IP do visitante, conforme HELENA_WEB_TRUST_PROXY (veja trustProxyMode):
+    //
+    // "cloudflare": vale CF-Connecting-IP. Conferido no Discloud, que fica atrás da
+    // Cloudflare: o X-Forwarded-For e o X-Real-IP chegam sobrescritos com o IP da
+    // BORDA da Cloudflare (todos os visitantes pareceriam o mesmo), e forjar o
+    // CF-Connecting-IP é barrado pela própria Cloudflare (403). Só use este modo se
+    // o app só for alcançável por ela: fora dela, qualquer um escreveria esse cabeçalho.
+    //
+    // 1: o IP é o ÚLTIMO valor de X-Forwarded-For, o endereço que o proxy mais
+    // próximo viu. O primeiro valor quem manda é o próprio visitante (com um IP novo
+    // a cada pedido ele nunca chegaria ao limite).
+    //
+    // Sem o cabeçalho esperado, vale o endereço da conexão.
     function clientIp(req) {
         let ip = req.socket.remoteAddress ?? "";
 
-        if (config.trustProxy) {
+        if (config.trustProxy === "cloudflare") {
+            const real = String(req.headers["cf-connecting-ip"] ?? "").trim();
+
+            // só algo com cara de IP (v4 ou v6)
+            if (/^[0-9a-fA-F:.]{3,45}$/.test(real)) {
+                ip = real;
+            }
+
+        } else if (config.trustProxy) {
             const hops = String(req.headers["x-forwarded-for"] ?? "").split(",");
             const forwarded = hops[hops.length - 1].trim();
 

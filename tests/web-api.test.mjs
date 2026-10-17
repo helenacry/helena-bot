@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 
-const { createWebApi, loadWebConfig, startWebApi, stopWebApi } = await import("../services/web-api.mjs");
+const { createWebApi, loadWebConfig, startWebApi, stopWebApi, trustProxyMode } = await import("../services/web-api.mjs");
 const { guildIds } = await import("../services/guild-registry.mjs");
 const { imprison } = await import("../services/prison.mjs");
 const { WEB_CONFIG } = await import("../config/web.mjs");
@@ -634,6 +634,86 @@ test("HELENA_WEB_DEBUG_IP mostra o que a API enxergou, uma vez por IP, e só qua
     assert.match(on[0], /x-real-ip="203\.0\.113\.9"/);
 
     assert.deepEqual(await capture({ trustProxy: true, debugIp: false }), [], "desligado, não escreve nada");
+});
+
+// ----------------------------------------------------------------------------
+// Atrás da Cloudflare (Discloud). Conferido num app de teste de verdade: o
+// X-Forwarded-For e o X-Real-IP chegam com o IP da BORDA da Cloudflare, o IP do
+// visitante vem em CF-Connecting-IP, e a Cloudflare barra quem tenta forjar esse
+// cabeçalho. Por isso o modo "cloudflare" usa ele, e só ele.
+// ----------------------------------------------------------------------------
+
+test("HELENA_WEB_TRUST_PROXY: cloudflare, 1/true/sim ou desligado", () => {
+    for (const value of ["cloudflare", "Cloudflare", "  CLOUDFLARE "]) {
+        assert.equal(trustProxyMode(value), "cloudflare", value);
+    }
+
+    for (const value of ["1", "true", "sim", "TRUE", " 1 "]) {
+        assert.equal(trustProxyMode(value), true, value);
+    }
+
+    // o que não é um valor conhecido NÃO liga a confiança em cabeçalhos
+    for (const value of [undefined, null, "", "0", "nao", "false", "cf", "qualquer"]) {
+        assert.equal(trustProxyMode(value), false, String(value));
+    }
+
+    // e a configuração do bot usa isso
+    const base = { HELENA_WEB_PORT: "8080", HELENA_WEB_ORIGINS: SITE, HELENA_OAUTH_REDIRECTS: REDIRECT, HELENA_OAUTH_CLIENT_ID: "app-id" };
+
+    assert.equal(loadWebConfig({ ...base, HELENA_WEB_TRUST_PROXY: "cloudflare" }).trustProxy, "cloudflare");
+    assert.equal(loadWebConfig({ ...base, HELENA_WEB_TRUST_PROXY: "1" }).trustProxy, true);
+    assert.equal(loadWebConfig(base).trustProxy, false);
+});
+
+test("modo cloudflare: cada visitante (CF-Connecting-IP) tem o seu limite, mesmo com o X-Forwarded-For da borda mudando", async () => {
+    await withApi({ trustProxy: "cloudflare" }, async ctx => {
+        // o mesmo visitante, mas o proxy da Cloudflare que o atende muda a cada pedido
+        for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
+            await badLogin(ctx, { "CF-Connecting-IP": "203.0.113.9", "X-Forwarded-For": `172.69.138.${i + 1}`, "X-Real-IP": `172.69.138.${i + 1}` });
+        }
+
+        const same = await badLogin(ctx, { "CF-Connecting-IP": "203.0.113.9", "X-Forwarded-For": "172.71.234.8" });
+
+        assert.equal(same.status, 429, "é o mesmo visitante, então o limite vale, mesmo com a borda diferente");
+
+        // outro visitante (outro CF-Connecting-IP) não é afetado, nem com o IPv6 do exemplo real
+        assert.equal((await badLogin(ctx, { "CF-Connecting-IP": "203.0.113.10", "X-Forwarded-For": "172.71.234.8" })).status, 401);
+        assert.equal((await badLogin(ctx, { "CF-Connecting-IP": "2804:16d8:a9be:100:546b:325b:2fa0:5f54" })).status, 401);
+    });
+});
+
+test("modo cloudflare: sem o cabeçalho, ou com lixo nele, vale o endereço da conexão (e o X-Forwarded-For não entra)", async () => {
+    await withApi({ trustProxy: "cloudflare" }, async ctx => {
+        // sem CF-Connecting-IP e com o X-Forwarded-For mudando: todos caem na conexão e batem no mesmo limite
+        for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
+            await badLogin(ctx, { "X-Forwarded-For": `198.51.100.${i + 1}` });
+        }
+
+        assert.equal((await badLogin(ctx, { "X-Forwarded-For": "198.51.100.200" })).status, 429);
+
+        // algo que não é IP no cabeçalho também não vale
+        assert.equal((await badLogin(ctx, { "CF-Connecting-IP": "isto-nao-e-ip; drop table" })).status, 429, "caiu na conexão, que já estourou o limite");
+    });
+});
+
+test("modo cloudflare: o diagnóstico mostra o IP que valeu", async () => {
+    const lines = [];
+    const original = console.log;
+
+    console.log = (...args) => { lines.push(args.join(" ")); };
+
+    try {
+        await withApi({ trustProxy: "cloudflare", debugIp: true }, async ctx => {
+            await badLogin(ctx, { "CF-Connecting-IP": "203.0.113.50", "X-Forwarded-For": "172.69.138.56", "X-Real-IP": "172.69.138.56" });
+        });
+    } finally {
+        console.log = original;
+    }
+
+    const seen = lines.filter(line => line.includes("[WEB] IP visto"));
+
+    assert.equal(seen.length, 1);
+    assert.match(seen[0], /IP visto: 203\.0\.113\.50 /);
 });
 
 // ==========================================
