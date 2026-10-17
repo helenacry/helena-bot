@@ -384,7 +384,7 @@ test("termos e privacidade: cada 'seção N' citada no texto leva ao assunto cer
     // para onde cada número aponta hoje; se as seções mudarem de lugar, o texto também precisa mudar
     const target = {
         terms: { 5: "regras", 15: "contato" },
-        privacy: { 3: "bot", 6: "terceiros", 15: "contato" }
+        privacy: { 3: "bot", 4: "jogo", 6: "terceiros", 15: "contato" }
     };
 
     for (const [name, page] of LEGAL) {
@@ -521,7 +521,8 @@ test("a política diz que não há cookies nem rastreadores, e o site não tem",
         "fonts.googleapis.com", "fonts.gstatic.com",   // fontes (Google)
         "vsync.lat",                                    // convite, login e servidor oficial
         "github.com",                                   // contato do desenvolvedor
-        "challenges.cloudflare.com"                     // verificação anti-robô do painel
+        "challenges.cloudflare.com",                    // verificação anti-robô do painel
+        "helena.discloud.dev"                           // API do painel (bot e banco no Discloud)
     ]);
 
     const files = [
@@ -542,7 +543,7 @@ test("a política diz que não há cookies nem rastreadores, e o site não tem",
 
     const policy = plainText(privacy);
 
-    for (const owner of ["vsync", "cloudflare", "github", "google fonts"]) {
+    for (const owner of ["vsync", "cloudflare", "github", "google fonts", "discloud"]) {
         assert.ok(policy.includes(owner), `a política cita ${owner}`);
     }
 });

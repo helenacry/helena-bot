@@ -19,13 +19,13 @@
     // ---- Painel da conta (login com a VSync + coleta do daily e das gemas) ----
     // Endereço público da API da Helena (a porta HELENA_WEB_PORT do bot, publicada
     // com HTTPS), sem barra no fim. Vazio = painel escondido.
-    apiUrl: "",
+    apiUrl: "https://helena.discloud.dev",
 
     // ID do aplicativo na VSync (o mesmo do link de convite). É público.
     clientId: "235205613573263360",
 
     // Chave PÚBLICA ("site key") do Cloudflare Turnstile. Vazia = sem desafio
     // na tela (a API só exige o desafio se tiver a chave secreta).
-    turnstileSiteKey: ""
+    turnstileSiteKey: "0x4AAAAAAFZjj29XG0d5aJuC"
   };
 })();

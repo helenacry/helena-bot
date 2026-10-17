@@ -40,8 +40,8 @@
     <h1>O que a Helena guarda sobre você</h1>
     <p class="lede">Quais dados ficam no banco do bot, o que o painel do site registra, por que, por quanto tempo e como você pede para apagar ou corrigir.</p>
     <ul class="legal-meta">
-      <li>Versão 1.0</li>
-      <li>Em vigor desde 13 de outubro de 2026</li>
+      <li>Versão 1.1</li>
+      <li>Em vigor desde 17 de outubro de 2026</li>
     </ul>
   </header>
 
@@ -149,7 +149,7 @@
           <li><strong>Cloudflare.</strong> Verifica que quem coleta no painel não é um robô (Turnstile).</li>
           <li><strong>GitHub.</strong> Hospeda estas páginas. Recebe o IP e o navegador de quem as abre, como em qualquer site.</li>
           <li><strong>Google Fonts.</strong> As fontes das páginas vêm do Google, que recebe o IP e o navegador de quem abre uma página.</li>
-          <li><strong>Conexão do painel.</strong> O serviço que publica a API do painel na internet (um túnel ou um servidor) enxerga o tráfego entre o seu navegador e a API.</li>
+          <li><strong>Discloud.</strong> Hospeda o bot, o banco de dados e a API do painel (<code>helena.discloud.dev</code>). Por isso enxerga o que está no banco, descrito na seção 4, e o tráfego entre o seu navegador e a API, com o IP e o navegador de quem usa o painel. O Discloud faz cópias de segurança automáticas do app, com o banco, e as guarda por alguns dias; por isso um dado apagado ainda pode existir nessas cópias por pouco tempo. O tráfego passa pela Cloudflare, que o Discloud usa na frente dos apps.</li>
         </ul>
         <p>Não vendemos dados, não usamos para publicidade e não passamos para mais ninguém, a não ser por ordem legal.</p>
       </section>
@@ -215,7 +215,7 @@
           <li>O código da sessão é guardado só como hash.</li>
           <li>A API do painel limita as tentativas por IP e por pessoa e só libera o uso pelo navegador a partir do site oficial.</li>
           <li>Os segredos (como o token do bot e a chave secreta do Turnstile) ficam só no servidor, nunca no site.</li>
-          <li>O banco de dados fica no servidor onde o bot roda, e só o desenvolvedor tem acesso.</li>
+          <li>O banco de dados fica no Discloud, onde o bot roda, e só o desenvolvedor tem acesso pela conta do app (o Discloud, como hospedagem, tem acesso técnico ao servidor).</li>
         </ul>
         <p>Nenhum sistema é totalmente seguro. Se houver um incidente que traga risco a você, avisamos no servidor oficial e, quando a lei exigir, a ANPD.</p>
       </section>
@@ -227,7 +227,7 @@
 
       <section id="exterior">
         <h2><span class="n">12</span> Fora do Brasil</h2>
-        <p>Cloudflare, GitHub e Google têm servidores fora do Brasil, então o IP e o navegador de quem usa o site passam por lá. Cada um tem as próprias garantias; veja as políticas deles. O banco de dados do bot fica no servidor do desenvolvedor.</p>
+        <p>Cloudflare, GitHub e Google têm servidores fora do Brasil, então o IP e o navegador de quem usa o site passam por lá. Cada um tem as próprias garantias; veja as políticas deles. O banco de dados do bot fica no Discloud; onde ficam os servidores dele está na política do próprio Discloud.</p>
       </section>
 
       <section id="cookies">
