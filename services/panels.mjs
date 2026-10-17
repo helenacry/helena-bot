@@ -27,6 +27,8 @@ import {
 
 import { handleMarketClick } from "./market-panel.mjs";
 
+import { handleProbeClick } from "./v2-probe.mjs";
+
 import {
     handleHelpClick,
     handleHelpModal
@@ -58,6 +60,7 @@ import { LAUNDERING_CONFIG } from "../config/crime.mjs";
 //   inv:...                                  /inventario  (shop-panels.mjs)
 //   bolsa:atualizar|fechar:<dono>            /bolsa       (market-panel.mjs)
 //   ajuda:...                                /ajuda       (help-panel.mjs)
+//   devv2:...                                /devv2       (v2-probe.mjs, só o dono)
 //
 // O ID do dono vai no customId: os botões pessoais só funcionam
 // para quem abriu o painel. O envio do modal leva o customId do
@@ -123,6 +126,10 @@ export function handlePanelClick(interaction) {
 
     if (area === "ajuda") {
         return handleHelpClick(interaction);
+    }
+
+    if (area === "devv2") {
+        return handleProbeClick(interaction);
     }
 
     const userId = interaction.user?.id;
