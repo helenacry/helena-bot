@@ -49,6 +49,12 @@ const MARIA = member("200000000000000001", "mariasilva", "Maria Silva", {
     nextPulseBadge: { id: "PULSE_6", months: 6, at: Date.now() + 5 * DAY }
 });
 
+// "Pulser desde": o pulsingSince que vem com o membro é o do SERVIDOR e fica nulo quando o
+// Pulse é de outro servidor (com pulsing=true). A data da CONTA sai do próximo selo, que chega
+// em pulsingSince + meses x 30 dias (conferido com a API de verdade).
+const NEXT_BADGE_AT = Date.UTC(2026, 11, 20, 12, 0);          // 20/12/2026 12:00 UTC
+const PULSE_FROM = Date.UTC(2026, 9, 21, 12, 0);              // 21/10/2026 12:00 UTC (60 dias antes)
+
 const MEMBERS = [
     member(ME.id, "eu", "Eu Mesmo"),
     MARIA,
@@ -57,7 +63,22 @@ const MEMBERS = [
     member("200000000000000004", "ana", "Ana"),
     member("200000000000000005", "helena", "Helena", { bot: true }),
     member("200000000000000006", "carlos", "Carlos"),
-    member("200000000000000007", "paula", "Paula")
+    member("200000000000000007", "paula", "Paula"),
+    member("200000000000000008", "pulsaoutro", "Pulsa Outro", {
+        pulsing: true, pulsingSince: null,
+        pulseBadge: { id: "PULSE_1", months: 1 },
+        nextPulseBadge: { id: "PULSE_2", months: 2, at: NEXT_BADGE_AT }
+    }),
+    member("200000000000000009", "pulsaaqui", "Pulsa Aqui", {
+        pulsing: true, pulsingSince: PULSE_FROM,
+        pulseBadge: { id: "PULSE_1", months: 1 },
+        nextPulseBadge: { id: "PULSE_2", months: 2, at: NEXT_BADGE_AT }
+    }),
+    member("200000000000000010", "nivelmaximo", "Nível Máximo", {
+        pulsing: true, pulsingSince: null,
+        pulseBadge: { id: "PULSE_24", months: 24 },
+        nextPulseBadge: null
+    })
 ];
 
 const calls = [];
@@ -174,6 +195,61 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
     assert.match(fields["🏅 Insígnia de Pulser atual"], /pulse_3/);
     assert.match(fields["🏅 Insígnia de Pulser atual"], /dias/);
     assert.match(fields["⏭️ Próxima insígnia de Pulser"], /em .*(dia|hora)/);
+});
+
+test("Pulser desde: Pulse de outro servidor (pulsingSince nulo) usa a data tirada do próximo selo", async () => {
+    const fields = fieldsOf(embedOf(await run("hui pulsaoutro")));
+
+    assert.match(fields["✨ Pulser desde"], /21 de outubro de 2026/, fields["✨ Pulser desde"]);
+    assert.doesNotMatch(fields["✨ Pulser desde"], /Não informado/);
+});
+
+test("Pulser desde: quando o servidor também informa a data, as duas concordam", async () => {
+    const fields = fieldsOf(embedOf(await run("hui pulsaaqui")));
+
+    assert.match(fields["✨ Pulser desde"], /21 de outubro de 2026/, fields["✨ Pulser desde"]);
+});
+
+test("Pulser desde: no nível máximo (sem próximo selo) e sem data do servidor, continua não informado", async () => {
+    const fields = fieldsOf(embedOf(await run("hui nivelmaximo")));
+
+    assert.match(fields["✨ Pulser desde"], /Não informado pela API/);
+});
+
+test("no comando de barra, quem pulsa e veio sem nada do Pulse na interação tem o membro buscado na API", async () => {
+    const userinfo = (await carregarComandos()).get("userinfo");
+
+    const result = await userinfo.execute({
+        guildId: G,
+        channelId: "900000000000000099",
+        user: { id: "200000000000000008", username: "pulsaoutro", displayName: "Pulsa Outro", pulsing: true, createdAt: Date.UTC(2024, 4, 10, 15, 30) },
+        member: { joinedAt: Date.UTC(2023, 2, 3, 12, 0), nickname: null, roleIds: [], pulsingSince: null, timeoutUntil: null },
+        data: { options: {} }
+    });
+
+    const fields = fieldsOf(result.data.embeds[0]);
+
+    assert.match(fields["✨ Pulser desde"], /21 de outubro de 2026/, fields["✨ Pulser desde"]);
+    assert.match(fields["📅 Entrou no servidor em"], /3 de março de 2023/, "a data de entrada continua sendo a da interação");
+    assert.equal(calls.filter(call => call.includes("/members/")).length, 1, "uma busca do membro");
+});
+
+test("no comando de barra, se a interação já trouxe o Pulse, não há chamada à API", async () => {
+    const userinfo = (await carregarComandos()).get("userinfo");
+
+    const result = await userinfo.execute({
+        guildId: G,
+        channelId: "900000000000000099",
+        user: {
+            id: "200000000000000008", username: "pulsaoutro", displayName: "Pulsa Outro", pulsing: true,
+            pulseBadge: { id: "PULSE_1", months: 1 }, nextPulseBadge: { id: "PULSE_2", months: 2, at: NEXT_BADGE_AT }
+        },
+        member: { joinedAt: Date.UTC(2023, 2, 3, 12, 0) },
+        data: { options: {} }
+    });
+
+    assert.match(fieldsOf(result.data.embeds[0])["✨ Pulser desde"], /21 de outubro de 2026/);
+    assert.deepEqual(calls.filter(call => call.includes("/members/")), []);
 });
 
 test("quem não tem Prisma+ nem Pulse aparece como tal", async () => {

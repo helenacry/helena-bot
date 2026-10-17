@@ -68,14 +68,29 @@ async function selfProfile(interaction) {
     const base = interaction.user;
     const member = interaction.member;
 
-    // Só a data: o resto do membro tem campos de SERVIDOR com o mesmo nome de
-    // campos da CONTA (como pulsingSince), e misturar tudo trocaria um pelo outro.
-    if (member?.joinedAt !== undefined && member?.joinedAt !== null) {
-        return { ...base, joinedAt: member.joinedAt };
+    // Só a data de entrada vem da interação: o resto do membro tem campos de
+    // SERVIDOR com o mesmo nome de campos da CONTA (como pulsingSince), e misturar
+    // tudo trocaria um pelo outro.
+    const joined =
+        member?.joinedAt !== undefined && member?.joinedAt !== null
+            ? { joinedAt: member.joinedAt }
+            : {};
+
+    const known = { ...base, ...joined };
+
+    // Quem pulsa mas veio sem nada do Pulse na interação precisa do membro da API
+    // para mostrar desde quando (e os selos).
+    const lacksPulse =
+        Boolean(base?.pulsing) &&
+        !base?.pulsingSince &&
+        !base?.nextPulseBadge;
+
+    if (joined.joinedAt !== undefined && !lacksPulse) {
+        return known;
     }
 
     if (!interaction.guildId || !base?.id) {
-        return base;
+        return known;
     }
 
     try {
@@ -85,7 +100,7 @@ async function selfProfile(interaction) {
         );
 
         if (found.status === "found") {
-            return { ...base, ...found.user, ...found.user.raw };
+            return { ...base, ...found.user, ...found.user.raw, ...joined };
         }
 
     } catch (error) {
@@ -95,7 +110,34 @@ async function selfProfile(interaction) {
         );
     }
 
-    return base;
+    return known;
+}
+
+// Desde quando a pessoa pulsa. O pulsingSince que vem junto do membro é o do
+// SERVIDOR: fica nulo quando o Pulse é de outro servidor, mesmo com pulsing=true, e
+// o perfil da conta (GET /users/:id) não traz o campo. Já o próximo selo é da CONTA
+// e chega em pulsingSince + meses x 30 dias (conferido com a API de verdade: bate no
+// milissegundo), então a data sai dele. Vale a mais antiga das duas (a conta pulsa
+// desde o Pulse mais antigo); sem próximo selo (nível máximo), vale a do servidor.
+// Devolve milissegundos ou null.
+function pulseStartOf(user) {
+    const at = Number(user.nextPulseBadge?.at);
+    const months = Number(user.nextPulseBadge?.months);
+    const server = Number(user.pulsingSince);
+
+    const derived =
+        Number.isFinite(at) && at > 0 &&
+        Number.isFinite(months) && months > 0
+            ? at - months * PULSE_MONTH
+            : null;
+
+    const own = Number.isFinite(server) && server > 0 ? server : null;
+
+    if (derived !== null && own !== null) {
+        return Math.min(derived, own);
+    }
+
+    return derived ?? own;
 }
 
 // Devolve { user, self } ou { response } com o aviso a mostrar.
@@ -305,7 +347,7 @@ export default {
             // PULSER
             // ==================================
             const pulserSince = user.pulsing
-                ? dateField(user.pulsingSince)
+                ? dateField(pulseStartOf(user))
                 : "Não possui Pulse ativo.";
 
             const pulseStart = Number(user.pulsingSince);
