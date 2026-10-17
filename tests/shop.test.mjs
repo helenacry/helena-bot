@@ -5,14 +5,14 @@ import {
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { handlePanelClick, handleModalSubmit } = await import("../services/panels.mjs");
-const { buildShopView, buildShopHome, shopCategories, SHOP_PAGE_SIZE } = await import("../services/shop-view.mjs");
-const { buildInventoryView, INVENTORY_PAGE_SIZE } = await import("../services/inventory-view.mjs");
-const { prepareDiscard } = await import("../services/discard.mjs");
-const { addItem } = await import("../services/inventory.mjs");
-const { equipWeapon, getEquippedWeapon } = await import("../services/equipment.mjs");
-const { tx } = await import("../services/combat.mjs");
-const { imprison } = await import("../services/prison.mjs");
+const { handlePanelClick, handleModalSubmit } = await import("../services/panels/panels.mjs");
+const { buildShopView, buildShopHome, shopCategories, SHOP_PAGE_SIZE } = await import("../services/panels/shop-view.mjs");
+const { buildInventoryView, INVENTORY_PAGE_SIZE } = await import("../services/panels/inventory-view.mjs");
+const { prepareDiscard } = await import("../services/economy/discard.mjs");
+const { addItem } = await import("../services/economy/inventory.mjs");
+const { equipWeapon, getEquippedWeapon } = await import("../services/combat/equipment.mjs");
+const { tx } = await import("../services/combat/combat.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
 const { ITEMS } = await import("../config/items.mjs");
 

@@ -141,7 +141,7 @@ test("as recusas trazem o tempo que falta quando há", () => {
 });
 
 test("toda recusa que a API pode mostrar à pessoa tem texto próprio na tela", () => {
-    const api = readFileSync(new URL("../services/web-api.mjs", import.meta.url), "utf8");
+    const api = readFileSync(new URL("../services/web/web-api.mjs", import.meta.url), "utf8");
 
     const emitted = [...new Set([...api.matchAll(/new HttpError\(\d+,\s*"([a-z_]+)"/g)].map(m => m[1]))];
 
@@ -236,8 +236,8 @@ test("sem apiUrl a página mostra o aviso em vez de tentar o login", () => {
 
 test("o que o painel gera é aceito pela API: login com PKCE conferido de verdade", async () => {
     const http = await import("node:http");
-    const { createWebApi } = await import("../services/web-api.mjs");
-    const { guildIds } = await import("../services/guild-registry.mjs");
+    const { createWebApi } = await import("../services/web/web-api.mjs");
+    const { guildIds } = await import("../services/platform/guild-registry.mjs");
 
     const SITE_ORIGIN = "https://site.exemplo.test";
 
@@ -372,7 +372,7 @@ test("tally: conta os liberados, soma os prêmios, ignora o preso e diz quando s
 });
 
 test("a escada de exemplo da tela de entrada é a mesma que o bot paga (não fica desatualizada)", async () => {
-    const { calculateReward, DAILY_CONFIG } = await import("../services/daily.mjs");
+    const { calculateReward, DAILY_CONFIG } = await import("../services/economy/daily.mjs");
 
     assert.deepEqual([...lib.SAMPLE_LADDER], [1, 2, 3, 4, 5, 6, 7].map(day => calculateReward(day).total));
     assert.equal(lib.SAMPLE_LADDER[0], DAILY_CONFIG.reward);

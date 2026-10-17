@@ -3,8 +3,8 @@ import { db, set } from "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const lookup = await import("../services/user-lookup.mjs");
-const { savePlayerName } = await import("../services/player-names.mjs");
+const lookup = await import("../services/platform/user-lookup.mjs");
+const { savePlayerName } = await import("../services/platform/player-names.mjs");
 
 const G = "900000000000000001";
 

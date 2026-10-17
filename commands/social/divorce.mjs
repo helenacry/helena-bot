@@ -1,4 +1,4 @@
-import { divorce } from "../../services/marriage.mjs";
+import { divorce } from "../../services/social/marriage.mjs";
 
 import { createEmbed, embedResponse, errorEmbed, HELENA_COLORS } from "../../utils/embed.mjs";
 

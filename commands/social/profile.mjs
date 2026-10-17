@@ -1,30 +1,30 @@
 
 import { db } from "../../database/connection.mjs";
-import { isOwner } from "../../services/developer.mjs";
+import { isOwner } from "../../services/platform/developer.mjs";
 import { getPlayer } from "../../database/economy.mjs";
 import { getJob } from "../../config/jobs.mjs";
-import { xpForLevel } from "../../services/experience.mjs";
-import { getMarriage } from "../../services/marriage.mjs";
-import { getPlayerName } from "../../services/player-names.mjs";
-import { getEquippedWeapon } from "../../services/equipment.mjs";
-import { getPlayerRank } from "../../services/player-rank.mjs";
+import { xpForLevel } from "../../services/progress/experience.mjs";
+import { getMarriage } from "../../services/social/marriage.mjs";
+import { getPlayerName } from "../../services/platform/player-names.mjs";
+import { getEquippedWeapon } from "../../services/combat/equipment.mjs";
+import { getPlayerRank } from "../../services/economy/player-rank.mjs";
 
 import {
     resolveUser,
     lookupProblem,
     shownName
-} from "../../services/user-lookup.mjs";
+} from "../../services/platform/user-lookup.mjs";
 
 import {
     checkAchievements,
     getEquippedTitle
-} from "../../services/achievements.mjs";
+} from "../../services/progress/achievements.mjs";
 
-import { renderProfileCard } from "../../services/profile-card.mjs";
+import { renderProfileCard } from "../../services/social/profile-card.mjs";
 
 import {
     uploadVSyncAttachment
-} from "../../services/vsync-attachments.mjs";
+} from "../../services/platform/vsync-attachments.mjs";
 
 import {
     errorEmbed,

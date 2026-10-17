@@ -6,9 +6,9 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { status, now } from "../../services/combat.mjs";
+import { status, now } from "../../services/combat/combat.mjs";
 
-import { HOSPITAL_RULES } from "../../services/hospital.mjs";
+import { HOSPITAL_RULES } from "../../services/combat/hospital.mjs";
 
 import { duration } from "../../utils/duration-text.mjs";
 

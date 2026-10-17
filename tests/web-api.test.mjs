@@ -4,9 +4,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 
-const { createWebApi, loadWebConfig, startWebApi, stopWebApi, trustProxyMode } = await import("../services/web-api.mjs");
-const { guildIds } = await import("../services/guild-registry.mjs");
-const { imprison } = await import("../services/prison.mjs");
+const { createWebApi, loadWebConfig, startWebApi, stopWebApi, trustProxyMode } = await import("../services/web/web-api.mjs");
+const { guildIds } = await import("../services/platform/guild-registry.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
 const { WEB_CONFIG } = await import("../config/web.mjs");
 const { GEM_BONUS } = await import("../config/gems.mjs");
 
@@ -733,7 +733,7 @@ test("/api/me traz a escada de 7 dias do daily e a recarga, com os números do b
         assert.equal(me.json.daily.cooldown, 24 * 60 * 60);
 
         // a escada vem do mesmo cálculo que paga o daily de verdade
-        const { calculateReward } = await import("../services/daily.mjs");
+        const { calculateReward } = await import("../services/economy/daily.mjs");
 
         assert.deepEqual(me.json.daily.ladder, [1, 2, 3, 4, 5, 6, 7].map(day => calculateReward(day).total));
     });

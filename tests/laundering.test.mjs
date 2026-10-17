@@ -6,8 +6,8 @@ import assert from "node:assert/strict";
 const {
     startLaundering, settleDue, unlockPrivate, getLaunderingStatus,
     startLaunderingSweeper, stopLaunderingSweeper
-} = await import("../services/laundering.mjs");
-const { imprison } = await import("../services/prison.mjs");
+} = await import("../services/crime/laundering.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
 
 const G = "g-laundry";
 const A = "ana";

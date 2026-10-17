@@ -8,9 +8,9 @@ import {
     getPrison,
     prisonLiveKey,
     escapeRow
-} from "../../services/prison.mjs";
+} from "../../services/crime/prison.mjs";
 
-import { ensureCrimePlayer } from "../../services/crime-player.mjs";
+import { ensureCrimePlayer } from "../../services/crime/crime-player.mjs";
 
 import { formatDuration } from "../../utils/time.mjs";
 
@@ -137,7 +137,7 @@ export default {
             const response = embedResponse(view.embed);
 
             // Preso: o tempo restante é atualizado na própria
-            // mensagem até a pena acabar (services/live-embed.mjs).
+            // mensagem até a pena acabar (services/platform/live-embed.mjs).
             // Livre: não há nada para atualizar.
             if (view.jailed) {
                 // Botão para tentar a fuga (só o dono consegue usar).

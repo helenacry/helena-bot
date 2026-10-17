@@ -15,7 +15,7 @@ import {
     unblock,
     isOwner,
     blocked
-} from "../../services/developer.mjs";
+} from "../../services/platform/developer.mjs";
 
 const ACTIONS = {
     BLOCK: "block",

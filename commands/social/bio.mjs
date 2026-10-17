@@ -5,7 +5,7 @@ import {
     getPlayer
 } from "../../database/economy.mjs";
 
-import { bioPanel } from "../../services/panels.mjs";
+import { bioPanel } from "../../services/panels/panels.mjs";
 
 import {
     createEmbed,

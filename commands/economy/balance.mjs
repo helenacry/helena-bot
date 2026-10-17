@@ -4,7 +4,7 @@ import {
     formatMoney
 } from "../../database/economy.mjs";
 
-import { bankPanel } from "../../services/panels.mjs";
+import { bankPanel } from "../../services/panels/panels.mjs";
 
 import {
     createEmbed,

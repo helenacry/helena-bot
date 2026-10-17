@@ -9,7 +9,7 @@ import path from "node:path";
 // A atividade do bot (o texto que aparece no perfil dele, girando a cada minuto)
 // e o endereço do site que ela mostra.
 
-const { getStatusMessages } = await import("../services/status-data.mjs");
+const { getStatusMessages } = await import("../services/platform/status-data.mjs");
 const { STATUS_CONFIG } = await import("../config/status.mjs");
 const { SITE_URL, WIKI_URL, SITE_LABEL } = await import("../config/site.mjs");
 const { HELP_CONFIG } = await import("../config/help.mjs");

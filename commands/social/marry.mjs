@@ -1,9 +1,9 @@
 
 import {
     requestMarriage
-} from "../../services/marriage.mjs";
+} from "../../services/social/marriage.mjs";
 
-import { mention } from "../../services/mentions.mjs";
+import { mention } from "../../services/platform/mentions.mjs";
 
 import {
     createEmbed,

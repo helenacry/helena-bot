@@ -1,7 +1,7 @@
 
 import { formatMoney } from "../../database/economy.mjs";
 
-import { claimDaily } from "../../services/daily.mjs";
+import { claimDaily } from "../../services/economy/daily.mjs";
 
 import {
     createEmbed,
@@ -139,7 +139,7 @@ function claimedResponse(result) {
 // ==========================================
 
 // As regras (recarga, sequência, bônus, limite da carteira) ficam em
-// services/daily.mjs, compartilhadas com o painel do site.
+// services/economy/daily.mjs, compartilhadas com o painel do site.
 
 export default {
     name: "daily",

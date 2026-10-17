@@ -6,7 +6,7 @@ import { ITEM_CATEGORIES } from "../../config/items.mjs";
 import {
     buildInventoryView,
     ALL_SHELVES
-} from "../../services/inventory-view.mjs";
+} from "../../services/panels/inventory-view.mjs";
 
 import {
     embedResponse,
@@ -20,7 +20,7 @@ import {
 // A mochila é um painel: menu de prateleiras, 12 itens por página,
 // Anterior/Próxima/Atualizar e o botão Descartar (abre um modal e
 // depois pede confirmação). A navegação fica em
-// services/shop-panels.mjs.
+// services/panels/shop-panels.mjs.
 
 export default {
     name: "inventario",

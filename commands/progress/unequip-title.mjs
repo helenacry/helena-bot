@@ -6,7 +6,7 @@ import {
 import {
     getEquippedTitle,
     unequipTitle
-} from "../../services/achievements.mjs";
+} from "../../services/progress/achievements.mjs";
 
 import {
     createEmbed,

@@ -1,9 +1,9 @@
 
 import { getPlayer } from "../../database/economy.mjs";
 
-import { prepareDiscard } from "../../services/discard.mjs";
+import { prepareDiscard } from "../../services/economy/discard.mjs";
 
-import { buildDiscardConfirm } from "../../services/inventory-view.mjs";
+import { buildDiscardConfirm } from "../../services/panels/inventory-view.mjs";
 
 import {
     embedResponse,

@@ -9,13 +9,13 @@ import assert from "node:assert/strict";
 // o erro vinha com um embed dentro de outro, e a VSync não conseguia mostrar.)
 
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
-const combat = await import("../services/combat.mjs");
-const { addItem } = await import("../services/inventory.mjs");
-const { equipWeapon } = await import("../services/equipment.mjs");
-const { HOSPITAL_RULES } = await import("../services/hospital.mjs");
-const { ARMORY_RULES } = await import("../services/armory.mjs");
+const combat = await import("../services/combat/combat.mjs");
+const { addItem } = await import("../services/economy/inventory.mjs");
+const { equipWeapon } = await import("../services/combat/equipment.mjs");
+const { HOSPITAL_RULES } = await import("../services/combat/hospital.mjs");
+const { ARMORY_RULES } = await import("../services/combat/armory.mjs");
 const { formatMoney } = await import("../database/economy.mjs");
-const { hpLine, durabilityLine } = await import("../services/combat-view.mjs");
+const { hpLine, durabilityLine } = await import("../services/combat/combat-view.mjs");
 const { progressBar } = await import("../utils/bar.mjs");
 
 const { DUEL_RULES, tx, ensure, challenge, accept } = combat;

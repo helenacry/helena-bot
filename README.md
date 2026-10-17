@@ -69,14 +69,27 @@ helena.mjs               Conexão com o gateway e despacho de comandos
 command-registry.mjs     Carrega os comandos e registra na VSync
 commands/                Um arquivo por comando, agrupados por categoria
   admin/ crime/ dev/ economy/ progress/ social/ utility/
-services/                Regras do jogo (energia, crime, prisão, lavagem, combate...)
+services/                Regras do jogo e do bot, uma pasta por assunto
+  economy/               daily, gemas, loja, bolsa, inventário, energia, missões, ranking
+  progress/              experiência e conquistas
+  crime/                 crime, roubo, prisão, fuga, procurados, lavagem
+  combat/                duelos, arsenal, equipamento e hospital
+  social/                casamento, cartão de perfil (e as fontes dele), /userinfo
+  panels/                painéis com botões e modais (loja, inventário, ajuda, bolsa, uso)
+  platform/              o que serve a todos: intervalo entre comandos, prefixo h, V2,
+                         dono e bloqueios, busca de usuário, anexos, contadores do suporte
+  web/                   a API do painel do site
 database/                Conexão SQLite e migrações (rodam sozinhas ao iniciar)
 config/                  Valores ajustáveis (empregos, itens, crime, cooldowns...)
-utils/                   Embeds, tempo, IDs e utilitários
-scripts/                 Ferramentas de linha de comando (npm run db:export)
+utils/                   Embeds, V2, tempo, IDs e utilitários
+scripts/                 Ferramentas de linha de comando (npm run db:export, discloud:zip)
+  site/                  Geradores do site: dados, cartão de exemplo e wiki (npm run site:data,
+                         site:card, wiki:build). Ficam fora de site/, que só tem o que vai ao ar
+site/                    O site, a wiki gerada e o painel da conta (publicado no GitHub Pages)
+wiki/                    Texto da wiki em Markdown (vira site/wiki com npm run wiki:build)
 Dockerfile               Imagem para a nuvem (veja "Hospedagem na nuvem")
 tests/                   Testes automáticos (npm test)
-assets/                  Imagens: insígnias, selos Pulse e base do cartão de perfil
+assets/                  Imagens e as fontes Poppins: insígnias, selos Pulse, base do cartão
 ```
 
 ## Criando um comando
@@ -136,7 +149,7 @@ Escreva uma `description` clara (até 100 caracteres, é o que a VSync mostra na
 
 ## Perfil e quantias
 
-O cartão do `/perfil` é uma imagem 1600×1200 (`services/profile-card.mjs`, SVG convertido pelo `sharp`, sem gravar nada em disco): lateral com o **RANK**, chip do estado civil com o cônjuge, anel do nível, foto em pentágono, nome e título, bio e cinco cartões (banco, gemas, carteira, arma e emprego). O RANK é a posição no ranking de patrimônio do `/ranking` (`services/player-rank.mjs`). A fonte é o **Poppins**, que vai no próprio projeto (`assets/fonts/`, licença OFL; o `services/card-fonts.mjs` aponta o fontconfig para essa pasta), então o cartão sai igual no PC e na nuvem. Se ele falhar, valem Nunito, Segoe UI e DejaVu Sans, e o log de início avisa (`[CARTÃO] Fonte Poppins carregada.` ou o aviso de que não foi achada). Emojis, bandeiras, tons de pele e caracteres invisíveis são **tirados** de nome, título, bio, cônjuge, emprego e arma: o desenho não tem como mostrar emoji colorido, e deixá-los viraria quadradinhos.
+O cartão do `/perfil` é uma imagem 1600×1200 (`services/social/profile-card.mjs`, SVG convertido pelo `sharp`, sem gravar nada em disco): lateral com o **RANK**, chip do estado civil com o cônjuge, anel do nível, foto em pentágono, nome e título, bio e cinco cartões (banco, gemas, carteira, arma e emprego). O RANK é a posição no ranking de patrimônio do `/ranking` (`services/economy/player-rank.mjs`). A fonte é o **Poppins**, que vai no próprio projeto (`assets/fonts/`, licença OFL; o `services/social/card-fonts.mjs` aponta o fontconfig para essa pasta), então o cartão sai igual no PC e na nuvem. Se ele falhar, valem Nunito, Segoe UI e DejaVu Sans, e o log de início avisa (`[CARTÃO] Fonte Poppins carregada.` ou o aviso de que não foi achada). Emojis, bandeiras, tons de pele e caracteres invisíveis são **tirados** de nome, título, bio, cônjuge, emprego e arma: o desenho não tem como mostrar emoji colorido, e deixá-los viraria quadradinhos.
 
 - `/perfil` mostra o seu cartão. `/perfil usuario:<@usuário>` (ou `hperfil maria`, `hperfil @maria`, `hperfil <@menção>`) mostra o de outra pessoa do servidor. A busca é só pelo **@usuário** (o nome de usuário, que é único, sem diferenciar maiúsculas) ou por menção: apelidos e nomes de exibição das plataformas não entram. A mensagem menciona a pessoa e, se não achar ninguém, avisa que não encontrou. O cartão é enviado direto para a VSync, sem gravar nada em disco.
 - `/userinfo` (alias `ui`) funciona igual: `/userinfo usuario:<@usuário>` (ou `hui maria`, `hui @maria`, `hui <@menção>`) mostra as insígnias, datas, Prisma+ e Pulse de outra pessoa do servidor. Também só pelo **@usuário exato** ou menção, a mensagem menciona a pessoa e, se não achar ninguém, avisa. Os dados vêm da própria lista de membros da VSync, sem chamada extra. Sem argumento mostra os seus. Bots também têm informações. O contador de visualizações segue em `generated/userinfo/views.json`.
@@ -158,13 +171,13 @@ Alguns comandos mostram botões que abrem formulários (modais) da VSync, no est
 | `/descartar` (alias `dropitem`) | **Confirmar descarte** | mesma confirmação do inventário; destrói o item, sem reembolso |
 | `/usaritem` (aliases `useitem`, `usar`) | menu com o que dá para usar, **Usar vários**, **Atualizar** | item (por nome, sem acento) e quantidade (número ou `max`, que usa até a energia encher) |
 
-- **Visual da loja:** a vitrine (`/loja`) mostra carteira, gemas e uma grade de prateleiras com a contagem e o menor preço de cada uma; a opção `categoria` (ex.: Armas; no prefixo, `hloja categoria:weapon`) pula direto para uma prateleira. Cada cartão traz preço de compra e venda, descrição, dano (armas), quanto você já tem, e se dá para comprar: ✅ até quantas unidades, 🔒 quanto falta, ou 📦 limite do item atingido. O botão do item fica verde quando cabe na carteira. Emojis das prateleiras: `ITEM_CATEGORY_EMOJIS` em `config/items.mjs`; layout em `services/shop-view.mjs`.
+- **Visual da loja:** a vitrine (`/loja`) mostra carteira, gemas e uma grade de prateleiras com a contagem e o menor preço de cada uma; a opção `categoria` (ex.: Armas; no prefixo, `hloja categoria:weapon`) pula direto para uma prateleira. Cada cartão traz preço de compra e venda, descrição, dano (armas), quanto você já tem, e se dá para comprar: ✅ até quantas unidades, 🔒 quanto falta, ou 📦 limite do item atingido. O botão do item fica verde quando cabe na carteira. Emojis das prateleiras: `ITEM_CATEGORY_EMOJIS` em `config/items.mjs`; layout em `services/panels/shop-view.mjs`.
 - **Itens com efeito:** Maçã (+10), Café (+25) e Energético (+50) repõem energia, uma unidade por uso. Com a energia cheia o uso é recusado e o item não é gasto; o que passa de 100 se perde. Armas são equipadas (não gastam a unidade). Os valores ficam no campo `use` de cada item em `config/items.mjs`. Preso não usa itens.
 
 - Comandos pelo prefixo (`hbio`) não têm interação e não abrem modal sozinhos: o botão da mensagem faz isso.
 - Os botões pessoais só funcionam para quem abriu o painel. O botão da loja serve a todos, e cada um compra para si.
 - O envio do formulário roda o comando de sempre com as opções preenchidas, então limites, recargas e a prisão continuam valendo (preso não deposita, nem por modal).
-- Para criar um painel: `services/modals.mjs` (`textField`, `openModal`, `readFields`) e `services/panels.mjs` (botões, clique e envio).
+- Para criar um painel: `services/panels/modals.mjs` (`textField`, `openModal`, `readFields`) e `services/panels/panels.mjs` (botões, clique e envio).
 
 ## Componentes V2
 
@@ -177,7 +190,7 @@ A VSync aceita blocos de layout nas mensagens de bots (`text`, `separator`, `sec
 
 ## Intervalo entre comandos
 
-Depois de usar um comando, a mesma pessoa espera **3 segundos** para o próximo, para o bot não ser sobrecarregado. O valor fica em `config/anti-spam.mjs` e a regra em `services/anti-spam.mjs`.
+Depois de usar um comando, a mesma pessoa espera **3 segundos** para o próximo, para o bot não ser sobrecarregado. O valor fica em `config/anti-spam.mjs` e a regra em `services/platform/anti-spam.mjs`.
 
 - **Vale para** os comandos de barra e para o prefixo `h`, e é um intervalo só por pessoa (vale em todos os servidores). **O dono (`HELENA_OWNER_ID`) também espera**, para ele conseguir testar; se quiser que os donos passem direto, troque `exemptOwners` para `true` em `config/anti-spam.mjs`.
 - **Não vale para** botões, menus e formulários: eles já pertencem a uma mensagem aberta por um comando. Comando que não existe e conversa que só começa com "h" não gastam o intervalo.
@@ -187,7 +200,7 @@ Depois de usar um comando, a mesma pessoa espera **3 segundos** para o próximo,
 
 ## Bolsa
 
-O `/bolsa` é o painel de mercado do servidor, inspirado no da Alfacusa (que não é uma bolsa de ações: é um índice que mexe nos preços). Cada servidor tem o seu mercado, sem ninguém precisar ligar nada. Regras em `config/market.mjs`, estado e preços em `services/market.mjs`, tela em `services/market-view.mjs`.
+O `/bolsa` é o painel de mercado do servidor, inspirado no da Alfacusa (que não é uma bolsa de ações: é um índice que mexe nos preços). Cada servidor tem o seu mercado, sem ninguém precisar ligar nada. Regras em `config/market.mjs`, estado e preços em `services/economy/market.mjs`, tela em `services/panels/market-view.mjs`.
 
 - **Índice:** de 0 a 90, sorteado com a mesma chance para cada número a cada 30 minutos, sem olhar o anterior. O 45 é o preço de tabela; o 0 vale 90% e o 90 vale 110%, em linha reta (a cada 9 pontos, 2%). Faixas só para o texto: Baixo (0 a 29), Médio (30 a 60) e Alto (61 a 90).
 - **Preços:** a compra vale a tabela de `config/items.mjs` vezes o preço do índice; a venda também, e mais o bônus do item em alta. Vale na loja, nos formulários, em `/comprar`, `/vender` e no inventário. O preço que vale é o da hora em que você confirma, não o que estava na tela.
@@ -201,9 +214,9 @@ O `/bolsa` é o painel de mercado do servidor, inspirado no da Alfacusa (que nã
 
 O painel permite coletar o **daily** e um **bônus de gemas** pelo navegador, entrando com a conta da VSync ("Entrar com vsync", OAuth2 com PKCE). Tudo vem **desligado**: sem `HELENA_WEB_PORT` o bot funciona como sempre e a API nem sobe.
 
-**Fluxo.** O site leva a pessoa à VSync; na volta, entrega o código e o `code_verifier` à API (`services/web-api.mjs`), porque o navegador não consegue falar direto com o endpoint de troca da VSync (ele não libera CORS para outros sites). A API troca o código, lê quem é a pessoa e os servidores dela, **devolve o acesso da VSync na hora** e cria uma sessão própria de 6 horas, no máximo 5 por pessoa. No banco fica só o hash do token. O painel lista só os servidores em que a pessoa e a Helena estão.
+**Fluxo.** O site leva a pessoa à VSync; na volta, entrega o código e o `code_verifier` à API (`services/web/web-api.mjs`), porque o navegador não consegue falar direto com o endpoint de troca da VSync (ele não libera CORS para outros sites). A API troca o código, lê quem é a pessoa e os servidores dela, **devolve o acesso da VSync na hora** e cria uma sessão própria de 6 horas, no máximo 5 por pessoa. No banco fica só o hash do token. O painel lista só os servidores em que a pessoa e a Helena estão.
 
-**Regras.** O daily usa o mesmo serviço do comando (`services/daily.mjs`): mesma recarga de 24 h, sequência, bônus do 7º dia, limite da carteira e a prisão também bloqueia. O bônus de gemas (`config/gems.mjs`) rende de 1 a 3 gemas a cada 5 horas e vale para a conta em todos os servidores (`services/gem-bonus.mjs`).
+**Regras.** O daily usa o mesmo serviço do comando (`services/economy/daily.mjs`): mesma recarga de 24 h, sequência, bônus do 7º dia, limite da carteira e a prisão também bloqueia. O bônus de gemas (`config/gems.mjs`) rende de 1 a 3 gemas a cada 5 horas e vale para a conta em todos os servidores (`services/economy/gem-bonus.mjs`).
 
 **Bot e site são o mesmo estado.** O daily e as gemas podem ser coletados pelo comando (`/daily`, `/coletargemas`) ou pelo painel, e os dois lados usam o mesmo serviço e o mesmo banco: coletou em um, o outro já mostra a recarga e não paga de novo. O `/gemas` também mostra se o bônus está disponível. `tests/web-api.test.mjs` coleta de um lado e confere o outro, nos dois sentidos, para o daily e para as gemas. Só uma diferença de propósito: o site pede o desafio anti-robô (Turnstile) quando configurado, e o comando não (quem digita o comando já está logado na VSync).
 
@@ -323,7 +336,7 @@ Os scripts são clássicos (não módulos) e dividem o objeto `window.Helena`, p
 - **O que não é automático:** os valores escritos nos textos (prêmio do `/daily`, custos e chances do crime, retornos da lavagem, tempos da prisão, e os textos das simulações de conversa) vêm de `config/` e dos comandos, mas foram copiados à mão. Se mudar esses valores no bot, atualize a página.
 - **Animações:** tudo nasce no estado final e visível; o JS só adiciona a classe `in` pouco antes de o elemento entrar na tela (veja `css/motion.css` e `js/motion.js`). Sem JS ou com `prefers-reduced-motion`, nada se mexe e a página está completa. A única exceção é o `ヘレナ` da margem do herói (só aparece em telas de 1280 px ou mais), que continua se escrevendo traço a traço, porque é curto, não desloca nada na tela e é a marca da página; ele também se escreve de novo quando o mouse passa por cima.
 - **Cores:** todas ficam em `site/css/tokens.css` e saem da foto de perfil (`assets/helena_pfp.png`): ameixa quase preta nas superfícies, orquídea e magenta nos destaques, rosa-pêssego nos detalhes. Os contrastes de texto foram conferidos (WCAG AA). O `npm test` falha se aparecer cor solta fora dos tokens.
-- **Imagens:** `assets/helena_pfp.png` gera o avatar da navbar e do site, o favicon e o ícone do celular; `assets/helena-profile.png` gera só a faixa do templo do rodapé (com o matiz levemente girado para combinar com a paleta). O cartão de exemplo do herói NÃO é uma imagem desenhada à mão: `npm run site:card` o gera com o mesmo gerador do `/perfil` (`services/profile-card.mjs`), com uma jogadora fictícia e a foto da Helena, então o site nunca fica diferente do cartão real. Rode de novo quando o desenho do cartão mudar. Os originais não são alterados; as versões do site ficam em `site/assets/img/`.
+- **Imagens:** `assets/helena_pfp.png` gera o avatar da navbar e do site, o favicon e o ícone do celular; `assets/helena-profile.png` gera só a faixa do templo do rodapé (com o matiz levemente girado para combinar com a paleta). O cartão de exemplo do herói NÃO é uma imagem desenhada à mão: `npm run site:card` o gera com o mesmo gerador do `/perfil` (`services/social/profile-card.mjs`), com uma jogadora fictícia e a foto da Helena, então o site nunca fica diferente do cartão real. Rode de novo quando o desenho do cartão mudar. Os originais não são alterados; as versões do site ficam em `site/assets/img/`.
 - **Skill de front:** `.claude/skills/front-sem-cara-de-ia/SKILL.md` reúne o que evitar para a página não parecer feita por IA, receitas para fazer diferente e um checklist. O Claude Code a usa ao mexer no site; também dá para chamar com `/front-sem-cara-de-ia`. A pasta `.claude/` está no `.gitignore`, então a skill fica só na sua máquina.
 
 ## Wiki
@@ -343,7 +356,7 @@ site/
   build-wiki.mjs      grava site/wiki/
 ```
 
-- **Números do bot.** Nunca escreva à mão um valor que existe no código. Use `{{v:crime.cooldown}}` no texto ou uma tabela como `{{table:jobs}}`, e o valor sai do bot quando a página é gerada. Os nomes disponíveis estão em `site/wiki-values.mjs`; um nome que não existe faz o build falhar.
+- **Números do bot.** Nunca escreva à mão um valor que existe no código. Use `{{v:crime.cooldown}}` no texto ou uma tabela como `{{table:jobs}}`, e o valor sai do bot quando a página é gerada. Os nomes disponíveis estão em `scripts/site/wiki-values.mjs`; um nome que não existe faz o build falhar.
 - **Avisos e cartões.** `> [!TIP]`, `> [!NOTE]`, `> [!WARNING]`, `> [!MONEY]` e `> [!EXAMPLE]` viram caixas coloridas. `{{cards: seção/página, ...}}` monta os cartões de navegação.
 - **Links.** `[texto](wiki:seção/página#âncora)` leva a outra página da wiki e `[texto](site:terms/)` leva a uma página do site. Link ou âncora que não existe faz o build falhar.
 - **Nova página.** Crie o `.md`, ponha o nome em `wiki/nav.mjs` e rode `npm run wiki:build`. Os nomes de arquivo e de pasta são em inglês, em kebab-case, como no resto do projeto.

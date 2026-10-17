@@ -5,7 +5,7 @@ import {
     formatMoney
 } from "../../database/economy.mjs";
 
-import { mention } from "../../services/mentions.mjs";
+import { mention } from "../../services/platform/mentions.mjs";
 
 import {
     createEmbed,

@@ -4,7 +4,7 @@
 // ==========================================
 
 // Um turno por hora paga o salário do emprego (config/jobs.mjs), dá XP e
-// custa energia (ENERGY_CONFIG.workCost, em services/energy.mjs).
+// custa energia (ENERGY_CONFIG.workCost, em services/economy/energy.mjs).
 
 export const WORK_CONFIG = Object.freeze({
     // Espera entre dois turnos, em segundos.

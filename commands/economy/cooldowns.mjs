@@ -14,7 +14,7 @@ import {
     ROBBERY_CONFIG
 } from "../../config/crime.mjs";
 
-import { ensureCrimePlayer } from "../../services/crime-player.mjs";
+import { ensureCrimePlayer } from "../../services/crime/crime-player.mjs";
 
 import {
     createEmbed,

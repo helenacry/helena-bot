@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const { createAntiSpam, buildCommandGate, antiSpamEnabled, antiSpamText, commandGate } =
-    await import("../services/anti-spam.mjs");
+    await import("../services/platform/anti-spam.mjs");
 
 const { ANTI_SPAM } = await import("../config/anti-spam.mjs");
 

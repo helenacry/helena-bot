@@ -5,7 +5,7 @@ import {
     buildShopHome,
     buildShopView,
     shopContext
-} from "../../services/shop-view.mjs";
+} from "../../services/panels/shop-view.mjs";
 
 import {
     embedResponse,
@@ -19,7 +19,7 @@ import {
 // A loja é um painel: abre numa vitrine com as prateleiras (ou direto
 // numa categoria), 5 itens por página, botões para comprar cada item
 // (abrem um modal de quantidade), "Por nome", "Vender" e "Fechar".
-// A navegação fica em services/shop-panels.mjs.
+// A navegação fica em services/panels/shop-panels.mjs.
 
 export default {
     name: "loja",

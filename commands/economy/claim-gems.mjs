@@ -1,4 +1,4 @@
-import { claimGemBonus } from "../../services/gem-bonus.mjs";
+import { claimGemBonus } from "../../services/economy/gem-bonus.mjs";
 
 import { GEM_BONUS } from "../../config/gems.mjs";
 
@@ -16,7 +16,7 @@ import {
 // COMANDO /COLETARGEMAS
 // ==========================================
 
-// O mesmo bônus que o painel do site coleta (services/gem-bonus.mjs): as
+// O mesmo bônus que o painel do site coleta (services/economy/gem-bonus.mjs): as
 // gemas e a recarga são da CONTA, então coletar aqui ou no site é a mesma
 // coisa. Coletou em um, o outro já mostra a espera. As regras e os números
 // ficam em config/gems.mjs.

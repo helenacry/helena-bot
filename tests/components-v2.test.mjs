@@ -11,7 +11,7 @@ const {
 
 const {
     v2Mode, v2Enabled, v2Payload, deliverCallback, deliverMessage
-} = await import("../services/v2-delivery.mjs");
+} = await import("../services/platform/v2-delivery.mjs");
 
 const { createEmbed, embedResponse } = await import("../utils/embed.mjs");
 

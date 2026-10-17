@@ -1,7 +1,7 @@
 
 import {
     equipWeapon
-} from "../../services/equipment.mjs";
+} from "../../services/combat/equipment.mjs";
 
 import {
     createEmbed,

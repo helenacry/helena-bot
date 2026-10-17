@@ -1,8 +1,8 @@
 import { devReply, deny, guard } from "../../utils/developer-response.mjs";
 
-import { option } from "../../services/developer.mjs";
+import { option } from "../../services/platform/developer.mjs";
 
-import { V2_PROBE_MODES, probeResponse } from "../../services/v2-probe.mjs";
+import { V2_PROBE_MODES, probeResponse } from "../../services/platform/v2-probe.mjs";
 
 export default {
     name: "devv2",

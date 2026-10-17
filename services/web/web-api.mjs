@@ -1,0 +1,1016 @@
+
+import http from "node:http";
+import { createHash, randomBytes } from "node:crypto";
+
+import { db } from "../../database/connection.mjs";
+
+import { WEB_CONFIG } from "../../config/web.mjs";
+import { GEM_BONUS } from "../../config/gems.mjs";
+import { PRISON_BLOCKED_COMMANDS } from "../../config/crime.mjs";
+
+import { claimDaily, getDailyStatus, calculateReward, DAILY_CONFIG } from "../economy/daily.mjs";
+import { claimGemBonus, getGemBonusStatus } from "../economy/gem-bonus.mjs";
+import { getPrison } from "../crime/prison.mjs";
+import { knowsGuild } from "../platform/guild-registry.mjs";
+
+// ==========================================
+// API DO SITE
+// ==========================================
+
+// Painel do jogador: a pessoa entra com a conta da VSync, vê os servidores
+// em que ela e a Helena estão e resgata o daily e o bônus de gemas pelo site.
+//
+// Fluxo de login (OAuth2 com PKCE, feito pelo site):
+//   1. o site manda a pessoa para a VSync, com um "code_challenge";
+//   2. a VSync devolve um "code" ao site;
+//   3. o site entrega o "code" e o "code_verifier" a esta API (o navegador
+//      não pode falar direto com o endpoint de troca: a VSync não libera
+//      CORS para outros sites);
+//   4. a API troca o código, lê quem é a pessoa e seus servidores, devolve o
+//      token da VSync (não precisamos mais dele) e cria uma sessão própria.
+//
+// Só ligada quando HELENA_WEB_PORT está definida. Sem cookies: a sessão
+// é um token no cabeçalho Authorization, e só o hash dele fica no banco.
+
+const JSON_HEADERS = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff"
+};
+
+// ==========================================
+// CONFIGURAÇÃO (VARIÁVEIS DE AMBIENTE)
+// ==========================================
+
+const list = value => String(value ?? "")
+    .split(",")
+    .map(item => item.trim())
+    .filter(Boolean);
+
+// Como o IP do visitante chega atrás de um proxy (HELENA_WEB_TRUST_PROXY):
+//   "cloudflare"       o IP vem em CF-Connecting-IP (Discloud e outras hospedagens
+//                      atrás da Cloudflare)
+//   "1", "true", "sim" o IP é o último valor de X-Forwarded-For (outros proxies)
+//   vazio              sem proxy: vale o endereço da conexão
+export function trustProxyMode(value) {
+    const text = String(value ?? "").trim().toLowerCase();
+
+    if (text === "cloudflare") {
+        return "cloudflare";
+    }
+
+    return ["1", "true", "sim"].includes(text);
+}
+
+// Devolve { enabled: false, reason } ou { enabled: true, ... }.
+export function loadWebConfig(env = process.env) {
+    const port = String(env.HELENA_WEB_PORT ?? "").trim();
+
+    if (!port) {
+        return { enabled: false, reason: "HELENA_WEB_PORT não definida" };
+    }
+
+    if (!/^\d{1,5}$/.test(port) || Number(port) > 65535) {
+        return { enabled: false, reason: "HELENA_WEB_PORT inválida" };
+    }
+
+    const origins = list(env.HELENA_WEB_ORIGINS).map(origin => origin.replace(/\/+$/, ""));
+    const redirects = list(env.HELENA_OAUTH_REDIRECTS);
+    const clientId = String(env.HELENA_OAUTH_CLIENT_ID ?? "").trim();
+
+    const missing = [];
+
+    if (!origins.length) missing.push("HELENA_WEB_ORIGINS");
+    if (!redirects.length) missing.push("HELENA_OAUTH_REDIRECTS");
+    if (!clientId) missing.push("HELENA_OAUTH_CLIENT_ID");
+
+    if (missing.length) {
+        return { enabled: false, reason: "faltam: " + missing.join(", ") };
+    }
+
+    return {
+        enabled: true,
+        port: Number(port),
+        host: String(env.HELENA_WEB_HOST ?? "").trim() || "127.0.0.1",
+        origins,
+        redirects,
+        clientId,
+        clientSecret: String(env.HELENA_OAUTH_CLIENT_SECRET ?? "").trim() || null,
+        turnstileSecret: String(env.HELENA_TURNSTILE_SECRET ?? "").trim() || null,
+        trustProxy: trustProxyMode(env.HELENA_WEB_TRUST_PROXY),
+        debugIp: ["1", "true", "sim"].includes(
+            String(env.HELENA_WEB_DEBUG_IP ?? "").trim().toLowerCase()
+        )
+    };
+}
+
+// ==========================================
+// LIMITE DE REQUISIÇÕES (EM MEMÓRIA)
+// ==========================================
+
+class RateLimiter {
+    constructor() {
+        this.hits = new Map();
+    }
+
+    // Conta um pedido. Devolve { ok, retryAfter } (segundos).
+    hit(key, { max, windowSeconds }, now) {
+        const since = now - windowSeconds;
+
+        const recent = (this.hits.get(key) ?? []).filter(time => time > since);
+
+        if (recent.length >= max) {
+            this.hits.set(key, recent);
+
+            return { ok: false, retryAfter: recent[0] + windowSeconds - now };
+        }
+
+        recent.push(now);
+        this.hits.set(key, recent);
+
+        return { ok: true, retryAfter: 0 };
+    }
+
+    prune(now, windowSeconds) {
+        for (const [key, times] of this.hits) {
+            if (!times.some(time => time > now - windowSeconds)) {
+                this.hits.delete(key);
+            }
+        }
+    }
+}
+
+// ==========================================
+// RESPOSTAS
+// ==========================================
+
+class HttpError extends Error {
+    constructor(status, code, extra = {}) {
+        super(code);
+
+        this.status = status;
+        this.code = code;
+        this.extra = extra;
+    }
+}
+
+const hashToken = token =>
+    createHash("sha256").update(token).digest("hex");
+
+const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+// ==========================================
+// FÁBRICA DA API
+// ==========================================
+
+// "deps" existe para os testes: fetch, relógio e sorteio.
+export function createWebApi(config, deps = {}) {
+    const fetchImpl = deps.fetch ?? globalThis.fetch;
+    const now = deps.now ?? nowSeconds;
+    const random = deps.random ?? Math.random;
+
+    const limiter = new RateLimiter();
+    const origins = new Set(config.origins);
+    const redirects = new Set(config.redirects);
+
+    // ----------------------------------
+    // utilidades
+    // ----------------------------------
+
+    // O IP do visitante, conforme HELENA_WEB_TRUST_PROXY (veja trustProxyMode):
+    //
+    // "cloudflare": vale CF-Connecting-IP. Conferido no Discloud, que fica atrás da
+    // Cloudflare: o X-Forwarded-For e o X-Real-IP chegam sobrescritos com o IP da
+    // BORDA da Cloudflare (todos os visitantes pareceriam o mesmo), e forjar o
+    // CF-Connecting-IP é barrado pela própria Cloudflare (403). Só use este modo se
+    // o app só for alcançável por ela: fora dela, qualquer um escreveria esse cabeçalho.
+    //
+    // 1: o IP é o ÚLTIMO valor de X-Forwarded-For, o endereço que o proxy mais
+    // próximo viu. O primeiro valor quem manda é o próprio visitante (com um IP novo
+    // a cada pedido ele nunca chegaria ao limite).
+    //
+    // Sem o cabeçalho esperado, vale o endereço da conexão.
+    function clientIp(req) {
+        let ip = req.socket.remoteAddress ?? "";
+
+        if (config.trustProxy === "cloudflare") {
+            const real = String(req.headers["cf-connecting-ip"] ?? "").trim();
+
+            // só algo com cara de IP (v4 ou v6)
+            if (/^[0-9a-fA-F:.]{3,45}$/.test(real)) {
+                ip = real;
+            }
+
+        } else if (config.trustProxy) {
+            const hops = String(req.headers["x-forwarded-for"] ?? "").split(",");
+            const forwarded = hops[hops.length - 1].trim();
+
+            if (forwarded) {
+                ip = forwarded.slice(0, 64);
+            }
+        }
+
+        debugIpOnce(req, ip);
+
+        return ip;
+    }
+
+    // HELENA_WEB_DEBUG_IP=1 mostra no log, uma vez por IP (no máximo 20), o que a
+    // API enxergou: serve para conferir, na hospedagem, se o IP real está chegando.
+    const seenIps = new Set();
+
+    function debugIpOnce(req, ip) {
+        if (!config.debugIp || seenIps.has(ip) || seenIps.size >= 20) {
+            return;
+        }
+
+        seenIps.add(ip);
+
+        console.log(
+            `[WEB] IP visto: ${ip} | conexão=${req.socket.remoteAddress ?? ""} | ` +
+            `x-forwarded-for="${String(req.headers["x-forwarded-for"] ?? "").slice(0, 120)}" | ` +
+            `x-real-ip="${String(req.headers["x-real-ip"] ?? "").slice(0, 64)}"`
+        );
+    }
+
+    function limit(key, rule) {
+        const result = limiter.hit(key, rule, now());
+
+        if (!result.ok) {
+            throw new HttpError(429, "too_many_requests", {
+                retryAfter: result.retryAfter
+            });
+        }
+    }
+
+    async function upstream(url, init) {
+        return fetchImpl(url, {
+            ...init,
+            signal: AbortSignal.timeout(WEB_CONFIG.upstreamTimeoutMs)
+        });
+    }
+
+    // O nome do erro que a VSync devolve ({ "error": "invalid_grant" }), só para
+    // o log. Nunca lança e só deixa passar letras e "_", então nada de
+    // dentro da resposta vai parar no log.
+    async function vsyncError(response) {
+        try {
+            const error = (await response.json())?.error;
+
+            return typeof error === "string" && /^[a-z_]{1,40}$/.test(error) ? error : "";
+        } catch {
+            return "";
+        }
+    }
+
+    function logClaim({ userId, kind, guildId = null, ok, detail = "", req }) {
+        db.prepare(`
+            INSERT INTO web_claim_log (
+                user_id, kind, guild_id, ok, detail, ip, user_agent, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+            userId,
+            kind,
+            guildId,
+            ok ? 1 : 0,
+            String(detail).slice(0, 200),
+            clientIp(req),
+            String(req.headers["user-agent"] ?? "").slice(0, 200),
+            now()
+        );
+    }
+
+    // ----------------------------------
+    // corpo da requisição
+    // ----------------------------------
+
+    function readJson(req) {
+        return new Promise((resolve, reject) => {
+            const chunks = [];
+            let size = 0;
+
+            let tooBig = false;
+
+            req.on("data", chunk => {
+                if (tooBig) {
+                    return;
+                }
+
+                size += chunk.length;
+
+                if (size > WEB_CONFIG.maxBodyBytes) {
+                    // Para de guardar e responde 413. A conexão é fechada
+                    // depois da resposta (veja send), não antes dela.
+                    tooBig = true;
+                    chunks.length = 0;
+
+                    reject(new HttpError(413, "body_too_large"));
+
+                    return;
+                }
+
+                chunks.push(chunk);
+            });
+
+            req.on("end", () => {
+                if (size === 0) {
+                    resolve({});
+
+                    return;
+                }
+
+                try {
+                    const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+
+                    if (!body || typeof body !== "object" || Array.isArray(body)) {
+                        throw new Error("não é um objeto");
+                    }
+
+                    resolve(body);
+
+                } catch {
+                    reject(new HttpError(400, "invalid_json"));
+                }
+            });
+
+            req.on("error", () => reject(new HttpError(400, "invalid_request")));
+        });
+    }
+
+    // ----------------------------------
+    // sessão
+    // ----------------------------------
+
+    function sessionFrom(req) {
+        const match = /^Bearer ([A-Za-z0-9_-]{20,128})$/.exec(
+            String(req.headers.authorization ?? "")
+        );
+
+        if (!match) {
+            throw new HttpError(401, "unauthorized");
+        }
+
+        const tokenHash = hashToken(match[1]);
+
+        const row = db.prepare(`
+            SELECT *
+            FROM web_sessions
+            WHERE token_hash = ?
+        `).get(tokenHash);
+
+        if (!row) {
+            throw new HttpError(401, "unauthorized");
+        }
+
+        if (row.expires_at <= now()) {
+            db.prepare("DELETE FROM web_sessions WHERE token_hash = ?").run(tokenHash);
+
+            throw new HttpError(401, "session_expired");
+        }
+
+        return {
+            tokenHash,
+            userId: row.user_id,
+            username: row.username,
+            displayName: row.display_name,
+            avatarUrl: row.avatar_url,
+            guilds: JSON.parse(row.guilds_json),
+            expiresAt: row.expires_at
+        };
+    }
+
+    function publicUser(session) {
+        return {
+            id: session.userId,
+            username: session.username,
+            displayName: session.displayName,
+            avatarUrl: session.avatarUrl
+        };
+    }
+
+    // ----------------------------------
+    // anti-robô (Cloudflare Turnstile)
+    // ----------------------------------
+
+    async function checkCaptcha(body, req) {
+        if (!config.turnstileSecret) {
+            return;
+        }
+
+        const token = typeof body.turnstile === "string" ? body.turnstile : "";
+
+        if (!token || token.length > 2048) {
+            throw new HttpError(400, "captcha_required");
+        }
+
+        let verdict;
+
+        try {
+            const response = await upstream(WEB_CONFIG.turnstileVerifyUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    secret: config.turnstileSecret,
+                    response: token,
+                    remoteip: clientIp(req)
+                })
+            });
+
+            verdict = await response.json();
+
+        } catch (error) {
+            console.warn("[WEB] Turnstile indisponível:", error.message);
+
+            throw new HttpError(503, "captcha_unavailable");
+        }
+
+        if (!verdict?.success) {
+            throw new HttpError(403, "captcha_failed");
+        }
+    }
+
+    // ----------------------------------
+    // POST /api/auth/login
+    // ----------------------------------
+
+    async function login(req) {
+        limit("ip:login:" + clientIp(req), WEB_CONFIG.limits.login);
+
+        const body = await readJson(req);
+
+        const code = typeof body.code === "string" ? body.code : "";
+        const verifier = typeof body.codeVerifier === "string" ? body.codeVerifier : "";
+        const redirectUri = typeof body.redirectUri === "string" ? body.redirectUri : "";
+
+        if (!code || code.length > 512) {
+            throw new HttpError(400, "invalid_code");
+        }
+
+        // O "verifier" do PKCE tem de 43 a 128 caracteres desse conjunto.
+        if (!/^[A-Za-z0-9\-._~]{43,128}$/.test(verifier)) {
+            throw new HttpError(400, "invalid_verifier");
+        }
+
+        // Só aceitamos os endereços de retorno cadastrados, escritos igual.
+        if (!redirects.has(redirectUri)) {
+            throw new HttpError(400, "invalid_redirect");
+        }
+
+        // 1. troca do código
+        const exchange = new URLSearchParams({
+            grant_type: "authorization_code",
+            code,
+            redirect_uri: redirectUri,
+            client_id: config.clientId,
+            code_verifier: verifier
+        });
+
+        if (config.clientSecret) {
+            exchange.set("client_secret", config.clientSecret);
+        }
+
+        let tokens;
+
+        try {
+            const response = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: exchange
+            });
+
+            if (!response.ok) {
+                const reason = await vsyncError(response);
+                const shown = reason || `HTTP ${response.status}`;
+
+                // 429 e 5xx: o problema é da VSync, não da pessoa. Vale tentar depois.
+                if (response.status === 429 || response.status >= 500) {
+                    console.warn(`[WEB] VSync com problema na troca do código: ${shown}`);
+
+                    throw new HttpError(502, "vsync_unavailable");
+                }
+
+                // invalid_grant é o normal (código vencido ou já usado: a pessoa entra de
+                // novo). Qualquer outro nome é erro NOSSO e a pessoa não tem como resolver.
+                console.warn(
+                    `[WEB] VSync recusou a troca do código: ${shown}` +
+                    (reason && reason !== "invalid_grant"
+                        ? " (confira HELENA_OAUTH_CLIENT_ID, HELENA_OAUTH_CLIENT_SECRET e HELENA_OAUTH_REDIRECTS)"
+                        : "")
+                );
+
+                throw new HttpError(401, "login_failed");
+            }
+
+            tokens = await response.json();
+
+        } catch (error) {
+            if (error instanceof HttpError) throw error;
+
+            console.warn("[WEB] VSync indisponível na troca do código:", error.message);
+
+            throw new HttpError(502, "vsync_unavailable");
+        }
+
+        const accessToken = typeof tokens?.access_token === "string" ? tokens.access_token : "";
+
+        if (!accessToken) {
+            throw new HttpError(401, "login_failed");
+        }
+
+        const auth = { Authorization: `Bearer ${accessToken}` };
+
+        let user;
+        let guilds = [];
+
+        try {
+            // 2. quem é a pessoa
+            const identity = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/userinfo`, { headers: auth });
+
+            if (!identity.ok) {
+                throw new HttpError(401, "login_failed");
+            }
+
+            user = await identity.json();
+
+            // 3. servidores (sem o escopo "guilds" a lista vem vazia)
+            const owned = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/guilds`, { headers: auth });
+
+            if (owned.ok) {
+                const data = await owned.json();
+
+                guilds = Array.isArray(data) ? data : (data?.guilds ?? []);
+            }
+
+        } catch (error) {
+            if (error instanceof HttpError) throw error;
+
+            console.warn("[WEB] VSync indisponível ao ler a conta:", error.message);
+
+            throw new HttpError(502, "vsync_unavailable");
+
+        } finally {
+            // 4. não precisamos mais do acesso da VSync: devolvemos já.
+            //    A sessão da Helena vale por conta própria. A revogação também
+            //    exige o cliente (client_id e, se houver, client_secret), como a troca.
+            for (const token of [accessToken, tokens?.refresh_token]) {
+                if (typeof token === "string" && token) {
+                    const revoke = new URLSearchParams({ token, client_id: config.clientId });
+
+                    if (config.clientSecret) {
+                        revoke.set("client_secret", config.clientSecret);
+                    }
+
+                    upstream(`${WEB_CONFIG.vsyncApi}/oauth2/token/revoke`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: revoke
+                    })
+                        .then(async response => {
+                            if (!response.ok) {
+                                console.warn(`[WEB] VSync não revogou o acesso: ${await vsyncError(response) || `HTTP ${response.status}`}`);
+                            }
+                        })
+                        .catch(() => {});
+                }
+            }
+        }
+
+        const userId = String(user?.id ?? "");
+
+        if (!/^[\w-]{1,64}$/.test(userId)) {
+            throw new HttpError(401, "login_failed");
+        }
+
+        // Só os servidores em que a Helena também está.
+        const mutual = guilds
+            .filter(guild => guild && guild.id !== undefined && knowsGuild(guild.id))
+            .slice(0, WEB_CONFIG.maxGuilds)
+            .map(guild => ({
+                id: String(guild.id),
+                name: String(guild.name ?? "").slice(0, 100),
+                icon: guild.iconUrl ?? guild.icon ?? null
+            }));
+
+        // 5. sessão da Helena
+        const token = randomBytes(32).toString("base64url");
+        const created = now();
+
+        // Cada pessoa mantém poucas sessões: ao passar do limite, as mais
+        // antigas saem (login repetido não acumula sessões à toa).
+        db.prepare(`
+            DELETE FROM web_sessions
+            WHERE user_id = ?
+              AND token_hash NOT IN (
+                  SELECT token_hash
+                  FROM web_sessions
+                  WHERE user_id = ?
+                  ORDER BY created_at DESC, rowid DESC
+                  LIMIT ?
+              )
+        `).run(userId, userId, WEB_CONFIG.maxSessionsPerUser - 1);
+
+        db.prepare(`
+            INSERT INTO web_sessions (
+                token_hash, user_id, username, display_name, avatar_url,
+                guilds_json, created_at, expires_at, ip, user_agent
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+            hashToken(token),
+            userId,
+            String(user.username ?? "").slice(0, 64),
+            String(user.displayName ?? user.username ?? "").slice(0, 64),
+            typeof user.avatarUrl === "string" ? user.avatarUrl.slice(0, 500) : null,
+            JSON.stringify(mutual),
+            created,
+            created + WEB_CONFIG.sessionTtl,
+            clientIp(req),
+            String(req.headers["user-agent"] ?? "").slice(0, 200)
+        );
+
+        logClaim({ userId, kind: "login", ok: true, detail: `${mutual.length} servidores`, req });
+
+        return {
+            status: 200,
+            body: {
+                token,
+                expiresAt: created + WEB_CONFIG.sessionTtl,
+                user: {
+                    id: userId,
+                    username: String(user.username ?? ""),
+                    displayName: String(user.displayName ?? user.username ?? ""),
+                    avatarUrl: typeof user.avatarUrl === "string" ? user.avatarUrl : null
+                }
+            }
+        };
+    }
+
+    // ----------------------------------
+    // POST /api/auth/logout
+    // ----------------------------------
+
+    function logout(req) {
+        const session = sessionFrom(req);
+
+        db.prepare("DELETE FROM web_sessions WHERE token_hash = ?").run(session.tokenHash);
+
+        logClaim({ userId: session.userId, kind: "logout", ok: true, req });
+
+        return { status: 200, body: { ok: true } };
+    }
+
+    // ----------------------------------
+    // GET /api/me
+    // ----------------------------------
+
+    function me(req) {
+        const session = sessionFrom(req);
+
+        limit("user:read:" + session.userId, WEB_CONFIG.limits.read);
+
+        const time = now();
+
+        const guilds = session.guilds
+            // se a Helena saiu do servidor desde o login, ele some da lista
+            .filter(guild => knowsGuild(guild.id))
+            .map(guild => {
+                const player = db.prepare(`
+                    SELECT wallet, bank, level
+                    FROM players
+                    WHERE guild_id = ?
+                      AND user_id = ?
+                `).get(guild.id, session.userId);
+
+                const prison = PRISON_BLOCKED_COMMANDS.has("daily")
+                    ? getPrison(guild.id, session.userId, time)
+                    : null;
+
+                return {
+                    id: guild.id,
+                    name: guild.name,
+                    icon: guild.icon,
+                    player: player ? { ...player } : null,
+                    daily: getDailyStatus(guild.id, session.userId, time),
+                    prison: prison ? { remaining: prison.remaining } : null
+                };
+            });
+
+        const gems = getGemBonusStatus(session.userId, time);
+
+        return {
+            status: 200,
+            body: {
+                user: publicUser(session),
+                expiresAt: session.expiresAt,
+                captcha: Boolean(config.turnstileSecret),
+                gems: {
+                    balance: gems.gems,
+                    available: gems.available,
+                    remaining: gems.remaining,
+                    min: GEM_BONUS.min,
+                    max: GEM_BONUS.max,
+                    cooldown: GEM_BONUS.cooldown
+                },
+                // A escada de 7 dias do daily (o prêmio de cada dia do ciclo, em centavos) e a
+                // recarga, para o painel desenhar a sequência com os números reais do bot.
+                daily: {
+                    cooldown: DAILY_CONFIG.cooldown,
+                    ladder: [1, 2, 3, 4, 5, 6, 7].map(day => calculateReward(day).total)
+                },
+                guilds
+            }
+        };
+    }
+
+    // ----------------------------------
+    // POST /api/claim/daily
+    // ----------------------------------
+
+    async function claimDailyRoute(req) {
+        const session = sessionFrom(req);
+
+        limit("ip:claim:" + clientIp(req), WEB_CONFIG.limits.claim);
+        limit("user:claim:" + session.userId, WEB_CONFIG.limits.claim);
+
+        const body = await readJson(req);
+
+        const guildId = typeof body.guildId === "string" ? body.guildId : "";
+
+        // Só servidores vistos no login, em que a Helena ainda está.
+        if (!session.guilds.some(guild => guild.id === guildId) || !knowsGuild(guildId)) {
+            throw new HttpError(403, "guild_not_allowed");
+        }
+
+        await checkCaptcha(body, req);
+
+        const time = now();
+
+        // Mesma regra do comando: preso não resgata.
+        if (PRISON_BLOCKED_COMMANDS.has("daily")) {
+            const prison = getPrison(guildId, session.userId, time);
+
+            if (prison) {
+                logClaim({ userId: session.userId, kind: "daily", guildId, ok: false, detail: "prison", req });
+
+                throw new HttpError(409, "prison", { remaining: prison.remaining });
+            }
+        }
+
+        const result = claimDaily(guildId, session.userId, time);
+
+        if (result.status === "claimed") {
+            logClaim({
+                userId: session.userId,
+                kind: "daily",
+                guildId,
+                ok: true,
+                detail: `dia ${result.streak}, ${result.reward.total}`,
+                req
+            });
+
+            return {
+                status: 200,
+                body: {
+                    status: "claimed",
+                    reward: result.reward,
+                    streak: result.streak,
+                    bestStreak: result.bestStreak,
+                    wallet: result.wallet,
+                    daily: getDailyStatus(guildId, session.userId, time)
+                }
+            };
+        }
+
+        logClaim({ userId: session.userId, kind: "daily", guildId, ok: false, detail: result.status, req });
+
+        if (result.status === "cooldown") {
+            throw new HttpError(409, "cooldown", {
+                remaining: result.remaining,
+                streak: result.streak,
+                bestStreak: result.bestStreak
+            });
+        }
+
+        throw new HttpError(409, result.status);
+    }
+
+    // ----------------------------------
+    // POST /api/claim/gems
+    // ----------------------------------
+
+    async function claimGemsRoute(req) {
+        const session = sessionFrom(req);
+
+        limit("ip:claim:" + clientIp(req), WEB_CONFIG.limits.claim);
+        limit("user:claim:" + session.userId, WEB_CONFIG.limits.claim);
+
+        const body = await readJson(req);
+
+        await checkCaptcha(body, req);
+
+        const result = claimGemBonus(session.userId, { now: now(), random });
+
+        if (result.status === "claimed") {
+            logClaim({ userId: session.userId, kind: "gems", ok: true, detail: `+${result.amount}`, req });
+
+            return {
+                status: 200,
+                body: {
+                    status: "claimed",
+                    amount: result.amount,
+                    balance: result.gems,
+                    remaining: result.remaining
+                }
+            };
+        }
+
+        logClaim({ userId: session.userId, kind: "gems", ok: false, detail: "cooldown", req });
+
+        throw new HttpError(409, "cooldown", {
+            remaining: result.remaining,
+            balance: result.gems
+        });
+    }
+
+    // ----------------------------------
+    // roteador
+    // ----------------------------------
+
+    const routes = {
+        "GET /api/health": () => ({ status: 200, body: { ok: true } }),
+        "POST /api/auth/login": login,
+        "POST /api/auth/logout": logout,
+        "GET /api/me": me,
+        "POST /api/claim/daily": claimDailyRoute,
+        "POST /api/claim/gems": claimGemsRoute
+    };
+
+    function corsHeaders(origin) {
+        if (!origin || !origins.has(origin)) {
+            return {};
+        }
+
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Headers": "authorization, content-type",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Max-Age": "600",
+            Vary: "Origin"
+        };
+    }
+
+    function send(res, status, body, extra = {}) {
+        const headers = { ...JSON_HEADERS, ...extra };
+
+        // Corpo grande demais: responde e fecha a conexão, sem ler o resto.
+        if (status === 413) {
+            headers.Connection = "close";
+
+            res.once("finish", () => res.req.destroy());
+        }
+
+        res.writeHead(status, headers);
+        res.end(JSON.stringify(body));
+    }
+
+    async function handle(req, res) {
+        const origin = req.headers.origin;
+        const cors = corsHeaders(origin);
+
+        try {
+            const path = new URL(req.url, "http://localhost").pathname;
+
+            // Um site que não está na lista nunca consegue falar com a API
+            // pelo navegador (sem Access-Control-Allow-Origin ele nem lê a resposta).
+            // Aqui recusamos também, para não executar nada em nome dele.
+            if (origin && !origins.has(origin)) {
+                throw new HttpError(403, "origin_not_allowed");
+            }
+
+            if (req.method === "OPTIONS") {
+                res.writeHead(204, { ...cors, "Cache-Control": "no-store" });
+                res.end();
+
+                return;
+            }
+
+            const route = routes[`${req.method} ${path}`];
+
+            if (!route) {
+                throw new HttpError(404, "not_found");
+            }
+
+            const result = await route(req);
+
+            send(res, result.status, result.body, cors);
+
+        } catch (error) {
+            if (error instanceof HttpError) {
+                const extra = { ...cors };
+
+                if (error.status === 429) {
+                    extra["Retry-After"] = String(error.extra.retryAfter ?? 60);
+                }
+
+                send(res, error.status, { error: error.code, ...error.extra }, extra);
+
+                return;
+            }
+
+            console.error("[WEB]", error);
+
+            send(res, 500, { error: "internal" }, cors);
+        }
+    }
+
+    // Apaga as sessões vencidas, o registro de coletas antigo e os contadores.
+    function cleanup() {
+        const time = now();
+
+        db.prepare("DELETE FROM web_sessions WHERE expires_at <= ?").run(time);
+
+        db.prepare("DELETE FROM web_claim_log WHERE created_at <= ?")
+            .run(time - WEB_CONFIG.claimLogDays * 24 * 60 * 60);
+
+        const longest = Math.max(
+            ...Object.values(WEB_CONFIG.limits).map(rule => rule.windowSeconds)
+        );
+
+        limiter.prune(time, longest);
+    }
+
+    return { handle, cleanup };
+}
+
+// ==========================================
+// SERVIDOR HTTP
+// ==========================================
+
+let running = null;
+
+// Liga a API, se estiver configurada. Devolve { port, close } ou null.
+export async function startWebApi(env = process.env, deps = {}) {
+    const config = loadWebConfig(env);
+
+    if (!config.enabled) {
+        console.log(`[WEB] API do site desligada (${config.reason}).`);
+
+        return null;
+    }
+
+    if (!config.turnstileSecret) {
+        console.warn(
+            "[WEB] Sem HELENA_TURNSTILE_SECRET: as coletas ficam SEM verificação anti-robô."
+        );
+    }
+
+    const api = createWebApi(config, deps);
+
+    const server = http.createServer((req, res) => {
+        api.handle(req, res);
+    });
+
+    // Conexões lentas não seguram a API.
+    server.headersTimeout = 10_000;
+    server.requestTimeout = 15_000;
+
+    try {
+        await new Promise((resolve, reject) => {
+            server.once("error", reject);
+            server.listen(config.port, config.host, resolve);
+        });
+
+    } catch (error) {
+        console.error(`[WEB] Não foi possível ouvir em ${config.host}:${config.port}:`, error.message);
+
+        return null;
+    }
+
+    const timer = setInterval(api.cleanup, WEB_CONFIG.cleanupSeconds * 1000);
+
+    timer.unref();
+
+    const address = server.address();
+
+    console.log(`[WEB] API do site ouvindo em http://${config.host}:${address.port}`);
+
+    running = {
+        port: address.port,
+
+        close: () => new Promise(resolve => {
+            clearInterval(timer);
+            server.close(() => resolve());
+            server.closeAllConnections?.();
+        })
+    };
+
+    return running;
+}
+
+export async function stopWebApi() {
+    if (running) {
+        await running.close();
+        running = null;
+    }
+}

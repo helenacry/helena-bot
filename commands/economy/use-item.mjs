@@ -4,20 +4,20 @@ import { getPlayer } from "../../database/economy.mjs";
 import {
     useItem,
     describeUse
-} from "../../services/use-item.mjs";
+} from "../../services/economy/use-item.mjs";
 
 import {
     buildUseView,
     findUsable
-} from "../../services/use-panel.mjs";
+} from "../../services/panels/use-panel.mjs";
 
 import {
     safeText
-} from "../../services/user-lookup.mjs";
+} from "../../services/platform/user-lookup.mjs";
 
 import {
     parseQuantity
-} from "../../services/panel-kit.mjs";
+} from "../../services/panels/panel-kit.mjs";
 
 import { GameBlocked } from "../../utils/game-error.mjs";
 

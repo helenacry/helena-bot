@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 
-const { clearUserLookupCache } = await import("../services/user-lookup.mjs");
+const { clearUserLookupCache } = await import("../services/platform/user-lookup.mjs");
 
 const G = "900000000000000001";
 const ME = { id: "111111111111111111", username: "eu", displayName: "Eu Mesmo" };

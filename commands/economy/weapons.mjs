@@ -6,16 +6,16 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { status } from "../../services/combat.mjs";
+import { status } from "../../services/combat/combat.mjs";
 
-import { getEquippedWeapon } from "../../services/equipment.mjs";
+import { getEquippedWeapon } from "../../services/combat/equipment.mjs";
 
 import {
     durabilityLine,
     isFirearm,
     weaponDamage,
     weaponTypeLabel
-} from "../../services/combat-view.mjs";
+} from "../../services/combat/combat-view.mjs";
 
 // ==========================================
 // COMANDO /ARMAS

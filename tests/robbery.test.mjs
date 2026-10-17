@@ -4,11 +4,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 const { attemptRobbery, robberyCap, robberyChance } =
-    await import("../services/robbery.mjs");
-const { addItem } = await import("../services/inventory.mjs");
-const { equipWeapon } = await import("../services/equipment.mjs");
-const { status, tx } = await import("../services/combat.mjs");
-const { imprison } = await import("../services/prison.mjs");
+    await import("../services/crime/robbery.mjs");
+const { addItem } = await import("../services/economy/inventory.mjs");
+const { equipWeapon } = await import("../services/combat/equipment.mjs");
+const { status, tx } = await import("../services/combat/combat.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
 const { getItem } = await import("../config/items.mjs");
 const { ROBBERY_CONFIG } = await import("../config/crime.mjs");
 

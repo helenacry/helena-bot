@@ -3,10 +3,10 @@ import { db, set } from "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { listWanted } = await import("../services/wanted.mjs");
-const { savePlayerName } = await import("../services/player-names.mjs");
-const { imprison } = await import("../services/prison.mjs");
-const { ensureCrimePlayer } = await import("../services/crime-player.mjs");
+const { listWanted } = await import("../services/crime/wanted.mjs");
+const { savePlayerName } = await import("../services/platform/player-names.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
+const { ensureCrimePlayer } = await import("../services/crime/crime-player.mjs");
 
 const G = "g-wanted";
 const T0 = 1_800_000_000;

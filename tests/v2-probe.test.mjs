@@ -5,8 +5,8 @@ import "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { probeResponse, handleProbeClick, V2_PROBE_MODES } = await import("../services/v2-probe.mjs");
-const { handlePanelClick } = await import("../services/panels.mjs");
+const { probeResponse, handleProbeClick, V2_PROBE_MODES } = await import("../services/platform/v2-probe.mjs");
+const { handlePanelClick } = await import("../services/panels/panels.mjs");
 const { carregarComandos } = await import("../command-registry.mjs");
 
 const OWNER = { id: "777000000000000001", avatarUrl: "https://cdn.exemplo.test/avatar.png" };

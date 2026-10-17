@@ -7,12 +7,12 @@ import assert from "node:assert/strict";
 // e o que o texto promete. As regras do duelo em si estão em combat.test.mjs.
 //
 // Na VSync, a menção só notifica quando está no texto da mensagem (body); dentro
-// do embed ela vira um chip sem aviso (services/mentions.mjs).
+// do embed ela vira um chip sem aviso (services/platform/mentions.mjs).
 
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
-const { DUEL_RULES, challenge, pendingChallenge, now, tx, ensure } = await import("../services/combat.mjs");
-const { addItem } = await import("../services/inventory.mjs");
-const { equipWeapon } = await import("../services/equipment.mjs");
+const { DUEL_RULES, challenge, pendingChallenge, now, tx, ensure } = await import("../services/combat/combat.mjs");
+const { addItem } = await import("../services/economy/inventory.mjs");
+const { equipWeapon } = await import("../services/combat/equipment.mjs");
 
 const A = "111111111111111111";
 const B = "222222222222222222";

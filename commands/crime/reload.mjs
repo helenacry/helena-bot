@@ -7,9 +7,9 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { reload } from "../../services/armory.mjs";
+import { reload } from "../../services/combat/armory.mjs";
 
-import { getEquippedWeapon } from "../../services/equipment.mjs";
+import { getEquippedWeapon } from "../../services/combat/equipment.mjs";
 
 // ==========================================
 // COMANDO /RECARREGAR

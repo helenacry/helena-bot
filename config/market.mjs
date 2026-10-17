@@ -6,7 +6,7 @@
 // Cada servidor tem um índice de mercado que muda de tempos em tempos e mexe
 // nos preços da loja, e um item "em alta" que paga mais na venda. Os valores
 // abaixo são os de tabela de config/items.mjs vezes o índice. O serviço fica
-// em services/market.mjs.
+// em services/economy/market.mjs.
 
 export const MARKET_CONFIG = Object.freeze({
     // De quanto em quanto tempo o mercado sorteia um novo índice (30 minutos).

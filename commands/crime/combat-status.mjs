@@ -6,15 +6,15 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { status, now, DUEL_RULES } from "../../services/combat.mjs";
+import { status, now, DUEL_RULES } from "../../services/combat/combat.mjs";
 
-import { getEquippedWeapon } from "../../services/equipment.mjs";
+import { getEquippedWeapon } from "../../services/combat/equipment.mjs";
 
 import {
     hpLine,
     durabilityLine,
     protectionText
-} from "../../services/combat-view.mjs";
+} from "../../services/combat/combat-view.mjs";
 
 // ==========================================
 // COMANDO /STATUSCOMBATE

@@ -6,7 +6,7 @@
 // próximo. Vale para os comandos de barra e para o prefixo h, em qualquer
 // servidor. É só para o bot não ser sobrecarregado: nada a ver com as esperas
 // do jogo (daily, trabalho, crime...), que ficam em config/cooldowns.mjs. O
-// serviço fica em services/anti-spam.mjs.
+// serviço fica em services/platform/anti-spam.mjs.
 
 export const ANTI_SPAM = Object.freeze({
     // Tempo mínimo entre dois comandos da mesma pessoa.

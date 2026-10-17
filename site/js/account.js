@@ -1,6 +1,6 @@
 // Painel da conta: entrar com a VSync (OAuth2 + PKCE), ver os servidores em
 // que a Helena também está e coletar o daily e as gemas. Fala com a API da
-// Helena (services/web-api.mjs); veja o README, "Painel do site (API)".
+// Helena (services/web/web-api.mjs); veja o README, "Painel do site (API)".
 //
 // A primeira metade são funções puras (expostas em Helena.accountLib, onde os
 // testes as exercitam); a segunda monta a tela. Todo texto vindo da API entra

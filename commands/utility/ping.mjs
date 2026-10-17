@@ -5,9 +5,9 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { guildIds } from "../../services/guild-registry.mjs";
+import { guildIds } from "../../services/platform/guild-registry.mjs";
 
-import { getCatalog } from "../../services/command-catalog.mjs";
+import { getCatalog } from "../../services/platform/command-catalog.mjs";
 
 import { formatDuration } from "../../utils/time.mjs";
 

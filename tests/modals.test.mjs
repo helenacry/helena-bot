@@ -5,11 +5,11 @@ import {
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { textField, openModal, readFields } = await import("../services/modals.mjs");
-const { handlePanelClick, handleModalSubmit } = await import("../services/panels.mjs");
+const { textField, openModal, readFields } = await import("../services/panels/modals.mjs");
+const { handlePanelClick, handleModalSubmit } = await import("../services/panels/panels.mjs");
 const { carregarComandos } = await import("../command-registry.mjs");
-const { imprison } = await import("../services/prison.mjs");
-const { clearUserLookupCache } = await import("../services/user-lookup.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
+const { clearUserLookupCache } = await import("../services/platform/user-lookup.mjs");
 
 const G = "900000000000000001";
 const ME = "111111111111111111";

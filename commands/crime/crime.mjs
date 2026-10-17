@@ -1,7 +1,7 @@
 
 import { formatMoney } from "../../database/economy.mjs";
 
-import { attemptCrime } from "../../services/crime.mjs";
+import { attemptCrime } from "../../services/crime/crime.mjs";
 
 import { CRIME_CONFIG } from "../../config/crime.mjs";
 

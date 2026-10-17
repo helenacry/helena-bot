@@ -5,9 +5,9 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { challenge, DUEL_RULES } from "../../services/combat.mjs";
+import { challenge, DUEL_RULES } from "../../services/combat/combat.mjs";
 
-import { mention } from "../../services/mentions.mjs";
+import { mention } from "../../services/platform/mentions.mjs";
 
 // Quanto o desafio vale, escrito para o jogador (o prazo vem de DUEL_RULES).
 const REQUEST_MINUTES = Math.round(DUEL_RULES.requestTtl / 60);
@@ -69,7 +69,7 @@ export default {
 
                 data: {
                     // Menção só avisa quem é citada no texto da mensagem; dentro
-                    // do embed ela vira apenas um chip (veja services/mentions.mjs).
+                    // do embed ela vira apenas um chip (veja services/platform/mentions.mjs).
                     body: mention(targetId),
                     embeds: [embed]
                 }

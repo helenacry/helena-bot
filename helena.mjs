@@ -18,11 +18,11 @@ import {
 import {
     startStatusRotation,
     stopStatusRotation
-} from "./services/status.mjs";
+} from "./services/platform/status.mjs";
 
 import {
     getStatusMessages
-} from "./services/status-data.mjs";
+} from "./services/platform/status-data.mjs";
 
 import {
     runStreakMigrations
@@ -37,26 +37,26 @@ import {
     userId,
     maintenance,
     blocked
-} from "./services/developer.mjs";
+} from "./services/platform/developer.mjs";
 
 import {
     processarPrefixo
-} from "./services/prefix.mjs";
+} from "./services/platform/prefix.mjs";
 
 import {
     commandGate,
     antiSpamText
-} from "./services/anti-spam.mjs";
+} from "./services/platform/anti-spam.mjs";
 
 import {
     startSupportStats,
     stopSupportStats
-} from "./services/support-stats.mjs";
+} from "./services/platform/support-stats.mjs";
 
 import {
     runPlayerNamesMigrations,
     savePlayerName
-} from "./services/player-names.mjs";
+} from "./services/platform/player-names.mjs";
 
 import {
     runAchievementMigrations
@@ -76,39 +76,39 @@ import {
 
 import {
     importLegacyViews
-} from "./services/userinfo-views.mjs";
+} from "./services/social/userinfo-views.mjs";
 
-import { guildIds } from "./services/guild-registry.mjs";
+import { guildIds } from "./services/platform/guild-registry.mjs";
 
 import {
     startWebApi,
     stopWebApi
-} from "./services/web-api.mjs";
+} from "./services/web/web-api.mjs";
 
 import {
     startLaunderingSweeper,
     stopLaunderingSweeper
-} from "./services/laundering.mjs";
+} from "./services/crime/laundering.mjs";
 
 import {
     prisonBlock
-} from "./services/prison.mjs";
+} from "./services/crime/prison.mjs";
 
 import {
     startLiveUpdate,
     stopAllLiveUpdates,
     LiveEditError
-} from "./services/live-embed.mjs";
+} from "./services/platform/live-embed.mjs";
 
 import {
     handleEscapeClick,
     clearEscapeSessions
-} from "./services/prison-escape.mjs";
+} from "./services/crime/prison-escape.mjs";
 
 import {
     handlePanelClick,
     handleModalSubmit
-} from "./services/panels.mjs";
+} from "./services/panels/panels.mjs";
 
 import {
     LIVE_CONFIG
@@ -116,11 +116,11 @@ import {
 
 import {
     cardFontAvailable
-} from "./services/profile-card.mjs";
+} from "./services/social/profile-card.mjs";
 
 import {
     deliverCallback
-} from "./services/v2-delivery.mjs";
+} from "./services/platform/v2-delivery.mjs";
 
 // ==========================================
 // CONFIGURAÇÕES
@@ -610,7 +610,7 @@ let shuttingDown = false;
 // ESTADO DOS SERVIDORES
 // ==========================================
 
-// O conjunto vive em services/guild-registry.mjs, compartilhado com a API do site.
+// O conjunto vive em services/platform/guild-registry.mjs, compartilhado com a API do site.
 
 let guildCountComplete = false;
 

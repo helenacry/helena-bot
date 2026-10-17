@@ -7,10 +7,10 @@ import path from "node:path";
 
 import sharp from "sharp";
 
-const { profileSvg, renderProfileCard, wrap, plain } = await import("../services/profile-card.mjs");
-const { getPlayerRank } = await import("../services/player-rank.mjs");
-const { useBundledFonts, FONTS_DIR, FONTS_CONF } = await import("../services/card-fonts.mjs");
-const { cardFontAvailable } = await import("../services/profile-card.mjs");
+const { profileSvg, renderProfileCard, wrap, plain } = await import("../services/social/profile-card.mjs");
+const { getPlayerRank } = await import("../services/economy/player-rank.mjs");
+const { useBundledFonts, FONTS_DIR, FONTS_CONF } = await import("../services/social/card-fonts.mjs");
+const { cardFontAvailable } = await import("../services/social/profile-card.mjs");
 
 const SAMPLE = Object.freeze({
     name: "Educado",

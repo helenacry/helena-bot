@@ -8,11 +8,11 @@ import {
 
 import {
     calculateLevel
-} from "../../services/experience.mjs";
+} from "../../services/progress/experience.mjs";
 
 import {
     recordMissionEvent
-} from "../../services/missions.mjs";
+} from "../../services/economy/missions.mjs";
 
 import {
     getJob
@@ -25,7 +25,7 @@ import {
 import {
     consumeEnergy,
     ENERGY_CONFIG
-} from "../../services/energy.mjs";
+} from "../../services/economy/energy.mjs";
 
 import {
     createEmbed,

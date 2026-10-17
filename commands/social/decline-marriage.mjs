@@ -1,7 +1,7 @@
 
 import {
     refuseMarriage
-} from "../../services/marriage.mjs";
+} from "../../services/social/marriage.mjs";
 
 import {
     createEmbed,

@@ -5,9 +5,9 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { refuse, pendingChallenge } from "../../services/combat.mjs";
+import { refuse, pendingChallenge } from "../../services/combat/combat.mjs";
 
-import { mention } from "../../services/mentions.mjs";
+import { mention } from "../../services/platform/mentions.mjs";
 
 // ==========================================
 // COMANDO /RECUSARDUELO

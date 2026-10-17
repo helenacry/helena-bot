@@ -15,11 +15,11 @@ import {
     hasAchievement,
     getAchievementProgress,
     getEquippedTitle
-} from "../../services/achievements.mjs";
+} from "../../services/progress/achievements.mjs";
 
-import { getPlayerName } from "../../services/player-names.mjs";
+import { getPlayerName } from "../../services/platform/player-names.mjs";
 
-import { mention } from "../../services/mentions.mjs";
+import { mention } from "../../services/platform/mentions.mjs";
 
 import {
     createEmbed,

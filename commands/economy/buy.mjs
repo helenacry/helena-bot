@@ -9,11 +9,11 @@ import {
 
 import {
     buyItem
-} from "../../services/shop.mjs";
+} from "../../services/economy/shop.mjs";
 
 import {
     marketLine
-} from "../../services/market.mjs";
+} from "../../services/economy/market.mjs";
 
 import {
     createEmbed,

@@ -9,9 +9,9 @@ import {
 
 import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
-import { buyAmmo, ARMORY_RULES } from "../../services/armory.mjs";
+import { buyAmmo, ARMORY_RULES } from "../../services/combat/armory.mjs";
 
-import { status } from "../../services/combat.mjs";
+import { status } from "../../services/combat/combat.mjs";
 
 import { reais } from "../../utils/money-text.mjs";
 

@@ -5,9 +5,9 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { accept, DUEL_RULES } from "../../services/combat.mjs";
+import { accept, DUEL_RULES } from "../../services/combat/combat.mjs";
 
-import { mention, mentionAll } from "../../services/mentions.mjs";
+import { mention, mentionAll } from "../../services/platform/mentions.mjs";
 
 export default {
     name: "aceitarduelo",

@@ -52,7 +52,7 @@ test("o Dockerfile: Node 24, instala só o necessário, não depende do .env e u
 
 test("a imagem traz uma fonte que o cartão de perfil usa (senão o texto some no Linux)", () => {
     const file = read("Dockerfile");
-    const font = read("services/profile-card.mjs").match(/const FONT = "([^"]+)"/)[1];
+    const font = read("services/social/profile-card.mjs").match(/const FONT = "([^"]+)"/)[1];
 
     // a lista de fontes do cartão começa em fontes do Windows; no Linux, o que vale é a DejaVu Sans
     assert.ok(font.split(",").map(name => name.trim()).includes("DejaVu Sans"), font);
@@ -200,16 +200,16 @@ test("o /devbackup grava ao lado do banco (na nuvem, no volume) e só o dono usa
 });
 
 test("o bot não grava dados em arquivos soltos: o que precisa durar vive no banco (o único arquivo que se faz backup)", () => {
-    // a pasta generated/ só aparece em services/userinfo-views.mjs, e só para LER o JSON antigo
+    // a pasta generated/ só aparece em services/social/userinfo-views.mjs, e só para LER o JSON antigo
     const mentions = [];
 
     for (const file of walk(["helena.mjs", "command-registry.mjs", "commands", "services", "config", "database", "utils"])) {
         if (/generated/.test(readFileSync(file, "utf8"))) mentions.push(path.relative(ROOT, file).replaceAll("\\", "/"));
     }
 
-    assert.deepEqual(mentions, ["services/userinfo-views.mjs"]);
+    assert.deepEqual(mentions, ["services/social/userinfo-views.mjs"]);
 
-    const views = read("services/userinfo-views.mjs");
+    const views = read("services/social/userinfo-views.mjs");
 
     assert.doesNotMatch(views, /writeFile|mkdir|appendFile/, "o contador não escreve arquivo");
     assert.match(views, /CREATE TABLE IF NOT EXISTS userinfo_views/);

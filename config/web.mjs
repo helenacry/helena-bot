@@ -3,7 +3,7 @@
 // API DO SITE (PAINEL DO JOGADOR)
 // ==========================================
 
-// Limites e prazos da API que o site usa (services/web-api.mjs). O que
+// Limites e prazos da API que o site usa (services/web/web-api.mjs). O que
 // muda de ambiente para ambiente (porta, origens, chaves) vem de variáveis
 // de ambiente; veja o README.
 

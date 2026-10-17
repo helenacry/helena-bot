@@ -5,14 +5,14 @@ import {
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { restoreEnergy, ENERGY_CONFIG } = await import("../services/energy.mjs");
-const { useItem, usableItems, describeUse } = await import("../services/use-item.mjs");
-const { buildUseView } = await import("../services/use-panel.mjs");
-const { handlePanelClick, handleModalSubmit } = await import("../services/panels.mjs");
-const { addItem } = await import("../services/inventory.mjs");
-const { equipWeapon, getEquippedWeapon } = await import("../services/equipment.mjs");
-const { tx } = await import("../services/combat.mjs");
-const { imprison } = await import("../services/prison.mjs");
+const { restoreEnergy, ENERGY_CONFIG } = await import("../services/economy/energy.mjs");
+const { useItem, usableItems, describeUse } = await import("../services/economy/use-item.mjs");
+const { buildUseView } = await import("../services/panels/use-panel.mjs");
+const { handlePanelClick, handleModalSubmit } = await import("../services/panels/panels.mjs");
+const { addItem } = await import("../services/economy/inventory.mjs");
+const { equipWeapon, getEquippedWeapon } = await import("../services/combat/equipment.mjs");
+const { tx } = await import("../services/combat/combat.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
 const { getItemUse, getItem } = await import("../config/items.mjs");
 

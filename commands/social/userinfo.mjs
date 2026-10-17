@@ -2,16 +2,16 @@
 import {
     getUserBadges,
     getPrismaInfo
-} from "../../services/userinfo-badges.mjs";
+} from "../../services/social/userinfo-badges.mjs";
 
 import {
     incrementUserinfoViews
-} from "../../services/userinfo-views.mjs";
+} from "../../services/social/userinfo-views.mjs";
 
 import {
     resolveUser,
     lookupProblem
-} from "../../services/user-lookup.mjs";
+} from "../../services/platform/user-lookup.mjs";
 
 import { warningEmbed } from "../../utils/embed.mjs";
 

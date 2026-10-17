@@ -9,9 +9,9 @@ import {
 
 import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
-import { heal, HOSPITAL_RULES } from "../../services/hospital.mjs";
+import { heal, HOSPITAL_RULES } from "../../services/combat/hospital.mjs";
 
-import { hpLine } from "../../services/combat-view.mjs";
+import { hpLine } from "../../services/combat/combat-view.mjs";
 
 import { duration } from "../../utils/duration-text.mjs";
 
@@ -22,7 +22,7 @@ import { reais } from "../../utils/money-text.mjs";
 // ==========================================
 
 // Leva a vida a 100. Cada ponto que falta custa dinheiro da carteira, e quem
-// se cura ganha um tempo de proteção contra duelos (regras em services/hospital.mjs).
+// se cura ganha um tempo de proteção contra duelos (regras em services/combat/hospital.mjs).
 
 export default {
     name: "curar",

@@ -1,1 +1,1 @@
-export { isOwner,ownerConfigured } from '../services/developer.mjs';
+export { isOwner,ownerConfigured } from '../services/platform/developer.mjs';

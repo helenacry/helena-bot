@@ -7,11 +7,11 @@ import assert from "node:assert/strict";
 // wiki descreve estas regras e usa os valores de DUEL_RULES, HOSPITAL_RULES e
 // ARMORY_RULES): se uma regra mudar de propósito, mude o teste junto.
 
-const combat = await import("../services/combat.mjs");
-const { heal } = await import("../services/hospital.mjs");
-const { buyAmmo, buyVest, repair, reload } = await import("../services/armory.mjs");
-const { addItem } = await import("../services/inventory.mjs");
-const { equipWeapon } = await import("../services/equipment.mjs");
+const combat = await import("../services/combat/combat.mjs");
+const { heal } = await import("../services/combat/hospital.mjs");
+const { buyAmmo, buyVest, repair, reload } = await import("../services/combat/armory.mjs");
+const { addItem } = await import("../services/economy/inventory.mjs");
+const { equipWeapon } = await import("../services/combat/equipment.mjs");
 
 const { challenge, accept, refuse, status, history, tx } = combat;
 

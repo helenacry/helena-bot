@@ -1,5 +1,5 @@
 import { devReply,deny,guard } from '../../utils/developer-response.mjs';
 import { isValidId } from '../../utils/ids.mjs';
-import { option,userId,logDev } from '../../services/developer.mjs';
-import { grant,guildId } from '../../services/developer.mjs';
+import { option,userId,logDev } from '../../services/platform/developer.mjs';
+import { grant,guildId } from '../../services/platform/developer.mjs';
 export default {name:'devgive',description:'Concede recursos a um jogador',options:[{name:'usuario',description:'ID do usuário',type:'string',required:true},{name:'tipo',description:'Recurso',type:'string',required:true,choices:[{name:'Carteira',value:'wallet'},{name:'Banco',value:'bank'},{name:'Gemas',value:'gems'},{name:'XP',value:'xp'},{name:'Item',value:'item'}]},{name:'quantidade',description:'Quantidade; dinheiro em centavos',type:'integer',required:true},{name:'item',description:'ID do item, quando tipo=item',type:'string',required:false}],async execute(i){if(!guard(i))return deny();try{const target=String(option(i,'usuario')??'');if(!isValidId(target))throw Error('ID de usuário inválido.');const type=option(i,'tipo');const n=grant({guild:guildId(i),target,type,amount:option(i,'quantidade'),itemId:option(i,'item'),actor:userId(i)});return devReply('🎁 Recurso concedido',`${n} (${type}) para ${target}. Valores monetários em centavos.`);}catch(e){return devReply("❌ Falha",e.message,"#EF4444");}}};

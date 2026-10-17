@@ -3,7 +3,7 @@ import { db, getPlayer, set, createPrefixRunner, fieldsOf } from "./helpers.mjs"
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { mention, mentionAll } = await import("../services/mentions.mjs");
+const { mention, mentionAll } = await import("../services/platform/mentions.mjs");
 
 const G = "g-mentions";
 

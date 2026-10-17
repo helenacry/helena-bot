@@ -3,7 +3,7 @@ import { db, getPlayer, set, get } from "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-// A bolsa (services/market.mjs): índice do servidor, item em alta e preços.
+// A bolsa (services/economy/market.mjs): índice do servidor, item em alta e preços.
 // tests/helpers.mjs deixa a bolsa desligada para os outros testes valerem o
 // preço de tabela; aqui ela liga e o sorteio é controlado.
 process.env.HELENA_MARKET = "on";
@@ -16,14 +16,14 @@ const { formatMoney } = await import("../database/economy.mjs");
 const {
     getMarket, setMarketRandom, marketEnabled, priceBp, bandOf,
     buyPriceOf, sellPriceOf, isHot, sellableItems, priceItem
-} = await import("../services/market.mjs");
+} = await import("../services/economy/market.mjs");
 
-const { buyItem, sellItem } = await import("../services/shop.mjs");
-const { addItem } = await import("../services/inventory.mjs");
-const { tx } = await import("../services/combat.mjs");
-const { buildShopView, buildShopHome, shopContext } = await import("../services/shop-view.mjs");
-const { buildInventoryView } = await import("../services/inventory-view.mjs");
-const { handlePanelClick, handleModalSubmit } = await import("../services/panels.mjs");
+const { buyItem, sellItem } = await import("../services/economy/shop.mjs");
+const { addItem } = await import("../services/economy/inventory.mjs");
+const { tx } = await import("../services/combat/combat.mjs");
+const { buildShopView, buildShopHome, shopContext } = await import("../services/panels/shop-view.mjs");
+const { buildInventoryView } = await import("../services/panels/inventory-view.mjs");
+const { handlePanelClick, handleModalSubmit } = await import("../services/panels/panels.mjs");
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
 
 const silently = async fn => {

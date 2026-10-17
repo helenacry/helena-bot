@@ -5,13 +5,13 @@ import {
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { imprison } = await import("../services/prison.mjs");
-const { addItem } = await import("../services/inventory.mjs");
-const { equipWeapon } = await import("../services/equipment.mjs");
-const { status, tx } = await import("../services/combat.mjs");
-const { clearUserLookupCache } = await import("../services/user-lookup.mjs");
-const { savePlayerName } = await import("../services/player-names.mjs");
-const { ensureCrimePlayer } = await import("../services/crime-player.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
+const { addItem } = await import("../services/economy/inventory.mjs");
+const { equipWeapon } = await import("../services/combat/equipment.mjs");
+const { status, tx } = await import("../services/combat/combat.mjs");
+const { clearUserLookupCache } = await import("../services/platform/user-lookup.mjs");
+const { savePlayerName } = await import("../services/platform/player-names.mjs");
+const { ensureCrimePlayer } = await import("../services/crime/crime-player.mjs");
 const { getPlayer } = await import("./helpers.mjs");
 
 const G = "900000000000000001";

@@ -9,12 +9,12 @@ import {
 
 import {
     sellItem
-} from "../../services/shop.mjs";
+} from "../../services/economy/shop.mjs";
 
 import {
     marketLine,
     formatPercent
-} from "../../services/market.mjs";
+} from "../../services/economy/market.mjs";
 
 import {
     createEmbed,

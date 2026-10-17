@@ -4,9 +4,9 @@ import {
     errorEmbed
 } from "../../utils/embed.mjs";
 
-import { getMarket } from "../../services/market.mjs";
+import { getMarket } from "../../services/economy/market.mjs";
 
-import { buildMarketView } from "../../services/market-view.mjs";
+import { buildMarketView } from "../../services/panels/market-view.mjs";
 
 // ==========================================
 // COMANDO /BOLSA
@@ -14,7 +14,7 @@ import { buildMarketView } from "../../services/market-view.mjs";
 
 // O mercado do servidor: o índice (de 0 a 90, sorteado a cada 30 minutos),
 // o item em alta e os preços de agora. Só mostra informação, então também
-// abre na prisão. As regras estão em services/market.mjs.
+// abre na prisão. As regras estão em services/economy/market.mjs.
 
 export default {
     name: "bolsa",

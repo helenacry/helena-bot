@@ -7,7 +7,7 @@ import {
     getAvailableTitles,
     getEquippedTitle,
     checkAchievements
-} from "../../services/achievements.mjs";
+} from "../../services/progress/achievements.mjs";
 
 import {
     getAchievementRarity

@@ -3,7 +3,7 @@ import { db, set, get } from "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { claimGemBonus, getGemBonusStatus } = await import("../services/gem-bonus.mjs");
+const { claimGemBonus, getGemBonusStatus } = await import("../services/economy/gem-bonus.mjs");
 const { GEM_BONUS } = await import("../config/gems.mjs");
 
 const U = "111111111111111111";

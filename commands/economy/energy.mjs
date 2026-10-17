@@ -2,7 +2,7 @@
 import {
     getEnergy,
     ENERGY_CONFIG
-} from "../../services/energy.mjs";
+} from "../../services/economy/energy.mjs";
 
 import {
     createEmbed,

@@ -3,8 +3,8 @@ import { db, getPlayer, seq, set, get, blockedTitle } from "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { attemptCrime } = await import("../services/crime.mjs");
-const { getPrison, imprison, prisonBlock } = await import("../services/prison.mjs");
+const { attemptCrime } = await import("../services/crime/crime.mjs");
+const { getPrison, imprison, prisonBlock } = await import("../services/crime/prison.mjs");
 const { rewardScale, CRIME_CONFIG } = await import("../config/crime.mjs");
 
 const G = "g-crime";

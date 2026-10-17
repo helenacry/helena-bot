@@ -9,10 +9,10 @@ import path from "node:path";
 
 const {
     renderMarkdown, parseFrontMatter, expandValues, slugify, escapeHtml
-} = await import("../site/wiki-markdown.mjs");
+} = await import("../scripts/site/wiki-markdown.mjs");
 
-const { reais, percent, duration, range, table } = await import("../site/wiki-values.mjs");
-const { generateWiki } = await import("../site/wiki-generate.mjs");
+const { reais, percent, duration, range, table } = await import("../scripts/site/wiki-values.mjs");
+const { generateWiki } = await import("../scripts/site/wiki-generate.mjs");
 const { NAV } = await import("../wiki/nav.mjs");
 
 const SITE = fileURLToPath(new URL("../site/", import.meta.url));
@@ -275,7 +275,7 @@ test("todo link e arquivo carregado pelas páginas existe, e as âncoras também
 });
 
 test("todo comando público do bot é citado em alguma página, fora da lista geral", async () => {
-    const { collectSiteData } = await import("../site/data-source.mjs");
+    const { collectSiteData } = await import("../scripts/site/data-source.mjs");
 
     const { categories } = await collectSiteData();
 
@@ -295,7 +295,7 @@ test("todo comando público do bot é citado em alguma página, fora da lista ge
 });
 
 test("os atalhos de cada comando que a wiki cita existem de verdade", async () => {
-    const { collectSiteData } = await import("../site/data-source.mjs");
+    const { collectSiteData } = await import("../scripts/site/data-source.mjs");
 
     const { categories } = await collectSiteData();
 

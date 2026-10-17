@@ -5,7 +5,7 @@ FROM node:24-bookworm-slim
 WORKDIR /app
 
 # O cartao de perfil e um SVG que o sharp desenha com as fontes do sistema, e a
-# lista de fontes dele (services/profile-card.mjs) termina em DejaVu Sans. Uma
+# lista de fontes dele (services/social/profile-card.mjs) termina em DejaVu Sans. Uma
 # imagem enxuta nao traz fonte nenhuma, e o texto do cartao sumiria.
 RUN apt-get update && apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
 

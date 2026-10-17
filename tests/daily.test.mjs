@@ -5,7 +5,7 @@ import {
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { imprison } = await import("../services/prison.mjs");
+const { imprison } = await import("../services/crime/prison.mjs");
 
 const G = "g-daily";
 const ME = { id: "111111111111111111", username: "eu", displayName: "Eu Mesmo" };
@@ -219,7 +219,7 @@ test("cada servidor tem a própria recarga e a própria sequência", async () =>
 // SERVIÇO (usado também pelo site)
 // ==========================================
 
-const { claimDaily, getDailyStatus, DAILY_CONFIG } = await import("../services/daily.mjs");
+const { claimDaily, getDailyStatus, DAILY_CONFIG } = await import("../services/economy/daily.mjs");
 
 test("getDailyStatus de quem nunca jogou: liberado, e não cria o jogador", () => {
     reset();

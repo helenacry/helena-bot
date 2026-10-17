@@ -5,7 +5,7 @@
 import { WIKI_URL } from "./site.mjs";
 
 // A lista de comandos NÃO fica aqui: a ajuda lê os comandos carregados pelo bot
-// (services/command-catalog.mjs), então ela nunca fica desatualizada. Aqui só
+// (services/platform/command-catalog.mjs), então ela nunca fica desatualizada. Aqui só
 // ficam o texto de cada categoria e os ajustes da tela.
 
 export const HELP_CONFIG = Object.freeze({

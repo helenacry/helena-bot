@@ -10,10 +10,10 @@ const {
     escapeEligibility,
     activeEscapeSessions,
     clearEscapeSessions
-} = await import("../services/prison-escape.mjs");
+} = await import("../services/crime/prison-escape.mjs");
 
 const { imprison, applyEscape, getPrison } =
-    await import("../services/prison.mjs");
+    await import("../services/crime/prison.mjs");
 const { ESCAPE_CONFIG } = await import("../config/crime.mjs");
 
 const G = "g-escape";

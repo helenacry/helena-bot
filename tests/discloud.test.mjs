@@ -120,7 +120,7 @@ test("o zip lido de volta tem o bot inteiro, com CRC e tamanho certos, e nada qu
     const zip = readZip(buildZip(collectEntries()));
     const names = Object.keys(zip);
 
-    for (const must of ["discloud.config", "helena.mjs", "package.json", "package-lock.json", "command-registry.mjs", "commands/economy/daily.mjs", "commands/economy/claim-gems.mjs", "services/web-api.mjs", "scripts/export-db.mjs"]) {
+    for (const must of ["discloud.config", "helena.mjs", "package.json", "package-lock.json", "command-registry.mjs", "commands/economy/daily.mjs", "commands/economy/claim-gems.mjs", "services/web/web-api.mjs", "scripts/export-db.mjs"]) {
         assert.ok(names.includes(must), `${must} falta no zip`);
     }
 

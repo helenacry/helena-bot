@@ -14,11 +14,11 @@ import {
 
 import {
     getPlayerMissions
-} from "../../services/missions.mjs";
+} from "../../services/economy/missions.mjs";
 
 import {
     calculateLevel
-} from "../../services/experience.mjs";
+} from "../../services/progress/experience.mjs";
 
 import {
     createEmbed,

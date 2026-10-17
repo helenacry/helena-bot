@@ -9,9 +9,9 @@ import {
 
 import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
-import { buyVest, ARMORY_RULES } from "../../services/armory.mjs";
+import { buyVest, ARMORY_RULES } from "../../services/combat/armory.mjs";
 
-import { DUEL_RULES } from "../../services/combat.mjs";
+import { DUEL_RULES } from "../../services/combat/combat.mjs";
 
 // ==========================================
 // COMANDO /COLETE

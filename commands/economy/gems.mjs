@@ -3,7 +3,7 @@ import {
     getPlayer
 } from "../../database/economy.mjs";
 
-import { getGemBonusStatus } from "../../services/gem-bonus.mjs";
+import { getGemBonusStatus } from "../../services/economy/gem-bonus.mjs";
 
 import { formatDuration } from "../../utils/time.mjs";
 

@@ -3,7 +3,7 @@ import { db } from "./connection.mjs";
 
 import {
     recordMissionEvent
-} from "../services/missions.mjs";
+} from "../services/economy/missions.mjs";
 
 // ==========================================
 // CONFIGURAÇÕES

@@ -12,22 +12,22 @@ import {
     getCatalog,
     findCommand,
     searchCommands
-} from "../../services/command-catalog.mjs";
+} from "../../services/platform/command-catalog.mjs";
 
 import {
     buildHelpHome,
     buildHelpCategory,
     buildHelpCommand,
     buildHelpSearch
-} from "../../services/help-view.mjs";
+} from "../../services/panels/help-view.mjs";
 
 // ==========================================
 // COMANDO /AJUDA
 // ==========================================
 
-// A central de ajuda é um painel (services/help-panel.mjs): o início tem o menu
+// A central de ajuda é um painel (services/panels/help-panel.mjs): o início tem o menu
 // de categorias e a busca. A lista de comandos vem dos comandos que o bot
-// carregou (services/command-catalog.mjs), então não fica desatualizada.
+// carregou (services/platform/command-catalog.mjs), então não fica desatualizada.
 //
 //   /ajuda                       o início
 //   /ajuda categoria:combate     direto numa categoria

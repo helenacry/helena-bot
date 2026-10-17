@@ -4,7 +4,7 @@ import { db } from "./connection.mjs";
 // PAINEL DO SITE: SESSÕES E COLETAS
 // ==========================================
 
-// Só ganha vida quando a API do site está ligada (services/web-api.mjs),
+// Só ganha vida quando a API do site está ligada (services/web/web-api.mjs),
 // mas as tabelas existem sempre, como as dos outros sistemas.
 export function runWebMigrations() {
     // A recarga do bônus de gemas é global (da conta, não do servidor).

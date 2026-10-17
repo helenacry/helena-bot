@@ -7,7 +7,7 @@ import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { join, dirname } from "node:path";
 
-const { collectSiteData } = await import("../site/data-source.mjs");
+const { collectSiteData } = await import("../scripts/site/data-source.mjs");
 const { WEB_CONFIG } = await import("../config/web.mjs");
 
 const SITE = fileURLToPath(new URL("../site/", import.meta.url));

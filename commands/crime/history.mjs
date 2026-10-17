@@ -6,11 +6,11 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { history, status, now } from "../../services/combat.mjs";
+import { history, status, now } from "../../services/combat/combat.mjs";
 
-import { mention } from "../../services/mentions.mjs";
+import { mention } from "../../services/platform/mentions.mjs";
 
-import { ago } from "../../services/combat-view.mjs";
+import { ago } from "../../services/combat/combat-view.mjs";
 
 // ==========================================
 // COMANDO /HISTORICO

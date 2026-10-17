@@ -1,14 +1,14 @@
 
 import { formatMoney } from "../../database/economy.mjs";
 
-import { attemptRobbery } from "../../services/robbery.mjs";
+import { attemptRobbery } from "../../services/crime/robbery.mjs";
 
 import {
     resolveUser,
     lookupProblem,
     safeText,
     shownName
-} from "../../services/user-lookup.mjs";
+} from "../../services/platform/user-lookup.mjs";
 
 import { ROBBERY_CONFIG } from "../../config/crime.mjs";
 

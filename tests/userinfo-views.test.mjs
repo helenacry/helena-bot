@@ -14,7 +14,7 @@ const workDir = mkdtempSync(path.join(tmpdir(), "helena-views-"));
 
 process.chdir(workDir);
 
-const { incrementUserinfoViews, getUserinfoViews, importLegacyViews } = await import("../services/userinfo-views.mjs");
+const { incrementUserinfoViews, getUserinfoViews, importLegacyViews } = await import("../services/social/userinfo-views.mjs");
 
 const rows = () => Object.fromEntries(db.prepare("SELECT user_id, views FROM userinfo_views ORDER BY user_id").all().map(r => [r.user_id, r.views]));
 
@@ -164,7 +164,7 @@ test("só entram IDs e contagens válidos: o resto do arquivo é ignorado", () =
 });
 
 test("o módulo não importa o JSON sozinho ao carregar: só quando o bot manda (os testes não consomem o arquivo de verdade)", () => {
-    const source = readFileSync(new URL("../services/userinfo-views.mjs", import.meta.url), "utf8");
+    const source = readFileSync(new URL("../services/social/userinfo-views.mjs", import.meta.url), "utf8");
 
     // importLegacyViews só é chamada em helena.mjs, nunca no corpo do módulo
     assert.doesNotMatch(source, /^importLegacyViews\(/m);

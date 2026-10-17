@@ -1,12 +1,12 @@
 
 import {
     acceptMarriage
-} from "../../services/marriage.mjs";
+} from "../../services/social/marriage.mjs";
 
 import {
     mention,
     mentionAll
-} from "../../services/mentions.mjs";
+} from "../../services/platform/mentions.mjs";
 
 import {
     createEmbed,

@@ -9,9 +9,9 @@ import {
 import {
     savePlayerName,
     getPlayerName
-} from "../../services/player-names.mjs";
+} from "../../services/platform/player-names.mjs";
 
-import { mention } from "../../services/mentions.mjs";
+import { mention } from "../../services/platform/mentions.mjs";
 
 import {
     createEmbed,

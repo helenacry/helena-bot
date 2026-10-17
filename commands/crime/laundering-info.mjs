@@ -4,9 +4,9 @@ import { formatMoney } from "../../database/economy.mjs";
 import {
     getLaunderingStatus,
     settleDue
-} from "../../services/laundering.mjs";
+} from "../../services/crime/laundering.mjs";
 
-import { getPrison } from "../../services/prison.mjs";
+import { getPrison } from "../../services/crime/prison.mjs";
 
 import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 

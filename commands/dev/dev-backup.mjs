@@ -1,5 +1,5 @@
 import { devReply,deny,guard } from '../../utils/developer-response.mjs';
-import { option,userId,logDev } from '../../services/developer.mjs';
+import { option,userId,logDev } from '../../services/platform/developer.mjs';
 import { db,DATABASE_PATH } from '../../database/connection.mjs';
 import { mkdirSync,copyFileSync } from 'node:fs';
 import { resolve,dirname } from 'node:path';

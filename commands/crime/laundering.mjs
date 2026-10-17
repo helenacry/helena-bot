@@ -10,11 +10,11 @@ import {
     startLaundering,
     unlockPrivate,
     settleDue
-} from "../../services/laundering.mjs";
+} from "../../services/crime/laundering.mjs";
 
 import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 
-import { launderingPanel } from "../../services/panels.mjs";
+import { launderingPanel } from "../../services/panels/panels.mjs";
 
 import { GameBlocked } from "../../utils/game-error.mjs";
 

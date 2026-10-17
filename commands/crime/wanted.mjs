@@ -1,9 +1,9 @@
 
-import { listWanted } from "../../services/wanted.mjs";
+import { listWanted } from "../../services/crime/wanted.mjs";
 
 import { WANTED_PAGE_SIZE } from "../../config/crime.mjs";
 
-import { safeText } from "../../services/user-lookup.mjs";
+import { safeText } from "../../services/platform/user-lookup.mjs";
 
 import {
     createEmbed,

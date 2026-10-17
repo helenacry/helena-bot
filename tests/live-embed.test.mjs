@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 const {
     startLiveUpdate, stopLiveUpdate, stopAllLiveUpdates,
     activeLiveUpdates, LiveEditError
-} = await import("../services/live-embed.mjs");
+} = await import("../services/platform/live-embed.mjs");
 const { LIVE_CONFIG } = await import("../config/live.mjs");
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));

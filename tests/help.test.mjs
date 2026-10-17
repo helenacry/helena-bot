@@ -8,13 +8,13 @@ import assert from "node:assert/strict";
 // da VSync e que a navegação e a busca funcionam.
 
 const { carregarComandos, comandosCarregados, resolverComando } = await import("../command-registry.mjs");
-const { handlePanelClick, handleModalSubmit } = await import("../services/panels.mjs");
+const { handlePanelClick, handleModalSubmit } = await import("../services/panels/panels.mjs");
 const { COMMAND_CATEGORIES, HIDDEN_FOLDERS, HIDDEN_COMMANDS } = await import("../config/command-categories.mjs");
 const { HELP_CONFIG } = await import("../config/help.mjs");
-const { collectSiteData } = await import("../site/data-source.mjs");
+const { collectSiteData } = await import("../scripts/site/data-source.mjs");
 
-const catalogModule = await import("../services/command-catalog.mjs");
-const viewModule = await import("../services/help-view.mjs");
+const catalogModule = await import("../services/platform/command-catalog.mjs");
+const viewModule = await import("../services/panels/help-view.mjs");
 
 const { getCatalog, findCommand, searchCommands, usageOf, buildCatalog } = catalogModule;
 const { buildHelpHome, buildHelpCategory, buildHelpCommand, buildHelpSearch, buildHelpClosed, pagesOf } = viewModule;

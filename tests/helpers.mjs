@@ -37,7 +37,7 @@ const migrations = [
     ["../database/combat-migrations.mjs", "runCombatMigrations"],
     ["../database/developer-migrations.mjs", "runDeveloperMigrations"],
     ["../database/streak-migrations.mjs", "runStreakMigrations"],
-    ["../services/player-names.mjs", "runPlayerNamesMigrations"],
+    ["../services/platform/player-names.mjs", "runPlayerNamesMigrations"],
     ["../database/achievement-migrations.mjs", "runAchievementMigrations"],
     ["../database/crime-migrations.mjs", "runCrimeMigrations"],
     ["../database/web-migrations.mjs", "runWebMigrations"],
@@ -106,7 +106,7 @@ export async function createPrefixRunner({
     gate
 }) {
     const { carregarComandos } = await import("../command-registry.mjs");
-    const { processarPrefixo } = await import("../services/prefix.mjs");
+    const { processarPrefixo } = await import("../services/platform/prefix.mjs");
 
     const log = console.log;
     console.log = () => {};
