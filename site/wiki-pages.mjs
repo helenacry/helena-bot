@@ -283,7 +283,7 @@ function renderPage({ page, result, nav, pages, section, neighbours }) {
     <span class="wiki-tag">Wiki</span>
     <div class="actions">
       <button class="btn wiki-menu-btn" id="wiki-menu-btn" type="button" aria-expanded="false" aria-controls="wiki-side" hidden>Menu</button>
-      <a class="btn" href="${root}">Voltar ao site</a>
+      <a class="btn wiki-back" href="${root}"><span class="long">Voltar ao site</span><span class="short" aria-hidden="true">← Site</span><span class="sr short-name">Voltar ao site</span></a>
     </div>
   </div>
 </header>
@@ -291,6 +291,7 @@ function renderPage({ page, result, nav, pages, section, neighbours }) {
 <div class="wiki">
 
   <aside class="wiki-side" id="wiki-side" aria-label="Menu da wiki">
+    <a class="side-back" href="${root}">← Voltar ao site</a>
     <form class="wiki-search" id="wiki-search-box" role="search" hidden>
       <label class="sr" for="wiki-search">Buscar na wiki</label>
       <input id="wiki-search" type="search" placeholder="Buscar na wiki" autocomplete="off">

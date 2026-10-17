@@ -34,7 +34,9 @@
 
 /* O cabeçalho vira menu quando os links, o logo e os botões não cabem em uma linha. */
 @media (max-width: 1080px) {
-  .menu-btn { display: inline-flex; }
+  .menu-btn { display: inline-flex; margin-left: 0; }
+  /* o convite fica junto do Menu, na ponta direita (e não colado no logo) */
+  .top .actions { margin-left: auto; }
   .top .actions .ghost { display: none; }
   .nav a[data-account]:not([hidden]) { display: block; }
   .nav {

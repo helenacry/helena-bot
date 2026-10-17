@@ -156,3 +156,63 @@ test("aberto direto do disco (file://), os links de pasta apontam para o index.h
         assert.match(read(page), /<script defer src="(\.\.\/)*(\.\.\/)?js\/util\.js"><\/script>/, page);
     }
 });
+
+test("a wiki sempre tem um jeito de voltar ao site, também no celular", () => {
+    const css = read("css/wiki.css");
+
+    for (const file of ["wiki/index.html", "wiki/economy/gems/index.html"]) {
+        const html = read(file);
+
+        // no cabeçalho: "Voltar ao site" no computador e "← Site" no celular (o nome acessível é sempre o inteiro)
+        assert.match(html, /<a class="btn wiki-back" href="[^"]*"><span class="long">Voltar ao site<\/span><span class="short" aria-hidden="true">← Site<\/span><span class="sr short-name">Voltar ao site<\/span><\/a>/, file);
+
+        // e como primeiro item da gaveta do menu
+        assert.match(html, /<aside class="wiki-side"[^>]*>\s*<a class="side-back" href="[^"]*">← Voltar ao site<\/a>/, file);
+    }
+
+    // o botão do cabeçalho não é mais escondido no celular
+    assert.doesNotMatch(css, /\.actions \.btn:not\(\.wiki-menu-btn\) \{ display: none; \}/);
+    assert.match(css, /@media \(max-width: 560px\) \{[^@]*\.wiki-back \.long \{ display: none; \}[^@]*\.wiki-back \.short \{ display: inline; \}/);
+    assert.match(css, /\.side-back \{ display: none; \}\s*@media \(max-width: 860px\) \{\s*\.side-back \{\s*display: flex;[^}]*min-height: 44px;/);
+});
+
+test("a gaveta do menu da wiki no celular ocupa a altura da tela e rola por dentro", () => {
+    const rule = read("css/wiki.css").match(/\.wiki-js \.wiki-side \{([^}]*)\}/)[1];
+
+    assert.match(rule, /position: fixed/);
+    assert.match(rule, /top: 64px/);
+    assert.match(rule, /bottom: 0/);
+
+    // sem isto o "align-self: start" do menu de computador faz o Chromium ignorar top e bottom:
+    // a gaveta vira uma coluna da altura do texto, começa atrás do cabeçalho e não rola
+    assert.match(rule, /align-self: stretch/);
+});
+
+test("o convite do cabeçalho fica junto do Menu (ponta direita) no tablet e no celular", () => {
+    const css = read("css/components.css");
+
+    assert.match(css, /@media \(max-width: 1080px\) \{[^@]*\.menu-btn \{ display: inline-flex; margin-left: 0; \}[^@]*\.top \.actions \{ margin-left: auto; \}/);
+});
+
+test("os links dos rodapés da wiki e das páginas legais têm área de toque de verdade", () => {
+    assert.match(read("css/wiki.css"), /\.wiki-foot a \{ display: inline-block; padding: 10px 0; \}/);
+    assert.match(read("css/legal.css"), /\.legal-foot a \{ display: inline-block; padding: 10px 0;/);
+});
+
+test("o painel é uma ficha: só a linha com daily liberado tem fundo e barra dourada, e a coroa marca o 7º dia", () => {
+    const css = read("css/account.css");
+
+    assert.match(css, /\.acc-row\.ready \{[^}]*background: var\(--bg-2\);[^}]*box-shadow: inset 3px 0 0 var\(--gold\);/);
+    assert.match(css, /\.acc-row\.jail \{[^}]*box-shadow: inset 3px 0 0 var\(--red\);/);
+
+    // a coroa é desenhada em CSS (sem emoji nem biblioteca de ícones)
+    assert.match(css, /--crown: polygon\(/);
+    assert.match(css, /clip-path: var\(--crown\)/);
+
+    // o movimento só roda com a classe "in" e some com movimento reduzido
+    assert.match(css, /\.in \.acc-track::after \{ animation: acc-fill/);
+    assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[^}]*animation: none;/);
+
+    // a gaveta e o painel usam só cores dos tokens
+    assert.doesNotMatch(css, /#[0-9a-fA-F]{3,8}\b|rgba?\(/);
+});

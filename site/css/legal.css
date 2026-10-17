@@ -109,7 +109,7 @@
 /* ---------- rodapé ---------- */
 .legal-foot { border-top: 1px solid var(--line); padding: 28px 0 56px; }
 .legal-foot .wrap { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; justify-content: space-between; }
-.legal-foot ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; }
-.legal-foot a { font-size: 0.92rem; }
+.legal-foot ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0 22px; }
+.legal-foot a { display: inline-block; padding: 10px 0; font-size: 0.92rem; }
 .legal-foot a[aria-current="page"] { color: var(--text); }
 .legal-foot p { color: var(--dim); font-size: 0.85rem; max-width: 52ch; }

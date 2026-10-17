@@ -8,7 +8,7 @@ import { WEB_CONFIG } from "../config/web.mjs";
 import { GEM_BONUS } from "../config/gems.mjs";
 import { PRISON_BLOCKED_COMMANDS } from "../config/crime.mjs";
 
-import { claimDaily, getDailyStatus } from "./daily.mjs";
+import { claimDaily, getDailyStatus, calculateReward, DAILY_CONFIG } from "./daily.mjs";
 import { claimGemBonus, getGemBonusStatus } from "./gem-bonus.mjs";
 import { getPrison } from "./prison.mjs";
 import { knowsGuild } from "./guild-registry.mjs";
@@ -711,6 +711,12 @@ export function createWebApi(config, deps = {}) {
                     min: GEM_BONUS.min,
                     max: GEM_BONUS.max,
                     cooldown: GEM_BONUS.cooldown
+                },
+                // A escada de 7 dias do daily (o prêmio de cada dia do ciclo, em centavos) e a
+                // recarga, para o painel desenhar a sequência com os números reais do bot.
+                daily: {
+                    cooldown: DAILY_CONFIG.cooldown,
+                    ladder: [1, 2, 3, 4, 5, 6, 7].map(day => calculateReward(day).total)
                 },
                 guilds
             }

@@ -69,7 +69,9 @@
 @media (max-width: 860px) {
   .wiki-side { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); padding: 20px 0 24px; }
   .wiki-js .wiki-side {
-    position: fixed; z-index: 30; top: 64px; left: 0; bottom: 0; width: min(20rem, 86vw);
+    /* align-self: stretch: o "start" do menu de computador faz a gaveta ignorar o top e o bottom,
+       ficar com a altura do texto (maior que a tela) e perder a rolagem */
+    position: fixed; z-index: 30; top: 64px; left: 0; bottom: 0; width: min(20rem, 86vw); align-self: stretch;
     max-height: none; padding: 20px 16px 40px; background: var(--bg);
     border-right: 1px solid var(--line-2); transform: translateX(-102%); visibility: hidden;
     transition: transform 0.25s var(--ease), visibility 0.25s;
@@ -192,10 +194,34 @@
 .wiki-doc ul.cards { padding-left: 0; gap: 12px; }
 .wiki-doc ul.cards li { display: block; }
 
-/* celular: cabeçalho enxuto (o logo e o rodapé já levam ao site) */
+/* voltar ao site: "Voltar ao site" no computador, "← Site" no celular (nunca some: a wiki é uma
+   parte do site, e quem chega por um link direto precisa de um jeito claro de voltar) */
+.wiki-back .short, .wiki-back .short-name { display: none; }
 @media (max-width: 560px) {
-  .wiki-page .top .actions .btn:not(.wiki-menu-btn) { display: none; }
+  .wiki-back .long { display: none; }
+  .wiki-back .short { display: inline; }
+  .wiki-back .short-name { display: block; }
+  .wiki-page .top .actions { gap: 8px; }
+  .wiki-page .top .actions .btn { padding: 9px 12px; }
 }
+@media (max-width: 400px) {
+  .wiki-tag { display: none; }
+}
+
+/* no menu lateral (gaveta do celular): o primeiro item leva de volta ao site */
+.side-back { display: none; }
+@media (max-width: 860px) {
+  .side-back {
+    display: flex; align-items: center; min-height: 44px; margin-bottom: 14px;
+    padding: 0 12px; border: 1px solid var(--line-2); border-radius: 10px;
+    color: var(--text); font-weight: 600; font-size: 0.95rem;
+  }
+  .side-back:hover { border-color: var(--brand); text-decoration: none; }
+}
+
+/* os links do rodapé têm área de toque de verdade */
+.wiki-foot a { display: inline-block; padding: 10px 0; }
+.wiki-foot ul { gap: 0 22px; }
 
 /* celular: tabelas curtas empilham, com o nome da coluna acima de cada valor */
 @media (max-width: 640px) {

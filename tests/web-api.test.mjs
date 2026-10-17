@@ -720,6 +720,25 @@ test("modo cloudflare: o diagnóstico mostra o IP que valeu", async () => {
 // SESSÃO
 // ==========================================
 
+test("/api/me traz a escada de 7 dias do daily e a recarga, com os números do bot", async () => {
+    await withApi({}, async ctx => {
+        const token = await loggedIn(ctx);
+
+        const me = await call(ctx, "GET", "/api/me", { token });
+
+        assert.equal(me.status, 200);
+
+        // R$ 500 + R$ 50 por dia seguido; no 7º, mais o bônus semanal (centavos)
+        assert.deepEqual(me.json.daily.ladder, [50_000, 55_000, 60_000, 65_000, 70_000, 75_000, 130_000]);
+        assert.equal(me.json.daily.cooldown, 24 * 60 * 60);
+
+        // a escada vem do mesmo cálculo que paga o daily de verdade
+        const { calculateReward } = await import("../services/daily.mjs");
+
+        assert.deepEqual(me.json.daily.ladder, [1, 2, 3, 4, 5, 6, 7].map(day => calculateReward(day).total));
+    });
+});
+
 test("sem token, com token inventado ou vencido: 401", async () => {
     await withApi({}, async ctx => {
         assert.equal((await call(ctx, "GET", "/api/me")).status, 401);

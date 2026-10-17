@@ -119,6 +119,77 @@
     return pips;
   }
 
+  // 55000 -> "550", 130000 -> "1.300": o prêmio na escada, sem "R$" e sem centavos.
+  function shortMoney(cents) {
+    return Math.round((Number(cents) || 0) / 100).toLocaleString("pt-BR");
+  }
+
+  // Quanto da espera já passou (de 0 a 1), para a barra: faltam "remaining" de "total" segundos.
+  function waitProgress(remaining, total) {
+    var whole = Number(total) > 0 ? Number(total) : 1;
+
+    return Math.min(1, Math.max(0, 1 - (Number(remaining) || 0) / whole));
+  }
+
+  // 0 = daily liberado, 1 = esperando, 2 = preso.
+  function rankOf(guild) {
+    return guild.prison ? 2 : (guild.daily.available ? 0 : 1);
+  }
+
+  function rewardOf(guild) {
+    return Number(guild.daily.nextReward && guild.daily.nextReward.total) || 0;
+  }
+
+  // Ordem das linhas: o daily liberado vem primeiro (o prêmio maior na frente); depois
+  // quem está esperando (o que libera antes vem antes); por último, quem está preso.
+  // Empatou, fica a ordem da API.
+  function sortGuilds(guilds) {
+    return (guilds || [])
+      .map(function (guild, index) { return { guild: guild, index: index }; })
+      .sort(function (a, b) {
+        var diff = rankOf(a.guild) - rankOf(b.guild);
+
+        if (diff) return diff;
+
+        if (rankOf(a.guild) === 0 && rewardOf(a.guild) !== rewardOf(b.guild)) {
+          return rewardOf(b.guild) - rewardOf(a.guild);
+        }
+
+        if (rankOf(a.guild) === 1 && a.guild.daily.remaining !== b.guild.daily.remaining) {
+          return a.guild.daily.remaining - b.guild.daily.remaining;
+        }
+
+        return a.index - b.index;
+      })
+      .map(function (item) { return item.guild; });
+  }
+
+  // O resumo do topo da lista: quantos dailys estão liberados, quanto somam (centavos) e,
+  // se nenhum está, em quanto tempo sai o próximo. Preso não conta.
+  function tally(guilds) {
+    var ready = 0;
+    var total = 0;
+    var nextIn = null;
+
+    (guilds || []).forEach(function (guild) {
+      if (guild.prison) return;
+
+      if (guild.daily.available) {
+        ready += 1;
+        total += rewardOf(guild);
+
+      } else if (nextIn === null || guild.daily.remaining < nextIn) {
+        nextIn = guild.daily.remaining;
+      }
+    });
+
+    return { ready: ready, total: total, nextIn: nextIn };
+  }
+
+  // A escada do exemplo da tela de entrada: os mesmos valores do bot (o teste confere
+  // contra o cálculo do daily, para o exemplo não ficar desatualizado).
+  var SAMPLE_LADDER = [50000, 55000, 60000, 65000, 70000, 75000, 130000];
+
   // Só imagens https entram na página (nada de javascript: ou data:).
   function safeImage(url) {
     return typeof url === "string" && /^https:\/\//.test(url) ? url : "";
@@ -159,6 +230,11 @@
     formatMoney: formatMoney,
     formatDuration: formatDuration,
     weekPips: weekPips,
+    shortMoney: shortMoney,
+    waitProgress: waitProgress,
+    sortGuilds: sortGuilds,
+    tally: tally,
+    SAMPLE_LADDER: SAMPLE_LADDER,
     safeImage: safeImage,
     errorText: errorText
   };
@@ -257,12 +333,21 @@
     state.timers = [];
   }
 
-  function show(children) {
+  // "animate": a ficha e as barras entram com movimento (a classe "in" liga as animações
+  // do CSS). Nas atualizações silenciosas (depois de coletar, ou quando uma contagem
+  // zera) a tela se refaz sem repetir a entrada. Sem JS ou com movimento reduzido, tudo
+  // já aparece pronto.
+  function show(children, animate) {
     stopTimers();
 
     while (root.firstChild) root.removeChild(root.firstChild);
 
     children.forEach(function (child) { root.appendChild(child); });
+
+    if (root.classList) {
+      if (animate) root.classList.add("in");
+      else root.classList.remove("in");
+    }
   }
 
   function setCaptchaVisible(visible) {
@@ -290,21 +375,24 @@
     return node;
   }
 
+  function words(value) { return document.createTextNode(value); }
+
   // Resultado da última ação, anunciado pelo leitor de tela. Fica guardado
   // em state.message e é redesenhado junto com o painel.
-  function say(text, kind) {
-    state.message = text ? { text: text, kind: kind || "" } : null;
+  function say(message, kind) {
+    state.message = message ? { text: message, kind: kind || "" } : null;
 
     var area = document.getElementById("acc-say");
 
     if (area) {
       area.className = "acc-say " + (kind || "");
-      area.textContent = text || "";
+      area.textContent = message || "";
     }
   }
 
   // Conta de verdade: a cada segundo diminui; quando chega a zero, atualiza.
-  function countdown(node, seconds, onDone) {
+  // "onTick" recebe os segundos que faltam (a barra de espera usa isso).
+  function countdown(node, seconds, onDone, onTick) {
     var left = Math.ceil(seconds);
 
     node.textContent = formatDuration(left);
@@ -320,12 +408,47 @@
       }
 
       node.textContent = formatDuration(left);
+
+      if (onTick) onTick(left);
     }, 1000);
 
     state.timers.push(timer);
   }
 
+  // Barra da espera: enche conforme a recarga passa. Devolve { node, set(segundosQueFaltam) }.
+  function meter(left, total) {
+    var fill = el("i");
+
+    function set(remaining) {
+      fill.setAttribute("style", "--p:" + waitProgress(remaining, total).toFixed(4));
+    }
+
+    set(left);
+
+    return { node: el("span", { "class": "acc-meter", "aria-hidden": "true" }, [fill]), set: set };
+  }
+
   // ---------- login ----------
+  // Um exemplo do que o painel mostra, ao lado do botão de entrar (marcado como exemplo,
+  // sem botão que funcione).
+  function sample() {
+    var guild = {
+      id: "exemplo",
+      name: "Servidor de exemplo",
+      icon: null,
+      player: { wallet: 120000, bank: 450000, level: 8 },
+      daily: { available: true, remaining: 0, streak: 2, nextStreak: 3, nextReward: { total: SAMPLE_LADDER[2], weeklyBonus: 0 } },
+      prison: null
+    };
+
+    var row = serverRow(guild, { daily: { ladder: SAMPLE_LADDER, cooldown: 86400 } }, 0, true);
+
+    return el("aside", { "class": "acc-sample", "aria-hidden": "true" }, [
+      el("span", { "class": "acc-sample-tag", text: "Exemplo" }),
+      el("ol", { "class": "acc-list" }, [row])
+    ]);
+  }
+
   function loginScreen(message) {
     setCaptchaVisible(false);
 
@@ -346,20 +469,28 @@
       });
     });
 
+    var copy = [
+      el("span", { "class": "eyebrow", text: "Painel do jogador" }),
+      el("h1", { text: "Pegue o seu daily e as suas gemas" }),
+      el("p", { "class": "acc-lede", text: "Entre com a sua conta da VSync para resgatar a recompensa diária nos servidores onde a Helena está e coletar gemas, que valem em todos eles." })
+    ];
+
+    if (message) copy.push(el("p", { "class": "acc-warn", role: "alert", text: message }));
+
+    copy.push(enter);
+
+    copy.push(el("ul", { "class": "acc-facts" }, [
+      el("li", { text: "A Helena vê só o seu nome, o seu avatar e a lista dos seus servidores." }),
+      el("li", { text: "Ela nunca recebe a sua senha, e o acesso que a VSync dá é devolvido assim que você entra." }),
+      el("li", { text: "A sessão dura 6 horas. Sair encerra tudo." })
+    ]));
+
     show([
-      el("section", { "class": "acc-box acc-login" }, [
-        el("span", { "class": "eyebrow", text: "Painel do jogador" }),
-        el("h1", { text: "Pegue o seu daily e as suas gemas" }),
-        el("p", { "class": "acc-lede", text: "Entre com a sua conta da VSync para resgatar a recompensa diária nos servidores onde a Helena está e coletar gemas, que valem em todos eles." }),
-        message ? el("p", { "class": "acc-warn", role: "alert", text: message }) : el("span"),
-        enter,
-        el("ul", { "class": "acc-facts" }, [
-          el("li", { text: "A Helena vê só o seu nome, o seu avatar e a lista dos seus servidores." }),
-          el("li", { text: "Ela nunca recebe a sua senha, e o acesso que a VSync dá é devolvido assim que você entra." }),
-          el("li", { text: "A sessão dura 6 horas. Sair encerra tudo." })
-        ])
+      el("div", { "class": "acc-login-wrap" }, [
+        el("section", { "class": "acc-login" }, copy),
+        sample()
       ])
-    ]);
+    ], true);
   }
 
   function finishLogin(params) {
@@ -447,7 +578,7 @@
 
       state.me = result.data;
 
-      dashboard();
+      dashboard(quiet);
     });
   }
 
@@ -483,7 +614,7 @@
     if (state.me.captcha) {
       if (!state.captchaToken) {
         say(errorText("captcha_required"), "bad");
-        dashboard();
+        dashboard(true);
 
         return;
       }
@@ -512,24 +643,20 @@
     });
   }
 
-  // Cartão das gemas: saldo da conta e a coleta (de 5 em 5 horas).
-  function gemCard(me) {
+  // Gemas: saldo da conta e a coleta (de 5 em 5 horas).
+  function purse(me) {
     var gems = me.gems;
 
-    var card = el("section", { "class": "acc-box acc-gems" }, [
+    var box = el("section", { "class": "acc-purse", "aria-label": "Gemas" }, [
       el("span", { "class": "eyebrow", text: "Gemas" }),
-      el("div", { "class": "acc-balance" }, [
-        el("b", { text: Number(gems.balance).toLocaleString("pt-BR") }),
-        el("span", { text: "valem em todos os servidores" })
-      ]),
-      el("p", {
-        "class": "acc-small",
-        text: "Cada coleta rende de " + gems.min + " a " + gems.max + " gemas, a cada " + (gems.cooldown / 3600) + " horas."
-      })
+      el("div", { "class": "acc-purse-top" }, [
+        el("b", { "class": "acc-purse-num", text: Number(gems.balance).toLocaleString("pt-BR") }),
+        el("span", { "class": "acc-purse-note", text: "valem em todos os servidores" })
+      ])
     ]);
 
     if (gems.available) {
-      var claim = button("Pegar gemas", "primary", function () {
+      var claim = button("Pegar gemas", "primary acc-go", function () {
         claim.disabled = true;
         claim.setAttribute("aria-busy", "true");
 
@@ -538,76 +665,124 @@
         });
       });
 
-      card.appendChild(claim);
+      box.appendChild(claim);
 
     } else {
       var timer = el("b", { "class": "acc-clock" });
+      var bar = meter(gems.remaining, gems.cooldown);
 
-      card.appendChild(el("p", { "class": "acc-wait" }, [document.createTextNode("Próxima coleta em "), timer]));
+      box.appendChild(el("p", { "class": "acc-wait" }, [words("Próxima coleta em "), timer]));
+      box.appendChild(bar.node);
 
-      countdown(timer, gems.remaining, refreshQuietly);
+      countdown(timer, gems.remaining, refreshQuietly, function (left) { bar.set(left); });
     }
 
-    return card;
+    box.appendChild(el("p", {
+      "class": "acc-small",
+      text: "Cada coleta rende de " + gems.min + " a " + gems.max + " gemas, a cada " + (gems.cooldown / 3600) + " horas."
+    }));
+
+    return box;
   }
 
-  // Cartão de um servidor: dinheiro, os 7 dias da sequência e o daily.
-  function serverCard(guild) {
+  // Uma linha por servidor: quem é, a escada de 7 dias e a ação. "preview" é a versão
+  // de exemplo da tela de entrada (sem ação de verdade).
+  function serverRow(guild, me, index, preview) {
     var daily = guild.daily;
+    var info = me.daily || {};
+    var ladder = info.ladder || [];
+    var cooldown = info.cooldown || 86400;
 
-    var head = el("div", { "class": "acc-server-head" }, [
-      avatar(guild.icon, guild.name, 44),
+    var pips = weekPips(daily.nextStreak);
+    var position = ((Math.max(1, daily.nextStreak) - 1) % 7) + 1;
+    var mode = guild.prison ? "jail" : (daily.available ? "ready" : "wait");
+
+    // quem
+    var stats = guild.player
+      ? el("span", { "class": "acc-stats" }, [
+          words("Carteira "), el("b", { text: formatMoney(guild.player.wallet) }),
+          words(" · banco "), el("b", { text: formatMoney(guild.player.bank) }),
+          words(" · nível "), el("b", { text: String(guild.player.level) })
+        ])
+      : el("span", { "class": "acc-stats", text: "Você ainda não jogou aqui" });
+
+    var who = el("div", { "class": "acc-row-id" }, [
+      avatar(guild.icon, guild.name, 46),
       el("div", {}, [
         el("h3", { text: guild.name || "Servidor" }),
+        stats,
         el("span", {
-          "class": "acc-small",
-          text: guild.player
-            ? formatMoney(guild.player.wallet) + " na carteira · " + formatMoney(guild.player.bank) + " no banco · nível " + guild.player.level
-            : "Você ainda não jogou aqui"
+          "class": "acc-streak",
+          text: daily.streak > 0
+            ? "sequência de " + daily.streak + (daily.streak === 1 ? " dia" : " dias")
+            : "sequência nova"
         })
       ])
     ]);
 
-    var pips = el("ol", { "class": "acc-pips", "aria-label": "Dias da sequência" }, weekPips(daily.nextStreak).map(function (pip) {
+    // a escada
+    var track = el("ol", {
+      "class": "acc-track",
+      "aria-label": "Dias da sequência, com o prêmio de cada um em reais",
+      style: "--at:" + ((position - 1) / 6).toFixed(4)
+    }, pips.map(function (pip) {
+      var prize = ladder[pip.day - 1];
+      var spoken = { done: "coletado", next: "é o de hoje", todo: "ainda não" }[pip.state];
+
       return el("li", {
-        "class": "pip " + pip.state + (pip.weekly ? " weekly" : ""),
-        title: "Dia " + pip.day + (pip.weekly ? " (bônus semanal)" : ""),
-        text: String(pip.day)
-      });
+        "class": "stop " + pip.state + (pip.weekly ? " weekly" : ""),
+        title: "Dia " + pip.day + (pip.weekly ? " (bônus semanal)" : "") + (prize !== undefined ? ": " + formatMoney(prize) : "")
+      }, [
+        el("i", { "aria-hidden": "true" }),
+        el("span", { text: prize !== undefined ? shortMoney(prize) : String(pip.day) }),
+        el("span", { "class": "sr", text: "Dia " + pip.day + (pip.weekly ? ", bônus semanal" : "") + ", " + spoken })
+      ]);
     }));
 
-    var reward = el("p", { "class": "acc-reward" }, [
-      document.createTextNode("Hoje: "),
-      el("b", { text: formatMoney(daily.nextReward.total) }),
-      document.createTextNode(daily.streak > 0
-        ? " · sequência de " + daily.streak + (daily.streak === 1 ? " dia" : " dias")
-        : " · sequência nova")
-    ]);
+    // a ação
+    var act = el("div", { "class": "acc-row-act" });
 
-    var action;
+    if (mode === "jail") {
+      act.appendChild(el("p", { "class": "acc-jail" }, [
+        words("Preso, falta "),
+        el("b", { text: formatDuration(guild.prison.remaining) }),
+        words(". Preso não coleta o daily.")
+      ]));
 
-    if (guild.prison) {
-      action = el("p", { "class": "acc-warn", text: "Preso, falta " + formatDuration(guild.prison.remaining) + ". Preso não coleta o daily." });
-
-    } else if (daily.available) {
-      action = button("Resgatar daily", "primary", function () {
-        action.disabled = true;
-        action.setAttribute("aria-busy", "true");
+    } else if (mode === "ready") {
+      var go = button("Resgatar " + formatMoney(daily.nextReward.total), "primary acc-go", function () {
+        go.disabled = true;
+        go.setAttribute("aria-busy", "true");
 
         collect("/api/claim/daily", { guildId: guild.id }, function (data) {
           return "Daily resgatado em " + (guild.name || "o servidor") + ": " + formatMoney(data.reward.total) + ". Sequência: " + data.streak + ".";
         });
       });
 
+      if (preview) {
+        go.disabled = true;
+        go.setAttribute("tabindex", "-1");
+      }
+
+      act.appendChild(go);
+
+      if (daily.nextReward.weeklyBonus > 0) {
+        act.appendChild(el("span", { "class": "acc-note", text: "inclui o bônus semanal" }));
+      }
+
     } else {
       var timer = el("b", { "class": "acc-clock" });
+      var bar = meter(daily.remaining, cooldown);
 
-      action = el("p", { "class": "acc-wait" }, [document.createTextNode("Próximo resgate em "), timer]);
+      act.appendChild(el("div", { "class": "acc-wait-box" }, [
+        el("p", { "class": "acc-wait" }, [words("Próximo resgate em "), timer]),
+        bar.node
+      ]));
 
-      countdown(timer, daily.remaining, refreshQuietly);
+      countdown(timer, daily.remaining, refreshQuietly, function (left) { bar.set(left); });
     }
 
-    return el("article", { "class": "acc-box acc-server" }, [head, pips, reward, action]);
+    return el("li", { "class": "acc-row " + mode, style: "--i:" + (index || 0) }, [who, track, act]);
   }
 
   // Desafio do Cloudflare Turnstile: carregado só quando a API pede, e
@@ -647,43 +822,66 @@
     document.head.appendChild(script);
   }
 
-  function dashboard() {
+  function dashboard(quiet) {
     var me = state.me;
 
-    var side = el("div", { "class": "acc-side" }, [
-      el("section", { "class": "acc-box acc-me" }, [
-        avatar(me.user.avatarUrl, me.user.displayName, 72),
-        el("h1", { text: me.user.displayName || me.user.username }),
-        el("span", { "class": "acc-small", text: "@" + me.user.username }),
-        button("Sair", "", function () { signOut(); })
+    var sheet = el("section", { "class": "acc-sheet" }, [
+      el("div", { "class": "acc-who" }, [
+        avatar(me.user.avatarUrl, me.user.displayName, 76),
+        el("div", { "class": "acc-who-text" }, [
+          el("span", { "class": "eyebrow", text: "Painel do jogador" }),
+          el("h1", { text: me.user.displayName || me.user.username }),
+          el("span", { "class": "acc-handle", text: "@" + me.user.username })
+        ]),
+        button("Sair", "acc-exit", function () { signOut(); })
       ]),
-      gemCard(me)
+      purse(me)
     ]);
 
-    var servers = me.guilds.length
-      ? me.guilds.map(serverCard)
-      : [notice("Nenhum servidor em comum", "A Helena não está em nenhum servidor seu. Adicione-a a um servidor da VSync e volte aqui.")];
+    var guilds = sortGuilds(me.guilds);
+    var totals = tally(guilds);
 
-    var main = el("div", { "class": "acc-main" }, [
-      el("div", { "class": "acc-main-head" }, [
-        el("span", { "class": "eyebrow", text: "Seus servidores" }),
-        el("h2", { text: "Daily por servidor" }),
-        el("p", { "class": "acc-small", text: "Cada servidor tem a própria recarga de 24 horas e a própria sequência." })
-      ])
-    ].concat(servers));
+    var summary = el("p", { "class": "acc-tally" });
+
+    if (totals.ready > 0) {
+      summary.appendChild(el("b", { text: String(totals.ready) }));
+      summary.appendChild(words(totals.ready === 1 ? " liberado · " : " liberados · "));
+      summary.appendChild(el("b", { text: formatMoney(totals.total) }));
+      summary.appendChild(words(" para resgatar"));
+
+    } else {
+      summary.appendChild(words(totals.nextIn !== null
+        ? "Nenhum liberado agora · o próximo em " + formatDuration(totals.nextIn)
+        : "Nenhum liberado agora"));
+    }
+
+    var servers = el("section", { "class": "acc-servers" }, [
+      el("div", { "class": "acc-servers-head" }, [
+        el("div", {}, [
+          el("span", { "class": "eyebrow", text: "Seus servidores" }),
+          el("h2", { text: "Daily por servidor" })
+        ]),
+        guilds.length ? summary : el("span")
+      ]),
+      el("p", { "class": "acc-small", text: "Cada servidor tem a própria recarga de 24 horas e a própria sequência." }),
+      guilds.length
+        ? el("ol", { "class": "acc-list" }, guilds.map(function (guild, index) { return serverRow(guild, me, index); }))
+        : notice("Nenhum servidor em comum", "A Helena não está em nenhum servidor seu. Adicione-a a um servidor da VSync e volte aqui.")
+    ]);
 
     var message = state.message;
 
     show([
-      el("div", { "class": "acc-grid" }, [side, main]),
+      sheet,
       el("p", {
         id: "acc-say",
         "class": "acc-say " + (message ? message.kind : ""),
         role: "status",
         "aria-live": "polite",
         text: message ? message.text : ""
-      })
-    ]);
+      }),
+      servers
+    ], !quiet);
 
     setupCaptcha();
   }
