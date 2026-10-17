@@ -13,17 +13,7 @@
     anchor.rel = "noopener";
     anchor.hidden = false;
 
-    var text = anchor.getAttribute("data-on") || anchor.textContent;
-    var short = anchor.getAttribute("data-on-short");
-
-    // No cabeçalho do celular não cabe o texto inteiro: o CSS escolhe qual dos dois mostrar.
-    if (short) {
-      anchor.textContent = "";
-      anchor.appendChild(H.el("span", { "class": "long", text: text }));
-      anchor.appendChild(H.el("span", { "class": "short", text: short }));
-    } else {
-      anchor.textContent = text;
-    }
+    anchor.textContent = anchor.getAttribute("data-on") || anchor.textContent;
   }
 
   $$('[data-cta="invite"]').forEach(function (a) {
@@ -36,8 +26,10 @@
   });
 
   // ---------- painel da conta (só aparece com a API configurada) ----------
+  // Com a API, o botão do cabeçalho é o Dashboard; sem ela, continua o "Ver comandos".
   if (H.config.apiUrl) {
     $$("[data-account]").forEach(function (a) { a.hidden = false; });
+    $$("[data-no-account]").forEach(function (a) { a.hidden = true; });
   }
 
   // ---------- menu no celular ----------

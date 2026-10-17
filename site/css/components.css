@@ -21,19 +21,22 @@
 .brand small { font-family: var(--font-display); color: var(--brand-hi); font-size: 0.8rem; }
 
 .nav { display: flex; gap: 4px; margin-inline: auto; }
-.nav a { color: var(--muted); font-size: 0.92rem; font-weight: 500; padding: 8px 12px; border-radius: 8px; }
+.nav a { color: var(--muted); font-size: 0.92rem; font-weight: 500; padding: 8px 12px; border-radius: 8px; white-space: nowrap; }
 .nav a:hover { color: var(--text); background: var(--bg-3); text-decoration: none; }
 .nav a.on { color: var(--text); }
 
 .top .actions { display: flex; gap: 10px; }
 .top .actions .btn { padding: 9px 16px; font-size: 0.9rem; }
 .top .btn { white-space: nowrap; }
-.top .btn .short { display: none; }
+/* O Dashboard já é um botão do cabeçalho: o link "Painel" só aparece no menu do celular. */
+.nav a[data-account] { display: none; }
 .menu-btn { display: none; margin-left: auto; padding: 9px 12px; }
 
-@media (max-width: 920px) {
+/* O cabeçalho vira menu quando os links, o logo e os botões não cabem em uma linha. */
+@media (max-width: 1080px) {
   .menu-btn { display: inline-flex; }
   .top .actions .ghost { display: none; }
+  .nav a[data-account]:not([hidden]) { display: block; }
   .nav {
     display: none;
     position: absolute; left: 0; right: 0; top: 100%;
@@ -50,10 +53,7 @@
   .top .wrap { gap: 10px; }
   .top .actions .btn { padding: 9px 12px; font-size: 0.85rem; }
 }
-/* Em telas estreitas o nome, o convite e o Menu não cabem juntos com o texto inteiro. */
 @media (max-width: 420px) {
-  .top .btn .long { display: none; }
-  .top .btn .short { display: inline; }
   .top .wrap { gap: 8px; }
   .menu-btn { padding: 9px 10px; }
 }

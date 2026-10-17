@@ -27,22 +27,31 @@ test("nenhum texto do site é menor que 12px (0.75rem)", () => {
     assert.deepEqual(small, []);
 });
 
-test("o botão de convite do cabeçalho tem texto curto para telas estreitas", () => {
+test("o cabeçalho tem os botões Dashboard e Adicionar, curtos o bastante para caber em qualquer tela", () => {
     const html = read("index.html");
     const nav = read("js/nav.js");
     const css = read("css/components.css");
 
-    const cta = html.match(/<a class="btn primary" href="#comecar" data-cta="invite"[^>]*>/)[0];
+    const actions = html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];
 
-    assert.match(cta, /data-on="Adicionar à VSync"/);
-    assert.match(cta, /data-on-short="Adicionar"/);
+    // Com a API ligada o botão é o Dashboard (leva ao painel); sem ela, continua o "Ver comandos".
+    assert.match(actions, /<a class="btn ghost" href="account\/" data-account hidden>Dashboard<\/a>/);
+    assert.match(actions, /<a class="btn ghost" href="#comandos" data-no-account>Ver comandos<\/a>/);
+    assert.match(nav, /\[data-no-account\][\s\S]{0,80}hidden = true/);
 
-    // o script monta os dois textos e o CSS escolhe qual mostrar
-    assert.match(nav, /"class": "long"/);
-    assert.match(nav, /"class": "short"/);
+    // o convite do cabeçalho é só "Adicionar", em qualquer largura (sem versão curta separada)
+    assert.match(actions, /data-cta="invite" data-on="Adicionar">/);
+    assert.doesNotMatch(html, /data-on-short/);
+    assert.doesNotMatch(nav, /"class": "(long|short)"/);
+    assert.doesNotMatch(css, /\.top \.btn \.(long|short)/);
 
-    assert.match(css, /\.top \.btn \.short \{ display: none; \}/);
-    assert.match(css, /@media \(max-width: 420px\) \{[^}]*\.top \.btn \.long \{ display: none; \}[^}]*\.top \.btn \.short \{ display: inline; \}/);
+    // o link "Painel" do menu só aparece no menu do celular (no computador o botão já leva ao painel)
+    assert.match(css, /\.nav a\[data-account\] \{ display: none; \}/);
+    assert.match(css, /@media \(max-width: 1080px\) \{[^@]*\.nav a\[data-account\]:not\(\[hidden\]\) \{ display: block; \}/);
+});
+
+test("os links do menu não quebram em duas linhas (\"O jogo\" não vira \"O\" e \"jogo\")", () => {
+    assert.match(read("css/components.css"), /\.nav a \{[^}]*white-space: nowrap;/);
 });
 
 test("o nome da Helena no cabeçalho não encolhe nem quebra (o botão não pode ficar por cima)", () => {
