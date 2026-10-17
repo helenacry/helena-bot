@@ -129,6 +129,11 @@ test("textField e openModal validam os limites da VSync", () => {
     assert.throws(() => openModal({ customId: "m", title: "ok", fields: "abcdef".split("").map(field) }), /1 a 5/);
     assert.throws(() => openModal({ customId: "m", title: "ok", fields: [field("a"), field("a")] }), /repetir/);
 
+    // o customId do modal tem o mesmo teto (1 a 100) que o dos campos
+    assert.throws(() => openModal({ customId: "", title: "ok", fields: [field("a")] }), /customId do modal/);
+    assert.throws(() => openModal({ customId: "m".repeat(101), title: "ok", fields: [field("a")] }), /customId do modal/);
+    assert.doesNotThrow(() => openModal({ customId: "m".repeat(100), title: "ok", fields: [field("a")] }));
+
     const modal = openModal({ customId: "m", title: "ok", fields: [field("a")] });
 
     assert.equal(modal.type, "modal");

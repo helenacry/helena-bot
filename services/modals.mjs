@@ -71,8 +71,8 @@ export function textField({
 
 // Resposta que abre o modal.
 export function openModal({ customId, title, fields }) {
-    if (typeof customId !== "string" || customId.length < 1) {
-        throw new Error("O modal precisa de um customId.");
+    if (typeof customId !== "string" || customId.length < 1 || customId.length > 100) {
+        throw new Error("O customId do modal deve ter de 1 a 100 caracteres.");
     }
 
     if (typeof title !== "string" || title.length < 1 || title.length > 45) {
