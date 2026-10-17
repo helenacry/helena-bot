@@ -692,13 +692,6 @@ function processarEventoGuild(msg) {
         return false;
     }
 
-    // Diagnóstico temporário.
-
-    console.log(
-        "[DEBUG GUILD EVENT]",
-        JSON.stringify(msg, null, 2)
-    );
-
     const guildId =
         obterGuildId(msg.d) ||
         obterGuildId(msg.d?.guild);
