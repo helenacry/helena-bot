@@ -12,6 +12,7 @@ import { claimDaily, getDailyStatus, calculateReward, DAILY_CONFIG } from "../ec
 import { claimGemBonus, getGemBonusStatus } from "../economy/gem-bonus.mjs";
 import { getPrison } from "../crime/prison.mjs";
 import { knowsGuild } from "../platform/guild-registry.mjs";
+import { createAvatarPreview, PREVIEW_PATH } from "./avatar-preview.mjs";
 
 // ==========================================
 // API DO SITE
@@ -168,6 +169,10 @@ export function createWebApi(config, deps = {}) {
     const fetchImpl = deps.fetch ?? globalThis.fetch;
     const now = deps.now ?? nowSeconds;
     const random = deps.random ?? Math.random;
+
+    // A imagem do avatar para os embeds (GET /img/avatar.png?u=...): não é da API do site,
+    // então fica fora das regras de origem e de JSON.
+    const avatarPreview = createAvatarPreview({ fetch: fetchImpl });
 
     const limiter = new RateLimiter();
     const origins = new Set(config.origins);
@@ -880,6 +885,13 @@ export function createWebApi(config, deps = {}) {
 
         try {
             const path = new URL(req.url, "http://localhost").pathname;
+
+            // É uma imagem pública, pedida pelo <img> do app da VSync (sem cabeçalho Origin).
+            if (path === PREVIEW_PATH && (req.method === "GET" || req.method === "HEAD")) {
+                await avatarPreview.serve(req, res);
+
+                return;
+            }
 
             // Um site que não está na lista nunca consegue falar com a API
             // pelo navegador (sem Access-Control-Allow-Origin ele nem lê a resposta).

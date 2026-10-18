@@ -10,6 +10,13 @@
 // O site em si tem o seu próprio config em site/js/config.js (roda no navegador).
 export const SITE_URL = "https://helenacry.github.io/helena-bot/";
 
+// O endereço público da API do bot (Discloud, atrás da Cloudflare). O bot o usa para montar o
+// endereço das imagens que a própria API serve (services/web/avatar-preview.mjs). Dá para trocar
+// por HELENA_API_URL sem mexer no código.
+export const API_URL = String(process.env.HELENA_API_URL || "https://helena.discloud.dev")
+    .trim()
+    .replace(/\/+$/, "");
+
 // Onde fica a wiki.
 export const WIKI_URL = `${SITE_URL}wiki/`;
 

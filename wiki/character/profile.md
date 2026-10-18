@@ -37,7 +37,7 @@ O cartão mostra a **menção**, o **@usuário** e o **ID** (em caixas de códig
 
 Embaixo do cartão há dois menus, só para quem usou o comando:
 
-- **Mais informações.** abre o **avatar** (uma imagem quadrada de 500x500, enviada como mensagem normal do canal, porque a VSync não aceita imagem em resposta privada), o **banner**, o nome de cada **insígnia**, as **datas e idades**, a **evolução do Pulse** (cada nível e quando chega), os **cargos** e o **status e a atividade** (online, status personalizado, o que está fazendo). Só aparece o que a pessoa tem, e o que ela escondeu na VSync não aparece.
+- **Mais informações.** abre o **avatar** (inteiro e sem cortar), o **banner**, o nome de cada **insígnia**, as **datas e idades**, a **evolução do Pulse** (cada nível e quando chega), os **cargos** e o **status e a atividade** (online, status personalizado, o que está fazendo). Só aparece o que a pessoa tem, e o que ela escondeu na VSync não aparece.
 - **Ver informações de outros membros no servidor.** lista quem já joga ali e tem a opção **Procurar por @usuário...**, que abre um formulário. O resultado também aparece só para você.
 
 ## Próximo passo

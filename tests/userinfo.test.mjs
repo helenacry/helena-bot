@@ -88,17 +88,6 @@ const MEMBERS = [
 
 const calls = [];
 
-// Imagens e anexos simulados: o avatar é uma foto LARGA (1200x300), para provar o recorte quadrado.
-const sharpLib = (await import("sharp")).default;
-
-const WIDE = await sharpLib({ create: { width: 1200, height: 300, channels: 3, background: "#8755da" } }).png().toBuffer();
-
-process.env.VSYNC_BOT_TOKEN = process.env.VSYNC_BOT_TOKEN || "teste";
-
-let failImages = false;
-let failUpload = false;
-let uploadedBytes = null;
-let lastInit = null;
 
 // liga para simular a VSync fora do ar na rota de membro
 let failMembers = false;
@@ -114,35 +103,6 @@ globalThis.fetch = async (url, init = {}) => {
         text: async () => JSON.stringify(body), arrayBuffer: async () => new ArrayBuffer(0),
         headers: { get: () => null }
     });
-
-    // a foto do avatar e do banner
-    if (u.startsWith("https://cdn.exemplo.test/")) {
-        if (failImages) return reply(500, {});
-
-        return {
-            ok: true, status: 200, headers: { get: () => null },
-            arrayBuffer: async () => WIDE.buffer.slice(WIDE.byteOffset, WIDE.byteOffset + WIDE.byteLength)
-        };
-    }
-
-    // o fluxo de anexos: limites, preparar, enviar os bytes e concluir
-    if (u.endsWith("/attachments/limits")) return reply(200, { maxBytes: 100 * 1024 * 1024, available: 4 });
-
-    if (u.endsWith("/attachments/init")) {
-        if (failUpload) return reply(500, {});
-
-        lastInit = JSON.parse(init.body);
-
-        return reply(201, { id: "att-test", uploadUrl: "https://upload.exemplo.test/att-test", uploadHeaders: {} });
-    }
-
-    if (u.startsWith("https://upload.exemplo.test/")) {
-        uploadedBytes = Buffer.from(init.body);
-
-        return reply(200, {});
-    }
-
-    if (/\/attachments\/[^/]+\/complete$/.test(u)) return reply(200, { id: "att-test", kind: "image" });
 
     let m;
 
@@ -874,75 +834,56 @@ test("cargos aparecem como chips de menção (que no embed não notificam) e o s
 });
 
 // ==========================================
-// AVATAR E BANNER: IMAGEM ANEXADA (500x500)
+// AVATAR E BANNER: EMBED PRIVADO (O AVATAR EM TELA LARGA, SEM ACHATAR)
 // ==========================================
 
-const sharp = (await import("sharp")).default;
+const { API_URL } = await import("../config/site.mjs");
 
-test("o avatar sai como anexo PNG 500x500, recortado no centro, em mensagem normal do canal", async () => {
-    const comandos = await carregarComandos();
-
-    const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["avatar"]), comandos);
-
-    assert.equal(reply.type, "message");
-    assert.notEqual(reply.data.ephemeral, true, "anexo não vale em resposta privada");
-    assert.deepEqual(reply.data.attachments, ["att:att-test"]);
-    assert.equal(reply.data.body, "🖼️ **Avatar de Maria Silva**");
-    assert.ok(!reply.data.embeds, "só a imagem: nada de embed gigante e achatado");
-
-    // o que foi enviado: PNG quadrado de 500x500, mesmo com a foto original larga (1200x300)
-    const meta = await sharp(uploadedBytes).metadata();
-
-    assert.equal(meta.format, "png");
-    assert.deepEqual([meta.width, meta.height], [500, 500]);
-
-    // o envio vai para o canal da interação
-    assert.equal(lastInit.name, `avatar-${MARIA.id}.png`);
-    assert.deepEqual(lastInit.scope, { guildId: G, channelId: "900000000000000099" });
-});
-
-test("o banner mantém a proporção e cabe em 960x540", async () => {
-    MEMBERS.push(member("200000000000000014", "comcapa", "Com Capa", { bannerUrl: "https://cdn.exemplo.test/capa.png" }));
+test("o avatar abre em embed privado, na tela larga servida pelo bot (a VSync cortaria um quadrado)", async () => {
+    MEMBERS.push(member("200000000000000015", "comcdn", "Com CDN", {
+        avatarUrl: "https://cdn.vsync.lat/att/2026/avatarabc123@256.webp"
+    }));
 
     clearUserLookupCache();
 
     const comandos = await carregarComandos();
 
-    const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000014`, ["banner"]), comandos);
+    const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000015`, ["avatar"]), comandos);
 
-    assert.equal(reply.data.body, "🌌 **Banner de Com Capa**");
-    assert.deepEqual(reply.data.attachments, ["att:att-test"]);
+    assert.equal(reply.type, "message");
+    assert.equal(reply.data.ephemeral, true, "continua só para quem pediu");
+    assert.ok(!reply.data.attachments, "nada de anexo");
 
-    const meta = await sharp(uploadedBytes).metadata();
+    const embed = reply.data.embeds[0];
 
-    // 1200x300 (4:1) reduzido para a largura de 960
-    assert.deepEqual([meta.width, meta.height], [960, 240]);
+    assert.equal(embed.title, "🖼️ Avatar de Com CDN");
+
+    // a imagem do embed é a tela larga do bot, com o avatar da CDN no endereço
+    assert.equal(
+        embed.image.url,
+        `${API_URL}/img/avatar.png?u=${encodeURIComponent("https://cdn.vsync.lat/att/2026/avatarabc123@256.webp")}`
+    );
+
+    // e o link "tamanho original" continua sendo o avatar cru
+    assert.match(embed.description, /\(https:\/\/cdn\.vsync\.lat\/att\/2026\/avatarabc123@256\.webp\)/);
 });
 
-test("sem conseguir baixar ou enviar a imagem, cai no embed privado com o link (como antes)", async () => {
+test("avatar de fora da CDN da VSync (ou sem avatar) cai na imagem crua, e o banner vai direto", async () => {
     const comandos = await carregarComandos();
 
-    failImages = true;
+    // o avatar de teste é de outro endereço: não passa pela tela larga
+    const raw = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["avatar"]), comandos);
 
-    try {
-        const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["avatar"]), comandos);
+    assert.equal(raw.data.embeds[0].image.url, MARIA.avatarUrl);
 
-        assert.equal(reply.data.ephemeral, true);
-        assert.equal(reply.data.embeds[0].image.url, MARIA.avatarUrl);
-        assert.match(reply.data.embeds[0].title, /Avatar de Maria Silva/);
-    } finally {
-        failImages = false;
-    }
+    MEMBERS.push(member("200000000000000014", "comcapa", "Com Capa", { bannerUrl: "https://cdn.vsync.lat/att/2026/capa.webp" }));
 
-    // a API de anexos fora do ar também não derruba a resposta
-    failUpload = true;
+    clearUserLookupCache();
 
-    try {
-        const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["avatar"]), comandos);
+    const banner = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000014`, ["banner"]), comandos);
 
-        assert.equal(reply.data.ephemeral, true);
-        assert.ok(reply.data.embeds[0].image);
-    } finally {
-        failUpload = false;
-    }
+    // o banner já é largo: o quadro da VSync mostra quase tudo, então vai sem passar pelo bot
+    assert.equal(banner.data.ephemeral, true);
+    assert.equal(banner.data.embeds[0].title, "🌌 Banner de Com Capa");
+    assert.equal(banner.data.embeds[0].image.url, "https://cdn.vsync.lat/att/2026/capa.webp");
 });

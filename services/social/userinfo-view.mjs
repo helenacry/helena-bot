@@ -1,6 +1,8 @@
 
 import { getUserBadges } from "./userinfo-badges.mjs";
 
+import { avatarPreviewUrl } from "../web/avatar-preview.mjs";
+
 import {
     PULSE_EMOJIS,
     PULSE_LEVELS,
@@ -176,7 +178,7 @@ const hasPresence = user =>
 export function detailOptions(user) {
     return [
         ...(user.avatarUrl
-            ? [{ label: "Avatar", value: "avatar", description: "A foto de perfil em 500x500", emoji: "🖼️" }]
+            ? [{ label: "Avatar", value: "avatar", description: "A foto de perfil, inteira e sem cortar", emoji: "🖼️" }]
             : []),
 
         ...(user.bannerUrl
@@ -201,8 +203,9 @@ export function detailOptions(user) {
 }
 
 // O embed de um detalhe, ou null se a opção não existe (ou não vale para esta pessoa).
-// "avatar" e "banner" aqui são só o reserva (a imagem por link): o menu manda a imagem de
-// verdade como anexo, redimensionada (services/social/userinfo-image.mjs).
+// "avatar": a imagem grande do embed vai numa tela larga servida pelo próprio bot
+// (services/web/avatar-preview.mjs), porque a VSync corta a imagem num quadro de 300 px de altura
+// e um avatar quadrado ficaria achatado. O link "Abrir em tamanho original" é o avatar cru.
 export function buildUserinfoDetail(kind, user, now = Date.now()) {
     const name = plain(user.nickname || user.displayName || user.username || "Usuário", 80);
 
@@ -213,11 +216,14 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
 
             if (!url) return null;
 
+            // sem avatar da CDN da VSync (ou sem a API pública), vale a imagem crua
+            const shown = (kind === "avatar" ? avatarPreviewUrl(url) : null) ?? url;
+
             return {
                 title: (kind === "avatar" ? "🖼️ Avatar de " : "🌌 Banner de ") + name,
                 description: "[Abrir em tamanho original](" + url + ")",
                 color: USERINFO_COLOR,
-                image: { url }
+                image: { url: shown }
             };
         }
 
