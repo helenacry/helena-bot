@@ -23,6 +23,18 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
+import { SITE_URL } from "../../config/site.mjs";
+
+import {
+    container,
+    divider,
+    headerBlock,
+    section,
+    subtext,
+    text,
+    thumbnail
+} from "../../utils/components-v2.mjs";
+
 import { button, row } from "./panel-kit.mjs";
 
 // ==========================================
@@ -209,6 +221,111 @@ const toolButtons = ownerId => [
 ];
 
 // ==========================================
+// DESENHO V2 (LAYOUT PRÓPRIO)
+// ==========================================
+
+// No V2 a loja é limpa, como a vitrine da Alfacusa: título com a imagem da Helena ao lado,
+// uma linha de apoio com quem está olhando, a carteira e as gemas, e cada prateleira como uma
+// seção com o botão "Entrar" à direita. Os mesmos botões e customIds do desenho clássico,
+// então os cliques são tratados pelo mesmo código (shop-panels.mjs).
+
+const SHOP_ART = `${SITE_URL}assets/img/apple-touch-icon.png`;
+
+const shopMeta = (ownerId, wallet, gems) =>
+    `<@${ownerId}> · 👛 ${formatMoney(wallet)} · 💎 ${gems}`;
+
+function homeLayout({ ownerId, wallet, gems, market, categories }) {
+    return [
+        container([
+            ...headerBlock(
+                ["## 🛒 Loja da Helena", "Escolha uma prateleira.", shopMeta(ownerId, wallet, gems)],
+                thumbnail(SHOP_ART)
+            ),
+
+            divider(),
+
+            ...categories.slice(1).map(entry => section(
+                [
+                    `**${entry.emoji} ${entry.label}**`,
+                    `${plural(entry.count, "item", "itens")} · a partir de ${formatMoney(entry.minPrice)}`
+                ],
+                button(`loja:pg:${ownerId}:${entry.value}:1`, "Entrar", "🛒", "primary")
+            )),
+
+            divider(),
+
+            ...(market ? [subtext(marketLine(market))] : []),
+
+            row(
+                button(`loja:pg:${ownerId}:${ALL_CATEGORIES}:1`, "Ver tudo", ALL_EMOJI, "secondary"),
+                ...toolButtons(ownerId)
+            )
+        ], { color: HELENA_COLORS.economy })
+    ];
+}
+
+// Uma prateleira: o nome e a página no alto, cada item como uma seção (nome e preço, descrição
+// e o que a carteira permite) com o botão Comprar à direita, e a navegação embaixo.
+function shelfLayout({
+    ownerId, category, emoji, label, wallet, gems, market,
+    items, status, owned, current, pages, total
+}) {
+    const rows = [
+        row(
+            button(`loja:pg:${ownerId}:${category}:${current - 1}`, "Anterior", "◀️", "secondary", { disabled: current <= 1 }),
+            button(`loja:noop:${ownerId}`, `${current}/${pages}`, undefined, "secondary", { disabled: true }),
+            button(`loja:pg:${ownerId}:${category}:${current + 1}`, "Próxima", "▶️", "secondary", { disabled: current >= pages })
+        ),
+
+        row(
+            button(`loja:home:${ownerId}`, "Início", "🏠", "primary"),
+            ...toolButtons(ownerId)
+        )
+    ];
+
+    const sections = items.map((item, index) => {
+        const have = owned[item.id] ?? 0;
+
+        const stack = Number.isFinite(item.maxStack) ? `/${item.maxStack}` : "";
+
+        const sell = item.sellable ? ` · 💵 venda ${formatMoney(item.sellPrice)}${item.hot ? " 🔥" : ""}` : "";
+
+        const weapon = weaponInfo(item).trim();
+
+        return section(
+            [
+                `**${item.emoji} ${item.name}** · **${formatMoney(item.buyPrice)}**`,
+
+                [
+                    item.description,
+                    ...(weapon ? [weapon] : []),
+                    `${status[index].text} · 🎒 ${have}${stack}${sell}`
+                ].join("\n")
+            ],
+            button(`loja:item:${ownerId}:${item.id}`, "Comprar", "🛒", status[index].max > 0 ? "success" : "secondary")
+        );
+    });
+
+    return [
+        container([
+            ...headerBlock([
+                `## ${emoji} ${label}`,
+                shopMeta(ownerId, wallet, gems),
+                `${plural(total, "item", "itens")} · página ${current}/${pages}`
+            ]),
+
+            divider(),
+
+            ...(sections.length ? sections : [text("📦 Não há produtos à venda nesta prateleira.")]),
+
+            divider(),
+
+            ...rows
+        ], { color: HELENA_COLORS.economy })
+    ];
+}
+
+// ==========================================
 // VITRINE INICIAL
 // ==========================================
 
@@ -263,6 +380,8 @@ export function buildShopHome({
 
     return {
         embed,
+
+        layout: homeLayout({ ownerId, wallet, gems, market, categories }),
 
         components: [
             categoryMenu(ownerId, null, market),
@@ -460,6 +579,12 @@ export function buildShopView({
 
     return {
         embed,
+
+        layout: shelfLayout({
+            ownerId, category, emoji, label, wallet, gems, market,
+            items: slice, status, owned, current, pages, total: items.length
+        }),
+
         components: rows,
         page: current,
         pages,

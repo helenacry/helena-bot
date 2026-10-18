@@ -82,6 +82,9 @@ export default {
             // Só o dono do painel navega e compra por ele.
             response.data.components = view.components;
 
+            // O desenho do V2 (a vitrine limpa); o clássico ignora.
+            response.data.layout = view.layout;
+
             return response;
 
         } catch (error) {
