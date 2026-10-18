@@ -7,6 +7,12 @@ import { SEARCH_VALUE } from "../social/userinfo-components.mjs";
 
 import { buildUserinfoDetail } from "../social/userinfo-view.mjs";
 
+import { bannerImage, squareAvatar } from "../social/userinfo-image.mjs";
+
+import { plain, safe } from "../social/userinfo-format.mjs";
+
+import { uploadVSyncAttachment } from "../platform/vsync-attachments.mjs";
+
 import {
     openModal,
     textField
@@ -60,6 +66,64 @@ const privateEmbed = embed => priv({
     data: { embeds: [embed] }
 });
 
+// O avatar e o banner vão como imagem anexada (500x500 e até 960x540), não como link em embed:
+// o embed mostra a foto enorme e achatada. Anexo não vale em resposta privada (a API recusa),
+// então esta resposta é uma mensagem normal do canal. Se a imagem não puder ser baixada ou
+// enviada, cai no embed privado com o link, como antes.
+async function imageReply(interaction, user, kind) {
+    const url = kind === "avatar" ? user.avatarUrl : user.bannerUrl;
+
+    const fallback = () => {
+        const embed = buildUserinfoDetail(kind, user);
+
+        return embed
+            ? privateEmbed(embed)
+            : warn("Sem esse detalhe", "Essa informação não existe para esta pessoa.");
+    };
+
+    if (!url) {
+        return fallback();
+    }
+
+    try {
+        const bytes = kind === "avatar" ? await squareAvatar(url) : await bannerImage(url);
+
+        if (!bytes) {
+            return fallback();
+        }
+
+        const safeId = String(user.id).replace(/[^a-zA-Z0-9_-]/g, "_");
+
+        const attachment = await uploadVSyncAttachment({
+            guildId: interaction.guildId,
+            channelId: interaction.channelId,
+            bytes,
+            filename: `${kind}-${safeId}.png`,
+            contentType: "image/png"
+        });
+
+        if (!attachment?.reference) {
+            return fallback();
+        }
+
+        const name = safe(plain(user.nickname || user.displayName || user.username || "Usuário", 80));
+
+        return {
+            type: "message",
+
+            data: {
+                body: (kind === "avatar" ? "🖼️ **Avatar de " : "🌌 **Banner de ") + name + "**",
+                attachments: [attachment.reference]
+            }
+        };
+
+    } catch (error) {
+        console.warn("[USERINFO] Não consegui enviar a imagem:", error.message);
+
+        return fallback();
+    }
+}
+
 // customId: userinfo:more:<dono>:<alvo> ou userinfo:other:<dono> (a escolha vem em data.values).
 // Assíncrono: busca a pessoa na API e roda o /userinfo dela.
 export async function handleUserinfoComponent(interaction, comandos) {
@@ -88,7 +152,13 @@ export async function handleUserinfoComponent(interaction, comandos) {
             return warn("Pessoa não encontrada", "Não achei essa pessoa neste servidor agora.");
         }
 
-        const embed = buildUserinfoDetail(choice, { ...found.user, ...found.user.raw });
+        const person = { ...found.user, ...found.user.raw };
+
+        if (choice === "avatar" || choice === "banner") {
+            return imageReply(interaction, person, choice);
+        }
+
+        const embed = buildUserinfoDetail(choice, person);
 
         return embed
             ? privateEmbed(embed)

@@ -169,21 +169,71 @@ export function dateWithAge(value, now = Date.now()) {
     return `${dateField(value)} (**${age}**)`;
 }
 
-// Duração em meses, dias e horas (cada mês do Pulse vale 30 dias).
-export function formatPulseDuration(milliseconds) {
-    if (!Number.isFinite(milliseconds)) return UNKNOWN;
+// Quanto falta de um instante até outro, em anos, meses, dias e horas de calendário, sem as
+// unidades zeradas: "6 meses 9 dias 23 horas". O meio-termo entre o agora e o próximo selo do
+// Pulse. "agora" se já passou; "menos de 1 hora" se falta quase nada.
+function addMonthsInstant(ms, months) {
+    const date = new Date(ms);
 
-    const totalHours = Math.floor(Math.max(0, milliseconds) / 3_600_000);
-    const months = Math.floor(totalHours / (30 * 24));
-    const days = Math.floor((totalHours % (30 * 24)) / 24);
-    const hours = totalHours % 24;
+    const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1));
+
+    const length = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+
+    return Date.UTC(
+        target.getUTCFullYear(),
+        target.getUTCMonth(),
+        Math.min(date.getUTCDate(), length),
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds()
+    );
+}
+
+export function formatCountdown(from, to) {
+    if (from == null || to == null) {
+        return UNKNOWN;
+    }
+
+    const start = Number(new Date(from));
+    const end = Number(new Date(to));
+
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+        return UNKNOWN;
+    }
+
+    if (end <= start) {
+        return "agora";
+    }
+
+    const a = new Date(start);
+    const b = new Date(end);
+
+    let total = (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + (b.getUTCMonth() - a.getUTCMonth());
+
+    if (addMonthsInstant(start, total) > end) {
+        total -= 1;
+    }
+
+    const rest = end - addMonthsInstant(start, total);
+
+    const days = Math.floor(rest / 86_400_000);
+    const hours = Math.floor((rest % 86_400_000) / 3_600_000);
+    const years = Math.floor(total / 12);
+    const months = total % 12;
+
     const parts = [];
 
+    if (years) parts.push(`${years} ${years === 1 ? "ano" : "anos"}`);
     if (months) parts.push(`${months} ${months === 1 ? "mês" : "meses"}`);
     if (days) parts.push(`${days} ${days === 1 ? "dia" : "dias"}`);
-    if (hours || !parts.length) parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
+    if (hours) parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
 
-    return parts.join(" ");
+    return parts.length ? parts.join(" ") : "menos de 1 hora";
+}
+
+// O plano de Prisma da conta ("prisma" ou "prisma_plus"). Sem a informação, vale Prisma+.
+export function prismaPlanName(user) {
+    return user?.prismaPlan === "prisma" ? "Prisma" : "Prisma+";
 }
 
 // Desde quando a pessoa pulsa. O pulsingSince que vem junto do membro é o do

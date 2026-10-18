@@ -199,23 +199,13 @@ export default {
             // ==================================
             // CARTÃO
             // ==================================
-            const horario = new Intl.DateTimeFormat(
-                "pt-BR",
-                {
-                    timeZone: "America/Sao_Paulo",
-                    dateStyle: "short",
-                    timeStyle: "short"
-                }
-            ).format(new Date());
-
             const embed = buildUserinfoEmbed({
                 user,
                 actorName:
                     interaction.user?.displayName ||
                     interaction.user?.username,
                 actorAvatar: interaction.user?.avatarUrl,
-                views,
-                time: horario
+                views
             });
 
             // ==================================

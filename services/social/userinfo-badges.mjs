@@ -1,3 +1,5 @@
+import { PULSE_EMOJIS } from "./userinfo-format.mjs";
+
 // ==========================================
 // CATÁLOGO DE INSÍGNIAS DO VSYNC
 // ==========================================
@@ -74,9 +76,7 @@ const BADGES = Object.freeze({
         [1, 2, 3, 6, 9, 12, 15, 18, 24].map(month => [
             "BADGE_SHOW_PULSE_" + month,
             {
-                emoji: month === 24
-                    ? "<:pulse_24:235401848926130176>"
-                    : "",
+                emoji: PULSE_EMOJIS[month] ?? "",
 
                 image:
                     "pulse/pulse" +
@@ -150,6 +150,17 @@ export function getUserBadges(user) {
             image: badge.image,
             name: badge.name
         });
+    }
+
+    // Os níveis do Pulse são acumulativos: aparece só o mais alto, como um selo só.
+    const pulse = badges.filter(badge => /^BADGE_SHOW_PULSE_\d+$/.test(badge.id));
+
+    if (pulse.length > 1) {
+        const level = badge => Number(badge.id.replace("BADGE_SHOW_PULSE_", ""));
+
+        const top = pulse.reduce((best, badge) => level(badge) > level(best) ? badge : best);
+
+        return badges.filter(badge => !pulse.includes(badge) || badge === top);
     }
 
     return badges;

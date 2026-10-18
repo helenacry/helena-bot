@@ -88,6 +88,18 @@ const MEMBERS = [
 
 const calls = [];
 
+// Imagens e anexos simulados: o avatar é uma foto LARGA (1200x300), para provar o recorte quadrado.
+const sharpLib = (await import("sharp")).default;
+
+const WIDE = await sharpLib({ create: { width: 1200, height: 300, channels: 3, background: "#8755da" } }).png().toBuffer();
+
+process.env.VSYNC_BOT_TOKEN = process.env.VSYNC_BOT_TOKEN || "teste";
+
+let failImages = false;
+let failUpload = false;
+let uploadedBytes = null;
+let lastInit = null;
+
 // liga para simular a VSync fora do ar na rota de membro
 let failMembers = false;
 
@@ -102,6 +114,35 @@ globalThis.fetch = async (url, init = {}) => {
         text: async () => JSON.stringify(body), arrayBuffer: async () => new ArrayBuffer(0),
         headers: { get: () => null }
     });
+
+    // a foto do avatar e do banner
+    if (u.startsWith("https://cdn.exemplo.test/")) {
+        if (failImages) return reply(500, {});
+
+        return {
+            ok: true, status: 200, headers: { get: () => null },
+            arrayBuffer: async () => WIDE.buffer.slice(WIDE.byteOffset, WIDE.byteOffset + WIDE.byteLength)
+        };
+    }
+
+    // o fluxo de anexos: limites, preparar, enviar os bytes e concluir
+    if (u.endsWith("/attachments/limits")) return reply(200, { maxBytes: 100 * 1024 * 1024, available: 4 });
+
+    if (u.endsWith("/attachments/init")) {
+        if (failUpload) return reply(500, {});
+
+        lastInit = JSON.parse(init.body);
+
+        return reply(201, { id: "att-test", uploadUrl: "https://upload.exemplo.test/att-test", uploadHeaders: {} });
+    }
+
+    if (u.startsWith("https://upload.exemplo.test/")) {
+        uploadedBytes = Buffer.from(init.body);
+
+        return reply(200, {});
+    }
+
+    if (/\/attachments\/[^/]+\/complete$/.test(u)) return reply(200, { id: "att-test", kind: "image" });
 
     let m;
 
@@ -442,9 +483,14 @@ test("olhar as informações de alguém não cria registro de jogador", async ()
 test("o contador de visualizações é da pessoa consultada", async () => {
     const footer = r => embedOf(r).footer.text;
 
-    assert.match(footer(await run("hui carlos")), /Comando executado por: Eu Mesmo \| Visualizações: 1 •/);
-    assert.match(footer(await run("hui carlos")), /Visualizações: 2 •/);
-    assert.match(footer(await run("hui paula")), /Visualizações: 1 •/, "cada pessoa tem o seu");
+    assert.match(footer(await run("hui carlos")), /^Comando executado por: Eu Mesmo \| Visualizações: 1$/);
+    assert.match(footer(await run("hui carlos")), /Visualizações: 2$/);
+    assert.match(footer(await run("hui paula")), /Visualizações: 1$/, "cada pessoa tem o seu");
+
+    // a hora vem no timestamp do embed (o app a mostra ao lado do rodapé), não no texto
+    const stamp = embedOf(await run("hui paula")).timestamp;
+
+    assert.ok(Math.abs(stamp - Date.now()) < 60_000, "o timestamp é o de agora, em milissegundos");
 
     // a contagem fica no banco do bot, e nenhum arquivo é criado
     assert.equal(db.prepare("SELECT views FROM userinfo_views WHERE user_id = ?").get("200000000000000006").views, 2);
@@ -533,7 +579,7 @@ test("Tag e ID vêm em blocos de código; a Menção é a descrição; o rodapé
     assert.equal(embed.fields[1].value, "```\n200000000000000004\n```");
     assert.equal(embed.description, "👤 **Menção:** <@200000000000000004>");
     assert.deepEqual(embed.footer.iconUrl, "https://cdn.exemplo.test/eu.png");
-    assert.match(embed.footer.text, /^Comando executado por: Eu Mesmo \| Visualizações: \d+ • /);
+    assert.match(embed.footer.text, /^Comando executado por: Eu Mesmo \| Visualizações: \d+$/);
 });
 
 test("autor, rodapé e nome saem como texto simples: sem barras do escape de markdown", async () => {
@@ -619,17 +665,15 @@ test("os menus têm no máximo 25 opções, mesmo com muita gente jogando", () =
     assert.equal(knownMembers(G, { limit: 5 }).length, 5);
 });
 
-test("Mais informações: avatar, insígnias, datas e a evolução do Pulse, em mensagem só de quem pediu", async () => {
+test("Mais informações: insígnias, datas e a evolução do Pulse, em mensagem só de quem pediu", async () => {
     const comandos = await comandosOf();
 
     const ask = value => handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, [value]), comandos);
 
-    const avatar = await ask("avatar");
+    const first = await ask("badges");
 
-    assert.equal(avatar.type, "message");
-    assert.equal(avatar.data.ephemeral, true);
-    assert.equal(avatar.data.embeds[0].image.url, MARIA.avatarUrl);
-    assert.match(avatar.data.embeds[0].title, /Avatar de Maria Silva/);
+    assert.equal(first.type, "message");
+    assert.equal(first.data.ephemeral, true);
 
     const badges = (await ask("badges")).data.embeds[0];
 
@@ -710,4 +754,195 @@ test("o formulário 'Procurar por @usuário...' mostra o cartão (privado) ou ex
 
     assert.match(JSON.stringify(await submit("   ")), /Faltou a pessoa/);
     assert.match(JSON.stringify(await submit("ninguemassim")), /Usuário não encontrado/);
+});
+
+
+// ==========================================
+// MAIS CONFERIDO COM O ZANY E COM A DOC DA VSYNC
+// ==========================================
+
+const { formatCountdown } = await import("../services/social/userinfo-format.mjs");
+const { getUserBadges } = await import("../services/social/userinfo-badges.mjs");
+const { detailOptions } = await import("../services/social/userinfo-view.mjs");
+
+const NOW0 = Date.UTC(2026, 9, 17, 12, 0);
+
+test("o que falta para o próximo selo sai em meses, dias e horas (o formato do Zany)", () => {
+    // 17/10/2026 12:00 -> 27/04/2027 11:00 UTC
+    assert.equal(formatCountdown(NOW0, Date.UTC(2027, 3, 27, 11, 0)), "6 meses 9 dias 23 horas");
+    assert.equal(formatCountdown(NOW0, NOW0 + 3 * 3_600_000), "3 horas");
+    assert.equal(formatCountdown(NOW0, NOW0 + 40 * 60_000), "menos de 1 hora");
+    assert.equal(formatCountdown(NOW0, Date.UTC(2028, 9, 18, 12, 0)), "2 anos 1 dia");
+    assert.equal(formatCountdown(NOW0, NOW0 - 1000), "agora");
+    assert.equal(formatCountdown(null, NOW0), UNKNOWN);
+});
+
+test("o selo atual mostra há quanto tempo a pessoa pulsa, igual ao 'Impulsionando desde'", () => {
+    const user = {
+        id: "1", username: "p", displayName: "P",
+        pulsing: true,
+        pulsingSince: Date.UTC(2024, 3, 27, 17, 44),
+        pulseBadge: { id: "PULSE_12", months: 12 },
+        nextPulseBadge: { id: "PULSE_15", months: 15, at: Date.UTC(2027, 3, 27, 11, 0) }
+    };
+
+    const fields = fieldsOf(buildUserinfoEmbed({ user, now: NOW0 }));
+
+    assert.equal(fields["✨ Pulser desde"], "27 de abril de 2024, às 14:44 (**2 anos 5 meses 20 dias**)");
+    assert.match(fields["🏅 Insígnia de Pulser atual"], /pulse_12.* │ \*\*2 anos 5 meses 20 dias\*\*$/);
+    assert.match(fields["⏭️ Próxima insígnia de Pulser"], /pulse_15.* │ \*\*em 6 meses 9 dias 23 horas\*\*$/);
+});
+
+test("o plano do Prisma vem da conta (Prisma ou Prisma+), e o apelido do servidor vai no autor", async () => {
+    MEMBERS.push(member("200000000000000013", "prismabasico", "Prisma Básico", {
+        prismaActive: true, prismaPlan: "prisma", prismaSince: Date.UTC(2025, 5, 1, 9, 0)
+    }));
+
+    clearUserLookupCache();
+
+    const basic = fieldsOf(embedOf(await run("hui prismabasico")));
+
+    assert.match(basic["💎 Assinante Prisma desde"], /1 de junho de 2025/);
+    assert.ok(!("💎 Assinante Prisma+ desde" in basic));
+
+    // sem o plano na resposta, vale Prisma+ (como era)
+    assert.ok("💎 Assinante Prisma+ desde" in fieldsOf(embedOf(await run("hui soprisma"))));
+
+    // jose tem o apelido Zezinho neste servidor
+    assert.equal(embedOf(await run("hui jose")).author.name, "jose (Zezinho)");
+});
+
+test("bots mostram 🤖 Bot nas insígnias, e quem está de castigo vê até quando", () => {
+    const bot = fieldsOf(buildUserinfoEmbed({ user: { id: "1", username: "b", bot: true }, now: NOW0 }));
+
+    assert.equal(bot["🏅 Insígnias"], "🤖 Bot");
+
+    const punished = fieldsOf(buildUserinfoEmbed({
+        user: { id: "1", username: "b", timeoutUntil: NOW0 + 3_600_000 },
+        now: NOW0
+    }));
+
+    assert.match(punished["⏳ De castigo até"], /em \*\*1 hora\*\*\)$/);
+
+    // castigo que já acabou não aparece
+    assert.ok(!("⏳ De castigo até" in fieldsOf(buildUserinfoEmbed({ user: { id: "1", username: "b", timeoutUntil: NOW0 - 1 }, now: NOW0 }))));
+});
+
+test("os níveis do Pulse são acumulativos: só o selo mais alto aparece nas insígnias, com o emoji dele", () => {
+    const badges = getUserBadges({
+        flags: ["BADGE_SHOW_PULSE_1", "BADGE_SHOW_PULSE_6", "BADGE_SHOW_PULSE_3", "BADGE_SHOW_VERIFIED"]
+    });
+
+    assert.deepEqual(badges.map(badge => badge.id), ["BADGE_SHOW_PULSE_6", "BADGE_SHOW_VERIFIED"]);
+    assert.match(badges.find(badge => badge.id === "BADGE_SHOW_PULSE_6").emoji, /pulse_6/);
+});
+
+test("o menu 'Mais informações.' também oferece banner, cargos e status quando a pessoa tem", () => {
+    const plain = detailOptions({ id: "1", username: "x" }).map(option => option.value);
+
+    assert.deepEqual(plain, ["badges", "dates"]);
+
+    const full = detailOptions({
+        id: "1", username: "x", avatarUrl: "https://a.test/a.png", bannerUrl: "https://a.test/b.png",
+        pulsing: true, roleIds: ["r1"], status: "online"
+    }).map(option => option.value);
+
+    assert.deepEqual(full, ["avatar", "banner", "badges", "dates", "pulse", "roles", "status"]);
+    assert.ok(detailOptions({ id: "1", username: "x", avatarUrl: "https://a.test/a.png" }).length <= 25);
+});
+
+test("cargos aparecem como chips de menção (que no embed não notificam) e o status resume a presença", () => {
+    const roles = buildUserinfoDetail("roles", { id: "1", username: "x", displayName: "X", roleIds: ["r-1", "r-2"] });
+
+    assert.equal(roles.title, "🎭 Cargos de X (2)");
+    assert.equal(roles.description, "<@&r-1> <@&r-2>");
+    assert.equal(buildUserinfoDetail("roles", { id: "1", username: "x", roleIds: [] }), null);
+
+    const status = buildUserinfoDetail("status", {
+        id: "1", username: "x", displayName: "X", status: "dnd",
+        customStatus: { text: "Focado *agora*", emoji: "🎯", expiresAt: null },
+        activity: { name: "Minecraft", startedAt: NOW0 - 3 * 86_400_000 },
+        listening: { title: "Música", artist: "Banda" }
+    }, NOW0);
+
+    assert.match(status.description, /\*\*Status:\*\* ⛔ Não perturbe/);
+    assert.match(status.description, /\*\*Status personalizado:\*\* 🎯 Focado \\\*agora\\\*/);
+    assert.match(status.description, /\*\*Atividade:\*\* Minecraft · desde .+ \(há \*\*3 dias\*\*\)/);
+    assert.match(status.description, /\*\*Ouvindo:\*\* 🎵 Música — Banda/);
+
+    assert.equal(buildUserinfoDetail("status", { id: "1", username: "x" }), null);
+});
+
+// ==========================================
+// AVATAR E BANNER: IMAGEM ANEXADA (500x500)
+// ==========================================
+
+const sharp = (await import("sharp")).default;
+
+test("o avatar sai como anexo PNG 500x500, recortado no centro, em mensagem normal do canal", async () => {
+    const comandos = await carregarComandos();
+
+    const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["avatar"]), comandos);
+
+    assert.equal(reply.type, "message");
+    assert.notEqual(reply.data.ephemeral, true, "anexo não vale em resposta privada");
+    assert.deepEqual(reply.data.attachments, ["att:att-test"]);
+    assert.equal(reply.data.body, "🖼️ **Avatar de Maria Silva**");
+    assert.ok(!reply.data.embeds, "só a imagem: nada de embed gigante e achatado");
+
+    // o que foi enviado: PNG quadrado de 500x500, mesmo com a foto original larga (1200x300)
+    const meta = await sharp(uploadedBytes).metadata();
+
+    assert.equal(meta.format, "png");
+    assert.deepEqual([meta.width, meta.height], [500, 500]);
+
+    // o envio vai para o canal da interação
+    assert.equal(lastInit.name, `avatar-${MARIA.id}.png`);
+    assert.deepEqual(lastInit.scope, { guildId: G, channelId: "900000000000000099" });
+});
+
+test("o banner mantém a proporção e cabe em 960x540", async () => {
+    MEMBERS.push(member("200000000000000014", "comcapa", "Com Capa", { bannerUrl: "https://cdn.exemplo.test/capa.png" }));
+
+    clearUserLookupCache();
+
+    const comandos = await carregarComandos();
+
+    const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000014`, ["banner"]), comandos);
+
+    assert.equal(reply.data.body, "🌌 **Banner de Com Capa**");
+    assert.deepEqual(reply.data.attachments, ["att:att-test"]);
+
+    const meta = await sharp(uploadedBytes).metadata();
+
+    // 1200x300 (4:1) reduzido para a largura de 960
+    assert.deepEqual([meta.width, meta.height], [960, 240]);
+});
+
+test("sem conseguir baixar ou enviar a imagem, cai no embed privado com o link (como antes)", async () => {
+    const comandos = await carregarComandos();
+
+    failImages = true;
+
+    try {
+        const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["avatar"]), comandos);
+
+        assert.equal(reply.data.ephemeral, true);
+        assert.equal(reply.data.embeds[0].image.url, MARIA.avatarUrl);
+        assert.match(reply.data.embeds[0].title, /Avatar de Maria Silva/);
+    } finally {
+        failImages = false;
+    }
+
+    // a API de anexos fora do ar também não derruba a resposta
+    failUpload = true;
+
+    try {
+        const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["avatar"]), comandos);
+
+        assert.equal(reply.data.ephemeral, true);
+        assert.ok(reply.data.embeds[0].image);
+    } finally {
+        failUpload = false;
+    }
 });
