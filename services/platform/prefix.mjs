@@ -236,7 +236,8 @@ export async function processarPrefixo({
                 body: data.body ?? "",
                 ...(data.embeds ? { embeds: data.embeds } : {}),
                 ...(data.components ? { components: data.components } : {}),
-                ...(data.attachments ? { attachments: data.attachments } : {})
+                ...(data.attachments ? { attachments: data.attachments } : {}),
+                ...(data.layout ? { layout: data.layout } : {})
             },
             userId: actorId,
             skip: Boolean(result.live),

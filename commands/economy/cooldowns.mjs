@@ -1,27 +1,15 @@
 
-import {
-    getPlayer
-} from "../../database/economy.mjs";
+import { buildCooldowns } from "../../services/economy/cooldowns-view.mjs";
 
-import {
-    COOLDOWNS,
-    getRemaining,
-    formatCooldown
-} from "../../config/cooldowns.mjs";
+import { embedResponse, errorEmbed } from "../../utils/embed.mjs";
 
-import {
-    CRIME_CONFIG,
-    ROBBERY_CONFIG
-} from "../../config/crime.mjs";
+// ==========================================
+// COMANDO /COOLDOWNS
+// ==========================================
 
-import { ensureCrimePlayer } from "../../services/crime/crime-player.mjs";
-
-import {
-    createEmbed,
-    embedResponse,
-    errorEmbed,
-    HELENA_COLORS
-} from "../../utils/embed.mjs";
+// Os tempos de recarga em dois grupos, o que é legal (trabalho, daily, gemas) e o que é
+// ilegal (crime, roubo, lavagem, cadeia), com um botão Atualizar. A tela é montada em
+// services/economy/cooldowns-view.mjs e o botão em services/panels/cooldowns-panel.mjs.
 
 export default {
     name: "cooldowns",
@@ -30,149 +18,26 @@ export default {
 
     async execute(interaction) {
         const guildId = interaction.guildId;
-        const userId = interaction.user?.id;
+        const user = interaction.user;
 
-        if (!guildId || !userId) {
-            return errorEmbed(
-                "Não foi possível identificar sua conta."
-            );
+        if (!guildId || !user?.id) {
+            return errorEmbed("Não foi possível identificar sua conta.");
         }
 
         try {
-            const player = getPlayer(guildId, userId);
+            const view = buildCooldowns({ guildId, user });
 
-            const now = Math.floor(Date.now() / 1000);
+            const response = embedResponse(view.embed);
 
-            const fields = [];
+            response.data.components = view.components;
+            response.data.layout = view.layout;
 
-            let available = 0;
-            let waiting = 0;
-
-            // Crime e lavagem guardam o tempo na própria tabela,
-            // então entram aqui já com o tempo restante.
-            const crime = ensureCrimePlayer(guildId, userId);
-
-            const activities = [
-                ...Object.values(COOLDOWNS).map(activity => ({
-                    ...activity,
-                    remaining: getRemaining(
-                        player[activity.column],
-                        activity.duration,
-                        now
-                    )
-                })),
-
-                {
-                    name: "Crime",
-                    command: "/crime",
-                    emoji: "🕵️",
-                    remaining: getRemaining(
-                        crime.last_crime,
-                        CRIME_CONFIG.cooldown,
-                        now
-                    )
-                },
-
-                {
-                    name: "Roubo",
-                    command: "/roubar",
-                    emoji: "🔫",
-                    remaining: getRemaining(
-                        crime.last_rob,
-                        ROBBERY_CONFIG.cooldown,
-                        now
-                    )
-                },
-
-                {
-                    name: "Lavagem",
-                    command: "/lavagem",
-                    emoji: "🧼",
-                    remaining: Math.max(
-                        0,
-                        crime.launder_ready_at - now
-                    )
-                }
-            ];
-
-            for (const activity of activities) {
-                const remaining = activity.remaining;
-
-                if (remaining === 0) {
-                    available++;
-
-                    fields.push({
-                        name:
-                            activity.emoji +
-                            " " +
-                            activity.name,
-
-                        value:
-                            "🟢 **Disponível**\n" +
-                            "Comando: `" +
-                            activity.command +
-                            "`",
-
-                        inline: true
-                    });
-
-                } else {
-                    waiting++;
-
-                    fields.push({
-                        name:
-                            activity.emoji +
-                            " " +
-                            activity.name,
-
-                        value:
-                            "⏳ **" +
-                            formatCooldown(remaining) +
-                            "** restantes\n" +
-                            "Comando: `" +
-                            activity.command +
-                            "`",
-
-                        inline: true
-                    });
-                }
-            }
-
-            fields.push({
-                name: "📊 Resumo",
-                value:
-                    "🟢 **Disponíveis:** " + available + "\n" +
-                    "⏳ **Em espera:** " + waiting,
-                inline: false
-            });
-
-            return embedResponse(
-                createEmbed({
-                    title: "⏰ Helena Cooldowns",
-
-                    description:
-                        waiting === 0
-                            ? "✨ Todas as suas atividades estão disponíveis!"
-                            : "Acompanhe quando poderá realizar suas próximas atividades.",
-
-                    color:
-                        waiting === 0
-                            ? HELENA_COLORS.success
-                            : HELENA_COLORS.primary,
-
-                    fields,
-
-                    footer:
-                        "Helena • Organize suas atividades."
-                })
-            );
+            return response;
 
         } catch (error) {
             console.error("[COOLDOWNS]", error);
 
-            return errorEmbed(
-                "Não foi possível consultar seus cooldowns."
-            );
+            return errorEmbed("Não foi possível consultar seus cooldowns.");
         }
     }
 };

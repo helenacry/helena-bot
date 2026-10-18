@@ -62,7 +62,10 @@ export function update(view) {
         type: "update",
         data: {
             embeds: view.embeds ?? [view.embed],
-            components: view.components
+            components: view.components,
+
+            // O desenho próprio da tela para o layout V2 (se a tela tiver um; o clássico o ignora).
+            ...(view.layout ? { layout: view.layout } : {})
         }
     };
 }

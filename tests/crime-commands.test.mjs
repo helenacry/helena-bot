@@ -261,6 +261,7 @@ test("cooldowns inclui o roubo", async () => {
 
     const r = await run("hcooldowns");
 
-    assert.match(r.text, /Roubo/);
-    assert.match(r.text, /\/roubar/);
+    // o grupo ilegal traz o roubo (o /cooldowns inteiro é testado em cooldowns.test.mjs)
+    assert.match(r.text, /Ilegal/);
+    assert.match(r.text, /Roubar/);
 });

@@ -6,7 +6,15 @@
  * section (1 a 3 textos + um botão ou uma miniatura) e container (barra de cor),
  * misturados com linhas de botões e menus; até 40 componentes por mensagem
  * contando todos os níveis; container não aceita container; customId único.
+ *
+ * Este módulo tem três partes:
+ *   1. as regras (layoutProblems) e a contagem de componentes;
+ *   2. o kit: peças prontas para montar um layout (heading, section, container...);
+ *   3. a conversão de uma resposta clássica (embed) em layout, para todos os
+ *      comandos ganharem o visual novo sem cada um ser reescrito.
  */
+
+import { DEFAULT_FOOTER } from "./embed.mjs";
 
 export const V2_LIMITS = Object.freeze({
     components: 40,
@@ -146,10 +154,33 @@ export function layoutProblems(components) {
 }
 
 // ==========================================
-// EMBED -> LAYOUT
+// KIT: PEÇAS PARA MONTAR UM LAYOUT
 // ==========================================
 
-function accentColor(color) {
+export const text = content => ({ type: "text", content });
+
+// "## Título", "### Grupo": a doc da VSync aceita títulos com # no começo da linha.
+export const heading = (title, level = 2) => text(`${"#".repeat(level)} ${title}`);
+
+// Letra pequena ("-# texto"), para notas e rodapés.
+export const subtext = content => text(`-# ${content}`);
+
+// Linha fina entre os grupos; "gap" só abre um respiro, sem linha.
+export const divider = (spacing = "small") => ({ type: "separator", divider: true, spacing });
+
+export const gap = (spacing = "small") => ({ type: "separator", divider: false, spacing });
+
+// Até 3 textos à esquerda e um acessório à direita (botão ou miniatura).
+export const section = (texts, accessory) => ({ type: "section", texts, accessory });
+
+// A miniatura só existe com https; sem ela devolve null (quem monta a seção cai num texto).
+export const thumbnail = (url, description) =>
+    String(url ?? "").startsWith("https://")
+        ? { type: "thumbnail", url, ...(description ? { description: String(description).slice(0, 200) } : {}) }
+        : null;
+
+// Barra de cor: "#rrggbb" ou número; cor inválida fica sem barra.
+export function accentColor(color) {
     if (typeof color === "number" && Number.isInteger(color) && color >= 0 && color <= 0xffffff) {
         return "#" + color.toString(16).padStart(6, "0");
     }
@@ -159,8 +190,34 @@ function accentColor(color) {
     return match ? "#" + match[1] : undefined;
 }
 
+export function container(components, { color, spoiler } = {}) {
+    const accent = accentColor(color);
+
+    return {
+        type: "container",
+        ...(accent ? { accentColor: accent } : {}),
+        ...(spoiler ? { spoiler: true } : {}),
+        components: components.filter(Boolean)
+    };
+}
+
+// Cabeçalho de painel: com miniatura, os textos viram uma seção (a miniatura fica ao lado);
+// sem ela, ficam como textos soltos. A seção aceita até 3 textos; o que passa disso segue solto.
+export function headerBlock(lines, thumb) {
+    const texts = lines.filter(Boolean);
+
+    if (!texts.length) return [];
+
+    if (!thumb) return texts.map(text);
+
+    return [
+        section(texts.slice(0, V2_LIMITS.sectionTexts), thumb),
+        ...texts.slice(V2_LIMITS.sectionTexts).map(text)
+    ];
+}
+
 // Parte o texto em pedaços de até "max", de preferência nas quebras de linha.
-function chunks(value, max = V2_LIMITS.textLength) {
+export function chunks(value, max = V2_LIMITS.textLength) {
     const parts = [];
     let rest = String(value ?? "").trim();
 
@@ -179,49 +236,59 @@ function chunks(value, max = V2_LIMITS.textLength) {
     return parts.filter(part => part.length > 0);
 }
 
+// ==========================================
+// EMBED -> LAYOUT
+// ==========================================
+
 const ZERO_WIDTH = /[​-‍﻿]/g;
 
-// Os campos viram texto corrido: "**nome**" e o valor logo abaixo. O campo vazio que
-// o embed usa só para pular linha não vira nada.
-function fieldTexts(fields) {
-    const blocks = [];
+// Um valor curto e de uma linha só ("Entregador", "**+R$ 150,00**") vira "Nome: valor" numa
+// lista compacta; o que tem várias linhas ou é comprido vira um bloco com título.
+const isCompact = (name, value) => !value.includes("\n") && value.length <= 60 && name.length <= 34;
+
+// O valor inteiro em negrito perde o negrito: o nome é que fica em negrito na linha.
+const unbold = value => {
+    const match = /^\*\*([^*]+)\*\*$/.exec(value);
+
+    return match ? match[1] : value;
+};
+
+// Campos do embed -> grupos: { lines: [...] } (compactos, juntos) ou { name, value } (bloco).
+export function fieldGroups(fields) {
+    const groups = [];
 
     for (const field of fields ?? []) {
         const name = String(field?.name ?? "").replace(ZERO_WIDTH, "").trim();
         const value = String(field?.value ?? "").replace(ZERO_WIDTH, "").trim();
 
+        // o campo vazio que o embed usa para pular linha não vira nada
         if (!name && !value) continue;
 
-        blocks.push(name ? `**${name}**\n${value}`.trim() : value);
-    }
+        if (name && value && isCompact(name, value)) {
+            const line = `**${name.replace(/:$/, "")}:** ${unbold(value)}`;
+            const last = groups.at(-1);
 
-    // junta os campos em poucos textos (cada texto vale um dos 40 componentes)
-    const joined = [];
-    let current = "";
+            if (last?.lines) last.lines.push(line);
+            else groups.push({ lines: [line] });
 
-    for (const block of blocks) {
-        for (const piece of chunks(block)) {
-            if (current && (current + "\n\n" + piece).length > V2_LIMITS.textLength) {
-                joined.push(current);
-                current = "";
-            }
-
-            current = current ? current + "\n\n" + piece : piece;
+            continue;
         }
+
+        groups.push({ name, value });
     }
 
-    if (current) joined.push(current);
-
-    return joined;
+    return groups;
 }
 
-const text = content => ({ type: "text", content });
+const groupText = group => group.lines
+    ? group.lines.join("\n")
+    : (group.name ? `### ${group.name}\n${group.value}` : group.value).trim();
 
-const divider = () => ({ type: "separator", divider: true, spacing: "small" });
-
-// Um embed vira um container com a cor do embed, o título, a descrição, os campos e as
-// linhas de botões e menus; o rodapé fica fora, em letra pequena. Sem bloco de imagem
-// no layout, embed com imagem não converte (devolve null).
+// Um embed vira um container com a cor dele, o título, a descrição, os campos em grupos
+// (linhas compactas ou blocos com título, separados por uma linha fina), os botões e menus
+// dentro e o rodapé fora, em letra pequena. O rodapé padrão da Helena, que se repete em
+// toda mensagem, não vai. Sem bloco de imagem no layout, embed com imagem não converte
+// (devolve null).
 export function embedToLayout(embed, rows = []) {
     if (!embed || typeof embed !== "object" || embed.image) {
         return null;
@@ -238,55 +305,53 @@ export function embedToLayout(embed, rows = []) {
 
     head.push(...chunks(embed.description));
 
-    const body = fieldTexts(embed.fields);
+    const groups = fieldGroups(embed.fields).flatMap(group => {
+        const content = groupText(group);
 
-    const inside = [];
-
-    const thumbnail = String(embed.thumbnail?.url ?? "");
-
-    // Com miniatura, os primeiros textos viram uma seção (a miniatura fica ao lado).
-    if (thumbnail.startsWith("https://")) {
-        const pool = [...head, ...(head.length ? [] : body.splice(0, 1))];
-        const inSection = pool.slice(0, V2_LIMITS.sectionTexts);
-
-        if (inSection.length) {
-            inside.push({
-                type: "section",
-                texts: inSection,
-                accessory: { type: "thumbnail", url: thumbnail }
-            });
-
-            head.splice(0, head.length, ...pool.slice(V2_LIMITS.sectionTexts));
-        }
-    }
-
-    head.forEach(content => inside.push(text(content)));
-
-    if (body.length && inside.length) inside.push(divider());
-
-    body.forEach(content => inside.push(text(content)));
+        return content ? chunks(content).map((piece, index) => ({ content: piece, block: Boolean(group.name) && index === 0 })) : [];
+    });
 
     const controls = (rows ?? []).filter(Boolean);
 
-    if (controls.length && inside.length) inside.push(divider());
+    const thumb = String(embed.thumbnail?.url ?? "").startsWith("https://")
+        ? { type: "thumbnail", url: embed.thumbnail.url }
+        : null;
 
-    inside.push(...controls);
+    const build = withSeparators => {
+        const body = groups.map(group => group.content);
+
+        // Sem título nem descrição, o primeiro grupo faz o papel do cabeçalho ao lado da miniatura.
+        const lead = head.length || !thumb ? head : body.splice(0, 1);
+
+        const inside = headerBlock(lead, thumb);
+
+        for (const content of body) {
+            if (withSeparators && inside.length) inside.push(divider());
+
+            inside.push(text(content));
+        }
+
+        if (controls.length && inside.length && withSeparators) inside.push(divider());
+
+        inside.push(...controls);
+
+        return inside;
+    };
+
+    let inside = build(true);
+
+    // Muitos grupos: sem as linhas finas, para caber nos 40 componentes.
+    if (countComponents([container(inside)]) > V2_LIMITS.components) inside = build(false);
 
     if (!inside.length) {
         return null;
     }
 
-    const color = accentColor(embed.color);
-
-    const layout = [{
-        type: "container",
-        ...(color ? { accentColor: color } : {}),
-        components: inside
-    }];
+    const layout = [container(inside, { color: embed.color })];
 
     const footer = String(embed.footer?.text ?? "").trim();
 
-    if (footer) layout.push(text(`-# ${footer}`.slice(0, V2_LIMITS.textLength)));
+    if (footer && footer !== DEFAULT_FOOTER) layout.push(subtext(footer.slice(0, V2_LIMITS.textLength - 3)));
 
     return layout;
 }
@@ -295,11 +360,21 @@ export function embedToLayout(embed, rows = []) {
 // RESPOSTA CLÁSSICA -> RESPOSTA V2
 // ==========================================
 
-// "data" no formato de sempre ({ body, embeds, components, ephemeral... }). Devolve o
-// mesmo com o layout no lugar do embed, ou null quando é melhor ficar no clássico:
+// Tira o layout próprio da resposta (ele só existe para o V2; o clássico não o conhece).
+export function stripLayout(data) {
+    if (!data || typeof data !== "object" || !("layout" in data)) return data;
+
+    const { layout, ...rest } = data;
+
+    return rest;
+}
+
+// "data" no formato de sempre ({ body, embeds, components, ephemeral... }), com um
+// "layout" opcional (o desenho próprio do V2 para essa tela). Devolve o mesmo com o layout
+// no lugar do embed, ou null quando é melhor ficar no clássico:
 //   - texto no body: é ele que avisa (notifica) quem foi mencionado;
 //   - anexos: a doc não diz se anexo convive com o layout;
-//   - mais de um embed, embed com imagem, ou layout fora das regras.
+//   - embed com imagem, mais de um embed ou layout fora das regras.
 // "clear": numa atualização (update) a mensagem antiga pode ter body e embed, então
 // o V2 os esvazia.
 export function toV2Data(data, { clear = false } = {}) {
@@ -315,17 +390,21 @@ export function toV2Data(data, { clear = false } = {}) {
         return null;
     }
 
-    if (!Array.isArray(data.embeds) || data.embeds.length !== 1) {
-        return null;
-    }
+    let layout = null;
 
-    const layout = embedToLayout(data.embeds[0], Array.isArray(data.components) ? data.components : []);
+    // O desenho próprio da tela vale quando está dentro das regras; senão, converte o embed.
+    if (Array.isArray(data.layout) && !layoutProblems(data.layout).length) {
+        layout = data.layout;
+
+    } else if (Array.isArray(data.embeds) && data.embeds.length === 1) {
+        layout = embedToLayout(data.embeds[0], Array.isArray(data.components) ? data.components : []);
+    }
 
     if (!layout || layoutProblems(layout).length) {
         return null;
     }
 
-    const { body, embeds, components, ...rest } = data;
+    const { body, embeds, components, layout: ignored, ...rest } = data;
 
     return {
         ...rest,

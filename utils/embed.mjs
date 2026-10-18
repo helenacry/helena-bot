@@ -17,7 +17,8 @@ export const HELENA_COLORS = Object.freeze({
     neutral: "#64748B"
 });
 
-const FOOTER = "Helena • Seu progresso, sua conquista.";
+// O rodapé de todo embed que não define o próprio (o layout V2 não o repete).
+export const DEFAULT_FOOTER = "Helena • Seu progresso, sua conquista.";
 
 function limit(value, max) {
     return String(value ?? "").slice(0, max);
@@ -31,7 +32,7 @@ export function createEmbed({
     description = "",
     color = HELENA_COLORS.primary,
     fields = [],
-    footer = FOOTER,
+    footer = DEFAULT_FOOTER,
     timestamp = true,
     thumbnail,
     image

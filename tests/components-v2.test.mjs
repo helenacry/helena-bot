@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 const {
-    embedToLayout, toV2Data, layoutProblems, countComponents, V2_LIMITS
+    embedToLayout, toV2Data, layoutProblems, countComponents, stripLayout, V2_LIMITS
 } = await import("../utils/components-v2.mjs");
 
 const {
@@ -65,7 +65,7 @@ test("embed vira um container com a cor, o título, a descrição, os campos e o
 
     assert.deepEqual(layoutProblems(layout), []);
 
-    const [container, footer] = layout;
+    const [container, ...outside] = layout;
 
     assert.equal(container.type, "container");
     assert.equal(container.accentColor, "#22C55E");
@@ -74,15 +74,78 @@ test("embed vira um container com a cor, o título, a descrição, os campos e o
 
     assert.equal(texts[0], "## 💰 Seu saldo");
     assert.equal(texts[1], "Tudo certo por aqui.");
-    assert.match(texts[2], /\*\*Carteira\*\*\nR\$ 10,00\n\n\*\*Banco\*\*\nR\$ 20,00/);
+
+    // campos curtos viram uma lista compacta "Nome: valor", numa linha cada, em um só texto
+    assert.equal(texts[2], "**Carteira:** R$ 10,00\n**Banco:** R$ 20,00");
 
     assert.ok(container.components.some(c => c.type === "separator"), "separa a descrição dos campos");
 
     // o campo vazio que o embed usa para pular linha não vira texto
     assert.ok(!texts.some(text => /^\s*$/.test(text)));
 
-    assert.equal(footer.type, "text");
-    assert.match(footer.content, /^-# Helena/);
+    // o rodapé padrão da Helena não se repete em toda mensagem
+    assert.deepEqual(outside, []);
+});
+
+test("rodapé próprio vai fora do container, em letra pequena", () => {
+    const layout = embedToLayout({ ...EMBED, footer: { text: "Helena • Loja • 20 itens à venda" } });
+
+    assert.equal(layout.length, 2);
+    assert.deepEqual(layout[1], { type: "text", content: "-# Helena • Loja • 20 itens à venda" });
+});
+
+test("campo comprido ou de várias linhas vira um bloco com título; os curtos ficam juntos na lista", () => {
+    const layout = embedToLayout({
+        title: "Resumo",
+        fields: [
+            { name: "💼 Emprego", value: "**Entregador**" },
+            { name: "💰 Pagamento", value: "**+R$ 150,00**" },
+            { name: "📜 Regras", value: "linha um\nlinha dois" },
+            { name: "🔋 Energia", value: "90/100" }
+        ]
+    });
+
+    assert.deepEqual(layoutProblems(layout), []);
+
+    const texts = layout[0].components.filter(c => c.type === "text").map(c => c.content);
+
+    // o negrito do valor inteiro sai (o nome é que fica em negrito)
+    assert.equal(texts[1], "**💼 Emprego:** Entregador\n**💰 Pagamento:** +R$ 150,00");
+    assert.equal(texts[2], "### 📜 Regras\nlinha um\nlinha dois");
+    assert.equal(texts[3], "**🔋 Energia:** 90/100");
+
+    // uma linha fina entre os grupos
+    const kinds = layout[0].components.map(c => c.type === "separator" ? "-" : "t");
+
+    assert.deepEqual(kinds, ["t", "-", "t", "-", "t", "-", "t"]);
+});
+
+test("a tela pode trazer o desenho próprio (layout): vale no V2 e nunca vai no clássico", () => {
+    const own = [{
+        type: "container",
+        components: [
+            { type: "section", texts: ["**Mercado Legal**", "Itens legalizados"], accessory: { type: "button", customId: "x:1", label: "Entrar", style: "success" } }
+        ]
+    }];
+
+    const data = { ...embedResponse(EMBED).data, layout: own };
+
+    const v2 = toV2Data(data);
+
+    assert.equal(v2.components, own, "usa o desenho próprio, não converte o embed");
+    assert.ok(!("layout" in v2));
+
+    // layout fora das regras: cai na conversão do embed
+    const broken = toV2Data({ ...data, layout: [{ type: "container", components: [] }] });
+
+    assert.equal(broken.components[0].components[0].content, "## 💰 Seu saldo");
+
+    // o clássico perde o layout e fica igual ao de antes
+    const classic = stripLayout(data);
+
+    assert.ok(!("layout" in classic));
+    assert.deepEqual(classic.embeds, data.embeds);
+    assert.equal(stripLayout({ a: 1 }).a, 1);
 });
 
 test("com miniatura, os primeiros textos viram uma seção com a miniatura ao lado (userinfo)", () => {

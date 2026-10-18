@@ -1,5 +1,5 @@
 
-import { toV2Data } from "../../utils/components-v2.mjs";
+import { toV2Data, stripLayout } from "../../utils/components-v2.mjs";
 
 import { isOwner } from "./developer.mjs";
 
@@ -58,8 +58,11 @@ export async function deliverCallback({ payload, userId, post, skip = false, log
         ? v2Payload(payload.data, userId, { clear: type === "update" })
         : null;
 
+    // O clássico nunca leva o "layout" (o desenho próprio do V2): a API não o conhece.
+    const classic = payload?.data ? { ...payload, data: stripLayout(payload.data) } : payload;
+
     if (!v2) {
-        return post(payload);
+        return post(classic);
     }
 
     const response = await post({ ...payload, data: v2 });
@@ -70,7 +73,7 @@ export async function deliverCallback({ payload, userId, post, skip = false, log
 
     log.warn(`[V2] A VSync recusou o layout (HTTP ${response.status}: ${await detailOf(response)}); usei o clássico.`);
 
-    return post(payload);
+    return post(classic);
 }
 
 // Mensagem enviada ao canal (comandos pelo prefixo h). "send" lança erro se a VSync recusar.
@@ -78,7 +81,7 @@ export async function deliverMessage({ data, userId, send, skip = false, log = c
     const v2 = skip ? null : v2Payload(data, userId);
 
     if (!v2) {
-        return send(data);
+        return send(stripLayout(data));
     }
 
     try {
@@ -87,6 +90,6 @@ export async function deliverMessage({ data, userId, send, skip = false, log = c
     } catch (error) {
         log.warn(`[V2] A VSync recusou o layout (${String(error?.message ?? error).slice(0, 200)}); usei o clássico.`);
 
-        return send(data);
+        return send(stripLayout(data));
     }
 }
