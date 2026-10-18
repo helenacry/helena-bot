@@ -44,7 +44,7 @@ O `/inventario` (atalho `/inv`) lista o que você tem por prateleira, **12 itens
 
 ## Usar itens: `/usaritem`
 
-O `/usaritem` (atalhos `/useitem` e `/usar`) abre um menu com o que dá para usar. Sem opções, ele mostra o painel; com `item` e `quantidade`, usa direto.
+O `/usaritem` (atalho `/usar`) abre um menu com o que dá para usar. Sem opções, ele mostra o painel; com `item` e `quantidade`, usa direto.
 
 - **Comida e bebida** repõem energia, um item por vez. Veja os valores em [Energia](wiki:character/energy).
 - Com a **energia cheia**, o uso é recusado e o item **não é gasto**. O que passaria de {{v:energy.max}} se perderia.

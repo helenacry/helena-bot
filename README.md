@@ -74,7 +74,7 @@ services/                Regras do jogo e do bot, uma pasta por assunto
   progress/              experiência e conquistas
   crime/                 crime, roubo, prisão, fuga, procurados, lavagem
   combat/                duelos, arsenal, equipamento e hospital
-  social/                casamento, cartão de perfil (e as fontes dele), /userinfo
+  social/                casamento, família (Gozofone e filhos), cartão de perfil (e as fontes dele), /userinfo
   panels/                painéis com botões e modais (loja, inventário, ajuda, bolsa, uso)
   platform/              o que serve a todos: intervalo entre comandos, prefixo h, V2,
                          dono e bloqueios, busca de usuário, anexos, contadores do suporte
@@ -169,7 +169,7 @@ Alguns comandos mostram botões que abrem formulários (modais) da VSync, no est
 | `/ajuda` (aliases `help`, `comandos`) | menu de categorias, menu de comandos (detalhe), **Anterior**/**Próxima**, **Buscar**, **Início**, **Fechar** | busca: uma palavra (nome, atalho ou o que o comando faz, sem acento). Também `/ajuda categoria:combate` e `/ajuda comando:daily` |
 | `/inventario` | menu de prateleiras, 12 itens por página (Anterior/Próxima/Atualizar), **Descartar** | item e quantidade (número, `metade` ou `tudo`); depois uma tela de confirmação com botão. 🟢 marca a arma equipada |
 | `/descartar` (alias `dropitem`) | **Confirmar descarte** | mesma confirmação do inventário; destrói o item, sem reembolso |
-| `/usaritem` (aliases `useitem`, `usar`) | menu com o que dá para usar, **Usar vários**, **Atualizar** | item (por nome, sem acento) e quantidade (número ou `max`, que usa até a energia encher) |
+| `/usaritem` (alias `usar`) | menu com o que dá para usar, **Usar vários**, **Atualizar** | item (por nome, sem acento) e quantidade (número ou `max`, que usa até a energia encher) |
 
 - **Visual da loja:** a vitrine (`/loja`) mostra carteira, gemas e uma grade de prateleiras com a contagem e o menor preço de cada uma; a opção `categoria` (ex.: Armas; no prefixo, `hloja categoria:weapon`) pula direto para uma prateleira. Cada cartão traz preço de compra e venda, descrição, dano (armas), quanto você já tem, e se dá para comprar: ✅ até quantas unidades, 🔒 quanto falta, ou 📦 limite do item atingido. O botão do item fica verde quando cabe na carteira. Emojis das prateleiras: `ITEM_CATEGORY_EMOJIS` em `config/items.mjs`; layout em `services/panels/shop-view.mjs`.
 - **Itens com efeito:** Maçã (+10), Café (+25) e Energético (+50) repõem energia, uma unidade por uso. Com a energia cheia o uso é recusado e o item não é gasto; o que passa de 100 se perde. Armas são equipadas (não gastam a unidade). Os valores ficam no campo `use` de cada item em `config/items.mjs`. Preso não usa itens.

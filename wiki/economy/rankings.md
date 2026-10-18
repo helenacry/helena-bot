@@ -3,7 +3,7 @@ title: Ranking
 description: Os três rankings do servidor, como a posição é calculada e o que significa o número do seu cartão de perfil.
 ---
 
-O `/ranking` (atalhos `/top` e `/rank`) mostra os 10 melhores jogadores do servidor em três classificações.
+O `/ranking` (atalho `/top`) mostra os 10 melhores jogadores do servidor em três classificações.
 
 ## Os três rankings
 

@@ -85,6 +85,7 @@ export async function collectWikiBot() {
     const { ARMORY_RULES } = await import("../../services/combat/armory.mjs");
     const { robberyCap } = await import("../../services/crime/robbery.mjs");
     const { MARRIAGE_RULES } = await import("../../services/social/marriage.mjs");
+    const { FAMILY_RULES } = await import("../../config/family.mjs");
     const { collectSiteData } = await import("./data-source.mjs");
 
     const { CRIME_CONFIG, CRIME_FINE, LAUNDERING_CONFIG, ROBBERY_CONFIG, ESCAPE_CONFIG } = crime;
@@ -220,6 +221,19 @@ export async function collectWikiBot() {
 
         marriage: {
             requestTtl: duration(MARRIAGE_RULES.requestTtl)
+        },
+
+        family: {
+            callTtl: duration(FAMILY_RULES.callTtl),
+            cooldown: duration(FAMILY_RULES.cooldown),
+            childChance: percent(FAMILY_RULES.childChance),
+            twinChance: percent(FAMILY_RULES.twinChance),
+            payoutMin: reais(FAMILY_RULES.payoutMin),
+            payoutMax: reais(FAMILY_RULES.payoutMax),
+            nameWindow: duration(FAMILY_RULES.nameWindow),
+            nameMin: String(FAMILY_RULES.nameMin),
+            nameMax: String(FAMILY_RULES.nameMax),
+            maxChildren: String(FAMILY_RULES.maxChildren)
         },
 
         prison: {

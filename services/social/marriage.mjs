@@ -293,6 +293,26 @@ export function divorce(guildId, userId) {
             spouseId
         );
 
-        return { spouseId };
+        // Os filhos e o bebê que esperava nome ficam com o casamento (ordem fixa a < b,
+        // como em database/family-migrations.mjs).
+        const [first, second] = String(userId) < String(spouseId)
+            ? [String(userId), String(spouseId)]
+            : [String(spouseId), String(userId)];
+
+        const children = db.prepare(`
+            DELETE FROM family_children
+            WHERE guild_id = ?
+              AND parent_a = ?
+              AND parent_b = ?
+        `).run(guildId, first, second).changes;
+
+        db.prepare(`
+            DELETE FROM family_births
+            WHERE guild_id = ?
+              AND parent_a = ?
+              AND parent_b = ?
+        `).run(guildId, first, second);
+
+        return { spouseId, children };
     });
 }

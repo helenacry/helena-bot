@@ -480,8 +480,7 @@ test("husaritem: erros viram avisos", async () => {
     assert.equal(owned("apple"), 1);
 });
 
-test("aliases useitem e usar; preso é bloqueado pelo comando", async () => {
-    assert.equal(resolverComando(comandos, "useitem")?.name, "usaritem");
+test("alias usar; preso é bloqueado pelo comando", async () => {
     assert.equal(resolverComando(comandos, "usar")?.name, "usaritem");
 
     reset({ energy: 10, since: nowSec() });

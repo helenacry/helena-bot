@@ -2,8 +2,8 @@
 window.Helena = window.Helena || {};
 window.Helena.data = {
  "stats": {
-  "commands": 54,
-  "aliases": 28,
+  "commands": 56,
+  "aliases": 26,
   "jobs": 23,
   "shopItems": 20,
   "weapons": 14,
@@ -58,8 +58,7 @@ window.Helena.data = {
     {
      "name": "descartar",
      "aliases": [
-      "dropitem",
-      "jogaritem"
+      "dropitem"
      ],
      "description": "Descarte itens do inventário (sem reembolso)"
     },
@@ -102,8 +101,7 @@ window.Helena.data = {
     {
      "name": "ranking",
      "aliases": [
-      "top",
-      "rank"
+      "top"
      ],
      "description": "Consulte os melhores jogadores do servidor"
     },
@@ -137,7 +135,6 @@ window.Helena.data = {
     {
      "name": "usaritem",
      "aliases": [
-      "useitem",
       "usar"
      ],
      "description": "Use itens: coma, beba ou equipe uma arma"
@@ -330,6 +327,18 @@ window.Helena.data = {
      "name": "divorciar",
      "aliases": [],
      "description": "Encerra seu casamento atual"
+    },
+    {
+     "name": "familia",
+     "aliases": [],
+     "description": "Veja o seu casal e os seus filhos"
+    },
+    {
+     "name": "gozofone",
+     "aliases": [
+      "gf"
+     ],
+     "description": "Ligue para o seu cônjuge: pode render um filho ou um dinheiro"
     },
     {
      "name": "perfil",

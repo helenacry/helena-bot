@@ -40,7 +40,7 @@ import {
 
 export default {
     name: "usaritem",
-    aliases: ["useitem", "usar"],
+    aliases: ["usar"],
     description: "Use itens: coma, beba ou equipe uma arma",
 
     options: [

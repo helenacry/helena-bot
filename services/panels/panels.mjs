@@ -31,6 +31,8 @@ import { handleProbeClick } from "../platform/v2-probe.mjs";
 
 import { handleCooldownsClick } from "./cooldowns-panel.mjs";
 
+import { handleFamilyClick, handleFamilyModal } from "./family-panel.mjs";
+
 import {
     handleHelpClick,
     handleHelpModal
@@ -64,6 +66,8 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   ajuda:...                                /ajuda       (help-panel.mjs)
 //   devv2:...                                /devv2       (v2-probe.mjs, só o dono)
 //   cd:atualizar:<dono>                      /cooldowns   (cooldowns-panel.mjs)
+//   gf:aceitar|recusar|cancelar:<ligação>    /gozofone    (family-panel.mjs)
+//   gf:nome:<nascimento>                     registrar o filho (formulário)
 //
 // O ID do dono vai no customId: os botões pessoais só funcionam
 // para quem abriu o painel. O envio do modal leva o customId do
@@ -137,6 +141,11 @@ export function handlePanelClick(interaction) {
 
     if (area === "cd") {
         return handleCooldownsClick(interaction);
+    }
+
+    // O Gozofone: o cônjuge atende, quem ligou cancela (cada um confere no serviço).
+    if (area === "gf") {
+        return handleFamilyClick(interaction);
     }
 
     const userId = interaction.user?.id;
@@ -259,7 +268,7 @@ export async function handleModalSubmit(interaction, comandos) {
         interaction.data?.customId || ""
     ).split(":");
 
-    if (!["banco", "lavagem", "bio", "loja", "inv", "uso", "ajuda"].includes(area)) {
+    if (!["banco", "lavagem", "bio", "loja", "inv", "uso", "ajuda", "gf"].includes(area)) {
         return null;
     }
 
@@ -291,6 +300,10 @@ export async function handleModalSubmit(interaction, comandos) {
 
     if (area === "ajuda") {
         return handleHelpModal(interaction);
+    }
+
+    if (area === "gf") {
+        return handleFamilyModal(interaction);
     }
 
     const fields = readFields(interaction);

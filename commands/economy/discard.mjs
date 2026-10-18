@@ -21,7 +21,7 @@ import {
 
 export default {
     name: "descartar",
-    aliases: ["dropitem", "jogaritem"],
+    aliases: ["dropitem"],
     description: "Descarte itens do inventário (sem reembolso)",
 
     options: [

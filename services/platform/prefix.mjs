@@ -62,7 +62,8 @@ function iniciarAoVivo(live, sent, message, edit) {
         startLiveUpdate({
             key: live.key,
             render: live.render,
-            maxMs: LIVE_CONFIG.channelMaxMs,
+            maxMs: Math.min(live.maxMs ?? Infinity, LIVE_CONFIG.channelMaxMs),
+            ...(live.intervalMs ? { intervalMs: live.intervalMs } : {}),
             edit: payload => edit(message, sentMessage.id, payload)
         });
 

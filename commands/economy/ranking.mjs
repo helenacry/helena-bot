@@ -181,7 +181,7 @@ function getRanking(guildId, type) {
 
 export default {
     name: "ranking",
-    aliases: ["top", "rank"],
+    aliases: ["top"],
 
     description:
         "Consulte os melhores jogadores do servidor",

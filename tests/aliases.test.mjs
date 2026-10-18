@@ -27,11 +27,11 @@ const run = await createPrefixRunner({
 test("os aliases apontam para o comando certo", () => {
     const expected = {
         bal: "saldo", carteira: "saldo", inv: "inventario", dep: "depositar",
-        work: "trabalhar", top: "ranking", rank: "ranking", diario: "daily",
+        work: "trabalhar", top: "ranking", diario: "daily",
         missao: "missoes", profile: "perfil", pagar: "transferir", ui: "userinfo",
         cd: "cooldowns", help: "ajuda", comandos: "ajuda", lav: "lavagem",
         lavar: "lavagem", lavstatus: "lavageminfo", cadeia: "prisao",
-        assaltar: "roubar", wanted: "procurados"
+        assaltar: "roubar", wanted: "procurados", gf: "gozofone"
     };
 
     for (const [alias, name] of Object.entries(expected)) {

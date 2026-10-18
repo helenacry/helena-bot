@@ -75,6 +75,10 @@ import {
 } from "./database/market-migrations.mjs";
 
 import {
+    runFamilyMigrations
+} from "./database/family-migrations.mjs";
+
+import {
     importLegacyViews
 } from "./services/social/userinfo-views.mjs";
 
@@ -155,11 +159,15 @@ async function responderInteracao(
     // "live" é só para o bot: não pode ir no corpo enviado à API.
     const { live, ...payload } = resultado ?? {};
 
-    // As telas da fuga da prisão são editadas depois com embeds (editarRespostaOriginal),
-    // como a contagem ao vivo: ficam no clássico, sem misturar os dois formatos.
+    // As telas da fuga da prisão e as ligações do Gozofone são editadas depois com embeds
+    // (editarRespostaOriginal, edição ao vivo), como a contagem ao vivo: ficam no clássico,
+    // sem misturar os dois formatos.
+    const customId = String(interaction.data?.customId ?? "");
+
     const manterClassico =
         Boolean(live) ||
-        String(interaction.data?.customId ?? "").startsWith("fuga:");
+        customId.startsWith("fuga:") ||
+        customId.startsWith("gf:");
 
     const callback = await deliverCallback({
         payload,
@@ -194,7 +202,8 @@ async function responderInteracao(
         startLiveUpdate({
             key: live.key,
             render: live.render,
-            maxMs: LIVE_CONFIG.interactionMaxMs,
+            maxMs: Math.min(live.maxMs ?? Infinity, LIVE_CONFIG.interactionMaxMs),
+            ...(live.intervalMs ? { intervalMs: live.intervalMs } : {}),
             edit: data => editarRespostaOriginal(interaction, data)
         });
     }
@@ -444,6 +453,7 @@ runAchievementMigrations();
 runCrimeMigrations();
 runWebMigrations();
 runMarketMigrations();
+runFamilyMigrations();
 
 // Traz o contador antigo do /userinfo (JSON) para o banco, uma vez.
 // O arquivo vira views.json.imported; sem ele, não faz nada.

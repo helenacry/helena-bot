@@ -837,7 +837,6 @@ test("alias store abre a mesma loja", async () => {
 
 test("aliases de descartar", () => {
     assert.equal(resolverComando(comandos, "dropitem")?.name, "descartar");
-    assert.equal(resolverComando(comandos, "jogaritem")?.name, "descartar");
 });
 
 test("preso não usa o descartar nem por comando", async () => {
