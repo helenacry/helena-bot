@@ -1,10 +1,5 @@
 
 import {
-    getUserBadges,
-    getPrismaInfo
-} from "../../services/social/userinfo-badges.mjs";
-
-import {
     incrementUserinfoViews
 } from "../../services/social/userinfo-views.mjs";
 
@@ -13,36 +8,23 @@ import {
     lookupProblem
 } from "../../services/platform/user-lookup.mjs";
 
+import {
+    buildUserinfoEmbed
+} from "../../services/social/userinfo-view.mjs";
+
+import {
+    userinfoComponents
+} from "../../services/social/userinfo-components.mjs";
+
+import {
+    knownMembers
+} from "../../services/panels/userinfo-panel.mjs";
+
 import { warningEmbed } from "../../utils/embed.mjs";
-
-const COLOR = "#8755DA";
-const MAX_FIELD = 1024;
-const UNKNOWN = "Não informado pela API";
-const PULSE_MONTH = 30 * 24 * 60 * 60 * 1000;
-
-const PULSE_EMOJIS = {
-    1: "<:pulse_1:235402034624745472>",
-    2: "<:pulse_2:235402010050318336>",
-    3: "<:pulse_3:235401992409075712>",
-    6: "<:pulse_6:235401974772027392>",
-    9: "<:pulse_9:235401952500273152>",
-    12: "<:pulse_12:235401933147754496>",
-    15: "<:pulse_15:235401908225200128>",
-    18: "<:pulse_18:235401879607463936>",
-    24: "<:pulse_24:235401848926130176>"
-};
 
 // ==========================================
 // UTILITÁRIOS
 // ==========================================
-
-function safe(value) {
-    return String(value ?? "")
-        .replace(/\\/g, "\\\\")
-        .replace(/([*_`~|>])/g, "\\$1")
-        .replace(/@/g, "@\u200b")
-        .replace(/\r?\n/g, " ");
-}
 
 function errorResponse(message) {
     return {
@@ -113,33 +95,6 @@ async function selfProfile(interaction) {
     return known;
 }
 
-// Desde quando a pessoa pulsa. O pulsingSince que vem junto do membro é o do
-// SERVIDOR: fica nulo quando o Pulse é de outro servidor, mesmo com pulsing=true, e
-// o perfil da conta (GET /users/:id) não traz o campo. Já o próximo selo é da CONTA
-// e chega em pulsingSince + meses x 30 dias (conferido com a API de verdade: bate no
-// milissegundo), então a data sai dele. Vale a mais antiga das duas (a conta pulsa
-// desde o Pulse mais antigo); sem próximo selo (nível máximo), vale a do servidor.
-// Devolve milissegundos ou null.
-function pulseStartOf(user) {
-    const at = Number(user.nextPulseBadge?.at);
-    const months = Number(user.nextPulseBadge?.months);
-    const server = Number(user.pulsingSince);
-
-    const derived =
-        Number.isFinite(at) && at > 0 &&
-        Number.isFinite(months) && months > 0
-            ? at - months * PULSE_MONTH
-            : null;
-
-    const own = Number.isFinite(server) && server > 0 ? server : null;
-
-    if (derived !== null && own !== null) {
-        return Math.min(derived, own);
-    }
-
-    return derived ?? own;
-}
-
 // Devolve { user, self } ou { response } com o aviso a mostrar.
 async function findTarget(interaction) {
     const query = String(
@@ -190,95 +145,6 @@ async function findTarget(interaction) {
     };
 }
 
-function first(object, keys) {
-    for (const key of keys) {
-        const value = object?.[key];
-
-        if (
-            value !== undefined &&
-            value !== null &&
-            value !== ""
-        ) {
-            return value;
-        }
-    }
-
-    return null;
-}
-
-function dateFrom(value) {
-    if (
-        value === undefined ||
-        value === null ||
-        value === ""
-    ) {
-        return null;
-    }
-
-    if (
-        typeof value === "number" ||
-        /^\d+$/.test(String(value))
-    ) {
-        const number = Number(value);
-
-        if (!Number.isFinite(number) || number <= 0) {
-            return null;
-        }
-
-        // A VSync retorna timestamps em milissegundos.
-        const date = new Date(number);
-
-        return Number.isNaN(date.getTime())
-            ? null
-            : date;
-    }
-
-    const date = new Date(value);
-
-    return Number.isNaN(date.getTime())
-        ? null
-        : date;
-}
-
-function dateField(value) {
-    const date = dateFrom(value);
-
-    if (!date) {
-        return UNKNOWN;
-    }
-
-    return new Intl.DateTimeFormat("pt-BR", {
-        dateStyle: "long",
-        timeStyle: "short",
-        timeZone: "America/Sao_Paulo"
-    }).format(date);
-}
-
-// Duração dos níveis Pulse: cada mês equivale a 30 dias.
-function formatPulseDuration(milliseconds) {
-    if (!Number.isFinite(milliseconds)) return UNKNOWN;
-
-    const totalHours = Math.floor(Math.max(0, milliseconds) / 3_600_000);
-    const months = Math.floor(totalHours / (30 * 24));
-    const days = Math.floor((totalHours % (30 * 24)) / 24);
-    const hours = totalHours % 24;
-    const parts = [];
-
-    if (months) parts.push(`${months} ${months === 1 ? "mês" : "meses"}`);
-    if (days) parts.push(`${days} ${days === 1 ? "dia" : "dias"}`);
-    if (hours || !parts.length) parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
-
-    return parts.join(" ");
-}
-
-function add(fields, name, value, inline = false) {
-    fields.push({
-        name,
-        value: String(value ?? UNKNOWN).slice(0, MAX_FIELD),
-        inline
-    });
-}
-
 // ==========================================
 // COMANDO /USERINFO
 // ==========================================
@@ -316,51 +182,6 @@ export default {
                 );
             }
 
-            const name = safe(
-                user.displayName ||
-                user.username ||
-                "Usuário"
-            );
-
-            const username = safe(
-                user.username || "desconhecido"
-            );
-
-            const prisma = getPrismaInfo(user);
-            const badges = getUserBadges(user);
-
-            // ==================================
-            // DATAS DA CONTA
-            // ==================================
-            const createdAt = dateField(user.createdAt);
-
-            const joinedAt = dateField(user.joinedAt);
-
-            // ==================================
-            // PULSER
-            // ==================================
-            // O Prisma+ e o Pulse só entram no cartão para quem tem: sem eles, os
-            // campos ficam de fora em vez de mostrar "não é assinante" e "não informado".
-            const pulseStart = Number(user.pulsingSince);
-            const currentLevel = Number(user.pulseBadge?.months);
-            const currentLevelAt = pulseStart + currentLevel * PULSE_MONTH;
-
-            const currentPulseBadge =
-                user.pulsing &&
-                    user.pulseBadge &&
-                    Number.isFinite(pulseStart) && pulseStart > 0 &&
-                    Number.isFinite(currentLevel) && currentLevel >= 0
-                    ? formatPulseDuration(Date.now() - currentLevelAt)
-                    : null;
-
-            const nextAt = Number(user.nextPulseBadge?.at);
-            const nextPulseBadge =
-                user.pulsing &&
-                    user.nextPulseBadge &&
-                    Number.isFinite(nextAt) && nextAt > 0
-                    ? "em " + formatPulseDuration(nextAt - Date.now())
-                    : null;
-
             // ==================================
             // CONTADOR DE VISUALIZAÇÕES
             // ==================================
@@ -376,14 +197,8 @@ export default {
             }
 
             // ==================================
-            // RODAPÉ
+            // CARTÃO
             // ==================================
-            const actor = safe(
-                interaction.user?.displayName ||
-                interaction.user?.username ||
-                "Usuário"
-            );
-
             const horario = new Intl.DateTimeFormat(
                 "pt-BR",
                 {
@@ -393,92 +208,15 @@ export default {
                 }
             ).format(new Date());
 
-            const footer =
-                "Comando executado por: " +
-                actor +
-                (
-                    views === null
-                        ? ""
-                        : " | Visualizações: " + views
-                ) +
-                " • " +
-                horario;
-
-            const fields = [];
-
-            add(fields, "👤 Menção", "<@" + user.id + ">");
-
-            const badgeText = badges
-                .map(badge => badge.emoji)
-                .filter(Boolean)
-                .join(" ");
-
-            add(fields, "🏷️ Tag", username, true);
-            add(fields, "🪪 ID", String(user.id), true);
-            add(fields, "🏅 Insígnias", badgeText || "Nenhuma", true);
-
-            add(fields, "📅 Conta criada em", createdAt);
-
-            add(fields, "📅 Entrou no servidor em", joinedAt);
-
-            if (user.prismaActive) {
-                add(
-                    fields,
-                    "💎 Assinante Prisma+ desde",
-                    dateField(user.prismaSince),
-                    true
-                );
-            }
-
-            if (user.pulsing) {
-                add(
-                    fields,
-                    "✨ Pulser desde",
-                    "**" + dateField(pulseStartOf(user)) + "**",
-                    true
-                );
-
-                fields.push({
-                    name: "\u200b",
-                    value: "\u200b",
-                    inline: false
-                });
-
-                add(
-                    fields,
-                    "🏅 Insígnia de Pulser atual",
-                    (PULSE_EMOJIS[user.pulseBadge?.months] ?? "") +
-                    " │ **" + (currentPulseBadge ?? UNKNOWN) + "**",
-                    true
-                );
-
-                add(
-                    fields,
-                    "⏭️ Próxima insígnia de Pulser",
-                    (PULSE_EMOJIS[user.nextPulseBadge?.months] ?? "") +
-                    " │ **" + (nextPulseBadge ?? UNKNOWN) + "**",
-                    true
-                );
-            }
-
-            // ==================================
-            // EMBED FINAL
-            // ==================================
-            const embed = {
-                author: {
-                    name: name + " (" + username + ")",
-                    ...(user.avatarUrl
-                        ? { iconUrl: user.avatarUrl }
-                        : {})
-                },
-                color: COLOR,
-                // Mantém o avatar maior à direita, se desejar.
-                thumbnail: user.avatarUrl
-                    ? { url: user.avatarUrl }
-                    : undefined,
-                fields,
-                footer: { text: footer }
-            };
+            const embed = buildUserinfoEmbed({
+                user,
+                actorName:
+                    interaction.user?.displayName ||
+                    interaction.user?.username,
+                actorAvatar: interaction.user?.avatarUrl,
+                views,
+                time: horario
+            });
 
             // ==================================
             // RESPOSTA
@@ -491,7 +229,15 @@ export default {
                     body: self
                         ? "<@" + user.id + ">"
                         : "Informações de <@" + user.id + ">",
-                    embeds: [embed]
+                    embeds: [embed],
+
+                    // Os dois menus embaixo do cartão: mais informações desta pessoa e ver
+                    // outros membros. Só quem usou o comando mexe neles.
+                    components: userinfoComponents({
+                        ownerId: String(interaction.user?.id ?? ""),
+                        user,
+                        members: knownMembers(interaction.guildId)
+                    })
                 }
             };
         } catch (error) {

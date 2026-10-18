@@ -74,6 +74,8 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   miss:resgatar:<dono>:<missão>            /missoes     (missions-panel.mjs)
 //   gf:aceitar|recusar|cancelar:<ligação>    /gozofone    (family-panel.mjs)
 //   gf:nome:<nascimento>                     registrar o filho (formulário)
+//   userinfo:more|other:<dono>[:<alvo>]      /userinfo    (userinfo-panel.mjs, menus)
+//   userinfo:buscar:<dono>                   /userinfo    (formulário "Procurar por @usuário...")
 //
 // O ID do dono vai no customId: os botões pessoais só funcionam
 // para quem abriu o painel. O envio do modal leva o customId do
@@ -282,7 +284,7 @@ export async function handleModalSubmit(interaction, comandos) {
         interaction.data?.customId || ""
     ).split(":");
 
-    if (!["banco", "lavagem", "bio", "loja", "inv", "uso", "ajuda", "gf"].includes(area)) {
+    if (!["banco", "lavagem", "bio", "loja", "inv", "uso", "ajuda", "gf", "userinfo"].includes(area)) {
         return null;
     }
 
@@ -318,6 +320,17 @@ export async function handleModalSubmit(interaction, comandos) {
 
     if (area === "gf") {
         return handleFamilyModal(interaction);
+    }
+
+    // "Procurar por @usuário..." do /userinfo: o mesmo comando, só para quem pediu.
+    if (area === "userinfo") {
+        const query = (readFields(interaction).usuario ?? "").trim();
+
+        if (!query) {
+            return warn("Faltou a pessoa", "Digite o @usuário ou a menção de quem você quer ver.");
+        }
+
+        return runCommand(comandos, "userinfo", { usuario: query }, interaction);
     }
 
     const fields = readFields(interaction);

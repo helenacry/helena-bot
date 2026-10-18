@@ -231,8 +231,10 @@ const toolButtons = ownerId => [
 
 const SHOP_ART = `${SITE_URL}assets/img/apple-touch-icon.png`;
 
+// Sem menção: num texto do V2 ela notificaria a pessoa (só no embed é visual). O painel é de
+// quem o abriu, então o nome não faz falta.
 const shopMeta = (ownerId, wallet, gems) =>
-    `<@${ownerId}> · 👛 ${formatMoney(wallet)} · 💎 ${gems}`;
+    `👛 ${formatMoney(wallet)} · 💎 ${gems}`;
 
 function homeLayout({ ownerId, wallet, gems, market, categories }) {
     return [

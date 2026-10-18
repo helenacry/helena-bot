@@ -33,6 +33,13 @@ A bio é o texto que aparece no cartão. Ela tem **até 160 caracteres**.
 
 O `/userinfo` (atalho `/ui`) é outra coisa: mostra as **informações e insígnias de um usuário da VSync**, não do jogo. Funciona com qualquer pessoa, mesmo que ela nunca tenha jogado a Helena.
 
+O cartão mostra a **menção**, o **@usuário** e o **ID** (em caixas de código, fáceis de copiar), as **insígnias**, quando a conta foi criada e quando entrou no servidor, cada data com a **idade** em anos, meses e dias. Quem tem **Prisma+** ou **Pulse** vê também desde quando, o selo atual de Pulser e quanto falta para o próximo. No rodapé aparecem quem usou o comando e quantas vezes aquele perfil já foi consultado.
+
+Embaixo do cartão há dois menus, só para quem usou o comando:
+
+- **Mais informações.** abre, só para você, o **avatar** em tamanho grande, o nome de cada **insígnia**, as **datas e idades** e a **evolução do Pulse** (cada nível e quando chega).
+- **Ver informações de outros membros no servidor.** lista quem já joga ali e tem a opção **Procurar por @usuário...**, que abre um formulário. O resultado também aparece só para você.
+
 ## Próximo passo
 
 {{cards: character/achievements-and-titles, character/marriage}}

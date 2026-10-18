@@ -126,6 +126,26 @@ function refund(call) {
     `).run(call.previousCall, call.guildId, call.callerId, call.createdAt);
 }
 
+// A espera do Gozofone de quem pergunta, para o /cooldowns: { married, remaining }. Sem casamento
+// não há o que mostrar (married = false). remaining é em segundos e já considera a devolução da
+// espera quando a ligação caiu sem resposta ou foi recusada.
+export function callWait(guildId, userId, now = nowSeconds()) {
+    if (!getMarriage(guildId, userId)) {
+        return { married: false, remaining: 0 };
+    }
+
+    const row = db.prepare(`
+        SELECT last_call
+        FROM family_calls
+        WHERE guild_id = ?
+          AND user_id = ?
+    `).get(guildId, String(userId));
+
+    const remaining = FAMILY_RULES.cooldown - (now - (row?.last_call ?? 0));
+
+    return { married: true, remaining: Math.max(0, remaining) };
+}
+
 export function startCall({ guildId, callerId, now = nowSeconds() }) {
     const couple = coupleOf(guildId, callerId);
 

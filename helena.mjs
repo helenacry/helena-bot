@@ -115,6 +115,10 @@ import {
 } from "./services/panels/panels.mjs";
 
 import {
+    handleUserinfoComponent
+} from "./services/panels/userinfo-panel.mjs";
+
+import {
     LIVE_CONFIG
 } from "./config/live.mjs";
 
@@ -540,29 +544,10 @@ async function executarComponente(interaction) {
         return painel;
     }
 
+    // Os menus do /userinfo (mais informações e outros membros): buscam a pessoa na API,
+    // então a resposta é assíncrona.
     if (customId.startsWith("userinfo:")) {
-        console.log(
-            "[USERINFO COMPONENT]",
-            {
-                customId,
-
-                userId: interaction.user?.id,
-
-                values:
-                    interaction.data?.values || []
-            }
-        );
-
-        return {
-            type: "message",
-
-            data: {
-                body:
-                    "💜 Os menus interativos do Userinfo estão em desenvolvimento.",
-
-                ephemeral: true
-            }
-        };
+        return handleUserinfoComponent(interaction, comandos);
     }
 
     console.warn(

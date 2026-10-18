@@ -1,43 +1,71 @@
-export function userinfoComponents(targetId) {
+
+import { detailOptions } from "./userinfo-view.mjs";
+
+// ==========================================
+// MENUS DO /USERINFO
+// ==========================================
+
+// Dois menus embaixo do cartão, como no Zany (a VSync só tem menu de texto, sem seletor de
+// pessoas, então o segundo lista quem já joga neste servidor):
+//
+//   userinfo:more:<dono>:<alvo>    "Mais informações."  (avatar, insígnias, datas, Pulse)
+//   userinfo:other:<dono>          "Ver informações de outros membros no servidor."
+//   userinfo:buscar:<dono>         formulário da opção "Procurar por @usuário..."
+//
+// "dono" é quem usou o comando: só ele mexe nos menus (services/panels/userinfo-panel.mjs).
+
+export const SEARCH_VALUE = "buscar";
+
+const MAX_MEMBERS = 24;
+
+const clip = (text, max) => {
+    const value = String(text ?? "");
+
+    return value.length > max ? value.slice(0, max - 1) + "…" : value;
+};
+
+// members: [{ id, name, level }] (quem já joga neste servidor, vindo do banco).
+export function userinfoComponents({ ownerId, user, members = [] }) {
     return [
         {
             type: "row",
-            components: [
-                {
-                    type: "select",
-                    customId: `userinfo:details:${targetId}`,
-                    placeholder: "Mais informações...",
-                    minValues: 1,
-                    maxValues: 1,
-                    options: [
-                        { label: "Avatar", value: "avatar", emoji: "🖼️" },
-                        { label: "Evolução do impulso", value: "boost", emoji: "✨" },
-                        { label: "Evolução do Nitro", value: "nitro", emoji: "💎" },
-                        { label: "Cores do perfil", value: "colors", emoji: "🎨" },
-                        { label: "Conexões", value: "connections", emoji: "🔗" },
-                        { label: "Nomes anteriores", value: "names", emoji: "📝" },
-                        { label: "Ícones antigos", value: "avatars", emoji: "👤" },
-                        { label: "Banners antigos", value: "banners", emoji: "🌌" },
-                        { label: "Últimas mensagens", value: "messages", emoji: "💬" },
-                        { label: "Mensagens deletadas", value: "deleted", emoji: "🗑️" },
-                        { label: "Última call", value: "voice", emoji: "🔊" },
-                        { label: "Servidores", value: "servers", emoji: "🌐" },
-                        { label: "Histórico de visualizações", value: "views", emoji: "👁️" }
-                    ]
-                }
-            ]
+            components: [{
+                type: "select",
+                customId: `userinfo:more:${ownerId}:${user.id}`,
+                placeholder: "Mais informações.",
+                minValues: 1,
+                maxValues: 1,
+                options: detailOptions(user)
+            }]
         },
+
         {
             type: "row",
-            components: [
-                {
-                    type: "button",
-                    customId: `userinfo:back:${targetId}`,
-                    label: "Voltar ao perfil",
-                    style: "secondary",
-                    emoji: "↩️"
-                }
-            ]
+            components: [{
+                type: "select",
+                customId: `userinfo:other:${ownerId}`,
+                placeholder: "Ver informações de outros membros no servidor.",
+                minValues: 1,
+                maxValues: 1,
+
+                options: [
+                    {
+                        label: "Procurar por @usuário...",
+                        value: SEARCH_VALUE,
+                        description: "Digite o @usuário ou a menção de quem você quer ver",
+                        emoji: "🔎"
+                    },
+
+                    ...members
+                        .filter(member => String(member.id) !== String(user.id))
+                        .slice(0, MAX_MEMBERS)
+                        .map(member => ({
+                            label: clip(member.name, 100),
+                            value: String(member.id),
+                            description: `Nível ${member.level}`
+                        }))
+                ]
+            }]
         }
     ];
 }

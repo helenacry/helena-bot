@@ -1,6 +1,8 @@
 
 import { getPlayer } from "../../database/economy.mjs";
 
+import { safeText } from "../platform/user-lookup.mjs";
+
 import {
     COOLDOWNS,
     getRemaining,
@@ -19,6 +21,8 @@ import { getPrison } from "../crime/prison.mjs";
 import { getDailyStatus } from "./daily.mjs";
 
 import { getGemBonusStatus } from "./gem-bonus.mjs";
+
+import { callWait } from "../social/family.mjs";
 
 import { createEmbed, HELENA_COLORS } from "../../utils/embed.mjs";
 
@@ -39,7 +43,7 @@ import { button, row } from "../panels/panel-kit.mjs";
 
 // Uma tela só para o /cooldowns e para o botão "Atualizar": o comando abre, o botão
 // refaz a mesma tela com a hora de agora. Dois grupos, como numa lista de afazeres:
-// o que é legal (trabalho, daily, gemas) e o que é ilegal (crime, roubo, lavagem e, se
+// o que é legal (trabalho, daily, gemas e, para casados, o Gozofone) e o que é ilegal (crime, roubo, lavagem e, se
 // estiver preso, a cadeia). ✅ pronto, ⏳ com o tempo que falta.
 //
 //   cd:atualizar:<dono>      atualiza esta tela
@@ -65,11 +69,15 @@ export function cooldownsOf(guildId, userId, now = Math.floor(Date.now() / 1000)
 
     const prison = getPrison(guildId, userId, now);
 
+    // O Gozofone só existe para quem é casado(a): sem casamento a linha nem aparece.
+    const call = callWait(guildId, userId, now);
+
     return {
         legal: [
             { label: "Trabalhar", remaining: getRemaining(player[COOLDOWNS.work.column], COOLDOWNS.work.duration, now) },
             { label: "Recompensa diária", remaining: getDailyStatus(guildId, userId, now).remaining },
-            { label: "Bônus de gemas", remaining: getGemBonusStatus(userId, now).remaining }
+            { label: "Bônus de gemas", remaining: getGemBonusStatus(userId, now).remaining },
+            ...(call.married ? [{ label: "Gozofone", remaining: call.remaining }] : [])
         ],
 
         illegal: [
@@ -97,7 +105,12 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
 
     const waiting = [...data.legal, ...data.illegal].filter(item => item.remaining > 0).length + (data.prison ? 1 : 0);
 
-    const meta = `<@${userId}> · atualizado às ${clock.format(new Date(now * 1000))}`;
+    const updated = `atualizado às ${clock.format(new Date(now * 1000))}`;
+
+    // No embed a menção é só visual; num texto do V2 ela notificaria, então lá vai o nome.
+    const meta = `<@${userId}> · ${updated}`;
+
+    const metaV2 = `**${safeText(user.displayName || user.username || "Jogador")}** · ${updated}`;
 
     const note = "Toque em Atualizar para ver os tempos de agora.";
 
@@ -122,7 +135,7 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
     // o V2: o mesmo conteúdo em blocos, com o avatar ao lado do título
     const layout = [
         container([
-            ...headerBlock(["## ⏱️ Tempos de recarga", meta], thumbnail(user.avatarUrl)),
+            ...headerBlock(["## ⏱️ Tempos de recarga", metaV2], thumbnail(user.avatarUrl)),
             divider(),
             text(`### ⚖️ Legal\n${legal.join("\n")}`),
             divider(),

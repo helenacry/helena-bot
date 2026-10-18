@@ -452,6 +452,7 @@ export async function collectWikiBot() {
             [COOLDOWNS.work.name, code(COOLDOWNS.work.command), duration(COOLDOWNS.work.duration)],
             [COOLDOWNS.daily.name, code(COOLDOWNS.daily.command), duration(COOLDOWNS.daily.duration)],
             ["Coletar gemas (painel do site)", "site", duration(GEM_BONUS.cooldown)],
+            ["Gozofone (ligar para o cônjuge)", code("/gozofone"), duration(FAMILY_RULES.cooldown)],
             ["Crime", code("/crime"), duration(CRIME_CONFIG.cooldown)],
             ["Roubar", code("/roubar"), duration(ROBBERY_CONFIG.cooldown)],
             ["Lavagem pública", code("/lavagem"), duration(LAUNDERING_CONFIG.kinds.public.cooldown)],

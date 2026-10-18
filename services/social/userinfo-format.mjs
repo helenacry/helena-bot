@@ -1,0 +1,214 @@
+
+// ==========================================
+// FORMATOS DO /USERINFO
+// ==========================================
+
+// Datas, idades e níveis do Pulse, usados pelo cartão do /userinfo e pelos detalhes do menu
+// "Mais informações". Tudo puro: recebe o usuário como a API da VSync devolve.
+
+export const UNKNOWN = "Não informado pela API";
+
+// Cada mês do Pulse vale 30 dias.
+export const PULSE_MONTH = 30 * 24 * 60 * 60 * 1000;
+
+// Os níveis do Pulse, em meses, e o emoji de cada selo.
+export const PULSE_LEVELS = Object.freeze([1, 2, 3, 6, 9, 12, 15, 18, 24]);
+
+export const PULSE_EMOJIS = Object.freeze({
+    1: "<:pulse_1:235402034624745472>",
+    2: "<:pulse_2:235402010050318336>",
+    3: "<:pulse_3:235401992409075712>",
+    6: "<:pulse_6:235401974772027392>",
+    9: "<:pulse_9:235401952500273152>",
+    12: "<:pulse_12:235401933147754496>",
+    15: "<:pulse_15:235401908225200128>",
+    18: "<:pulse_18:235401879607463936>",
+    24: "<:pulse_24:235401848926130176>"
+});
+
+// Texto sem formatação para o autor, o rodapé e os títulos do embed (a VSync não processa
+// markdown neles: uma barra invertida apareceria de verdade). Só tira as quebras de linha.
+export function plain(value, max = 200) {
+    return String(value ?? "")
+        .replace(/[\r\n]+/g, " ")
+        .trim()
+        .slice(0, max);
+}
+
+// Para texto que entra em description e campos, onde o markdown vale.
+export function safe(value) {
+    return String(value ?? "")
+        .replace(/\\/g, "\\\\")
+        .replace(/([*_`~|>])/g, "\\$1")
+        .replace(/@/g, "@​")
+        .replace(/\r?\n/g, " ");
+}
+
+export function dateFrom(value) {
+    if (
+        value === undefined ||
+        value === null ||
+        value === ""
+    ) {
+        return null;
+    }
+
+    if (
+        typeof value === "number" ||
+        /^\d+$/.test(String(value))
+    ) {
+        const number = Number(value);
+
+        if (!Number.isFinite(number) || number <= 0) {
+            return null;
+        }
+
+        // A VSync retorna timestamps em milissegundos.
+        const date = new Date(number);
+
+        return Number.isNaN(date.getTime())
+            ? null
+            : date;
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime())
+        ? null
+        : date;
+}
+
+const DAY_FORMAT = new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "long",
+    timeZone: "America/Sao_Paulo"
+});
+
+const TIME_FORMAT = new Intl.DateTimeFormat("pt-BR", {
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo"
+});
+
+// "30 de setembro de 2016, às 20:55" (horário de Brasília).
+export function dateField(value) {
+    const date = dateFrom(value);
+
+    if (!date) {
+        return UNKNOWN;
+    }
+
+    return `${DAY_FORMAT.format(date)}, às ${TIME_FORMAT.format(date)}`;
+}
+
+// A idade em anos, meses e dias de CALENDÁRIO (na data de Brasília, sem contar a hora): "10 anos
+// 15 dias", sem as unidades zeradas. null se a data não existe; "menos de 1 dia" se foi hoje.
+const BRASILIA = 3 * 60 * 60 * 1000;
+
+// Meia-noite (UTC) do dia de calendário de Brasília em que o instante cai.
+function calendarDay(ms) {
+    const shifted = new Date(ms - BRASILIA);
+
+    return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+}
+
+// A data daqui a n meses, com o dia limitado ao tamanho do mês (31/01 + 1 mês = 28 ou 29/02).
+function addMonths(day, months) {
+    const date = new Date(day);
+
+    const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1));
+
+    const length = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+
+    return Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), Math.min(date.getUTCDate(), length));
+}
+
+export function formatAge(from, to = Date.now()) {
+    const start = dateFrom(from);
+
+    if (!start) {
+        return null;
+    }
+
+    const first = calendarDay(start.getTime());
+    const last = calendarDay(new Date(to).getTime());
+
+    if (!(last > first)) {
+        return "menos de 1 dia";
+    }
+
+    const a = new Date(first);
+    const b = new Date(last);
+
+    let total = (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + (b.getUTCMonth() - a.getUTCMonth());
+
+    // o último mês cheio que cabe até a data de hoje
+    if (addMonths(first, total) > last) {
+        total -= 1;
+    }
+
+    const days = Math.round((last - addMonths(first, total)) / 86_400_000);
+    const years = Math.floor(total / 12);
+    const months = total % 12;
+
+    const parts = [];
+
+    if (years) parts.push(`${years} ${years === 1 ? "ano" : "anos"}`);
+    if (months) parts.push(`${months} ${months === 1 ? "mês" : "meses"}`);
+    if (days) parts.push(`${days} ${days === 1 ? "dia" : "dias"}`);
+
+    return parts.length ? parts.join(" ") : "menos de 1 dia";
+}
+
+// "30 de setembro de 2016, às 20:55 (**10 anos 15 dias**)"
+export function dateWithAge(value, now = Date.now()) {
+    const age = formatAge(value, now);
+
+    if (age === null) {
+        return UNKNOWN;
+    }
+
+    return `${dateField(value)} (**${age}**)`;
+}
+
+// Duração em meses, dias e horas (cada mês do Pulse vale 30 dias).
+export function formatPulseDuration(milliseconds) {
+    if (!Number.isFinite(milliseconds)) return UNKNOWN;
+
+    const totalHours = Math.floor(Math.max(0, milliseconds) / 3_600_000);
+    const months = Math.floor(totalHours / (30 * 24));
+    const days = Math.floor((totalHours % (30 * 24)) / 24);
+    const hours = totalHours % 24;
+    const parts = [];
+
+    if (months) parts.push(`${months} ${months === 1 ? "mês" : "meses"}`);
+    if (days) parts.push(`${days} ${days === 1 ? "dia" : "dias"}`);
+    if (hours || !parts.length) parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
+
+    return parts.join(" ");
+}
+
+// Desde quando a pessoa pulsa. O pulsingSince que vem junto do membro é o do
+// SERVIDOR: fica nulo quando o Pulse é de outro servidor, mesmo com pulsing=true, e
+// o perfil da conta (GET /users/:id) não traz o campo. Já o próximo selo é da CONTA
+// e chega em pulsingSince + meses x 30 dias (conferido com a API de verdade: bate no
+// milissegundo), então a data sai dele. Vale a mais antiga das duas (a conta pulsa
+// desde o Pulse mais antigo); sem próximo selo (nível máximo), vale a do servidor.
+// Devolve milissegundos ou null.
+export function pulseStartOf(user) {
+    const at = Number(user.nextPulseBadge?.at);
+    const months = Number(user.nextPulseBadge?.months);
+    const server = Number(user.pulsingSince);
+
+    const derived =
+        Number.isFinite(at) && at > 0 &&
+        Number.isFinite(months) && months > 0
+            ? at - months * PULSE_MONTH
+            : null;
+
+    const own = Number.isFinite(server) && server > 0 ? server : null;
+
+    if (derived !== null && own !== null) {
+        return Math.min(derived, own);
+    }
+
+    return derived ?? own;
+}

@@ -110,7 +110,7 @@ test("o V2: avatar ao lado do título, os dois grupos separados por linhas finas
     // o cabeçalho é uma seção: título e linha de apoio à esquerda, o avatar à direita
     assert.equal(inside[0].type, "section");
     assert.equal(inside[0].texts[0], "## ⏱️ Tempos de recarga");
-    assert.match(inside[0].texts[1], new RegExp(`^<@${ME.id}> · atualizado às \\d\\d:\\d\\d$`));
+    assert.match(inside[0].texts[1], new RegExp(`^\\*\\*Eu Mesmo\\*\\* · atualizado às \\d\\d:\\d\\d$`));
     assert.deepEqual(inside[0].accessory, { type: "thumbnail", url: ME.avatarUrl });
 
     const kinds = inside.map(component => component.type);
@@ -186,4 +186,64 @@ test("o botão Atualizar: só quem abriu atualiza, e a tela sai de novo com os t
 
     assert.equal(blocked.type, "message");
     assert.equal(blocked.data.ephemeral, true);
+});
+
+// ==========================================
+// GOZOFONE
+// ==========================================
+
+const { FAMILY_RULES } = await import("../config/family.mjs");
+const { callWait } = await import("../services/social/family.mjs");
+
+function marry() {
+    set("DELETE FROM marriages WHERE guild_id = ?", G);
+    set("DELETE FROM family_calls WHERE guild_id = ?", G);
+
+    for (const [user, spouse] of [[ME.id, OTHER.id], [OTHER.id, ME.id]]) {
+        set("INSERT INTO marriages (guild_id, user_id, spouse_id, married_at) VALUES (?, ?, ?, ?)", G, user, spouse, NOW - 1000);
+    }
+}
+
+test("Gozofone: só quem é casado(a) vê a linha, como a última do grupo Legal", () => {
+    set("DELETE FROM marriages WHERE guild_id = ?", G);
+
+    assert.deepEqual(callWait(G, ME.id, NOW), { married: false, remaining: 0 });
+    assert.ok(!cooldownsOf(G, ME.id, NOW).legal.some(item => item.label === "Gozofone"));
+    assert.doesNotMatch(buildCooldowns({ guildId: G, user: ME, now: NOW }).embed.fields[0].value, /Gozofone/);
+
+    marry();
+
+    const view = buildCooldowns({ guildId: G, user: ME, now: NOW });
+
+    assert.deepEqual(view.embed.fields[0].value.split("\n").at(-1), "✅ **Gozofone:** Pronto para uso");
+    assert.equal(view.waiting, 0);
+});
+
+test("Gozofone: a espera de 1 hora aparece como ⏳ e conta nos que esperam; volta a ✅ depois", () => {
+    marry();
+
+    assert.equal(FAMILY_RULES.cooldown, 60 * 60);
+
+    // ligou há 20 minutos: faltam 40
+    set("INSERT INTO family_calls (guild_id, user_id, last_call) VALUES (?, ?, ?)", G, ME.id, NOW - 20 * 60);
+
+    const view = buildCooldowns({ guildId: G, user: ME, now: NOW });
+
+    assert.match(view.embed.fields[0].value, /⏳ \*\*Gozofone:\*\* `em 40m`/);
+    assert.equal(view.waiting, 1);
+
+    // no V2, o mesmo texto no bloco Legal
+    assert.match(JSON.stringify(view.layout), /⏳ \*\*Gozofone:\*\* `em 40m`/);
+
+    // a espera é de quem ligou: o cônjuge está liberado
+    assert.equal(callWait(G, OTHER.id, NOW).remaining, 0);
+
+    // passada 1 hora, liberado
+    const later = buildCooldowns({ guildId: G, user: ME, now: NOW + 40 * 60 });
+
+    assert.match(later.embed.fields[0].value, /✅ \*\*Gozofone:\*\* Pronto para uso/);
+    assert.equal(later.waiting, 0);
+
+    set("DELETE FROM marriages WHERE guild_id = ?", G);
+    set("DELETE FROM family_calls WHERE guild_id = ?", G);
 });

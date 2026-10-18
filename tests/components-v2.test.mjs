@@ -503,3 +503,20 @@ test("pelo prefixo: se a VSync recusar o layout, o mesmo comando sai como embed"
     assert.equal(attempts[1].embeds.length, 1, "o clássico");
     assert.ok(warnings.some(line => /\[V2\]/.test(line)));
 });
+
+test("menção de pessoa ou cargo no texto fica no clássico: no layout ela notificaria, no embed é só visual", () => {
+    const base = embedResponse(EMBED).data;
+
+    const mention = text => ({ ...base, embeds: [{ ...EMBED, description: text }] });
+
+    assert.equal(toV2Data(mention("O casal é <@bc86cc02-1111> e <@bc86cc02-2222>")), null);
+    assert.equal(toV2Data(mention("Avisa <@&efb6b62a-aaaa>")), null);
+    assert.equal(toV2Data({ ...base, embeds: [{ ...EMBED, fields: [{ name: "Quem", value: "<@123>" }] }] }), null);
+
+    // um layout próprio com menção também fica no clássico
+    assert.equal(toV2Data({ ...base, layout: [{ type: "container", components: [{ type: "text", content: "oi <@123>" }] }] }), null);
+
+    // sem menção converte, e um canal <#id> ou emoji <:x:1> não são menção de pessoa
+    assert.ok(toV2Data(mention("Veja <#abc123> e <:festa:123>")));
+    assert.ok(toV2Data(mention("Sem menções por aqui")));
+});

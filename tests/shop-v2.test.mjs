@@ -34,7 +34,7 @@ test("vitrine no V2: título com a imagem da Helena, quem olha, carteira e gemas
     assert.equal(head.type, "section");
     assert.equal(head.texts[0], "## 🛒 Loja da Helena");
     assert.equal(head.texts[1], "Escolha uma prateleira.");
-    assert.equal(head.texts[2], `<@${OWNER}> · 👛 ${"R$ 10,00".replace(" ", " ")} · 💎 26`);
+    assert.equal(head.texts[2], `👛 ${"R$ 10,00".replace(" ", " ")} · 💎 26`);
     assert.equal(head.accessory.type, "thumbnail");
     assert.match(head.accessory.url, /^https:\/\/.*\/assets\/img\/apple-touch-icon\.png$/);
 

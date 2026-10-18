@@ -373,10 +373,14 @@ export function stripLayout(data) {
 // "layout" opcional (o desenho próprio do V2 para essa tela). Devolve o mesmo com o layout
 // no lugar do embed, ou null quando é melhor ficar no clássico:
 //   - texto no body: é ele que avisa (notifica) quem foi mencionado;
+//   - menção de pessoa ou cargo (<@id>, <@&id>) no texto: no embed ela é só visual, mas
+//     num texto do layout ela notifica, como no body (a doc de mensagens);
 //   - anexos: a doc não diz se anexo convive com o layout;
 //   - embed com imagem, mais de um embed ou layout fora das regras.
 // "clear": numa atualização (update) a mensagem antiga pode ter body e embed, então
 // o V2 os esvazia.
+const MENTION = /<@&?[0-9A-Za-z-]+>/;
+
 export function toV2Data(data, { clear = false } = {}) {
     if (!data || typeof data !== "object") {
         return null;
@@ -400,7 +404,7 @@ export function toV2Data(data, { clear = false } = {}) {
         layout = embedToLayout(data.embeds[0], Array.isArray(data.components) ? data.components : []);
     }
 
-    if (!layout || layoutProblems(layout).length) {
+    if (!layout || layoutProblems(layout).length || MENTION.test(JSON.stringify(layout))) {
         return null;
     }
 
