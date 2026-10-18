@@ -47,9 +47,9 @@ function privateMessage(view) {
     });
 }
 
-// customId: ajuda:<ação>:<dono>[:<categoria>:<página>]
+// customId: ajuda:<ação>:<dono>[:<categoria>:<página>[:<comando>]]
 export function handleHelpClick(interaction) {
-    const [, action, ownerId, a, b] = String(
+    const [, action, ownerId, a, b, c] = String(
         interaction.data?.customId || ""
     ).split(":");
 
@@ -114,9 +114,10 @@ export function handleHelpClick(interaction) {
             : warn("Categoria inválida", "Abra a ajuda de novo com `/ajuda`.");
     }
 
-    // menu de comandos (o valor escolhido é o nome do comando)
-    if (action === "cmd") {
-        const entry = findCommand(catalog, interaction.data?.values?.[0]);
+    // menu de comandos (o valor escolhido é o nome do comando) ou, no V2, o botão Ver de um
+    // comando (o nome vem no customId)
+    if (action === "cmd" || action === "ver") {
+        const entry = findCommand(catalog, action === "ver" ? c : interaction.data?.values?.[0]);
 
         if (!entry) {
             return warn("Comando não encontrado", "Esse comando não existe mais. Abra a ajuda de novo com `/ajuda`.");

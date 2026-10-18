@@ -11,6 +11,14 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
+import {
+    container,
+    divider,
+    section,
+    subtext,
+    text
+} from "../../utils/components-v2.mjs";
+
 import { button, row } from "./panel-kit.mjs";
 
 // ==========================================
@@ -26,6 +34,7 @@ import { button, row } from "./panel-kit.mjs";
 //   ajuda:cat:<dono>                      menu de categorias (valor = categoria)
 //   ajuda:pg:<dono>:<categoria>:<n>       página n de uma categoria
 //   ajuda:cmd:<dono>:<categoria>:<n>      menu de comandos (valor = comando)
+//   ajuda:ver:<dono>:<categoria>:<n>:<comando>   botão Ver ao lado de um comando (só no V2)
 //   ajuda:buscar:<dono>                   abre o formulário de busca
 //   ajuda:fechar:<dono>                   fecha o painel
 //
@@ -123,8 +132,50 @@ export function buildHelpHome({ ownerId, catalog }) {
         footer: `Helena • ${plural(catalog.total, "comando", "comandos")}`
     });
 
+    // O V2: uma seção por categoria, com o botão Abrir ao lado (no lugar do menu).
+    const layout = [
+        container([
+            text("## 📖 Central de Ajuda da Helena"),
+
+            text(
+                "Tudo o que a Helena faz, por categoria. Toque em **Abrir** numa categoria " +
+                "ou em **Buscar** para achar um comando pelo nome ou pelo que ele faz."
+            ),
+
+            divider(),
+
+            text([
+                "**Como usar um comando**",
+                "• **De barra:** `/daily`. Escreva `/` e escolha na lista.",
+                "• **Com prefixo:** `hdaily`. O `h` vem colado no nome.",
+                "• **Opções:** `<assim>` é obrigatória e `[assim]` é opcional. No prefixo, escreva na ordem " +
+                "ou como `nome:valor`."
+            ].join("\n")),
+
+            divider(),
+
+            ...catalog.categories.map(category => section(
+                [
+                    `**${category.emoji} ${category.label}** · ${plural(category.commands.length, "comando", "comandos")}`,
+                    HELP_CONFIG.blurbs[category.id] ?? ""
+                ].filter(Boolean),
+                button(`ajuda:pg:${ownerId}:${category.id}:1`, "Abrir", "📂", "secondary")
+            )),
+
+            divider(),
+
+            text(`📚 **Wiki:** ${HELP_CONFIG.wikiUrl}`),
+
+            row(searchButton(ownerId), closeButton(ownerId))
+        ], { color: HELENA_COLORS.primary }),
+
+        subtext(`Helena • ${plural(catalog.total, "comando", "comandos")}`)
+    ];
+
     return {
         embed,
+
+        layout,
 
         components: [
             categoryMenu(ownerId, catalog, null),
@@ -193,23 +244,62 @@ export function buildHelpCategory({ ownerId, catalog, categoryId, page = 1 }) {
         footer: `Helena • Página ${current}/${pages} • ${plural(category.commands.length, "comando", "comandos")}`
     });
 
+    const navigation = row(
+        button(`ajuda:pg:${ownerId}:${category.id}:${current - 1}`, "Anterior", "◀️", "secondary", { disabled: current <= 1 }),
+        button(`ajuda:noop:${ownerId}`, `${current}/${pages}`, undefined, "secondary", { disabled: true }),
+        button(`ajuda:pg:${ownerId}:${category.id}:${current + 1}`, "Próxima", "▶️", "secondary", { disabled: current >= pages }),
+        homeButton(ownerId),
+        closeButton(ownerId)
+    );
+
+    // O V2: cada comando é uma seção com o botão Ver ao lado (no lugar do menu de comandos).
+    const layout = [
+        container([
+            text(`## ${category.emoji} ${category.label}`),
+
+            text(`${HELP_CONFIG.blurbs[category.id] ?? ""}\nToque em **Ver** para as opções e como usar.`.trim()),
+
+            divider(),
+
+            ...slice.map(entry => {
+                const usage = usageOf(entry);
+
+                const aliases = entry.aliases.length > 0
+                    ? ` (${entry.aliases.map(alias => "/" + alias).join(", ")})`
+                    : "";
+
+                return section(
+                    [
+                        `**/${entry.name}**${aliases}`,
+                        `${entry.description}\n\`${usage.slash}\``
+                    ],
+                    button(`ajuda:ver:${ownerId}:${category.id}:${current}:${entry.name}`, "Ver", "🔎", "secondary")
+                );
+            }),
+
+            divider(),
+
+            categoryMenu(ownerId, catalog, category.id),
+
+            navigation
+        ], { color: HELENA_COLORS.primary }),
+
+        subtext(`Helena • Página ${current}/${pages} • ${plural(category.commands.length, "comando", "comandos")}`)
+    ];
+
     return {
         embed,
         page: current,
         pages,
+
+        layout,
 
         components: [
             categoryMenu(ownerId, catalog, category.id),
 
             commandMenu(ownerId, slice, category.id, current),
 
-            row(
-                button(`ajuda:pg:${ownerId}:${category.id}:${current - 1}`, "Anterior", "◀️", "secondary", { disabled: current <= 1 }),
-                button(`ajuda:noop:${ownerId}`, `${current}/${pages}`, undefined, "secondary", { disabled: true }),
-                button(`ajuda:pg:${ownerId}:${category.id}:${current + 1}`, "Próxima", "▶️", "secondary", { disabled: current >= pages }),
-                homeButton(ownerId),
-                closeButton(ownerId)
-            )
+            navigation
         ]
     };
 }

@@ -1,16 +1,14 @@
-
 import {
-    getPlayer,
-    formatMoney
+    getPlayer
 } from "../../database/economy.mjs";
 
 import { bankPanel } from "../../services/panels/panels.mjs";
 
+import { buildBalance } from "../../services/economy/balance-view.mjs";
+
 import {
-    createEmbed,
     embedResponse,
-    errorEmbed,
-    HELENA_COLORS
+    errorEmbed
 } from "../../utils/embed.mjs";
 
 export default {
@@ -36,73 +34,21 @@ export default {
                 interaction.user?.username ||
                 "Jogador";
 
-            const patrimonio = player.wallet + player.bank;
-
-            const response = embedResponse(
-                createEmbed({
-                    title: "🏦 Helena Bank",
-
-                    description:
-                        `**Conta de ${username}**\n\n` +
-                        "Confira abaixo sua situação financeira.",
-
-                    color: HELENA_COLORS.economy,
-
-                    fields: [
-                        {
-                            name: "👛 Carteira",
-                            value: `**${formatMoney(player.wallet)}**`,
-                            inline: true
-                        },
-                        {
-                            name: "🏛️ Banco",
-                            value: `**${formatMoney(player.bank)}**`,
-                            inline: true
-                        },
-                        {
-                            name: "💎 Gemas",
-                            value: `**${player.gems}**`,
-                            inline: true
-                        },
-                        {
-                            name: "⭐ Nível",
-                            value: `**${player.level}**`,
-                            inline: true
-                        },
-                        {
-                            name: "✨ Experiência",
-                            value: `**${player.xp} XP**`,
-                            inline: true
-                        },
-                        // Dinheiro sujo só aparece para quem tem. Não
-                        // entra no patrimônio: precisa ser lavado.
-                        ...(player.dirty_money > 0
-                            ? [{
-                                name: "🧺 Dinheiro sujo",
-                                value: `**${formatMoney(player.dirty_money)}**`,
-                                inline: true
-                            }]
-                            : []),
-                        {
-                            name: "━━━━━━━━━━━━━━━━",
-                            value: "\u200B",
-                            inline: false
-                        },
-                        {
-                            name: "💰 Patrimônio total",
-                            value: `**${formatMoney(patrimonio)}**`,
-                            inline: false
-                        }
-                    ],
-
-                    footer:
-                        "Helena • Seu progresso, sua conquista."
-                })
-            );
-
             // Botões que abrem formulários: depositar, sacar e
             // transferir (só o dono do painel consegue usar).
-            response.data.components = bankPanel(userId);
+            const controls = bankPanel(userId);
+
+            const view = buildBalance({
+                player,
+                username,
+                avatarUrl: interaction.user?.avatarUrl,
+                controls
+            });
+
+            const response = embedResponse(view.embed);
+
+            response.data.components = controls;
+            response.data.layout = view.layout;
 
             return response;
 

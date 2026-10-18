@@ -61,6 +61,10 @@ function reply(view) {
     // Só quem abriu o painel mexe nos botões e menus.
     response.data.components = view.components;
 
+    if (view.layout) {
+        response.data.layout = view.layout;
+    }
+
     return response;
 }
 
