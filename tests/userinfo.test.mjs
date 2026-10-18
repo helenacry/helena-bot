@@ -861,7 +861,7 @@ test("o avatar abre em embed privado, na tela larga servida pelo bot (a VSync co
     // a imagem do embed é a tela larga do bot, com o avatar da CDN no endereço
     assert.equal(
         embed.image.url,
-        `${API_URL}/img/avatar.jpg?u=${encodeURIComponent("https://cdn.vsync.lat/att/2026/avatarabc123@256.webp")}`
+        `${API_URL}/img/avatar.webp?u=${encodeURIComponent("https://cdn.vsync.lat/att/2026/avatarabc123@256.webp")}`
     );
 
     // e o link "tamanho original" continua sendo o avatar cru

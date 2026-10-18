@@ -4,26 +4,27 @@ import sharp from "sharp";
 import { API_URL } from "../../config/site.mjs";
 
 // ==========================================
-// IMAGEM DO AVATAR PARA EMBEDS (/img/avatar.jpg)
+// IMAGEM DO AVATAR PARA EMBEDS (/img/avatar.webp)
 // ==========================================
 
 // O app da VSync desenha a imagem grande de um embed num quadro de, no máximo, 520 px de
 // largura com 300 px de altura e "object-fit: cover". Um avatar quadrado vira uma faixa
-// cortada no meio (parece achatado). Aqui o avatar é posto INTEIRO e quadrado no centro de uma
-// tela 1000x600 (a proporção do quadro), com o próprio avatar desfocado no fundo. A VSync mostra
-// essa tela sem cortar nada.
+// cortada no meio (parece achatado). Aqui o avatar é posto INTEIRO e quadrado, de cantos
+// arredondados, colado à esquerda de uma tela 1000x600 (a proporção do quadro) com o resto
+// TRANSPARENTE: o embed aparece com o avatar limpo, sobre a cor do próprio embed, sem cortar nada.
+// (O quadro limita a altura em 300 px, então o avatar aparece com uns 290 px de lado.)
 //
 // O endereço leva a URL do avatar (?u=). Só vale avatar da CDN da VSync, para a rota não
 // virar um proxy de imagens da internet. Nada é gravado em disco: o resultado fica numa memória
 // pequena e a Cloudflare (que fica na frente do Discloud) guarda o resto.
 
-export const PREVIEW_PATH = "/img/avatar.jpg";
+export const PREVIEW_PATH = "/img/avatar.webp";
 
 export const PREVIEW_SIZE = Object.freeze({ width: 1000, height: 600 });
 
 // Lado do avatar dentro da tela (a altura toda) e o arredondamento dos cantos.
 const FACE = PREVIEW_SIZE.height;
-const CORNER = 56;
+const CORNER = 24;
 
 // Só estes endereços são aceitos como origem (a CDN dos avatares da VSync).
 export const AVATAR_HOSTS = Object.freeze(["cdn.vsync.lat"]);
@@ -62,17 +63,11 @@ export function avatarPreviewUrl(avatarUrl, base = API_URL) {
     return `${base}${PREVIEW_PATH}?u=${encodeURIComponent(avatarUrl)}`;
 }
 
-// A tela 1000x600 em JPEG (o PNG de um fundo desfocado passava de 800 KB): o avatar quadrado de
-// 600 px, com cantos arredondados, no centro de uma cópia dele mesmo, ampliada, desfocada e
-// escurecida.
+// A tela 1000x600 em WebP com transparência (um PNG de foto passa de 600 KB, o WebP fica em
+// dezenas): o avatar quadrado de 600 px, com cantos arredondados, no canto esquerdo, e o resto
+// transparente.
 export async function composeAvatar(input) {
     const { width, height } = PREVIEW_SIZE;
-
-    const background = await sharp(input)
-        .resize(width, height, { fit: "cover", position: "centre" })
-        .blur(32)
-        .modulate({ brightness: 0.55 })
-        .toBuffer();
 
     const face = await sharp(input)
         .resize(FACE, FACE, { fit: "cover", position: "centre" })
@@ -89,9 +84,11 @@ export async function composeAvatar(input) {
         .png()
         .toBuffer();
 
-    return sharp(background)
-        .composite([{ input: rounded, left: Math.round((width - FACE) / 2), top: 0 }])
-        .jpeg({ quality: 90 })
+    return sharp({
+        create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+    })
+        .composite([{ input: rounded, left: 0, top: 0 }])
+        .webp({ quality: 92, alphaQuality: 100 })
         .toBuffer();
 }
 
@@ -143,7 +140,7 @@ export function createAvatarPreview(deps = {}) {
         return composeAvatar(input);
     }
 
-    // Devolve { status, headers, body } (o corpo é o JPEG ou um JSON de erro).
+    // Devolve { status, headers, body } (o corpo é o WebP ou um JSON de erro).
     async function render(source) {
         if (!isAvatarSource(source)) {
             return fail(400, "invalid_source");
@@ -193,7 +190,7 @@ export function createAvatarPreview(deps = {}) {
             status: 200,
 
             headers: {
-                "Content-Type": "image/jpeg",
+                "Content-Type": "image/webp",
                 "Content-Length": String(png.length),
                 // o endereço muda quando o avatar muda, então pode ficar guardado
                 "Cache-Control": "public, max-age=86400",
@@ -222,7 +219,7 @@ export function createAvatarPreview(deps = {}) {
         };
     }
 
-    // Atende GET e HEAD de /img/avatar.jpg?u=<avatar>.
+    // Atende GET e HEAD de /img/avatar.webp?u=<avatar>.
     async function serve(req, res) {
         const source = new URL(req.url, "http://localhost").searchParams.get("u") ?? "";
 

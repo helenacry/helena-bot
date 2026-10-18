@@ -170,7 +170,7 @@ export function createWebApi(config, deps = {}) {
     const now = deps.now ?? nowSeconds;
     const random = deps.random ?? Math.random;
 
-    // A imagem do avatar para os embeds (GET /img/avatar.jpg?u=...): não é da API do site,
+    // A imagem do avatar para os embeds (GET /img/avatar.webp?u=...): não é da API do site,
     // então fica fora das regras de origem e de JSON.
     const avatarPreview = createAvatarPreview({ fetch: fetchImpl });
 

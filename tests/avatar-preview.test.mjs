@@ -6,7 +6,8 @@ import http from "node:http";
 
 // A imagem do avatar que o embed do /userinfo usa. A VSync mostra a imagem grande de um embed
 // num quadro de 300 px de altura (object-fit: cover): um avatar quadrado ficava cortado e
-// achatado. O bot serve o avatar inteiro no centro de uma tela 1000x600.
+// achatado. O bot serve o avatar inteiro, quadrado e de cantos arredondados, no canto esquerdo
+// de uma tela 1000x600 transparente: o embed mostra o avatar limpo, sem cortar nada.
 
 const sharp = (await import("sharp")).default;
 
@@ -21,13 +22,15 @@ const SOURCE = "https://cdn.vsync.lat/att/2026/avatarabc123@256.webp";
 const solid = (width, height, color) =>
     sharp({ create: { width, height, channels: 3, background: color } }).png().toBuffer();
 
-const pixel = async (png, x, y) => {
-    const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
+const pixelRgba = async (image, x, y) => {
+    const { data, info } = await sharp(image).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
-    const at = (y * info.width + x) * info.channels;
+    const at = (y * info.width + x) * 4;
 
-    return [data[at], data[at + 1], data[at + 2]];
+    return [data[at], data[at + 1], data[at + 2], data[at + 3]];
 };
+
+const pixel = async (image, x, y) => (await pixelRgba(image, x, y)).slice(0, 3);
 
 // ==========================================
 // QUAIS AVATARES VALEM
@@ -60,7 +63,7 @@ test("o endereço da imagem leva o avatar e o endereço público da API; fora da
         `https://helena.exemplo.test${PREVIEW_PATH}?u=${encodeURIComponent(SOURCE)}`
     );
 
-    assert.equal(PREVIEW_PATH, "/img/avatar.jpg");
+    assert.equal(PREVIEW_PATH, "/img/avatar.webp");
     assert.equal(avatarPreviewUrl("https://exemplo.test/a.png", "https://helena.exemplo.test"), null);
     assert.equal(avatarPreviewUrl(SOURCE, ""), null);
 });
@@ -69,33 +72,32 @@ test("o endereço da imagem leva o avatar e o endereço público da API; fora da
 // A IMAGEM
 // ==========================================
 
-test("a tela é 1000x600 em JPEG leve, com o avatar inteiro e quadrado no centro e o fundo escurecido", async () => {
+test("a tela é 1000x600 em WebP transparente, com o avatar inteiro, quadrado e arredondado à esquerda", async () => {
     assert.deepEqual({ ...PREVIEW_SIZE }, { width: 1000, height: 600 });
 
     const png = await composeAvatar(await solid(256, 256, "#ff0000"));
 
     const meta = await sharp(png).metadata();
 
-    assert.equal(meta.format, "jpeg");
+    assert.equal(meta.format, "webp");
+    assert.equal(meta.hasAlpha, true);
     assert.deepEqual([meta.width, meta.height], [1000, 600]);
     assert.ok(png.length < 200_000, `tela leve: ${png.length} bytes`);
 
-    // o centro é o avatar, na cor original
-    const [r, g, b] = await pixel(png, 500, 300);
+    // o avatar é um quadrado de 600 px colado à esquerda, na cor original e opaco
+    const [r, g, b, a] = await pixelRgba(png, 300, 300);
 
-    assert.ok(r > 240 && g < 15 && b < 15, `centro ${[r, g, b]}`);
+    assert.ok(r > 240 && g < 15 && b < 15 && a === 255, `avatar ${[r, g, b, a]}`);
+    assert.equal((await pixelRgba(png, 4, 300))[3], 255, "a borda esquerda é do avatar");
+    assert.equal((await pixelRgba(png, 595, 300))[3], 255, "a borda direita do avatar");
 
-    // a faixa do lado é o fundo (mesma cor, mas desfocada e mais escura)
-    const [br, bg, bb] = await pixel(png, 40, 300);
+    // o resto da tela é transparente (o embed aparece por trás)
+    assert.equal((await pixelRgba(png, 605, 300))[3], 0, "logo depois do avatar");
+    assert.equal((await pixelRgba(png, 900, 300))[3], 0, "no fim da tela");
 
-    assert.ok(br > 80 && br < 200 && bg < 30 && bb < 30, `lado ${[br, bg, bb]}`);
-
-    // o avatar ocupa a altura toda (600 px de lado): a borda esquerda dele está em x=200
-    assert.ok((await pixel(png, 210, 300))[0] > 240, "dentro do avatar");
-    assert.ok((await pixel(png, 190, 300))[0] < 200, "fora do avatar");
-
-    // os cantos do avatar são arredondados: o canto de cima vira fundo
-    assert.ok((await pixel(png, 203, 3))[0] < 200, "canto arredondado");
+    // os cantos do avatar são arredondados
+    assert.ok((await pixelRgba(png, 1, 1))[3] < 128, "canto de cima arredondado");
+    assert.ok((await pixelRgba(png, 1, 598))[3] < 128, "canto de baixo arredondado");
 });
 
 test("uma foto larga ou alta não achata: o avatar é recortado no centro, nunca esticado", async () => {
@@ -111,7 +113,7 @@ test("uma foto larga ou alta não achata: o avatar é recortado no centro, nunca
 
     const png = await composeAvatar(wide);
 
-    for (const x of [210, 300, 500, 700, 790]) {
+    for (const x of [15, 150, 300, 450, 585]) {
         const [r, , b] = await pixel(png, x, 300);
 
         assert.ok(r > 240 && b < 15, `x=${x}: ${[r, b]}`);
@@ -140,7 +142,7 @@ function fakeFetch({ status = 200, bytes, hold } = {}) {
     return { impl, calls };
 }
 
-test("atende o avatar da CDN com JPEG, guarda na memória e não baixa de novo", async () => {
+test("atende o avatar da CDN com WebP, guarda na memória e não baixa de novo", async () => {
     const upstream = fakeFetch();
 
     const preview = createAvatarPreview({ fetch: upstream.impl });
@@ -148,7 +150,7 @@ test("atende o avatar da CDN com JPEG, guarda na memória e não baixa de novo",
     const first = await preview.render(SOURCE);
 
     assert.equal(first.status, 200);
-    assert.equal(first.headers["Content-Type"], "image/jpeg");
+    assert.equal(first.headers["Content-Type"], "image/webp");
     assert.match(first.headers["Cache-Control"], /^public, max-age=\d+$/);
     assert.equal(first.headers["X-Content-Type-Options"], "nosniff");
     assert.deepEqual([(await sharp(first.body).metadata()).width, (await sharp(first.body).metadata()).height], [1000, 600]);
@@ -280,14 +282,14 @@ async function withServer(fn) {
     }
 }
 
-test("GET /img/avatar.jpg?u=... devolve a imagem pela API, sem exigir origem; HEAD vem sem corpo", async () => {
+test("GET /img/avatar.webp?u=... devolve a imagem pela API, sem exigir origem; HEAD vem sem corpo", async () => {
     await withServer(async (base, upstream) => {
         const url = `${base}${PREVIEW_PATH}?u=${encodeURIComponent(SOURCE)}`;
 
         const response = await fetch(url);
 
         assert.equal(response.status, 200);
-        assert.equal(response.headers.get("content-type"), "image/jpeg");
+        assert.equal(response.headers.get("content-type"), "image/webp");
 
         const meta = await sharp(Buffer.from(await response.arrayBuffer())).metadata();
 
@@ -297,7 +299,7 @@ test("GET /img/avatar.jpg?u=... devolve a imagem pela API, sem exigir origem; HE
         const head = await fetch(url, { method: "HEAD" });
 
         assert.equal(head.status, 200);
-        assert.equal(head.headers.get("content-type"), "image/jpeg");
+        assert.equal(head.headers.get("content-type"), "image/webp");
         assert.equal((await head.arrayBuffer()).byteLength, 0);
 
         // sem o parâmetro, ou com um avatar de fora: 400 em JSON
@@ -313,7 +315,7 @@ test("GET /img/avatar.jpg?u=... devolve a imagem pela API, sem exigir origem; HE
 test("o resto da API não muda: rota desconhecida segue 404 e o POST na rota da imagem também", async () => {
     await withServer(async base => {
         assert.equal((await fetch(`${base}/api/nao-existe`)).status, 404);
-        assert.equal((await fetch(`${base}/img/outra.jpg`)).status, 404);
+        assert.equal((await fetch(`${base}/img/outra.webp`)).status, 404);
         assert.equal((await fetch(`${base}${PREVIEW_PATH}`, { method: "POST" })).status, 404);
         assert.equal((await (await fetch(`${base}/api/health`)).json()).ok, true);
     });
