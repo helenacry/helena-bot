@@ -4,7 +4,7 @@ import sharp from "sharp";
 import { API_URL } from "../../config/site.mjs";
 
 // ==========================================
-// IMAGEM DO AVATAR PARA EMBEDS (/img/avatar.png)
+// IMAGEM DO AVATAR PARA EMBEDS (/img/avatar.jpg)
 // ==========================================
 
 // O app da VSync desenha a imagem grande de um embed num quadro de, no máximo, 520 px de
@@ -17,7 +17,7 @@ import { API_URL } from "../../config/site.mjs";
 // virar um proxy de imagens da internet. Nada é gravado em disco: o resultado fica numa memória
 // pequena e a Cloudflare (que fica na frente do Discloud) guarda o resto.
 
-export const PREVIEW_PATH = "/img/avatar.png";
+export const PREVIEW_PATH = "/img/avatar.jpg";
 
 export const PREVIEW_SIZE = Object.freeze({ width: 1000, height: 600 });
 
@@ -62,8 +62,9 @@ export function avatarPreviewUrl(avatarUrl, base = API_URL) {
     return `${base}${PREVIEW_PATH}?u=${encodeURIComponent(avatarUrl)}`;
 }
 
-// A tela 1000x600: o avatar em PNG quadrado de 600 px, com cantos arredondados, no centro de
-// uma cópia dele mesmo, ampliada, desfocada e escurecida.
+// A tela 1000x600 em JPEG (o PNG de um fundo desfocado passava de 800 KB): o avatar quadrado de
+// 600 px, com cantos arredondados, no centro de uma cópia dele mesmo, ampliada, desfocada e
+// escurecida.
 export async function composeAvatar(input) {
     const { width, height } = PREVIEW_SIZE;
 
@@ -90,7 +91,7 @@ export async function composeAvatar(input) {
 
     return sharp(background)
         .composite([{ input: rounded, left: Math.round((width - FACE) / 2), top: 0 }])
-        .png()
+        .jpeg({ quality: 90 })
         .toBuffer();
 }
 
@@ -142,7 +143,7 @@ export function createAvatarPreview(deps = {}) {
         return composeAvatar(input);
     }
 
-    // Devolve { status, headers, body } (o corpo é o PNG ou um JSON de erro).
+    // Devolve { status, headers, body } (o corpo é o JPEG ou um JSON de erro).
     async function render(source) {
         if (!isAvatarSource(source)) {
             return fail(400, "invalid_source");
@@ -192,7 +193,7 @@ export function createAvatarPreview(deps = {}) {
             status: 200,
 
             headers: {
-                "Content-Type": "image/png",
+                "Content-Type": "image/jpeg",
                 "Content-Length": String(png.length),
                 // o endereço muda quando o avatar muda, então pode ficar guardado
                 "Cache-Control": "public, max-age=86400",
@@ -221,7 +222,7 @@ export function createAvatarPreview(deps = {}) {
         };
     }
 
-    // Atende GET e HEAD de /img/avatar.png?u=<avatar>.
+    // Atende GET e HEAD de /img/avatar.jpg?u=<avatar>.
     async function serve(req, res) {
         const source = new URL(req.url, "http://localhost").searchParams.get("u") ?? "";
 

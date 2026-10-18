@@ -60,7 +60,7 @@ test("o endereço da imagem leva o avatar e o endereço público da API; fora da
         `https://helena.exemplo.test${PREVIEW_PATH}?u=${encodeURIComponent(SOURCE)}`
     );
 
-    assert.equal(PREVIEW_PATH, "/img/avatar.png");
+    assert.equal(PREVIEW_PATH, "/img/avatar.jpg");
     assert.equal(avatarPreviewUrl("https://exemplo.test/a.png", "https://helena.exemplo.test"), null);
     assert.equal(avatarPreviewUrl(SOURCE, ""), null);
 });
@@ -69,15 +69,16 @@ test("o endereço da imagem leva o avatar e o endereço público da API; fora da
 // A IMAGEM
 // ==========================================
 
-test("a tela é 1000x600 em PNG, com o avatar inteiro e quadrado no centro e o fundo escurecido", async () => {
+test("a tela é 1000x600 em JPEG leve, com o avatar inteiro e quadrado no centro e o fundo escurecido", async () => {
     assert.deepEqual({ ...PREVIEW_SIZE }, { width: 1000, height: 600 });
 
     const png = await composeAvatar(await solid(256, 256, "#ff0000"));
 
     const meta = await sharp(png).metadata();
 
-    assert.equal(meta.format, "png");
+    assert.equal(meta.format, "jpeg");
     assert.deepEqual([meta.width, meta.height], [1000, 600]);
+    assert.ok(png.length < 200_000, `tela leve: ${png.length} bytes`);
 
     // o centro é o avatar, na cor original
     const [r, g, b] = await pixel(png, 500, 300);
@@ -139,7 +140,7 @@ function fakeFetch({ status = 200, bytes, hold } = {}) {
     return { impl, calls };
 }
 
-test("atende o avatar da CDN com PNG, guarda na memória e não baixa de novo", async () => {
+test("atende o avatar da CDN com JPEG, guarda na memória e não baixa de novo", async () => {
     const upstream = fakeFetch();
 
     const preview = createAvatarPreview({ fetch: upstream.impl });
@@ -147,7 +148,7 @@ test("atende o avatar da CDN com PNG, guarda na memória e não baixa de novo", 
     const first = await preview.render(SOURCE);
 
     assert.equal(first.status, 200);
-    assert.equal(first.headers["Content-Type"], "image/png");
+    assert.equal(first.headers["Content-Type"], "image/jpeg");
     assert.match(first.headers["Cache-Control"], /^public, max-age=\d+$/);
     assert.equal(first.headers["X-Content-Type-Options"], "nosniff");
     assert.deepEqual([(await sharp(first.body).metadata()).width, (await sharp(first.body).metadata()).height], [1000, 600]);
@@ -279,14 +280,14 @@ async function withServer(fn) {
     }
 }
 
-test("GET /img/avatar.png?u=... devolve o PNG pela API, sem exigir origem; HEAD vem sem corpo", async () => {
+test("GET /img/avatar.jpg?u=... devolve a imagem pela API, sem exigir origem; HEAD vem sem corpo", async () => {
     await withServer(async (base, upstream) => {
         const url = `${base}${PREVIEW_PATH}?u=${encodeURIComponent(SOURCE)}`;
 
         const response = await fetch(url);
 
         assert.equal(response.status, 200);
-        assert.equal(response.headers.get("content-type"), "image/png");
+        assert.equal(response.headers.get("content-type"), "image/jpeg");
 
         const meta = await sharp(Buffer.from(await response.arrayBuffer())).metadata();
 
@@ -296,7 +297,7 @@ test("GET /img/avatar.png?u=... devolve o PNG pela API, sem exigir origem; HEAD 
         const head = await fetch(url, { method: "HEAD" });
 
         assert.equal(head.status, 200);
-        assert.equal(head.headers.get("content-type"), "image/png");
+        assert.equal(head.headers.get("content-type"), "image/jpeg");
         assert.equal((await head.arrayBuffer()).byteLength, 0);
 
         // sem o parâmetro, ou com um avatar de fora: 400 em JSON
@@ -312,7 +313,7 @@ test("GET /img/avatar.png?u=... devolve o PNG pela API, sem exigir origem; HEAD 
 test("o resto da API não muda: rota desconhecida segue 404 e o POST na rota da imagem também", async () => {
     await withServer(async base => {
         assert.equal((await fetch(`${base}/api/nao-existe`)).status, 404);
-        assert.equal((await fetch(`${base}/img/outra.png`)).status, 404);
+        assert.equal((await fetch(`${base}/img/outra.jpg`)).status, 404);
         assert.equal((await fetch(`${base}${PREVIEW_PATH}`, { method: "POST" })).status, 404);
         assert.equal((await (await fetch(`${base}/api/health`)).json()).ok, true);
     });
