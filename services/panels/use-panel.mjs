@@ -34,6 +34,14 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
+import {
+    container,
+    divider,
+    section,
+    subtext,
+    text
+} from "../../utils/components-v2.mjs";
+
 // ==========================================
 // PAINEL DE USO DE ITENS
 // ==========================================
@@ -43,10 +51,20 @@ import {
 // na hora; "Usar vários" abre um formulário com item e quantidade.
 //
 //   uso:sel:<dono>       menu (usa 1 unidade do item escolhido)
+//   uso:item:<dono>:<item>   botão ao lado do item (só no V2): usa 1 unidade
 //   uso:varios:<dono>    abre o formulário de quantidade
 //   uso:ref:<dono>       atualiza o painel
 
 const MAX_OPTIONS = 25;
+
+// Itens com botão próprio no V2 (cada um são 4 dos 40 componentes); os demais ficam no menu.
+const MAX_SECTIONS = 6;
+
+const energyBar = (energy, max) => {
+    const filled = max > 0 ? Math.round((energy / max) * 10) : 0;
+
+    return "█".repeat(Math.max(0, Math.min(10, filled))) + "░".repeat(10 - Math.max(0, Math.min(10, filled)));
+};
 
 // ==========================================
 // TELA
@@ -84,10 +102,8 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
             "Comida com energia cheia não é gasta."
     });
 
-    const components = [];
-
-    if (usable.length > 0) {
-        components.push(row({
+    const menu = usable.length > 0
+        ? row({
             type: "select",
             customId: `uso:sel:${ownerId}`,
             placeholder: "🍽️ Escolha um item para usar",
@@ -105,10 +121,10 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
                     : `+${use.energy} de energia`,
                 emoji: item.emoji
             }))
-        }));
-    }
+        })
+        : null;
 
-    components.push(row(
+    const tools = row(
         button(
             `uso:varios:${ownerId}`,
             "Usar vários",
@@ -117,9 +133,50 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
             { disabled: usable.every(entry => entry.use.kind === "equip") }
         ),
         button(`uso:ref:${ownerId}`, "Atualizar", "🔄")
-    ));
+    );
 
-    return { embed, components, usable };
+    const components = menu ? [menu, tools] : [tools];
+
+    // O V2: cada item é uma seção com o botão Usar (ou Equipar) ao lado. Passou de
+    // MAX_SECTIONS itens, o menu leva todos; até lá os botões das seções bastam.
+    const shown = usable.slice(0, MAX_SECTIONS);
+
+    const controls = usable.length > MAX_SECTIONS ? components : [tools];
+
+    const layout = [
+        container([
+            text("## 🍽️ Usar item"),
+
+            ...(notice ? [text(notice)] : []),
+
+            text(`⚡ **Energia** ${energyBar(energy.energy, energy.max)} **${energy.energy}/${energy.max}**`),
+
+            divider(),
+
+            ...(shown.length > 0
+                ? shown.map(({ item, quantity, use }) => section(
+                    [
+                        use.kind === "equip"
+                            ? `${item.emoji} **${item.name}**`
+                            : `${item.emoji} **${item.name}** ×${quantity}`,
+
+                        use.kind === "equip"
+                            ? `${use.verb} a arma`
+                            : `${use.verb} · +${use.energy} de energia`
+                    ],
+                    button(`uso:item:${ownerId}:${item.id}`, use.verb, item.emoji, "success")
+                ))
+                : [text("Você não tem nenhum item para usar. Compre comida e bebida na `/loja`.")]),
+
+            divider(),
+
+            ...controls
+        ], { color: HELENA_COLORS.success }),
+
+        subtext("Helena • Cada toque usa 1 unidade. Comida com energia cheia não é gasta.")
+    ];
+
+    return { embed, components, usable, layout };
 }
 
 // ==========================================
@@ -151,7 +208,7 @@ function blockedInPrison(interaction) {
 
 // customId: uso:<ação>:<dono>
 export function handleUseClick(interaction) {
-    const [, action, ownerId] = String(
+    const [, action, ownerId, buttonItemId] = String(
         interaction.data?.customId || ""
     ).split(":");
 
@@ -189,8 +246,10 @@ export function handleUseClick(interaction) {
         });
     }
 
-    if (action === "sel") {
-        const itemId = interaction.data?.values?.[0];
+    if (action === "sel" || action === "item") {
+        const itemId = action === "item"
+            ? buttonItemId
+            : interaction.data?.values?.[0];
 
         const blocked = blockedInPrison(interaction);
 

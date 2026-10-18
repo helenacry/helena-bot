@@ -26,6 +26,13 @@ import {
 
 import { button, row } from "./panel-kit.mjs";
 
+import {
+    container,
+    divider,
+    subtext,
+    text
+} from "../../utils/components-v2.mjs";
+
 // ==========================================
 // VISÃO DO INVENTÁRIO
 // ==========================================
@@ -119,13 +126,22 @@ export function buildInventoryView({
 
     const lines = [];
 
+    // as mesmas linhas, separadas por prateleira (o V2 dá um bloco a cada uma)
+    const groups = [];
+
     let lastCategory = null;
 
     for (const entry of slice) {
         if (shelf === ALL_SHELVES && entry.category !== lastCategory) {
             lines.push(`\n**📂 ${getCategoryName(entry.category)}**`);
 
+            groups.push({ title: getCategoryName(entry.category), lines: [] });
+
             lastCategory = entry.category;
+        }
+
+        if (groups.length === 0) {
+            groups.push({ title: null, lines: [] });
         }
 
         const mark = entry.item_id === equipped ? "🟢 " : "";
@@ -136,9 +152,11 @@ export function buildInventoryView({
                 (isHot(entry.item, market) ? " 🔥" : "")
             : "";
 
-        lines.push(
-            `${mark}${entry.emoji} **${entry.name}** ×${entry.quantity}${sells}`
-        );
+        const line = `${mark}${entry.emoji} **${entry.name}** ×${entry.quantity}${sells}`;
+
+        lines.push(line);
+
+        groups.at(-1).lines.push(line);
     }
 
     const label = shelf === ALL_SHELVES
@@ -237,9 +255,38 @@ export function buildInventoryView({
         )
     ];
 
+    // O V2: quem é, o resumo, um bloco por prateleira e os controles embaixo.
+    const layout = [
+        container([
+            text("## 🎒 Helena Inventário"),
+
+            text(
+                `**${username}** · 📂 ${label}` +
+                (equipped ? " · 🟢 arma equipada" : "") +
+                `\n📦 **${stats.uniqueItems}** ${stats.uniqueItems === 1 ? "item diferente" : "itens diferentes"}` +
+                ` · 🔢 **${stats.totalQuantity}** no total`
+            ),
+
+            divider(),
+
+            ...(filtered.length === 0
+                ? [text("📦 Nenhum item nesta seleção.\nVisite `/loja` para adquirir novos itens.")]
+                : groups.map(group => text(
+                    (group.title ? `### 📂 ${group.title}\n` : "") + group.lines.join("\n")
+                ))),
+
+            divider(),
+
+            ...components
+        ], { color: HELENA_COLORS.inventory }),
+
+        subtext(`Helena • Página ${current}/${pages}`)
+    ];
+
     return {
         embed,
         components,
+        layout,
         page: current,
         pages,
         shelf,

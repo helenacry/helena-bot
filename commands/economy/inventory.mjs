@@ -82,6 +82,7 @@ export default {
 
             // Só o dono do painel navega e descarta por ele.
             response.data.components = view.components;
+            response.data.layout = view.layout;
 
             return response;
 

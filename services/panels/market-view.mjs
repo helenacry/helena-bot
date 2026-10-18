@@ -21,6 +21,13 @@ import {
 
 import { formatDuration } from "../../utils/time.mjs";
 
+import {
+    container,
+    divider,
+    subtext,
+    text
+} from "../../utils/components-v2.mjs";
+
 import { button, row } from "./panel-kit.mjs";
 
 // ==========================================
@@ -144,9 +151,40 @@ export function buildMarketView({ ownerId, market }) {
         footer: `Helena • Bolsa • atualiza a cada ${minutes} minutos`
     });
 
+    // O V2: o índice em destaque, o item em alta e a tabela de preços, com a explicação em letra
+    // pequena no fim.
+    const layout = [
+        container([
+            text("## 📊 Helena Bolsa"),
+
+            text(`O mercado do seu servidor. O índice muda a cada ${minutes} minutos e mexe nos preços da loja.`),
+
+            divider(),
+
+            text(`### 📈 Índice do servidor\n${indexLines.join("\n")}`),
+
+            text(`### 🔥 Item em alta\n${hotLines.join("\n")}`),
+
+            divider(),
+
+            text(`### 🛒 Preços de agora\n${priceLines(market).join("\n") || "Nada para vender."}`),
+
+            divider(),
+
+            subtext("💡 Índice baixo deixa a loja mais barata, índice alto paga melhor na venda. " +
+                `O preço vai de ${formatPercent(MARKET_CONFIG.minPriceBp)} a ${formatPercent(MARKET_CONFIG.maxPriceBp)} da tabela, ` +
+                "e o item em alta soma o bônus só na venda. Cada servidor tem o seu mercado."),
+
+            buttons(ownerId)
+        ], { color: HELENA_COLORS.economy }),
+
+        subtext(`Helena • Bolsa • atualiza a cada ${minutes} minutos`)
+    ];
+
     return {
         embed,
-        components: [buttons(ownerId)]
+        components: [buttons(ownerId)],
+        layout
     };
 }
 

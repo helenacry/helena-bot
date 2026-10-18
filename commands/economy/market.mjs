@@ -42,6 +42,10 @@ export default {
             // Só o dono do painel mexe nos botões.
             response.data.components = view.components;
 
+            if (view.layout) {
+                response.data.layout = view.layout;
+            }
+
             return response;
 
         } catch (error) {

@@ -89,6 +89,7 @@ export default {
                 const response = embedResponse(view.embed);
 
                 response.data.components = view.components;
+                response.data.layout = view.layout;
 
                 return response;
             }

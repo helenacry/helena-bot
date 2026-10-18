@@ -33,6 +33,10 @@ import { handleCooldownsClick } from "./cooldowns-panel.mjs";
 
 import { handleFamilyClick, handleFamilyModal } from "./family-panel.mjs";
 
+import { handleRankingClick } from "./ranking-panel.mjs";
+
+import { handleMissionsClick } from "./missions-panel.mjs";
+
 import {
     handleHelpClick,
     handleHelpModal
@@ -66,6 +70,8 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   ajuda:...                                /ajuda       (help-panel.mjs)
 //   devv2:...                                /devv2       (v2-probe.mjs, só o dono)
 //   cd:atualizar:<dono>                      /cooldowns   (cooldowns-panel.mjs)
+//   rank:tipo:<dono>:<tipo>                  /ranking     (ranking-panel.mjs)
+//   miss:resgatar:<dono>:<missão>            /missoes     (missions-panel.mjs)
 //   gf:aceitar|recusar|cancelar:<ligação>    /gozofone    (family-panel.mjs)
 //   gf:nome:<nascimento>                     registrar o filho (formulário)
 //
@@ -146,6 +152,14 @@ export function handlePanelClick(interaction) {
     // O Gozofone: o cônjuge atende, quem ligou cancela (cada um confere no serviço).
     if (area === "gf") {
         return handleFamilyClick(interaction);
+    }
+
+    if (area === "rank") {
+        return handleRankingClick(interaction);
+    }
+
+    if (area === "miss") {
+        return handleMissionsClick(interaction);
     }
 
     const userId = interaction.user?.id;

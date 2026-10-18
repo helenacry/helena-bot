@@ -43,7 +43,7 @@ São {{v:missions.count}} missões por dia, que somam {{v:missions.total}} e {{v
 
 {{table:missions}}
 
-Cumpra o objetivo e resgate com `/missoes`. O progresso conta por dia **UTC**: a virada acontece à meia-noite UTC, que é **21h no horário de Brasília**.
+Cumpra o objetivo e resgate: o `/missoes` mostra o botão **Resgatar** em cada missão pronta (também dá para usar `/missoes resgatar:<missão>`). O progresso conta por dia **UTC**: a virada acontece à meia-noite UTC, que é **21h no horário de Brasília**.
 
 ## Vender o que você não usa
 

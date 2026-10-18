@@ -13,7 +13,7 @@ O `/ranking` (atalho `/top`) mostra os 10 melhores jogadores do servidor em trê
 | **Nível** | quem tem o nível mais alto |
 | **Gemas** | quem tem mais gemas |
 
-Escolha com a opção `tipo` (Patrimônio, Nível ou Gemas). No prefixo, escreva `hranking tipo:level`.
+Escolha com a opção `tipo` (Patrimônio, Nível ou Gemas). No prefixo, escreva `hranking tipo:level`. Os botões embaixo do ranking trocam de classificação na mesma mensagem, só para quem abriu.
 
 Se você não está entre os 10 primeiros, o ranking mostra também a **sua posição**.
 
