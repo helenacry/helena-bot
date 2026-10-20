@@ -29,7 +29,7 @@ const png = await renderProfileCard({
     isOwner: true,
     avatarBuffer,
 
-    title: "Rico",
+    title: "💰 Rico",
     bio: "Algumas pessoas colecionam coisas, eu coleciono momentos. E ainda assim, sempre quero mais.",
 
     // Em reais (o gerador recebe reais, não centavos).

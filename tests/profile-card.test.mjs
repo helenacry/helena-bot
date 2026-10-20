@@ -348,3 +348,245 @@ test("a imagem de exemplo do site existe e tem o tamanho certo", async () => {
 
     assert.deepEqual([meta.width, meta.height], [1200, 900]);
 });
+
+
+// ==========================================
+// O DESENHO NOVO (conferido com a imagem de referência)
+// ==========================================
+
+const { splitTitle } = await import("../services/social/profile-card.mjs");
+const { ACHIEVEMENTS } = await import("../config/achievements.mjs");
+
+// Os dados do cartão de referência (a conta "richcry"), com a foto da Helena no lugar do gato.
+const REFERENCE = Object.freeze({
+    name: "richcry",
+    isOwner: true,
+    title: "💰 Rico",
+    bio: "swaydif",
+    bank: 0,
+    wallet: 500,
+    gems: 0,
+    job: "Entregador",
+    level: 1,
+    maxLevel: 100,
+    xpProgress: 0,
+    xpRequired: 100,
+    rank: 3,
+    married: true,
+    spouseName: "flawless tavio"
+});
+
+// A caixa dos pixels claros de uma região do cartão (x, y, largura, altura).
+function inkBox(raw, info, [x0, y0, x1, y1], minLuminance) {
+    let left = Infinity, right = -1, top = Infinity, bottom = -1;
+
+    for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+            const at = (y * info.width + x) * info.channels;
+
+            const lum = 0.299 * raw[at] + 0.587 * raw[at + 1] + 0.114 * raw[at + 2];
+
+            if (lum >= minLuminance) {
+                left = Math.min(left, x); right = Math.max(right, x);
+                top = Math.min(top, y); bottom = Math.max(bottom, y);
+            }
+        }
+    }
+
+    return right < 0 ? null : { x: left, y: top, w: right - left + 1, h: bottom - top + 1 };
+}
+
+test("os textos do cartão ficam onde estão no desenho de referência (até 1 px)", async () => {
+    const png = await renderProfileCard(REFERENCE);
+
+    const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+
+    // [nome, região, luminância mínima, caixa esperada na referência]
+    const expected = [
+        ["Casado(a)", [330, 40, 640, 92], 200, { x: 338, y: 50, w: 176, h: 35 }],
+        ["@cônjuge", [330, 94, 640, 124], 120, { x: 339, y: 97, w: 140, h: 18 }],
+        ["RANK", [40, 128, 190, 162], 120, { x: 79, y: 141, w: 66, h: 17 }],
+        ["posição", [40, 168, 190, 240], 200, { x: 101, y: 188, w: 21, h: 31 }],
+        ["LEVEL", [1340, 84, 1520, 114], 150, { x: 1401, y: 96, w: 59, h: 15 }],
+        ["nível", [1400, 115, 1460, 178], 200, { x: 1421, y: 125, w: 15, h: 40 }],
+        ["porcentagem", [1400, 180, 1460, 212], 150, { x: 1416, y: 181, w: 29, h: 16 }],
+        ["nome", [880, 590, 1250, 676], 200, { x: 973, y: 616, w: 172, h: 50 }],
+        ["DEV", [1470, 684, 1540, 716], 120, { x: 1477, y: 694, w: 33, h: 12 }],
+        ["Helena", [40, 1010, 190, 1055], 120, { x: 77, y: 1025, w: 70, h: 15 }],
+        ["Bio", [240, 796, 420, 836], 120, { x: 260, y: 806, w: 34, h: 18 }],
+        ["texto da bio", [240, 862, 600, 906], 150, { x: 259, y: 876, w: 80, h: 21 }],
+        ["valor do banco", [750, 820, 1060, 862], 200, { x: 764, y: 824, w: 109, h: 27 }],
+        ["rótulo da carteira", [750, 908, 950, 932], 110, { x: 763, y: 915, w: 80, h: 12 }],
+        ["valor do emprego", [975, 1044, 1300, 1086], 200, { x: 988, y: 1049, w: 170, h: 30 }],
+        ["o emoji do título", [1015, 672, 1048, 712], 60, { x: 1024, y: 680, w: 20, h: 23 }],
+        ["o texto do título", [1049, 672, 1110, 712], 110, { x: 1053, y: 683, w: 40, h: 15 }]
+    ];
+
+    for (const [name, region, luminance, want] of expected) {
+        const got = inkBox(data, info, region, luminance);
+
+        assert.ok(got, `${name}: nada desenhado`);
+
+        for (const key of ["x", "y", "w", "h"]) {
+            assert.ok(
+                Math.abs(got[key] - want[key]) <= 1,
+                `${name}: ${key} = ${got[key]}, a referência tem ${want[key]}`
+            );
+        }
+    }
+});
+
+test("as cores principais seguem a referência (moldura, painel, pílula e círculos)", async () => {
+    const png = await renderProfileCard(REFERENCE);
+
+    const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+
+    const at = (x, y) => {
+        const i = (y * info.width + x) * info.channels;
+
+        return [data[i], data[i + 1], data[i + 2]];
+    };
+
+    const near = (got, want, tolerance = 6) =>
+        got.every((value, index) => Math.abs(value - want[index]) <= tolerance);
+
+    // [ponto, cor da referência]
+    const spots = {
+        "moldura": [[800, 8], [0x9b, 0x59, 0xf4]],
+        "vão escuro": [[800, 14], [0x0d, 0x08, 0x21]],
+        "linha clara interna": [[800, 19], [0xd0, 0xa0, 0xff]],
+        "lateral": [[112, 600], [0x16, 0x0d, 0x36]],
+        "centro do painel": [[1000, 300], [0x55, 0x24, 0x75]],
+        "fundo (esquerda, embaixo)": [[240, 1160], [0x29, 0x0f, 0x44]],
+        "fundo (direita, embaixo)": [[1560, 1160], [0x11, 0x0a, 0x2b]],
+        "chip": [[600, 60], [0x20, 0x0f, 0x3c]],
+        "pílula": [[1000, 815], [0x21, 0x15, 0x41]],
+        "círculo do banco": [[686, 825], [0xa8, 0x55, 0xf7]],
+        "círculo do emprego": [[905, 1050], [0xe9, 0xa0, 0x2e]],
+        "bio": [[400, 1000], [0x1a, 0x10, 0x36]]
+    };
+
+    for (const [name, [[x, y], want]] of Object.entries(spots)) {
+        const got = at(x, y);
+
+        assert.ok(near(got, want), `${name}: ${got} em vez de ${want}`);
+    }
+});
+
+// ==========================================
+// EMOJI DO TÍTULO E ANEL DO NÍVEL
+// ==========================================
+
+test("o emoji do título é desenhado em vetor (todos os títulos das conquistas têm o seu)", async () => {
+    const emojis = [...new Set(Object.values(ACHIEVEMENTS ?? {}).map(achievement => achievement.titleEmoji).filter(Boolean))];
+
+    assert.ok(emojis.length >= 10, "a lista de títulos mudou?");
+
+    for (const emoji of emojis) {
+        const parts = splitTitle(`${emoji} Título`);
+
+        assert.ok(parts.art, `${emoji} sem desenho`);
+        assert.equal(parts.text, "Título");
+
+        const svg = await profileSvg({ ...SAMPLE, title: `${emoji} Título` });
+
+        assert.match(svg, /<g transform="translate\([\d.]+,676\.6\) scale\(0\.875\)">/, emoji);
+        assert.doesNotMatch(svg, /\p{Extended_Pictographic}/u, "nenhum caractere de emoji no SVG");
+    }
+});
+
+test("emoji fora da lista, título sem emoji e sem título", async () => {
+    // fora da lista: sem desenho, o texto continua e vira a estrelinha de sempre
+    const unknown = splitTitle("🦄 Mágico");
+
+    assert.equal(unknown.art, null);
+    assert.equal(unknown.text, "Mágico");
+
+    const svg = await profileSvg({ ...SAMPLE, title: "🦄 Mágico" });
+
+    assert.ok(textsOf(svg).includes("Mágico"));
+    assert.doesNotMatch(svg, /scale\(0\.875\)/);
+    assert.doesNotMatch(svg, /\p{Extended_Pictographic}/u);
+
+    // sem emoji
+    const plainTitle = await profileSvg({ ...SAMPLE, title: "Rico" });
+
+    assert.ok(textsOf(plainTitle).includes("Rico"));
+    assert.doesNotMatch(plainTitle, /scale\(0\.875\)/);
+
+    // sem título
+    assert.ok(textsOf(await profileSvg({ ...SAMPLE, title: "" })).includes("Sem título equipado"));
+});
+
+test("o título (com o emoji) fica centralizado na faixa do nome", async () => {
+    for (const title of ["💰 Rico", "🌱 Iniciante", "🏅 Campeão"]) {
+        const png = await renderProfileCard({ ...REFERENCE, title });
+
+        const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+
+        const box = inkBox(data, info, [960, 672, 1180, 712], 60);
+
+        // o nome está centrado em 1058; o título (emoji + texto) fica a até 3 px do mesmo centro
+        assert.ok(Math.abs(box.x + box.w / 2 - 1058) <= 3, `${title}: centro em ${box.x + box.w / 2}`);
+    }
+});
+
+test("o anel do nível: no 0% sobra um trecho à esquerda do topo, e o progresso cresce para a esquerda", async () => {
+    const svg0 = await profileSvg({ ...REFERENCE, xpProgress: 0 });
+
+    // 6% do círculo, saindo do topo no sentido anti-horário, em traço de 12 px
+    assert.match(svg0, /<path d="M1430,67 A81,81 0 0 0 1\d{3}\.\d,\d{2}\.\d" fill="none" stroke="#b66cff" stroke-width="12" stroke-linecap="round"\/>/);
+
+    const png = await renderProfileCard(REFERENCE);
+
+    const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+
+    const bright = degrees => {
+        const radians = degrees * Math.PI / 180;
+
+        const x = Math.round(1430 + 81 * Math.cos(radians));
+        const y = Math.round(148 + 81 * Math.sin(radians));
+
+        const i = (y * info.width + x) * info.channels;
+
+        return data[i + 2] > 200;
+    };
+
+    assert.ok(bright(-101), "o trecho está à esquerda do topo");
+    assert.ok(!bright(-70), "e não à direita");
+    assert.ok(!bright(-130), "nem passa do trecho");
+
+    // metade do caminho: o arco grande passa para o outro lado
+    assert.match(await profileSvg({ ...REFERENCE, xpProgress: 60, xpRequired: 100 }), /A81,81 0 1 0 /);
+
+    // cheio: círculo inteiro
+    assert.match(await profileSvg({ ...REFERENCE, level: 100 }), /<circle cx="1430" cy="148" r="81" fill="none" stroke="#b66cff" stroke-width="12"\/>/);
+});
+
+test("o pentágono do avatar, o coração e a coroa seguem as medidas do desenho", async () => {
+    const png = await renderProfileCard(REFERENCE);
+
+    const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+
+    // pontas do contorno (a ponta de cima e a base), como na referência
+    const apex = inkBox(data, info, [380, 280, 470, 310], 150);
+    const base = inkBox(data, info, [280, 650, 580, 700], 150);
+
+    assert.ok(Math.abs(apex.y - 294) <= 1 && Math.abs(apex.w - 46) <= 2, JSON.stringify(apex));
+    assert.ok(Math.abs(base.x - 296) <= 2 && Math.abs(base.w - 258) <= 3, JSON.stringify(base));
+
+    const heart = inkBox(data, info, [240, 44, 316, 120], 245);
+
+    assert.ok(Math.abs(heart.w - 30) <= 1 && Math.abs(heart.h - 31) <= 1, JSON.stringify(heart));
+
+    const crown = inkBox(data, info, [40, 40, 190, 125], 150);
+
+    assert.ok(Math.abs(crown.w - 52) <= 1 && Math.abs(crown.h - 47) <= 2, JSON.stringify(crown));
+});
+
+test("a imagem de exemplo do site usa o desenho novo (título com emoji e selo DEV)", async () => {
+    const source = readFileSync(new URL("../scripts/site/build-card.mjs", import.meta.url), "utf8");
+
+    assert.match(source, /title: "💰 Rico"/);
+    assert.match(source, /isOwner: true/);
+});

@@ -25,8 +25,8 @@ const H = 1200;
 // mas não é a ideal.
 const FONT = "Poppins, Nunito, Segoe UI, DejaVu Sans, Arial, sans-serif";
 
-const LILAC = "#b97cff";
-const BORDER = "#7d4fe0";
+const LILAC = "#b978ff";
+const BORDER = "#7540c7";
 
 // ==========================================
 // UTILITÁRIOS
@@ -158,32 +158,33 @@ function star(x, y, size, color = "#9f7be3", opacity = 0.5) {
     return `<path d="M${x},${y - size} Q${x + k},${y - k} ${x + size},${y} Q${x + k},${y + k} ${x},${y + size} Q${x - k},${y + k} ${x - size},${y} Q${x - k},${y - k} ${x},${y - size} Z" fill="${color}" opacity="${opacity}"/>`;
 }
 
-// Pentágono regular com uma ponta para cima.
-function pentagon(cx, cy, radius) {
+// Pentágono com uma ponta para cima (um pouco mais largo que alto, como no desenho: rx > ry).
+function pentagon(cx, cy, rx, ry = rx) {
     return [-90, -18, 54, 126, 198]
         .map(degrees => {
             const angle = degrees * Math.PI / 180;
 
             return [
-                (cx + radius * Math.cos(angle)).toFixed(1),
-                (cy + radius * Math.sin(angle)).toFixed(1)
+                (cx + rx * Math.cos(angle)).toFixed(1),
+                (cy + ry * Math.sin(angle)).toFixed(1)
             ].join(",");
         })
         .join(" ");
 }
 
-// Arco do anel de nível: começa no topo e anda no sentido horário.
+// Arco do anel de nível: sai do topo e anda no sentido anti-horário (no desenho, o trecho do 0%
+// fica à esquerda do topo).
 function arc(cx, cy, radius, ratio) {
     if (ratio >= 0.999) {
-        return `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#bb86ff" stroke-width="18"/>`;
+        return `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#b66cff" stroke-width="12"/>`;
     }
 
-    const angle = (-90 + 360 * ratio) * Math.PI / 180;
+    const angle = (-90 - 360 * ratio) * Math.PI / 180;
 
     const x = cx + radius * Math.cos(angle);
     const y = cy + radius * Math.sin(angle);
 
-    return `<path d="M${cx},${cy - radius} A${radius},${radius} 0 ${ratio > 0.5 ? 1 : 0} 1 ${x.toFixed(1)},${y.toFixed(1)}" fill="none" stroke="#bb86ff" stroke-width="18" stroke-linecap="round"/>`;
+    return `<path d="M${cx},${cy - radius} A${radius},${radius} 0 ${ratio > 0.5 ? 1 : 0} 0 ${x.toFixed(1)},${y.toFixed(1)}" fill="none" stroke="#b66cff" stroke-width="12" stroke-linecap="round"/>`;
 }
 
 const ICONS = {
@@ -213,16 +214,21 @@ const ICONS = {
         <path fill="none" stroke="#fff" stroke-width="5" d="M-9,-10 V-15 Q-9,-19 -5,-19 H5 Q9,-19 9,-15 V-10"/>
         <rect fill="${color}" opacity=".45" x="-22" y="3" width="44" height="4"/>`,
 
+    // Três pontas com os lados retos e a barra embaixo, na mesma largura (52 x 48).
     crown: color => `
-        <path fill="${color}" d="M-26,18 L-31,-14 L-14,2 L0,-24 L14,2 L31,-14 L26,18 Z"/>
-        <rect fill="${color}" x="-26" y="22" width="52" height="7" rx="3"/>`,
+        <path fill="${color}" d="M-26,-17 L-10.5,-3 L0,-24 L10.5,-3 L26,-17 L26,12 L-26,12 Z"/>
+        <rect fill="${color}" x="-26" y="17" width="52" height="7" rx="3.5"/>`,
 
+    // Coração de 30 x 31.
     heart: (color, filled = true) => `
-        <path fill="${filled ? color : "none"}" stroke="${color}" stroke-width="${filled ? 0 : 4}" d="M0,16 C-30,-6 -16,-26 0,-9 C16,-26 30,-6 0,16 Z"/>`
+        <path fill="${filled ? color : "none"}" stroke="${color}" stroke-width="${filled ? 0 : 3.5}" d="M0,15.5 C-8,9 -15,3 -15,-5.5 C-15,-12 -10.5,-15.5 -6.5,-15.5 C-3.5,-15.5 -1.5,-14 0,-11.5 C1.5,-14 3.5,-15.5 6.5,-15.5 C10.5,-15.5 15,-12 15,-5.5 C15,3 8,9 0,15.5 Z"/>`
 };
 
+// "scale" é um número ou [largura, altura] (alguns ícones do desenho são mais largos ou mais altos).
 function icon(name, x, y, scale, ...args) {
-    return `<g transform="translate(${x},${y}) scale(${scale})">${ICONS[name](...args)}</g>`;
+    const [sx, sy] = Array.isArray(scale) ? scale : [scale, scale];
+
+    return `<g transform="translate(${x},${y}) scale(${sx},${sy})">${ICONS[name](...args)}</g>`;
 }
 
 // ==========================================
@@ -233,12 +239,12 @@ function pill({ x, y, color, glyph, label, value, detail = "" }) {
     const long = String(value).length > 13;
 
     return `
-        <rect x="${x}" y="${y}" width="432" height="94" rx="47" fill="#1e1541" stroke="${BORDER}" stroke-width="2"/>
-        <circle cx="${x + 48}" cy="${y + 47}" r="36" fill="${color}"/>
-        ${glyph(x + 48, y + 47)}
-        ${txt(x + 100, y + 38, label, 18, "#b9a6e6", 600, 'letter-spacing="1.2"')}
-        ${txt(x + 100, y + 73, short(value, 22), long ? 27 : 34, "#ffffff", 800)}
-        ${detail ? txt(x + 404, y + 73, detail, 21, "#cdb2f7", 600, 'text-anchor="end"') : ""}
+        <rect x="${x + 1}" y="${y}" width="430" height="94" rx="47" fill="#211541" stroke="${BORDER}" stroke-width="2"/>
+        <circle cx="${x + 49}" cy="${y + 47}" r="36" fill="${color}"/>
+        ${glyph(x + 49, y + 47)}
+        ${txt(x + 100, y + 37, label, 17, "#bda2df", 500)}
+        ${txt(x + 100, y + 69, short(value, 22), long ? 24 : 30, "#ffffff", 700)}
+        ${detail ? txt(x + 404, y + 69, detail, 19, "#cdb2f7", 600, 'text-anchor="end"') : ""}
     `;
 }
 
@@ -303,16 +309,159 @@ async function imageData(url, buffer) {
 }
 
 // ==========================================
+// EMOJI DO TÍTULO
+// ==========================================
+
+// O SVG do sharp não desenha emoji colorido (sem fonte de emoji o texto vira quadradinhos), então
+// os emojis dos títulos das conquistas são desenhados aqui, em vetor, numa grade de 32 x 32. O
+// título equipado vem como "💰 Rico": o emoji do começo vira este desenho, e um emoji que não
+// está na lista fica de fora (o cartão mostra uma estrelinha no lugar).
+const EMOJI_ART = Object.freeze({
+    // 🌱 broto
+    "🌱": `
+        <path d="M16,29 L16,14" stroke="#3f7d20" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+        <path d="M16,17 C16,9 10,5 3,6 C3,14 9,18 16,17 Z" fill="#7ed957"/>
+        <path d="M16,14 C16,6 22,2 29,3 C29,11 23,15 16,14 Z" fill="#4fb53a"/>`,
+
+    // 🏆 troféu
+    "🏆": `
+        <path d="M9,5 H23 V14 C23,19.5 19.5,22.5 16,22.5 C12.5,22.5 9,19.5 9,14 Z" fill="#ffc83d"/>
+        <path d="M9,8 H5.2 C5.2,13.5 7,15.5 10.2,15.8 M23,8 H26.8 C26.8,13.5 25,15.5 21.8,15.8" stroke="#ffb300" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        <rect x="14.4" y="22.5" width="3.2" height="4" fill="#e69a00"/>
+        <rect x="10" y="26" width="12" height="3.4" rx="1.4" fill="#ffc83d" stroke="#e69a00" stroke-width="1"/>
+        <path d="M12,7.5 V13 C12,15.5 13,17 14.4,18" stroke="#fff3c4" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".85"/>`,
+
+    // 👑 coroa
+    "👑": `
+        <path d="M3,24 L2,10 L10,16.5 L16,6 L22,16.5 L30,10 L29,24 Z" fill="#ffc83d"/>
+        <path d="M3,24 H29 V27.5 H3 Z" fill="#e69a00"/>
+        <circle cx="2.2" cy="10" r="1.9" fill="#ffc83d"/><circle cx="16" cy="6" r="1.9" fill="#ffc83d"/><circle cx="29.8" cy="10" r="1.9" fill="#ffc83d"/>
+        <circle cx="16" cy="19.5" r="2" fill="#ef4444"/><circle cx="9" cy="20.5" r="1.5" fill="#3b82f6"/><circle cx="23" cy="20.5" r="1.5" fill="#3b82f6"/>`,
+
+    // 💵 cédula
+    "💵": `
+        <rect x="2.5" y="8" width="27" height="16" rx="2.6" fill="#55b95a" stroke="#2e7d32" stroke-width="1.5"/>
+        <circle cx="16" cy="16" r="4.6" fill="#b7e4b9" stroke="#2e7d32" stroke-width="1.2"/>
+        <circle cx="7.2" cy="12.2" r="1.4" fill="#b7e4b9"/><circle cx="24.8" cy="19.8" r="1.4" fill="#b7e4b9"/>`,
+
+    // 💰 saco de dinheiro
+    "💰": `
+        <path d="M11,3.6 L21,3.6 L18.2,10 L13.8,10 Z" fill="#b67a43"/>
+        <path d="M16,9.5 C8,12 4.6,19 4.6,23.2 C4.6,27.4 9.6,29.4 16,29.4 C22.4,29.4 27.4,27.4 27.4,23.2 C27.4,19 24,12 16,9.5 Z" fill="#c98b4e" stroke="#8a5a2b" stroke-width="1"/>
+        <path d="M11.6,9.6 H20.4" stroke="#e8c15a" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="16" cy="21" r="5" fill="#ffd54f" stroke="#c79100" stroke-width="1"/>
+        <path d="M17.7,18.8 C16.9,18 14.3,18.2 14.3,19.8 C14.3,21.6 17.7,20.8 17.7,22.6 C17.7,24 15.1,24.3 14.3,23.3 M16,17.4 V24.6" stroke="#a06b00" stroke-width="1.3" stroke-linecap="round" fill="none"/>`,
+
+    // 💎 gema
+    "💎": `
+        <path d="M9,5 H23 L29,12 L16,28.5 L3,12 Z" fill="#4fc3f7"/>
+        <path d="M9,5 H23 L19.6,12 H12.4 Z" fill="#b3e5fc"/>
+        <path d="M3,12 H29 M9,5 L12.4,12 L16,28.5 M23,5 L19.6,12 L16,28.5" stroke="#0288d1" stroke-width="1.1" stroke-linejoin="round" fill="none" opacity=".75"/>`,
+
+    // 🔥 fogo
+    "🔥": `
+        <path d="M16,2.6 C17,8 24.4,11 24.4,19.2 C24.4,25.2 20.6,29.4 16,29.4 C11.4,29.4 7.6,25.2 7.6,19.2 C7.6,15.2 9.8,13 10.8,10 C13,12 13,14 14,15.2 C14,10.2 13.8,6.2 16,2.6 Z" fill="#ff6d1f"/>
+        <path d="M16,14.6 C17,18 21.2,19.4 21.2,23.6 C21.2,26.8 18.9,28.8 16,28.8 C13.1,28.8 10.8,26.8 10.8,23.6 C10.8,20 14,19 16,14.6 Z" fill="#ffc107"/>
+        <path d="M16,21.8 C17,23.4 18.6,24 18.6,26 C18.6,27.6 17.4,28.8 16,28.8 C14.6,28.8 13.4,27.6 13.4,26 C13.4,24.2 15,23.4 16,21.8 Z" fill="#fff3b0"/>`,
+
+    // 🌟 estrela brilhante
+    "🌟": `
+        <path d="M16,2.4 L19.7,11.3 L29.4,12.1 L22,18.4 L24.3,27.8 L16,22.8 L7.7,27.8 L10,18.4 L2.6,12.1 L12.3,11.3 Z" fill="#ffd633" stroke="#f5a300" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M27.5,2.5 L28.4,5 L31,5.9 L28.4,6.8 L27.5,9.3 L26.6,6.8 L24,5.9 L26.6,5 Z" fill="#fff176"/>`,
+
+    // ⚔ espadas cruzadas
+    "⚔": `
+        <g transform="rotate(45 16 16)">
+            <path d="M16,1.5 L18.4,5.6 V20 H13.6 V5.6 Z" fill="#cfd8dc" stroke="#90a4ae" stroke-width=".8"/>
+            <rect x="9.6" y="20" width="12.8" height="2.8" rx="1.3" fill="#8d6e63"/>
+            <rect x="14.8" y="22.8" width="2.4" height="5" fill="#5d4037"/>
+            <circle cx="16" cy="28.6" r="1.9" fill="#ffc107"/>
+        </g>
+        <g transform="rotate(-45 16 16)">
+            <path d="M16,1.5 L18.4,5.6 V20 H13.6 V5.6 Z" fill="#e3eaee" stroke="#90a4ae" stroke-width=".8"/>
+            <rect x="9.6" y="20" width="12.8" height="2.8" rx="1.3" fill="#8d6e63"/>
+            <rect x="14.8" y="22.8" width="2.4" height="5" fill="#5d4037"/>
+            <circle cx="16" cy="28.6" r="1.9" fill="#ffc107"/>
+        </g>`,
+
+    // 🏅 medalha
+    "🏅": `
+        <path d="M8.6,2.6 H15.2 L19.6,13.4 H13 Z" fill="#e53935"/>
+        <path d="M23.4,2.6 H16.8 L12.4,13.4 H19 Z" fill="#1e88e5"/>
+        <circle cx="16" cy="20.4" r="9" fill="#ffc83d" stroke="#e69a00" stroke-width="1.6"/>
+        <circle cx="16" cy="20.4" r="5.4" fill="#ffe082" stroke="#e69a00" stroke-width=".9"/>
+        <path d="M16,17 L16.9,19.3 L19.3,19.5 L17.5,21 L18.1,23.4 L16,22.1 L13.9,23.4 L14.5,21 L12.7,19.5 L15.1,19.3 Z" fill="#e69a00"/>`
+});
+
+// Separa o título equipado ("💰 Rico") no desenho do emoji (ou null) e no texto sem emoji.
+export function splitTitle(raw) {
+    const text = String(raw ?? "").trim();
+
+    const first = /^\p{Extended_Pictographic}️?/u.exec(text)?.[0] ?? "";
+
+    return {
+        art: EMOJI_ART[first.replace(/️/g, "")] ?? null,
+        text: plain(text)
+    };
+}
+
+// ==========================================
+// LARGURA DE UM TEXTO
+// ==========================================
+
+// A largura que o texto ocupa de verdade (para centralizar o emoji junto com o título): desenha
+// o texto com as mesmas fontes e mede onde há tinta. O resultado fica guardado.
+const widths = new Map();
+
+async function textWidth(value, size, weight) {
+    const key = `${value}|${size}|${weight}`;
+
+    if (widths.has(key)) {
+        return widths.get(key);
+    }
+
+    const pad = 20;
+
+    const boxWidth = Math.ceil(chars(value).length * size * 0.9) + pad * 2;
+
+    const { data, info } = await sharp(Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${boxWidth}" height="${Math.ceil(size * 2)}">` +
+        txt(pad, Math.ceil(size * 1.4), value, size, "#ffffff", weight) +
+        "</svg>"
+    )).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+
+    let left = info.width;
+    let right = -1;
+
+    for (let x = 0; x < info.width; x++) {
+        for (let y = 0; y < info.height; y++) {
+            if (data[(y * info.width + x) * 4 + 3] > 40) {
+                left = Math.min(left, x);
+                right = Math.max(right, x);
+
+                break;
+            }
+        }
+    }
+
+    const width = right >= left ? right - left + 1 : 0;
+
+    widths.set(key, width);
+
+    return width;
+}
+
+// ==========================================
 // DECORAÇÃO
 // ==========================================
 
-// [x, y, tamanho, opacidade]
+// [x, y, tamanho, cor]: as estrelas do painel, uma cor para cada (algumas mais fortes).
 const STARS = [
-    [930, 104, 21, 0.55], [708, 180, 25, 0.55], [360, 153, 14, 0.5],
-    [1197, 125, 11, 0.5], [445, 260, 21, 0.45], [1092, 239, 19, 0.5],
-    [842, 275, 14, 0.5], [1328, 286, 21, 0.5], [689, 425, 14, 0.45],
-    [1170, 419, 14, 0.5], [880, 492, 21, 0.5], [1412, 506, 25, 0.5],
-    [582, 92, 9, 0.3], [1511, 232, 13, 0.7]
+    [930, 104, 21, "#745091"], [708, 180, 25, "#ad89c9"], [360, 153, 14, "#a887c4"],
+    [1197, 125, 11, "#755092"], [445, 260, 21, "#6c4d8a"], [1092, 239, 19, "#b28bcd"],
+    [842, 275, 14, "#7b5398"], [1328, 286, 21, "#745090"], [689, 425, 14, "#745091"],
+    [1170, 419, 14, "#af89cb"], [880, 492, 21, "#734f90"], [1412, 506, 25, "#684b84"],
+    [582, 92, 9, "#2a1647"], [1511, 232, 13, "#ab88c6"]
 ];
 
 // ==========================================
@@ -348,8 +497,8 @@ export async function profileSvg(data = {}) {
 
     const percent = Math.floor(ratio * 100);
 
-    // No 0% o anel ainda mostra um tracinho, como no desenho.
-    const arcRatio = ratio > 0 ? ratio : 0.02;
+    // Com 0% o anel ainda mostra um trecho (6% do círculo), como no desenho.
+    const arcRatio = Math.max(ratio, 0.06);
 
     const avatar = await imageData(
         data.avatarUrl,
@@ -362,14 +511,16 @@ export async function profileSvg(data = {}) {
     const nameLength = chars(name).length;
 
     const nameSize = nameLength <= 12
-        ? 58
-        : Math.max(34, 58 - (nameLength - 12) * 3);
+        ? 48
+        : Math.max(30, 48 - (nameLength - 12) * 2.5);
 
-    const title = plain(data.title);
+    const titleParts = splitTitle(data.title);
+
+    const title = short(titleParts.text, 30);
 
     const bio = plain(data.bio) || "Nenhuma bio definida.";
 
-    const bioLines = wrap(bio, 27, 7);
+    const bioLines = wrap(bio, 28, 7);
 
     // Só emoji no nome da pessoa: sobra "" e o cartão mostra o traço.
     const spouseName = plain(String(data.spouseName ?? "").replace(/^@+/, ""));
@@ -389,7 +540,31 @@ export async function profileSvg(data = {}) {
 
     const weapon = plain(data.weapon) || "Nenhuma";
 
-    const pentagonPoints = pentagon(425, 497, 201);
+    const pentagonPoints = pentagon(424.5, 499, 203.5, 200.1);
+
+    // Título equipado: o emoji (desenhado) e o texto, centralizados juntos no meio da faixa (no
+    // desenho, o emoji tem 20 px de tinta e fica a 10 px do texto).
+    let titleSvg;
+
+    if (title) {
+        const size = 20;
+
+        const textInk = await textWidth(title, size, 500);
+
+        const lead = titleParts.art ? 30 : 0;
+
+        // onde começa a tinta (o texto começa uns 1,5 px depois do ponto de partida)
+        const left = 1058 - (lead + textInk) / 2;
+
+        const mark = titleParts.art
+            ? `<g transform="translate(${(left - 2.6).toFixed(1)},676.6) scale(0.875)">${titleParts.art}</g>`
+            : star(left - 14, 689, 8, "#d6b4ff", 0.9);
+
+        titleSvg = mark + txt(left + lead - 1.5, 698, title, size, "#c9a5ef", 500);
+
+    } else {
+        titleSvg = txt(1058, 697, "Sem título equipado", 20, "#8f78c4", 500, 'text-anchor="middle"');
+    }
 
     // ======================================
     // SVG DO PERFIL
@@ -399,19 +574,32 @@ export async function profileSvg(data = {}) {
     <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
 
         <defs>
-            <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#21123f"/>
-                <stop offset="1" stop-color="#110c27"/>
+            <!-- fundo da moldura: um degradê que clareia para a esquerda, embaixo, e um brilho por cima -->
+            <linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="59" y1="1383" x2="2085" y2="611">
+                <stop offset="0" stop-color="#2e1148"/>
+                <stop offset="0.5" stop-color="#150c30"/>
+                <stop offset="1" stop-color="#100729"/>
             </linearGradient>
 
-            <radialGradient id="glow" cx="0.63" cy="0.38" r="0.75">
-                <stop offset="0" stop-color="#5f2b8f"/>
-                <stop offset="0.55" stop-color="#341659"/>
-                <stop offset="1" stop-color="#1b0f3b"/>
+            <radialGradient id="bgGlow" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(838 664) scale(1088 588)">
+                <stop offset="0" stop-color="#53166e" stop-opacity=".32"/>
+                <stop offset="0.6" stop-color="#53166e" stop-opacity=".14"/>
+                <stop offset="1" stop-color="#53166e" stop-opacity="0"/>
             </radialGradient>
 
+            <radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(1000 288) scale(782 493)">
+                <stop offset="0" stop-color="#562477"/>
+                <stop offset="0.51" stop-color="#341451"/>
+                <stop offset="1" stop-color="#1b0b36"/>
+            </radialGradient>
+
+            <linearGradient id="rim" gradientUnits="userSpaceOnUse" x1="0" y1="296" x2="0" y2="698">
+                <stop offset="0" stop-color="#c9a0ff"/>
+                <stop offset="1" stop-color="#b878ff"/>
+            </linearGradient>
+
             <clipPath id="hero">
-                <rect x="210" y="24" width="1366" height="712" rx="44"/>
+                <rect x="210" y="25" width="1366" height="711" rx="30"/>
             </clipPath>
 
             <clipPath id="pentagon">
@@ -421,15 +609,16 @@ export async function profileSvg(data = {}) {
 
         <!-- MOLDURA -->
 
-        <rect x="6" y="6" width="1588" height="1188" rx="70" fill="url(#bg)" stroke="#a66cf5" stroke-width="10"/>
-        <rect x="20" y="20" width="1560" height="1160" rx="58" fill="none" stroke="#6b3fc4" stroke-width="2" opacity=".6"/>
+        <rect x="8" y="8" width="1584" height="1184" rx="44" fill="#0d0821" stroke="#9b59f4" stroke-width="8"/>
+        <rect x="20" y="20" width="1560" height="1160" rx="34" fill="url(#bg)" stroke="#d0a0ff" stroke-width="2"/>
+        <rect x="21" y="21" width="1558" height="1158" rx="33" fill="url(#bgGlow)"/>
 
         <!-- PAINEL PRINCIPAL -->
 
-        <rect x="210" y="24" width="1366" height="712" rx="44" fill="url(#glow)" stroke="${BORDER}" stroke-width="2"/>
+        <rect x="210" y="25" width="1366" height="711" rx="30" fill="url(#glow)" stroke="${BORDER}" stroke-width="2"/>
 
         <g clip-path="url(#hero)">
-            ${STARS.map(([x, y, size, opacity]) => star(x, y, size, "#a98aea", opacity)).join("")}
+            ${STARS.map(([x, y, size, color]) => star(x, y, size, color, 1)).join("")}
 
             <!-- faixa do nome -->
             <rect x="210" y="583" width="1366" height="153" fill="#0d0820" opacity=".55"/>
@@ -438,24 +627,21 @@ export async function profileSvg(data = {}) {
 
         <!-- NOME E TÍTULO -->
 
-        ${txt(1060, 656, name, nameSize, "#ffffff", 800, 'text-anchor="middle"')}
+        ${txt(1058, 654, name, nameSize, "#ffffff", 700, 'text-anchor="middle"')}
 
-        ${title
-            ? star(1060 - chars(short(title, 30)).length * 8.1 - 26, 690, 8, "#d6b4ff", 0.9) +
-              txt(1060, 698, short(title, 30), 24, "#d6b4ff", 600, 'text-anchor="middle"')
-            : txt(1060, 698, "Sem título equipado", 22, "#8f78c4", 500, 'text-anchor="middle"')}
+        ${titleSvg}
 
         ${data.isOwner
-            ? icon("crown", 1446, 700, 0.42, "#f5c66d") +
-              txt(1472, 708, "DEV", 22, "#f5c66d", 800)
+            ? icon("crown", 1445.5, 701.5, 0.35, "#f3ca71") +
+              txt(1476, 706, "DEV", 17, "#f3ca71", 700)
             : ""}
 
         <!-- AVATAR EM PENTÁGONO -->
 
-        <polygon points="${pentagonPoints}" fill="#2a1a55" stroke="#c9a6ff" stroke-width="16" stroke-linejoin="round"/>
+        <polygon points="${pentagonPoints}" fill="#2a1a55" stroke="url(#rim)" stroke-width="9" stroke-linejoin="round"/>
 
         ${avatar
-            ? `<image href="${avatar}" x="${425 - 201}" y="${497 - 201}" width="402" height="402" preserveAspectRatio="xMidYMid slice" clip-path="url(#pentagon)"/>`
+            ? `<image href="${avatar}" x="${424.5 - 205}" y="${499 - 205}" width="410" height="410" preserveAspectRatio="xMidYMid slice" clip-path="url(#pentagon)"/>`
             : `<g clip-path="url(#pentagon)">
                    <rect x="224" y="296" width="402" height="402" fill="#4a2c85"/>
                    ${star(425, 480, 90, "#c9a6ff", 0.9)}
@@ -463,48 +649,49 @@ export async function profileSvg(data = {}) {
 
         <!-- ESTADO CIVIL (chip no canto) -->
 
-        <path d="M212,26 H780 V106 a32,32 0 0 1 -32,32 H212 Z" fill="#1b1237" stroke="#8a5cf0" stroke-width="2"/>
+        <path d="M210,25 H780 V114 a24,24 0 0 1 -24,24 H210 Z" fill="#200f3c"/>
+        <path d="M780,25 V114 a24,24 0 0 1 -24,24 H211" fill="none" stroke="#a65bf3" stroke-width="2"/>
 
-        <circle cx="278" cy="82" r="38" fill="${married ? "#d92f8c" : "#43336f"}"/>
-        ${icon("heart", 278, 83, 0.9, "#ffffff", married)}
+        <circle cx="278" cy="82" r="38" fill="${married ? "#d83391" : "#43336f"}"/>
+        ${icon("heart", 278, 83.5, 1.03, "#ffffff", married)}
 
-        ${txt(337, 80, married ? "Casado(a)" : "Solteiro(a)", 36, "#ffffff", 700)}
-        ${txt(337, 112, married ? short(spouse || "—", 24) : "sem cônjuge", 21, "#b5a2e0", 500)}
+        ${txt(337, 79, married ? "Casado(a)" : "Solteiro(a)", 32, "#ffffff", 700)}
+        ${txt(337, 111, married ? short(spouse || "—", 24) : "sem cônjuge", 18, "#d7b9f7", 500)}
 
         <!-- ANEL DO NÍVEL -->
 
-        <circle cx="1430" cy="148" r="104" fill="#1c1238" stroke="#6a3fd1" stroke-width="8"/>
-        <circle cx="1430" cy="148" r="80" fill="none" stroke="#33206b" stroke-width="18"/>
-        ${arc(1430, 148, 80, arcRatio)}
+        <circle cx="1430" cy="148" r="104" fill="#170c32" stroke="#512b91" stroke-width="8"/>
+        <circle cx="1430" cy="148" r="81" fill="none" stroke="#38215f" stroke-width="12"/>
+        ${arc(1430, 148, 81, arcRatio)}
 
-        ${txt(1430, 112, "LEVEL", 22, "#eadfff", 700, 'text-anchor="middle" letter-spacing="1.5"')}
-        ${txt(1430, 176, String(level), 66, "#ffffff", 800, 'text-anchor="middle"')}
-        ${txt(1430, 203, `${percent}%`, 22, "#d3c0f7", 600, 'text-anchor="middle"')}
+        ${txt(1430, 111, "LEVEL", 22, "#ddc6fa", 700, 'text-anchor="middle"')}
+        ${txt(1430, 165, String(level), 55, "#ffffff", 700, 'text-anchor="middle"')}
+        ${txt(1430, 197, `${percent}%`, 22, "#d9c0f5", 500, 'text-anchor="middle"')}
 
         <!-- LATERAL -->
 
-        <rect x="24" y="24" width="176" height="1152" rx="40" fill="#140e2b" stroke="${BORDER}" stroke-width="2"/>
+        <rect x="25" y="25" width="175" height="1151" rx="26" fill="#160d36" stroke="${BORDER}" stroke-width="2"/>
 
-        ${icon("crown", 112, 84, 0.92, LILAC)}
-        ${txt(112, 152, "RANK", 27, "#c5a3ff", 700, 'text-anchor="middle" letter-spacing="1"')}
-        ${txt(112, 222, rank, rank.length > 3 ? 40 : 54, "#ffffff", 800, 'text-anchor="middle"')}
-        <rect x="48" y="262" width="129" height="2" fill="#382865"/>
+        ${icon("crown", 112, 81.5, 1, LILAC)}
+        ${txt(112, 158, "RANK", 24, "#d1b4ff", 700, 'text-anchor="middle"')}
+        ${txt(112, 219, rank, rank.length > 3 ? 32 : 42, "#ffffff", 700, 'text-anchor="middle"')}
+        <rect x="48" y="259" width="129" height="2" fill="#432469"/>
 
-        ${txt(112, 1040, "Helena", 24, "#b58cff", 700, 'text-anchor="middle"')}
+        ${txt(112, 1039, "Helena", 20, "#c5a2ef", 700, 'text-anchor="middle"')}
         ${star(112, 1140, 18, "#b36bff", 0.95)}
 
         <!-- BIO -->
 
-        <rect x="225" y="778" width="385" height="330" rx="28" fill="#1a1236" stroke="${BORDER}" stroke-width="2"/>
-        ${txt(258, 826, "Bio", 28, LILAC, 700)}
-        <rect x="258" y="846" width="319" height="2" fill="#3b2a6b"/>
+        <rect x="225" y="778" width="385" height="330" rx="19" fill="#1a1036" stroke="#7141b5" stroke-width="2"/>
+        ${txt(258, 823, "Bio", 23, "#c696ff", 700)}
+        <rect x="258" y="845" width="319" height="2" fill="#432469"/>
 
         ${bioLines.map((line, index) => txt(
             258,
-            892 + index * 33,
+            891 + index * 32,
             line,
-            22,
-            data.bio ? "#e7dcfc" : "#8f78c4",
+            21,
+            data.bio ? "#e0cef5" : "#8f78c4",
             400,
             'font-style="italic"'
         )).join("")}
@@ -512,34 +699,34 @@ export async function profileSvg(data = {}) {
         <!-- DADOS -->
 
         ${pill({
-            x: 662, y: 778, color: "#a24cf0", label: "BANCO",
+            x: 662, y: 778, color: "#a855f7", label: "BANCO",
             value: money(data.bank),
-            glyph: (x, y) => icon("bank", x, y, 0.95)
+            glyph: (x, y) => icon("bank", x, y + 1.5, [0.86, 0.79])
         })}
 
         ${pill({
-            x: 1110, y: 778, color: "#d63fe2", label: "GEMAS",
+            x: 1110, y: 778, color: "#d442db", label: "GEMAS",
             value: Number(data.gems || 0).toLocaleString("pt-BR"),
-            glyph: (x, y) => icon("gem", x, y, 0.95, "#d63fe2")
+            glyph: (x, y) => icon("gem", x, y, 0.73, "#d442db")
         })}
 
         ${pill({
-            x: 662, y: 890, color: "#ee5aa6", label: "CARTEIRA",
+            x: 662, y: 890, color: "#ed5ca8", label: "CARTEIRA",
             value: money(data.wallet),
-            glyph: (x, y) => icon("wallet", x, y, 0.95, "#ee5aa6")
+            glyph: (x, y) => icon("wallet", x, y + 2, [0.82, 0.89], "#ed5ca8")
         })}
 
         ${pill({
-            x: 1110, y: 890, color: "#22c3a6", label: "ARMA EQUIPADA",
+            x: 1110, y: 890, color: "#2bbfae", label: "ARMA EQUIPADA",
             value: weapon,
             detail: damage ? `Dano ${damage}` : "",
-            glyph: (x, y) => icon("gun", x, y, 0.95)
+            glyph: (x, y) => icon("gun", x, y, [0.83, 0.835])
         })}
 
         ${pill({
-            x: 886, y: 1002, color: "#f2a21c", label: "EMPREGO ATUAL",
+            x: 886, y: 1002, color: "#e9a02e", label: "EMPREGO ATUAL",
             value: plain(data.job) || "Desempregado(a)",
-            glyph: (x, y) => icon("briefcase", x, y, 0.95, "#f2a21c")
+            glyph: (x, y) => icon("briefcase", x, y + 0.5, [0.857, 0.884], "#e9a02e")
         })}
 
     </svg>

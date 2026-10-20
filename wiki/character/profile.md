@@ -9,8 +9,9 @@ O **`/perfil`** (atalho `/profile`) mostra o seu cartão de perfil: uma imagem c
 
 - **RANK**: a sua posição no ranking de patrimônio (veja [Ranking](wiki:economy/rankings));
 - o **estado civil**, solteiro(a) ou casado(a) (veja [Casamento](wiki:character/marriage));
-- o **nível**, num anel que mostra quanto falta para o próximo;
-- a sua **foto**, o **nome** e o **título** equipado;
+- o **nível**, num anel que mostra quanto falta para o próximo (com 0% sobra um pequeno trecho do anel, à esquerda do topo);
+- a sua **foto**, o **nome** e o **título** equipado, com o emoji do título ao lado do texto (💰 Rico, 🔥 Persistente...);
+- o selo **DEV**, para o dono do bot;
 - a **bio**;
 - o **banco**, a **carteira** e as **gemas**;
 - a **arma equipada** (com o dano) e o **emprego atual**.
