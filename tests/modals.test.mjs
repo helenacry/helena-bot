@@ -532,7 +532,7 @@ test("bio: pedaço solto de emoji e caracteres de controle não vão para o banc
     assert.equal(bioOf(), "ok 😀");
 });
 
-test("bio: o aviso diz o que o cartão não desenha (emoji, símbolos e emojis personalizados)", async () => {
+test("bio: o aviso diz o que o cartão não desenha (símbolos, outros alfabetos, emojis personalizados e menções)", async () => {
     reset();
 
     const noteOf = response => JSON.stringify(response).includes("No cartão do perfil");
@@ -540,21 +540,26 @@ test("bio: o aviso diz o que o cartão não desenha (emoji, símbolos e emojis p
     // texto comum: sem aviso
     assert.equal(noteOf(await send(submit("bio:editar", { texto: "Gosto de café" }))), false);
 
-    // com emoji: o aviso mostra como fica no cartão
-    const withEmoji = JSON.stringify(await send(submit("bio:editar", { texto: "Gosto de café ☕😀" })));
+    // emojis comuns o cartão desenha (em cores): sem aviso, nem com bandeira, tom de pele e emoji composto
+    for (const texto of ["Gosto de café ☕😀", "💜💜💜", "oi 👍🏽 🇧🇷 1️⃣ 👨‍👩‍👧 ❤️‍🔥"]) {
+        assert.equal(noteOf(await send(submit("bio:editar", { texto }))), false, texto);
+    }
 
-    assert.match(withEmoji, /No cartão do perfil/);
-    assert.match(withEmoji, /Ela aparece assim: \*\*Gosto de café\*\*/);
+    // o que sobra de fora: o aviso mostra como fica no cartão, com os emojis no lugar
+    const withSymbol = JSON.stringify(await send(submit("bio:editar", { texto: "Gosto de café ☕ ★彡" })));
 
-    // símbolo decorativo e emoji personalizado da VSync
-    const decorative = JSON.stringify(await send(submit("bio:editar", { texto: "꒰ sou calma ꒱ <:festa:3f2a-9c1e>" })));
+    assert.match(withSymbol, /No cartão do perfil/);
+    assert.match(withSymbol, /Ela aparece assim: \*\*Gosto de café ☕\*\*/);
 
-    assert.match(decorative, /Ela aparece assim: \*\*sou calma\*\*/);
+    // símbolo decorativo, emoji personalizado da VSync e menção
+    const decorative = JSON.stringify(await send(submit("bio:editar", { texto: "꒰ sou calma 😀 ꒱ <:festa:3f2a-9c1e> <@1234>" })));
 
-    // só emoji: o cartão mostra a bio padrão
-    const onlyEmoji = JSON.stringify(await send(submit("bio:editar", { texto: "💜💜💜" })));
+    assert.match(decorative, /Ela aparece assim: \*\*sou calma 😀\*\*/);
 
-    assert.match(onlyEmoji, /Nenhuma bio definida/);
+    // só coisa que o cartão não desenha: ele mostra a bio padrão
+    const onlySymbols = JSON.stringify(await send(submit("bio:editar", { texto: "꒰ ✿ ꒱ <:festa:3f2a-9c1e>" })));
+
+    assert.match(onlySymbols, /Nenhuma bio definida/);
 });
 
 test("bio: o modal abre com a bio inteira, mesmo cheia de emoji, sem cortar um emoji ao meio", () => {

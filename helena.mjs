@@ -127,6 +127,10 @@ import {
 } from "./services/social/profile-card.mjs";
 
 import {
+    emojiDrawingWorks
+} from "./services/social/card-emoji.mjs";
+
+import {
     deliverCallback
 } from "./services/platform/v2-delivery.mjs";
 
@@ -500,6 +504,19 @@ cardFontAvailable()
     ))
     .catch(error => console.warn(
         "[CARTÃO] Não consegui conferir a fonte:",
+        error?.message ?? error
+    ));
+
+// Os emojis de nome, bio e cônjuge são desenhados como imagem (Twemoji): confere que esta máquina
+// desenha mesmo. Se não desenhar, o cartão volta a tirar os emojis do texto.
+emojiDrawingWorks()
+    .then(works => console.log(
+        works
+            ? "[CARTÃO] Emojis coloridos prontos (Twemoji)."
+            : "[CARTÃO] ⚠️ Emojis coloridos indisponíveis: o cartão do /perfil vai tirar os emojis do texto."
+    ))
+    .catch(error => console.warn(
+        "[CARTÃO] Não consegui conferir os emojis:",
         error?.message ?? error
     ));
 

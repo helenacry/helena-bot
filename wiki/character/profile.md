@@ -10,7 +10,7 @@ O **`/perfil`** (atalho `/profile`) mostra o seu cartão de perfil: uma imagem c
 - **RANK**: a sua posição no ranking de patrimônio (veja [Ranking](wiki:economy/rankings));
 - o **estado civil**, solteiro(a) ou casado(a) (veja [Casamento](wiki:character/marriage));
 - o **nível**, num anel que mostra quanto falta para o próximo (com 0% sobra um pequeno trecho do anel, à esquerda do topo);
-- a sua **foto**, o **nome** e o **título** equipado, com o emoji do título ao lado do texto (💰 Rico, 🔥 Persistente...);
+- a sua **foto**, o **nome** (os emojis do nome aparecem em cores) e o **título** equipado, com o emoji do título ao lado do texto (💰 Rico, 🔥 Persistente...);
 - o selo **DEV**, para o dono do bot;
 - a **bio**;
 - o **banco**, a **carteira** e as **gemas**;
@@ -28,7 +28,9 @@ A bio é o texto que aparece no cartão. Ela tem **até 160 caracteres** (cada e
 - **`/bio`** sem texto abre um editor, com o botão **Editar bio**, já preenchido com a bio atual.
 
 > [!NOTE]
-> O cartão só desenha letras latinas, números e a pontuação comum. **Emojis, símbolos decorativos (★, ✿, ꒰), emojis personalizados da VSync, menções e outros alfabetos (japonês, coreano, árabe, cirílico) ficam de fora do cartão**, para não aparecerem como quadradinhos. A bio guardada continua inteira, e o `/bio` avisa como ela fica no cartão. Letras em fonte estilizada (𝓑𝓲𝓸) viram letras comuns.
+> O cartão desenha letras latinas, números, a pontuação comum e os **emojis comuns, em cores** (rostos, bandeiras, tons de pele, 1️⃣, 👨‍👩‍👧, 🏳️‍🌈...), na bio, no nome e no nome do cônjuge. **Símbolos decorativos (★, ✿, ꒰), emojis personalizados da VSync, menções e outros alfabetos (japonês, coreano, árabe, cirílico) ficam de fora do cartão**, para não aparecerem como quadradinhos, e o mesmo vale para emojis lançados de 2023 em diante, que ainda não têm desenho. A bio guardada continua inteira, e o `/bio` avisa como ela fica no cartão quando algo fica de fora. Letras em fonte estilizada (𝓑𝓲𝓸) viram letras comuns.
+>
+> Os emojis do cartão são do [Twemoji](https://github.com/jdecked/twemoji) (© Twitter, Inc. e colaboradores), usados sob a licença [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 > [!WARNING]
 > A bio aparece para qualquer pessoa que veja o seu perfil. Os [termos de uso](site:terms/) pedem que ela não tenha conteúdo ilegal, ofensivo ou que exponha dados de outras pessoas.

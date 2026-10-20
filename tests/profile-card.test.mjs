@@ -108,7 +108,7 @@ test("o nível máximo mostra 100%", async () => {
     assert.ok(texts.includes("100%"));
 });
 
-test("emoji sai do texto (o SVG não desenha emoji colorido)", async () => {
+test("emoji de título, emprego e arma saem do texto (o SVG não desenha emoji colorido); o do nome vira imagem", async () => {
     const svg = await profileSvg({ ...SAMPLE, name: "Ana 🌸", title: "👑 Realeza", job: "💼 Chefe", weapon: "🔫 Pistola" });
 
     assert.doesNotMatch(svg, /\p{Extended_Pictographic}/u);
@@ -151,6 +151,7 @@ test("nenhum resto de emoji sobra no cartão, em campo nenhum", async () => {
         spouseName: "@maria_🐱💜"
     });
 
+    // os emojis viram imagem: no texto do SVG não sobra pedaço de emoji nenhum (nem invisível)
     const leftovers = textsOf(svg)
         .flatMap(text => [...text])
         .filter(letter => /[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Modifier}\p{Cf}️⃣]/u.test(letter));
@@ -159,15 +160,29 @@ test("nenhum resto de emoji sobra no cartão, em campo nenhum", async () => {
 
     const texts = textsOf(svg);
 
-    assert.ok(texts.includes("Ana Silva"));
+    // o texto de nome e cônjuge fica em pedaços entre os emojis desenhados
+    assert.ok(texts.includes("Ana"));
+    assert.ok(texts.includes("Silva"));
     assert.ok(texts.includes("@maria_"));
+
+    // título, emprego e arma não levam emoji colorido: saem do texto
+    assert.ok(texts.includes("Magnata"));
+    assert.ok(texts.includes("Barista"));
+    assert.ok(texts.includes("Revólver"));
 });
 
-test("o cônjuge com só emoji no nome aparece como traço, sem '@' solto", async () => {
-    const texts = textsOf(await profileSvg({ ...SAMPLE, spouseName: "🐱💜" }));
+test("o cônjuge só com emoji aparece como '@' e os emojis; sem nada que o cartão desenhe, aparece o traço", async () => {
+    const emojis = await profileSvg({ ...SAMPLE, spouseName: "🐱💜" });
 
-    assert.ok(texts.includes("—"));
-    assert.ok(!texts.includes("@"));
+    assert.ok(textsOf(emojis).includes("@"));
+    assert.equal([...emojis.matchAll(/<image href="data:image\/svg\+xml/g)].length, 2);
+
+    for (const spouseName of ["★☆", "<:festa:1-2>", "日本語"]) {
+        const texts = textsOf(await profileSvg({ ...SAMPLE, spouseName }));
+
+        assert.ok(texts.includes("—"), spouseName);
+        assert.ok(!texts.includes("@"), spouseName);
+    }
 });
 
 test("cortar nome e bio não parte um caractere grande ao meio", async () => {
@@ -668,12 +683,8 @@ test("o cartão sai (e só com caracteres que o Poppins desenha) para qualquer b
     }
 });
 
-test("bio só de emoji ou de símbolos mostra a bio padrão, e emoji no meio do texto some sem deixar buraco", async () => {
-    for (const bio of ["💜💜💜", "꒰ ✿ ꒱", "<:festa:1-2>", "日本語"]) {
+test("bio só de símbolos, de outro alfabeto ou de token da VSync mostra a bio padrão", async () => {
+    for (const bio of ["꒰ ✿ ꒱", "<:festa:1-2>", "<@1234>", "日本語"]) {
         assert.ok(textsOf(await profileSvg({ ...SAMPLE, bio })).includes("Nenhuma bio definida."), bio);
     }
-
-    const texts = textsOf(await profileSvg({ ...SAMPLE, bio: "gosto de 🍕 pizza e 🎮 jogos" }));
-
-    assert.ok(texts.includes("gosto de pizza e jogos"));
 });

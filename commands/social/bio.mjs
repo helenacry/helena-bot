@@ -6,7 +6,7 @@ import {
 
 import { bioPanel } from "../../services/panels/panels.mjs";
 
-import { plain } from "../../services/social/profile-card.mjs";
+import { cardText } from "../../services/social/profile-card.mjs";
 
 import {
     createEmbed,
@@ -132,15 +132,17 @@ export default {
                 }
             ];
 
-            // O cartão do /perfil só desenha letras e números: emoji, emojis personalizados da VSync,
-            // menções e símbolos especiais ficam de fora do cartão (a bio guardada continua inteira).
-            const onCard = plain(bio);
+            // O cartão do /perfil desenha letras, números e os emojis comuns (em cores). Símbolos
+            // especiais, outros alfabetos, emojis personalizados da VSync e menções ficam de fora do
+            // cartão (a bio guardada continua inteira): o aviso mostra como ela fica lá.
+            const onCard = cardText(bio);
 
-            if (onCard !== bio.replace(/\s+/g, " ")) {
+            if (onCard !== bio.normalize("NFC").replace(/\s+/g, " ")) {
                 fields.push({
                     name: "🖼️ No cartão do perfil",
                     value:
-                        "O cartão não desenha emoji nem símbolos especiais, então eles ficam de fora dele. " +
+                        "O cartão desenha letras e emojis comuns, mas não símbolos especiais, outros alfabetos, " +
+                        "emojis personalizados da VSync nem menções, então esses ficam de fora dele. " +
                         (onCard
                             ? "Ela aparece assim: **" + onCard.replace(/([*_`~|>\\])/g, "\\$1") + "**"
                             : "Como só tem isso, o cartão mostra \"Nenhuma bio definida.\""),

@@ -153,3 +153,178 @@ export function canDraw(codePoint) {
 
     return set === false || set.has(codePoint);
 }
+
+// ==========================================
+// LARGURA DAS LETRAS
+// ==========================================
+
+// Para pôr um emoji no meio de uma linha, o cartão precisa saber onde o texto antes dele termina. A
+// largura de cada letra vem da tabela "hmtx" do próprio arquivo da fonte (a "cmap" diz qual é o
+// desenho de cada caractere). Não conta o kerning (o ajuste fino entre pares de letras), que mexe
+// uma fração de pixel por linha: sobra de folga para o emoji.
+
+// Cada fonte lida fica guardada: { unitsPerEm, advance(codePoint) } ou null se o arquivo falhou.
+const metrics = new Map();
+
+// A tabela de caracteres Unicode mais completa da fonte, devolvida como função código -> número do
+// desenho (0 = a fonte não tem). Formatos 4 e 12, como no readCoverage.
+function glyphLookup(buffer, cmap) {
+    const count = buffer.readUInt16BE(cmap + 2);
+
+    let best = null;
+
+    for (let i = 0; i < count; i++) {
+        const at = cmap + 4 + i * 8;
+
+        const platform = buffer.readUInt16BE(at);
+        const encoding = buffer.readUInt16BE(at + 2);
+        const offset = cmap + buffer.readUInt32BE(at + 4);
+
+        const format = buffer.readUInt16BE(offset);
+
+        const unicode = platform === 0 || (platform === 3 && (encoding === 1 || encoding === 10));
+
+        if (unicode && (format === 12 || format === 4) && (!best || format > best.format)) {
+            best = { offset, format };
+        }
+    }
+
+    if (!best) {
+        return () => 0;
+    }
+
+    if (best.format === 12) {
+        const groups = buffer.readUInt32BE(best.offset + 12);
+
+        return code => {
+            for (let g = 0; g < groups; g++) {
+                const at = best.offset + 16 + g * 12;
+
+                const start = buffer.readUInt32BE(at);
+                const end = buffer.readUInt32BE(at + 4);
+
+                if (code >= start && code <= end) {
+                    return buffer.readUInt32BE(at + 8) + (code - start);
+                }
+            }
+
+            return 0;
+        };
+    }
+
+    const segments = buffer.readUInt16BE(best.offset + 6) / 2;
+
+    const ends = best.offset + 14;
+    const starts = ends + segments * 2 + 2;
+    const deltas = starts + segments * 2;
+    const offsets = deltas + segments * 2;
+
+    return code => {
+        if (code > 0xFFFF) {
+            return 0;
+        }
+
+        for (let s = 0; s < segments; s++) {
+            const start = buffer.readUInt16BE(starts + s * 2);
+            const end = buffer.readUInt16BE(ends + s * 2);
+
+            if (code < start || code > end) continue;
+
+            const delta = buffer.readInt16BE(deltas + s * 2);
+            const rangeOffset = buffer.readUInt16BE(offsets + s * 2);
+
+            if (rangeOffset === 0) {
+                return (code + delta) & 0xFFFF;
+            }
+
+            const at = offsets + s * 2 + rangeOffset + (code - start) * 2;
+
+            const glyph = at + 2 <= buffer.length ? buffer.readUInt16BE(at) : 0;
+
+            return glyph === 0 ? 0 : (glyph + delta) & 0xFFFF;
+        }
+
+        return 0;
+    };
+}
+
+// Lê as larguras de um TTF: { unitsPerEm, advance(codePoint) }, com a largura em unidades da fonte
+// (ou null se a fonte não tem o caractere).
+export function readAdvances(buffer) {
+    const tables = {};
+
+    for (let i = 0; i < buffer.readUInt16BE(4); i++) {
+        const at = 12 + i * 16;
+
+        tables[buffer.toString("latin1", at, at + 4)] = buffer.readUInt32BE(at + 8);
+    }
+
+    if (tables.cmap === undefined || tables.head === undefined || tables.hhea === undefined || tables.hmtx === undefined) {
+        return null;
+    }
+
+    const unitsPerEm = buffer.readUInt16BE(tables.head + 18);
+
+    const metricCount = buffer.readUInt16BE(tables.hhea + 34);
+
+    const glyphOf = glyphLookup(buffer, tables.cmap);
+
+    return {
+        unitsPerEm,
+
+        advance(codePoint) {
+            const glyph = glyphOf(codePoint);
+
+            if (glyph === 0) {
+                return null;
+            }
+
+            const index = Math.min(glyph, metricCount - 1);
+
+            return buffer.readUInt16BE(tables.hmtx + index * 4);
+        }
+    };
+}
+
+// O arquivo da fonte para um peso (e itálico): os mesmos que o cartão desenha.
+export function fontFileFor(weight = 400, italic = false) {
+    const heavy = Number(weight) >= 700;
+    const medium = Number(weight) >= 500;
+
+    if (heavy) return "Poppins-Bold.ttf";
+
+    if (medium) return italic ? "Poppins-MediumItalic.ttf" : "Poppins-Medium.ttf";
+
+    return italic ? "Poppins-Italic.ttf" : "Poppins-Regular.ttf";
+}
+
+function metricsFor(file) {
+    if (!metrics.has(file)) {
+        try {
+            metrics.set(file, readAdvances(readFileSync(path.join(FONTS_DIR, file))));
+        } catch {
+            metrics.set(file, null);
+        }
+    }
+
+    return metrics.get(file);
+}
+
+// A largura, em pixels, de um texto numa fonte do cartão. Espaços contam (o SVG corta os do começo
+// e do fim do texto, então quem posiciona o texto soma essa largura por conta própria). Caractere
+// que a fonte não tem vale 0,6 do tamanho, e sem a fonte o texto todo é estimado assim.
+export function textAdvance(text, size, { weight = 400, italic = false } = {}) {
+    const font = metricsFor(fontFileFor(weight, italic));
+
+    let total = 0;
+
+    for (const letter of String(text ?? "")) {
+        const units = font?.advance(letter.codePointAt(0));
+
+        total += units === null || units === undefined
+            ? size * 0.6
+            : (units / font.unitsPerEm) * size;
+    }
+
+    return total;
+}

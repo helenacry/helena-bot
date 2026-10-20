@@ -5,7 +5,9 @@ import "./card-fonts.mjs";
 
 import sharp from "sharp";
 
-import { canDraw } from "./card-glyphs.mjs";
+import { canDraw, textAdvance } from "./card-glyphs.mjs";
+
+import { emojiImage, findEmoji } from "./card-emoji.mjs";
 
 // ==========================================
 // CARTÃO DE PERFIL
@@ -63,9 +65,10 @@ function money(value) {
     }).format(Number(value) || 0);
 }
 
-// O SVG não desenha emoji colorido: tira os emojis do texto (o título
-// equipado costuma começar com um) e deixa só as letras. Sai tudo que forma
-// um emoji, não só a figura: teclas (1️⃣), bandeiras (duas letras regionais),
+// O SVG não desenha emoji colorido: o que sobrar de emoji no texto sai, e fica só as letras. Os emojis
+// comuns de nome, bio e cônjuge são desenhados à parte, como imagem (veja rich(), mais abaixo); aqui
+// saem os que não têm desenho, e em tudo o mais (emprego, arma, título) saem todos. Sai tudo que
+// forma um emoji, não só a figura: teclas (1️⃣), bandeiras (duas letras regionais),
 // tons de pele, e os caracteres invisíveis que costuram os emojis compostos
 // (ZWJ, seletores de variação, etiquetas) e que de outra forma sobrariam como
 // quadradinhos. ©, ® e ™ ficam, a não ser que venham pedindo a versão emoji.
@@ -87,24 +90,27 @@ const EMOJI = new RegExp(
 // somem (e a menção some também: o cartão não mostra o ID de ninguém).
 const TOKEN = /<a?:[\p{L}\p{N}_~]{1,32}:[\p{L}\p{N}-]{1,64}>|<[@#][&!]?[\p{L}\p{N}-]{1,64}>/gu;
 
-// Deixa o texto como o cartão consegue desenhar: letras e números sem os "adornos". Tira os tokens da
-// VSync, os emojis, os caracteres invisíveis e tudo o que o Poppins não tem (símbolos decorativos,
-// japonês, árabe...), que sairiam como quadradinhos. Antes, o acento solto se junta à letra (NFC) e o
-// caractere que o Poppins não tem vira o seu equivalente comum, se houver (NFKC): letras em fonte
-// estilizada (𝓑𝓲𝓸, 𝗕𝗶𝗼), largura total (ＡＢＣ) e ligaduras (ﬁ) voltam a ser letras. O que o Poppins já
-// tem (™, ©, é...) fica como está.
-export function plain(value) {
+// Cada emoji desenhado como imagem entra no texto como este caractere (área de uso privado, que nenhum
+// texto de quem joga consegue trazer: rich() e plain() tiram esses antes). Assim o texto continua uma
+// string só e passa pelo mesmo corte e quebra de linha; os arquivos dos emojis vão numa lista à parte,
+// na mesma ordem.
+const MARK = "";
+
+// Deixa o texto como o cartão consegue desenhar: letras e números sem os "adornos". Tira os caracteres
+// de controle e invisíveis e tudo o que o Poppins não tem (símbolos decorativos, japonês, árabe...),
+// que sairiam como quadradinhos. Antes, o acento solto se junta à letra (NFC) e o caractere que o
+// Poppins não tem vira o seu equivalente comum, se houver (NFKC): letras em fonte estilizada
+// (𝓑𝓲𝓸, 𝗕𝗶𝗼), largura total (ＡＢＣ) e ligaduras (ﬁ) voltam a ser letras. O que o Poppins já tem
+// (™, ©, é...) fica como está. O MARK passa sem ser tocado.
+function tidy(text) {
     const letters = Array.from(
-        String(value ?? "")
-            .normalize("NFC")
-            .replace(TOKEN, " ")
-            .replace(EMOJI, "")
+        text
             .replace(/\s+/g, " ")
-            .replace(/[\p{Cc}\p{Cs}\p{Co}\p{Cn}]/gu, "")
+            .replace(/[\p{Cc}\p{Cs}\p{Co}\p{Cn}]/gu, letter => letter === MARK ? letter : "")
     );
 
     return letters
-        .flatMap(letter => canDraw(letter.codePointAt(0))
+        .flatMap(letter => letter === MARK || canDraw(letter.codePointAt(0))
             ? [letter]
             : Array.from(letter.normalize("NFKC")).filter(part => part === " " || canDraw(part.codePointAt(0))))
         .join("")
@@ -112,9 +118,65 @@ export function plain(value) {
         .trim();
 }
 
+// O texto pronto para o cartão, sem emoji nenhum: tira os tokens da VSync (emoji personalizado e
+// menção) e os emojis, e deixa o resto passar por tidy().
+export function plain(value) {
+    return tidy(
+        String(value ?? "")
+            .normalize("NFC")
+            .replace(/\p{Co}/gu, "")
+            .replace(TOKEN, " ")
+            .replace(EMOJI, "")
+    );
+}
+
+// O mesmo que plain(), mas os emojis comuns ficam, para serem desenhados em cores: devolve o texto
+// com um MARK no lugar de cada emoji, os arquivos dos desenhos (na ordem) e os emojis como estavam
+// escritos. Um emoji sem desenho (novo demais, ou os pacotes não instalados) sai do texto, como no plain().
+export function rich(value) {
+    const source = String(value ?? "")
+        .normalize("NFC")
+        .replace(/\p{Co}/gu, "")
+        .replace(TOKEN, " ");
+
+    const files = [];
+    const glyphs = [];
+
+    let marked = "";
+    let cursor = 0;
+
+    for (const { start, end, file } of findEmoji(source)) {
+        marked += source.slice(cursor, start) + MARK;
+
+        files.push(file);
+        glyphs.push(source.slice(start, end));
+
+        cursor = end;
+    }
+
+    marked += source.slice(cursor);
+
+    return { text: tidy(marked.replace(EMOJI, "")), files, glyphs };
+}
+
+// O texto como aparece no cartão, com os emojis de verdade no lugar (para mostrar à pessoa como a bio
+// vai ficar).
+export function cardText(value) {
+    const { text, glyphs } = rich(value);
+
+    let next = 0;
+
+    return text.replaceAll(MARK, () => glyphs[next++]);
+}
+
+// Quanto cada caractere pesa na linha: um emoji ocupa o espaço de uns dois caracteres e meio.
+const EMOJI_WEIGHT = 2.3;
+
+const weigh = letters => letters.reduce((sum, letter) => sum + (letter === MARK ? EMOJI_WEIGHT : 1), 0);
+
 // Quebra o texto em linhas de até "max" caracteres, sem cortar palavras
 // (palavra maior que a linha é partida). Passando de "maxLines", termina
-// com reticências.
+// com reticências. O emoji (MARK) pesa mais que uma letra.
 export function wrap(text, max, maxLines) {
     const lines = [];
     let line = "";
@@ -122,21 +184,32 @@ export function wrap(text, max, maxLines) {
     for (const piece of String(text ?? "").split(/\s+/).filter(Boolean)) {
         let letters = chars(piece);
 
-        while (letters.length > max) {
+        while (weigh(letters) > max) {
             if (line) {
                 lines.push(line);
                 line = "";
             }
 
-            lines.push(letters.slice(0, max).join(""));
-            letters = letters.slice(max);
+            let take = 0;
+            let used = 0;
+
+            while (take < letters.length && used + weigh([letters[take]]) <= max) {
+                used += weigh([letters[take]]);
+
+                take++;
+            }
+
+            take = Math.max(1, take);
+
+            lines.push(letters.slice(0, take).join(""));
+            letters = letters.slice(take);
         }
 
         const word = letters.join("");
 
         if (!line) {
             line = word;
-        } else if (chars(line + " " + word).length <= max) {
+        } else if (weigh(chars(line + " " + word)) <= max) {
             line += " " + word;
         } else {
             lines.push(line);
@@ -151,7 +224,14 @@ export function wrap(text, max, maxLines) {
     if (lines.length > maxLines) {
         const kept = lines.slice(0, maxLines);
 
-        kept[maxLines - 1] = short(kept[maxLines - 1] + "…", max);
+        // a última linha perde letras do fim até caber com as reticências
+        const last = chars(kept[maxLines - 1]);
+
+        while (last.length > 0 && weigh(last) + 1 > max) {
+            last.pop();
+        }
+
+        kept[maxLines - 1] = last.join("") + "…";
 
         return kept;
     }
@@ -169,6 +249,74 @@ function txt(
     extra = ""
 ) {
     return `<text x="${x}" y="${y}" font-family="${FONT}" font-size="${size}" font-weight="${weight}" fill="${color}" ${extra}>${esc(value)}</text>`;
+}
+
+// O espaço que o emoji ocupa na linha e o tamanho do desenho, em múltiplos do tamanho da letra; e
+// quanto o desenho sobe acima da linha de base do texto (o emoji fica centrado na altura das letras).
+const EMOJI_ADVANCE = 1.25;
+const EMOJI_BOX = 1.12;
+const EMOJI_RISE = 0.9;
+
+// Uma linha de texto que pode ter emojis (os MARK de rich()). Sem emoji sai igual ao txt(). Com emoji,
+// a linha vira pedaços: o texto entre os emojis, cada pedaço no seu lugar (a largura vem das letras do
+// Poppins), e o desenho de cada emoji, que sai da lista "files" (o que foi usado é tirado dela).
+// "middle" centraliza a linha inteira em x.
+function richText(x, y, line, files, size, color, weight, { italic = false, middle = false } = {}) {
+    const extra = [
+        italic ? 'font-style="italic"' : "",
+        middle ? 'text-anchor="middle"' : ""
+    ].filter(Boolean).join(" ");
+
+    if (!line.includes(MARK)) {
+        return txt(x, y, line, size, color, weight, extra);
+    }
+
+    const parts = line.split(MARK);
+
+    const style = { weight, italic };
+
+    const advance = size * EMOJI_ADVANCE;
+    const box = size * EMOJI_BOX;
+
+    const total = parts.reduce((sum, part) => sum + textAdvance(part, size, style), 0)
+        + (parts.length - 1) * advance;
+
+    let cursor = middle ? x - total / 2 : x;
+
+    let svg = "";
+
+    parts.forEach((part, index) => {
+        // o SVG corta os espaços do começo e do fim de um texto, então o espaço do começo é somado aqui
+        const body = part.trim();
+
+        if (body) {
+            const lead = textAdvance(part.slice(0, part.indexOf(body)), size, style);
+
+            svg += txt(
+                (cursor + lead).toFixed(1),
+                y,
+                body,
+                size,
+                color,
+                weight,
+                italic ? 'font-style="italic"' : ""
+            );
+        }
+
+        cursor += textAdvance(part, size, style);
+
+        if (index < parts.length - 1) {
+            const image = emojiImage(files.shift());
+
+            if (image) {
+                svg += `<image href="${image}" x="${(cursor + (advance - box) / 2).toFixed(1)}" y="${(y - size * EMOJI_RISE).toFixed(1)}" width="${box.toFixed(1)}" height="${box.toFixed(1)}"/>`;
+            }
+
+            cursor += advance;
+        }
+    });
+
+    return svg;
 }
 
 // ==========================================
@@ -530,9 +678,16 @@ export async function profileSvg(data = {}) {
     );
 
     // Identidade
-    const name = short(plain(data.name) || "Jogador", 20);
+    // Nome, bio e cônjuge levam emojis em cores (o texto fica com um MARK no lugar de cada um e os
+    // desenhos vêm de "files", na ordem). O corte (short) conta cada emoji como 1.
+    const nameRich = rich(data.name);
 
-    const nameLength = chars(name).length;
+    const name = short(nameRich.text || "Jogador", 20);
+
+    const nameFiles = nameRich.files.slice();
+
+    // o emoji pesa mais que uma letra: um nome cheio de emojis encolhe a letra como um nome comprido
+    const nameLength = weigh(chars(name));
 
     const nameSize = nameLength <= 12
         ? 48
@@ -542,14 +697,18 @@ export async function profileSvg(data = {}) {
 
     const title = short(titleParts.text, 30);
 
-    const bio = plain(data.bio) || "Nenhuma bio definida.";
+    const bioRich = rich(data.bio);
 
-    const bioLines = wrap(bio, 28, 7);
+    const bioLines = wrap(bioRich.text || "Nenhuma bio definida.", 28, 7);
 
-    // Só emoji no nome da pessoa: sobra "" e o cartão mostra o traço.
-    const spouseName = plain(String(data.spouseName ?? "").replace(/^@+/, ""));
+    const bioFiles = bioRich.files.slice();
 
-    const spouse = spouseName ? "@" + spouseName : "";
+    // Nada que o cartão consiga desenhar no nome da pessoa: sobra "" e o cartão mostra o traço.
+    const spouseRich = rich(String(data.spouseName ?? "").replace(/^@+/, ""));
+
+    const spouse = spouseRich.text ? "@" + spouseRich.text : "";
+
+    const spouseFiles = spouseRich.files.slice();
 
     const married = Boolean(data.married);
 
@@ -651,7 +810,7 @@ export async function profileSvg(data = {}) {
 
         <!-- NOME E TÍTULO -->
 
-        ${txt(1058, 654, name, nameSize, "#ffffff", 700, 'text-anchor="middle"')}
+        ${richText(1058, 654, name, nameFiles, nameSize, "#ffffff", 700, { middle: true })}
 
         ${titleSvg}
 
@@ -680,7 +839,7 @@ export async function profileSvg(data = {}) {
         ${icon("heart", 278, 83.5, 1.03, "#ffffff", married)}
 
         ${txt(337, 79, married ? "Casado(a)" : "Solteiro(a)", 32, "#ffffff", 700)}
-        ${txt(337, 111, married ? short(spouse || "—", 24) : "sem cônjuge", 18, "#d7b9f7", 500)}
+        ${richText(337, 111, married ? short(spouse || "—", 24) : "sem cônjuge", spouseFiles, 18, "#d7b9f7", 500)}
 
         <!-- ANEL DO NÍVEL -->
 
@@ -710,14 +869,15 @@ export async function profileSvg(data = {}) {
         ${txt(258, 823, "Bio", 23, "#c696ff", 700)}
         <rect x="258" y="845" width="319" height="2" fill="#432469"/>
 
-        ${bioLines.map((line, index) => txt(
+        ${bioLines.map((line, index) => richText(
             258,
             891 + index * 32,
             line,
+            bioFiles,
             21,
-            data.bio ? "#e0cef5" : "#8f78c4",
+            bioRich.text ? "#e0cef5" : "#8f78c4",
             400,
-            'font-style="italic"'
+            { italic: true }
         )).join("")}
 
         <!-- DADOS -->
