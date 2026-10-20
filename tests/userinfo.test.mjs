@@ -1014,7 +1014,7 @@ test("o cartão mostra o Prisma+ de quem assina (insígnia e data pelo perfil da
     const fields = fieldsOf(embed);
 
     // as insígnias: Prisma+ primeiro, depois as outras, e o tempo de tela pelo nome (sem emoji)
-    assert.match(fields["🏅 Insígnias"], /^<:badge_prisma_plus:\d+> <:badge_early_supporter:\d+> <:badge_developer:\d+> · Tempo de tela: Fledgling$/);
+    assert.match(fields["🏅 Insígnias"], /^<:badge_prisma_plus:\d+> <:badge_early_supporter:\d+> <:badge_developer:\d+>\nTempo de tela: Fledgling$/);
 
     // a data vem do perfil da conta, que a rota do membro não trouxe
     assert.match(fields["💎 Assinante Prisma+ desde"], /^11 de outubro de 2026/);
@@ -1046,6 +1046,39 @@ test("se o perfil da conta falhar, o cartão sai igual, com a data como não inf
 
     assert.match(fields["🏅 Insígnias"], /badge_prisma_plus/);
     assert.equal(fields["💎 Assinante Prisma+ desde"], UNKNOWN);
+});
+
+test("sem a data do Prisma nem na conta, o log diz só a estrutura que a API devolveu (campos e tipos, nada pessoal)", async () => {
+    const id = "200000000000000023";
+
+    MEMBERS.push(member(id, "datafaltando", "Data Faltando", { prismaActive: true, prismaPlan: "prisma_plus", prismaSince: null }));
+
+    ACCOUNTS[id] = { id, username: "datafaltando", bio: "texto da bio pessoal", prisma: { active: true, source: "stripe", plan: "prisma_plus", since: null } };
+
+    clearUserLookupCache();
+
+    const warned = [];
+    const original = console.warn;
+
+    console.warn = (...args) => warned.push(args.join(" "));
+
+    try {
+        const fields = fieldsOf(embedOf(await run("hui datafaltando")));
+
+        assert.equal(fields["💎 Assinante Prisma+ desde"], UNKNOWN);
+
+    } finally {
+        console.warn = original;
+    }
+
+    const line = warned.find(text => text.includes("Prisma ativo sem data"));
+
+    assert.ok(line, "faltou o log");
+    assert.match(line, /prismaPlan=prisma_plus, prismaSince=null/);
+    assert.match(line, /prisma=active:boolean,source:string,plan:string,since:null/);
+
+    // nenhum valor pessoal no log
+    assert.doesNotMatch(line, /texto da bio pessoal|stripe|datafaltando/);
 });
 
 test("quem não assina Prisma não gasta chamada ao perfil da conta nem ganha campos de Prisma", async () => {

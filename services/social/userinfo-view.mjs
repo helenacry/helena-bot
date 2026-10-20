@@ -69,13 +69,17 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
         .join(" ");
 
     // As insígnias sem emoji cadastrado (o plano Prisma básico, o tempo de tela, alguns presentes)
-    // entram pelo nome, para nenhuma ficar escondida.
+    // entram pelo nome, cada uma numa linha embaixo dos ícones (o campo é estreito: lado a lado o
+    // nome quebraria no meio e deixaria um "·" solto), para nenhuma ficar escondida.
     const named = badges
         .filter(badge => !badge.emoji)
         .map(badge => safe(badge.name))
-        .join(" · ");
+        .join("\n");
 
-    const badgeText = [user.bot ? "🤖 Bot" : null, icons || null, named || null].filter(Boolean).join(" · ");
+    const badgeText = [
+        [user.bot ? "🤖 Bot" : null, icons || null].filter(Boolean).join(" · "),
+        named
+    ].filter(Boolean).join("\n");
 
     const fields = [];
 

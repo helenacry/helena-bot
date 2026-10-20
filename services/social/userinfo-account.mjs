@@ -28,9 +28,28 @@ export async function completeUser(user) {
     }
 
     try {
-        const prisma = (await fetchAccount(user.id))?.prisma;
+        const account = await fetchAccount(user.id);
+
+        const prisma = account?.prisma;
 
         const since = toMillis(prisma?.since);
+
+        if (since === null) {
+            // Só a estrutura (nomes e tipos dos campos), nunca valores de uma pessoa: para saber, pelo
+            // log, o que a API devolveu quando a data não veio.
+            const kind = value => value === null ? "null" : Array.isArray(value) ? "lista" : typeof value;
+
+            console.warn(
+                "[USERINFO] Prisma ativo sem data. Membro: prismaPlan=" + String(user.prismaPlan) +
+                ", prismaSince=" + kind(user.prismaSince) + ". Conta: " +
+                (account && typeof account === "object"
+                    ? Object.keys(account).join(",") + "; prisma=" +
+                      (prisma && typeof prisma === "object"
+                          ? Object.entries(prisma).map(([key, value]) => key + ":" + kind(value)).join(",")
+                          : kind(prisma))
+                    : "sem resposta")
+            );
+        }
 
         const plan = ["prisma", "prisma_plus"].includes(prisma?.plan) ? prisma.plan : null;
 
