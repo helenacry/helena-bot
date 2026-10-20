@@ -1,4 +1,3 @@
-
 import { db } from "../../database/connection.mjs";
 
 import {
@@ -7,6 +6,8 @@ import {
 
 import { bioPanel } from "../../services/panels/panels.mjs";
 
+import { plain } from "../../services/social/profile-card.mjs";
+
 import {
     createEmbed,
     embedResponse,
@@ -14,7 +15,23 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
+// Quantos caracteres a bio aceita. Conta caracteres de verdade: um emoji vale 1 (o .length do
+// JavaScript contaria 2, e uma bio com 100 emojis seria recusada como "maior que 160").
 const MAX_BIO_LENGTH = 160;
+
+const lengthOf = text => Array.from(text).length;
+
+// O texto como é guardado: quebras de linha comuns, sem caracteres de controle, sem pedaços soltos
+// de emoji (que quebrariam o JSON da API e o desenho do cartão) e sem os controles de direção do
+// texto (que invertem a ordem das letras em volta). O resto, como o ZWJ dos emojis compostos, fica.
+function cleanBio(text) {
+    return String(text)
+        .replace(/\r\n?/g, "\n")
+        .replace(/\p{Cs}/gu, "")
+        .replace(/[‪-‮⁦-⁩]/g, "")
+        .replace(/[^\P{Cc}\n\t]/gu, "")
+        .trim();
+}
 
 export default {
     name: "bio",
@@ -74,7 +91,7 @@ export default {
                 );
             }
 
-            const bio = texto.trim();
+            const bio = cleanBio(texto);
 
             if (!bio) {
                 return errorEmbed(
@@ -82,9 +99,9 @@ export default {
                 );
             }
 
-            if (bio.length > MAX_BIO_LENGTH) {
+            if (lengthOf(bio) > MAX_BIO_LENGTH) {
                 return errorEmbed(
-                    `Sua bio pode ter no máximo ${MAX_BIO_LENGTH} caracteres.`
+                    `Sua bio pode ter no máximo ${MAX_BIO_LENGTH} caracteres (cada emoji conta como 1).`
                 );
             }
 
@@ -101,6 +118,36 @@ export default {
                 userId
             );
 
+            const fields = [
+                {
+                    name: "👤 Sua nova bio",
+                    value: bio,
+                    inline: false
+                },
+                {
+                    name: "📌 Onde aparece?",
+                    value:
+                        "Sua descrição será exibida no comando `/perfil`.",
+                    inline: false
+                }
+            ];
+
+            // O cartão do /perfil só desenha letras e números: emoji, emojis personalizados da VSync,
+            // menções e símbolos especiais ficam de fora do cartão (a bio guardada continua inteira).
+            const onCard = plain(bio);
+
+            if (onCard !== bio.replace(/\s+/g, " ")) {
+                fields.push({
+                    name: "🖼️ No cartão do perfil",
+                    value:
+                        "O cartão não desenha emoji nem símbolos especiais, então eles ficam de fora dele. " +
+                        (onCard
+                            ? "Ela aparece assim: **" + onCard.replace(/([*_`~|>\\])/g, "\\$1") + "**"
+                            : "Como só tem isso, o cartão mostra \"Nenhuma bio definida.\""),
+                    inline: false
+                });
+            }
+
             return embedResponse(
                 createEmbed({
                     title: "✏️ Bio atualizada",
@@ -110,19 +157,7 @@ export default {
 
                     color: HELENA_COLORS.success,
 
-                    fields: [
-                        {
-                            name: "👤 Sua nova bio",
-                            value: bio,
-                            inline: false
-                        },
-                        {
-                            name: "📌 Onde aparece?",
-                            value:
-                                "Sua descrição será exibida no comando `/perfil`.",
-                            inline: false
-                        }
-                    ]
+                    fields
                 })
             );
 

@@ -22,10 +22,13 @@ Use a opção `usuario` com o nome, uma @menção ou o ID: `/perfil usuario:@pes
 
 ## Mudar a bio
 
-A bio é o texto que aparece no cartão. Ela tem **até 160 caracteres**.
+A bio é o texto que aparece no cartão. Ela tem **até 160 caracteres** (cada emoji conta como 1).
 
 - **`/bio texto:Seu texto aqui`** troca na hora.
 - **`/bio`** sem texto abre um editor, com o botão **Editar bio**, já preenchido com a bio atual.
+
+> [!NOTE]
+> O cartão só desenha letras latinas, números e a pontuação comum. **Emojis, símbolos decorativos (★, ✿, ꒰), emojis personalizados da VSync, menções e outros alfabetos (japonês, coreano, árabe, cirílico) ficam de fora do cartão**, para não aparecerem como quadradinhos. A bio guardada continua inteira, e o `/bio` avisa como ela fica no cartão. Letras em fonte estilizada (𝓑𝓲𝓸) viram letras comuns.
 
 > [!WARNING]
 > A bio aparece para qualquer pessoa que veja o seu perfil. Os [termos de uso](site:terms/) pedem que ela não tenha conteúdo ilegal, ofensivo ou que exponha dados de outras pessoas.

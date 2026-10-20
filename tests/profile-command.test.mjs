@@ -148,3 +148,28 @@ test("o cartão vai da memória para a API: a pasta generated/profiles nem é cr
     assert.ok(calls.some(c => c.startsWith("POST /attachments/init")));
     assert.ok(calls.some(c => /^POST \/attachments\/.*\/complete/.test(c)));
 });
+
+// ==========================================
+// BIO COM EMOJI NO PERFIL
+// ==========================================
+
+test("quem tem bio com emoji, símbolo ou emoji personalizado da VSync ainda recebe o cartão", async () => {
+    getPlayer(G, ME.id);
+
+    for (const bio of [
+        "oi 😀 tudo bem? 👨‍👩‍👧‍👦",
+        "💜".repeat(100),
+        "꒰ঌ sou calma ໒꒱ ✧･ﾟ: *✧･ﾟ:*",
+        "Olá <:festa:3f2a9c1e-5b7d-4c0e-8a11-9d6e2b7a4f10> mundo",
+        "𝓑𝓲𝓸 𝓲𝓷𝓽𝓮𝓻𝓮𝓼𝓼𝓪𝓷𝓽𝓮",
+        "日本語 한국어"
+    ]) {
+        db.prepare("UPDATE players SET bio = ? WHERE guild_id = ? AND user_id = ?").run(bio, G, ME.id);
+
+        const r = await run("hperfil");
+
+        assert.equal(r.body, `<@${ME.id}>`, bio.slice(0, 20));
+        assert.equal(r.attachments.length, 1, `sem cartão para a bio ${JSON.stringify(bio).slice(0, 30)}`);
+        assert.notEqual(r.title, "❌ Ocorreu um erro");
+    }
+});

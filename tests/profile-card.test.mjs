@@ -590,3 +590,90 @@ test("a imagem de exemplo do site usa o desenho novo (título com emoji e selo D
     assert.match(source, /title: "💰 Rico"/);
     assert.match(source, /isOwner: true/);
 });
+
+// ==========================================
+// TEXTO COM EMOJI, SÍMBOLOS E TOKENS DA VSYNC
+// ==========================================
+
+const { canDraw, readCoverage } = await import("../services/social/card-glyphs.mjs");
+
+const NASTY_BIOS = [
+    "oi 😀 tudo bem?", "💜💜💜", "👨‍👩‍👧‍👦 família 🏳️‍🌈", "🇧🇷 Brasil 🇵🇹", "1️⃣ primeiro", "❤️ amor ❤️‍🔥", "👍🏽 joia",
+    "Olá <:festa:3f2a9c1e-5b7d-4c0e-8a11-9d6e2b7a4f10> mundo <a:dance:1111-2222>", "fala <@bc86cc02-1111-2222> e <#abcd> <@&cargo-1>",
+    "𝓑𝓲𝓸 𝓲𝓷𝓽𝓮𝓻𝓮𝓼𝓼𝓪𝓷𝓽𝓮 𝕗𝕚𝕟𝕒𝕝 ＡＢＣ", "꒰ঌ sou calma ໒꒱ ✧･ﾟ: *✧･ﾟ:* ★彡 ♡ ✿ ❀", "日本語 한국어 العربية русский", "texto\u200bcom\u200dinvisíveis\u202etrocado",
+    "😀".repeat(80), "linha 1 😀\nlinha 2 🎉\r\nlinha 3", "</text><script>alert(1)</script> & \" ' < >", "abc\ud83dxyz\ude00",
+    "™ © ® R$ 10,00 50% #1 — “aspas” …"
+];
+
+// os caracteres dos textos desenhados no SVG (com as entidades desfeitas)
+const drawnCharacters = svg => [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)]
+    .flatMap(match => Array.from(match[1]
+        .replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", '"')
+        .replaceAll("&apos;", "'").replaceAll("&amp;", "&")));
+
+test("o Poppins do projeto: o que ele desenha e o que não (a lista vem do arquivo da fonte)", () => {
+    for (const letter of "aZ9éçãõüñÀ—–…’“”€£$%&@#™©®") {
+        assert.ok(canDraw(letter.codePointAt(0)), `${letter} deveria ter desenho`);
+    }
+
+    for (const letter of "★☆♥♡✿❀✧꒰日本한ا😀❤✨→") {
+        assert.equal(canDraw(letter.codePointAt(0)), false, `${letter} não tem desenho`);
+    }
+
+    // a leitura do arquivo: faixas [início, fim] dentro do Unicode, do jeito que a tabela cmap guarda
+    const ranges = readCoverage(readFileSync(path.join(FONTS_DIR, "Poppins-Regular.ttf")));
+
+    assert.ok(ranges.length > 5);
+    assert.ok(ranges.some(([start, end]) => start <= 0x61 && end >= 0x7a), "a-z");
+    assert.ok(ranges.every(([start, end]) => start <= end));
+});
+
+test("plain: tokens da VSync somem, fonte estilizada vira letra comum e símbolo sem desenho sai", () => {
+    // emoji personalizado e menções (o cartão não mostra o ID de ninguém)
+    assert.equal(plain("Olá <:festa:3f2a9c1e-5b7d> mundo <a:dance:1111-2222>"), "Olá mundo");
+    assert.equal(plain("fala <@bc86cc02-1111> e <#abcd> <@&cargo-1>"), "fala e");
+
+    // letras estilizadas, largura total e acento solto voltam a ser texto comum
+    assert.equal(plain("𝓑𝓲𝓸 𝗕𝗼𝗹𝗱 ＡＢＣ ①㎏"), "Bio Bold ABC 1kg");
+    assert.equal(plain("Jose\u0301 c\u0327a"), "José ça");
+
+    // símbolos decorativos e outros alfabetos (quadradinhos no servidor) saem
+    assert.equal(plain("꒰ঌ sou calma ໒꒱ ★彡 ♡ ✿"), "sou calma");
+    assert.equal(plain("日本語 한국어 العربية"), "");
+
+    // o que o Poppins tem fica
+    assert.equal(plain("™ © ® R$ 10,00 50% #1 — “aspas” ’"), "™ © ® R$ 10,00 50% #1 — “aspas” ’");
+
+    // pedaço solto de emoji, controle e inversor de direção
+    assert.equal(plain("abc\ud83dxyz\ude00"), "abcxyz");
+    assert.equal(plain("a\u0000b\u202ec\u200b"), "abc");
+    assert.equal(plain("a\nb\r\nc"), "a b c");
+});
+
+test("o cartão sai (e só com caracteres que o Poppins desenha) para qualquer bio, nome e cônjuge", async () => {
+    for (const bio of NASTY_BIOS) {
+        const data = { ...SAMPLE, bio, name: bio, spouseName: bio, job: bio };
+
+        const svg = await profileSvg(data);
+
+        for (const letter of drawnCharacters(svg)) {
+            assert.ok(letter === " " || canDraw(letter.codePointAt(0)), `${JSON.stringify(letter)} sem desenho, em ${JSON.stringify(bio).slice(0, 40)}`);
+        }
+
+        assert.doesNotMatch(svg, /&lt;:|&lt;@|&lt;#|&lt;a:/, `token cru no cartão: ${JSON.stringify(bio).slice(0, 40)}`);
+
+        const png = await renderProfileCard(data);
+
+        assert.deepEqual([(await sharp(png).metadata()).width, (await sharp(png).metadata()).height], [1600, 1200]);
+    }
+});
+
+test("bio só de emoji ou de símbolos mostra a bio padrão, e emoji no meio do texto some sem deixar buraco", async () => {
+    for (const bio of ["💜💜💜", "꒰ ✿ ꒱", "<:festa:1-2>", "日本語"]) {
+        assert.ok(textsOf(await profileSvg({ ...SAMPLE, bio })).includes("Nenhuma bio definida."), bio);
+    }
+
+    const texts = textsOf(await profileSvg({ ...SAMPLE, bio: "gosto de 🍕 pizza e 🎮 jogos" }));
+
+    assert.ok(texts.includes("gosto de pizza e jogos"));
+});

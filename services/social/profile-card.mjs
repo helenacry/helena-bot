@@ -5,6 +5,8 @@ import "./card-fonts.mjs";
 
 import sharp from "sharp";
 
+import { canDraw } from "./card-glyphs.mjs";
+
 // ==========================================
 // CARTÃO DE PERFIL
 // ==========================================
@@ -80,11 +82,33 @@ const EMOJI = new RegExp(
     "gu"
 );
 
+// Os "tokens" da VSync dentro de um texto: emoji personalizado (<:nome:id>, <a:nome:id>) e menção
+// de pessoa, cargo ou canal (<@id>, <@&id>, <#id>). No cartão viravam um texto cru e comprido; aqui
+// somem (e a menção some também: o cartão não mostra o ID de ninguém).
+const TOKEN = /<a?:[\p{L}\p{N}_~]{1,32}:[\p{L}\p{N}-]{1,64}>|<[@#][&!]?[\p{L}\p{N}-]{1,64}>/gu;
+
+// Deixa o texto como o cartão consegue desenhar: letras e números sem os "adornos". Tira os tokens da
+// VSync, os emojis, os caracteres invisíveis e tudo o que o Poppins não tem (símbolos decorativos,
+// japonês, árabe...), que sairiam como quadradinhos. Antes, o acento solto se junta à letra (NFC) e o
+// caractere que o Poppins não tem vira o seu equivalente comum, se houver (NFKC): letras em fonte
+// estilizada (𝓑𝓲𝓸, 𝗕𝗶𝗼), largura total (ＡＢＣ) e ligaduras (ﬁ) voltam a ser letras. O que o Poppins já
+// tem (™, ©, é...) fica como está.
 export function plain(value) {
-    return String(value ?? "")
-        .replace(EMOJI, "")
+    const letters = Array.from(
+        String(value ?? "")
+            .normalize("NFC")
+            .replace(TOKEN, " ")
+            .replace(EMOJI, "")
+            .replace(/\s+/g, " ")
+            .replace(/[\p{Cc}\p{Cs}\p{Co}\p{Cn}]/gu, "")
+    );
+
+    return letters
+        .flatMap(letter => canDraw(letter.codePointAt(0))
+            ? [letter]
+            : Array.from(letter.normalize("NFKC")).filter(part => part === " " || canDraw(part.codePointAt(0))))
+        .join("")
         .replace(/\s+/g, " ")
-        .replace(/\p{Cc}/gu, "")
         .trim();
 }
 

@@ -251,9 +251,12 @@ export function handlePanelClick(interaction) {
     }
 
     if (area === "bio" && action === "editar") {
+        // A bio inteira vai no formulário (cortar por UTF-16 partiria um emoji ao meio e a API
+        // recusaria o texto). Com emojis, o texto tem mais unidades que caracteres, então o limite do
+        // campo sobe só o bastante para o texto caber; o comando /bio confere os 160 caracteres.
         const current = String(
             getPlayer(interaction.guildId, userId).bio ?? ""
-        ).slice(0, BIO_MAX_LENGTH);
+        );
 
         return openModal({
             customId: "bio:editar",
@@ -263,7 +266,7 @@ export function handlePanelClick(interaction) {
                 label: "Sua bio (até 160 caracteres)",
                 style: "paragraph",
                 placeholder: "Conte um pouco sobre você",
-                maxLength: BIO_MAX_LENGTH,
+                maxLength: Math.max(BIO_MAX_LENGTH, current.length),
                 ...(current ? { value: current } : {})
             })]
         });

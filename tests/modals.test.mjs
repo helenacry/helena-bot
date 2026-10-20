@@ -482,3 +482,103 @@ test("os botões do saldo valem também pelo alias hbal", async () => {
 
     assert.equal((await run("hbal")).components.length, 1);
 });
+
+// ==========================================
+// BIO COM EMOJI
+// ==========================================
+
+const bioOf = () => get("SELECT bio FROM players WHERE guild_id=? AND user_id=?", G, ME).bio;
+
+test("bio com emoji: conta caracteres de verdade (cada emoji vale 1), pelo comando e pelo modal", async () => {
+    reset();
+
+    // 100 emojis = 100 caracteres (200 no .length do JavaScript): cabe
+    const hundred = "💜".repeat(100);
+
+    assert.match(titleOf(await send(submit("bio:editar", { texto: hundred }))), /Bio atualizada/);
+    assert.equal(bioOf(), hundred);
+
+    // 160 caracteres exatos com emoji: cabe; 161: recusa com o motivo claro
+    const limit = "😀".repeat(80) + "a".repeat(80);
+
+    assert.match(titleOf(await send(submit("bio:editar", { texto: limit }))), /Bio atualizada/);
+    assert.equal(bioOf(), limit);
+
+    const over = await send(submit("bio:editar", { texto: limit + "z" }));
+
+    assert.match(JSON.stringify(over), /no máximo 160 caracteres \(cada emoji conta como 1\)/);
+    assert.equal(bioOf(), limit, "a bio boa continua guardada");
+
+    // pelo prefixo também
+    reset();
+
+    const run = await createPrefixRunner({ guildId: G, author: { id: ME, username: "eu", displayName: "Eu Mesmo" } });
+
+    assert.match((await run("hbio oi 😀 tudo bem? ❤️ 👨‍👩‍👧‍👦")).title, /Bio atualizada/);
+    assert.equal(bioOf(), "oi 😀 tudo bem? ❤️ 👨‍👩‍👧‍👦");
+});
+
+test("bio: pedaço solto de emoji e caracteres de controle não vão para o banco", async () => {
+    reset();
+
+    await send(submit("bio:editar", { texto: "abc\ud83dxyz\ude00 com\u0000controle‮ e\r\nquebra" }));
+
+    // sem pedaço solto de emoji, sem controle, sem o inversor de direção e com a quebra de linha comum
+    assert.equal(bioOf(), "abcxyz comcontrole e\nquebra");
+
+    // um emoji inteiro (par de unidades) não é "pedaço solto": fica
+    await send(submit("bio:editar", { texto: "ok 😀" }));
+
+    assert.equal(bioOf(), "ok 😀");
+});
+
+test("bio: o aviso diz o que o cartão não desenha (emoji, símbolos e emojis personalizados)", async () => {
+    reset();
+
+    const noteOf = response => JSON.stringify(response).includes("No cartão do perfil");
+
+    // texto comum: sem aviso
+    assert.equal(noteOf(await send(submit("bio:editar", { texto: "Gosto de café" }))), false);
+
+    // com emoji: o aviso mostra como fica no cartão
+    const withEmoji = JSON.stringify(await send(submit("bio:editar", { texto: "Gosto de café ☕😀" })));
+
+    assert.match(withEmoji, /No cartão do perfil/);
+    assert.match(withEmoji, /Ela aparece assim: \*\*Gosto de café\*\*/);
+
+    // símbolo decorativo e emoji personalizado da VSync
+    const decorative = JSON.stringify(await send(submit("bio:editar", { texto: "꒰ sou calma ꒱ <:festa:3f2a-9c1e>" })));
+
+    assert.match(decorative, /Ela aparece assim: \*\*sou calma\*\*/);
+
+    // só emoji: o cartão mostra a bio padrão
+    const onlyEmoji = JSON.stringify(await send(submit("bio:editar", { texto: "💜💜💜" })));
+
+    assert.match(onlyEmoji, /Nenhuma bio definida/);
+});
+
+test("bio: o modal abre com a bio inteira, mesmo cheia de emoji, sem cortar um emoji ao meio", () => {
+    reset();
+
+    // 100 emojis = 200 unidades: não pode ser cortada em 160 nem estourar o limite do campo
+    const full = "💜".repeat(100);
+
+    set("UPDATE players SET bio = ? WHERE guild_id=? AND user_id=?", full, G, ME);
+
+    const [field] = handlePanelClick(click(`bio:editar:${ME}`)).data.fields;
+
+    assert.equal(field.value, full);
+    assert.ok(field.maxLength >= field.value.length, `${field.maxLength} < ${field.value.length}`);
+
+    // uma bio comum continua com o limite de 160 do formulário
+    set("UPDATE players SET bio = 'oi' WHERE guild_id=? AND user_id=?", G, ME);
+
+    assert.equal(handlePanelClick(click(`bio:editar:${ME}`)).data.fields[0].maxLength, 160);
+
+    // bio de 81 emojis + 1 letra: também inteira (o corte por unidades partia um emoji ao meio)
+    const odd = "a" + "😀".repeat(81);
+
+    set("UPDATE players SET bio = ? WHERE guild_id=? AND user_id=?", odd, G, ME);
+
+    assert.equal(handlePanelClick(click(`bio:editar:${ME}`)).data.fields[0].value, odd);
+});
