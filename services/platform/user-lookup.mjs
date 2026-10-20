@@ -97,6 +97,14 @@ async function fetchMember(guildId, userId) {
     return data?.member ? toUser(data.member) : null;
 }
 
+// O perfil público da conta (GET /users/:id): traz o plano e o início do Prisma num formato próprio
+// (prisma.since), e a bio e as conexões. null se a API não conhece a conta.
+export async function fetchAccount(userId) {
+    const data = await apiGet(`/users/${encodeURIComponent(userId)}`);
+
+    return data?.account ?? data?.user ?? data ?? null;
+}
+
 async function loadMembers(guildId) {
     const cached = cache.get(guildId);
 

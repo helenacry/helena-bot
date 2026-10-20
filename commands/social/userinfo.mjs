@@ -13,6 +13,10 @@ import {
 } from "../../services/social/userinfo-view.mjs";
 
 import {
+    completeUser
+} from "../../services/social/userinfo-account.mjs";
+
+import {
     userinfoComponents
 } from "../../services/social/userinfo-components.mjs";
 
@@ -174,7 +178,10 @@ export default {
                 return target.response;
             }
 
-            const { user, self } = target;
+            const { self } = target;
+
+            // completa a data do Prisma pelo perfil da conta quando o membro veio sem ela
+            const user = await completeUser(target.user);
 
             if (!user?.id) {
                 return errorResponse(

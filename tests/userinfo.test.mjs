@@ -92,6 +92,10 @@ const calls = [];
 // liga para simular a VSync fora do ar na rota de membro
 let failMembers = false;
 
+// perfil público da conta (GET /users/:id), por ID; failAccount simula a rota fora do ar
+const ACCOUNTS = {};
+let failAccount = false;
+
 // API simulada: lista de membros e membro por ID.
 globalThis.fetch = async (url, init = {}) => {
     const u = String(url);
@@ -116,6 +120,14 @@ globalThis.fetch = async (url, init = {}) => {
 
     if (/\/guilds\/[^/]+$/.test(u)) return reply(200, { members: MEMBERS });
 
+    if ((m = u.match(/\/users\/([^/?]+)$/))) {
+        if (failAccount) return reply(500, {});
+
+        const account = ACCOUNTS[decodeURIComponent(m[1])];
+
+        return account ? reply(200, { account }) : reply(404, {});
+    }
+
     return reply(404, {});
 };
 
@@ -136,6 +148,9 @@ test.beforeEach(() => {
     clearUserLookupCache();
     calls.length = 0;
     failMembers = false;
+    failAccount = false;
+
+    for (const id of Object.keys(ACCOUNTS)) delete ACCOUNTS[id];
 });
 
 // ==========================================
@@ -886,4 +901,175 @@ test("avatar de fora da CDN da VSync (ou sem avatar) cai na imagem crua, e o ban
     assert.equal(banner.data.ephemeral, true);
     assert.equal(banner.data.embeds[0].title, "🌌 Banner de Com Capa");
     assert.equal(banner.data.embeds[0].image.url, "https://cdn.vsync.lat/att/2026/capa.webp");
+});
+
+// ==========================================
+// PRISMA, PULSE E INSÍGNIAS DE QUEM TEM (e de quem não tem)
+// ==========================================
+
+const ids = user => getUserBadges(user).map(badge => badge.id);
+
+test("o Prisma+ vem de prismaActive e prismaPlan, não de uma flag: a insígnia aparece e vai primeiro", () => {
+    // como a API manda: nenhuma flag de Prisma, só a assinatura ativa
+    const plus = getUserBadges({ prismaActive: true, prismaPlan: "prisma_plus", flags: ["EARLY_SUPPORTER", "VERIFIED_BOT_DEVELOPER"] });
+
+    assert.deepEqual(plus.map(badge => badge.id), ["BADGE_SHOW_PRISMA", "BADGE_SHOW_EARLY_SUPPORTER", "BADGE_SHOW_VERIFIED_BOT_DEVELOPER"]);
+    assert.equal(plus[0].name, "Prisma+");
+    assert.match(plus[0].emoji, /badge_prisma_plus/);
+
+    // plano básico: "Prisma", sem emoji cadastrado (aparece pelo nome)
+    const basic = getUserBadges({ prismaActive: true, prismaPlan: "prisma" });
+
+    assert.deepEqual(basic.map(badge => [badge.id, badge.name, badge.emoji]), [["BADGE_SHOW_PRISMA_BASIC", "Prisma", ""]]);
+
+    // sem o plano na resposta, vale Prisma+ (como era); e a flag junto com a assinatura não duplica
+    assert.deepEqual(ids({ prismaActive: true, flags: ["BADGE_SHOW_PRISMA"] }), ["BADGE_SHOW_PRISMA"]);
+
+    // plano básico com uma flag de Prisma+: manda a assinatura de agora
+    assert.deepEqual(ids({ prismaActive: true, prismaPlan: "prisma", flags: ["BADGE_SHOW_PRISMA"] }), ["BADGE_SHOW_PRISMA_BASIC"]);
+});
+
+test("quem não assina Prisma, não pulsa e não compartilha tela não ganha insígnia nenhuma por isso", () => {
+    assert.deepEqual(ids({ prismaActive: false, prismaPlan: null, pulsing: false, pulseBadge: null, shareSeconds: 0, flags: [] }), []);
+    assert.deepEqual(ids({}), []);
+
+    // o plano sozinho, com a assinatura vencida, não mostra nada
+    assert.deepEqual(ids({ prismaActive: false, prismaPlan: "prisma_plus" }), []);
+
+    // menos de 1 hora de tela: nada
+    assert.deepEqual(ids({ shareSeconds: 3599 }), []);
+});
+
+test("as flags da conta chegam com o nome simples (ADMIN, VERIFIED...) e também como BADGE_SHOW_<nome>", () => {
+    assert.deepEqual(
+        ids({ flags: ["ADMIN", "VERIFIED", "PARTNER", "STAFF", "EARLY_SUPPORTER", "VERIFIED_BOT_DEVELOPER"] }),
+        [
+            "BADGE_SHOW_ADMIN", "BADGE_SHOW_VERIFIED", "BADGE_SHOW_PARTNER", "BADGE_SHOW_STAFF",
+            "BADGE_SHOW_EARLY_SUPPORTER", "BADGE_SHOW_VERIFIED_BOT_DEVELOPER"
+        ]
+    );
+
+    // as duas formas da mesma insígnia contam uma vez só, e os outros nomes dela valem
+    assert.deepEqual(ids({ flags: ["VERIFIED", "BADGE_SHOW_VERIFIED", "MODERATOR"] }), ["BADGE_SHOW_VERIFIED", "BADGE_SHOW_STAFF"]);
+
+    // presentes: o nível mais baixo não tem emoji, mas entra
+    assert.deepEqual(ids({ flags: ["GIFTING_PATRON"] }), ["GIFTING_PATRON"]);
+
+    // flag desconhecida é ignorada, sem quebrar
+    assert.deepEqual(ids({ flags: ["ALGO_NOVO", "BADGE_SHOW_OUTRA", null, 7] }), []);
+});
+
+test("o que a pessoa escondeu (hiddenBadges) e o que o admin escondeu (BADGE_HIDE_) não aparece", () => {
+    const user = {
+        flags: ["ADMIN", "VERIFIED", "EARLY_SUPPORTER", "BADGE_HIDE_VERIFIED"],
+        hiddenBadges: ["ADMIN"],
+        prismaActive: true, prismaPlan: "prisma_plus",
+        pulsing: true, pulseBadge: { id: "PULSE_3", months: 3 },
+        shareSeconds: 4 * 3600
+    };
+
+    assert.deepEqual(ids(user), ["BADGE_SHOW_PRISMA", "BADGE_SHOW_EARLY_SUPPORTER", "BADGE_SHOW_PULSE_3", "STREAM_1H"]);
+
+    // PRISMA, PULSE e STREAM_TIME escondem o grupo inteiro
+    assert.deepEqual(ids({ ...user, hiddenBadges: ["PRISMA", "PULSE", "STREAM_TIME"] }), ["BADGE_SHOW_ADMIN", "BADGE_SHOW_EARLY_SUPPORTER"]);
+});
+
+test("o selo de Pulse vem de pulseBadge quando as flags não trazem o nível; sem pulsar, não aparece", () => {
+    assert.deepEqual(ids({ pulsing: true, pulseBadge: { id: "PULSE_6", months: 6 } }), ["BADGE_SHOW_PULSE_6"]);
+    assert.deepEqual(ids({ pulsing: false, pulseBadge: { id: "PULSE_6", months: 6 } }), []);
+
+    // um nível que não tem selo cadastrado é ignorado
+    assert.deepEqual(ids({ pulsing: true, pulseBadge: { id: "PULSE_4", months: 4 } }), []);
+
+    // flags e pulseBadge juntos: só o mais alto
+    assert.deepEqual(ids({ pulsing: true, flags: ["BADGE_SHOW_PULSE_3"], pulseBadge: { id: "PULSE_12", months: 12 } }), ["BADGE_SHOW_PULSE_12"]);
+});
+
+test("tempo de tela: só o nível mais alto, pelo nome, com as marcas da página de insígnias da VSync", () => {
+    const tier = seconds => getUserBadges({ shareSeconds: seconds }).map(badge => badge.name);
+
+    assert.deepEqual(tier(3600), ["Tempo de tela: Newcomer"]);
+    assert.deepEqual(tier(5 * 3600), ["Tempo de tela: Fledgling"]);
+    assert.deepEqual(tier(74.9 * 3600), ["Tempo de tela: Breakout"]);
+    assert.deepEqual(tier(1000 * 3600), ["Tempo de tela: Sensation"]);
+    assert.deepEqual(tier(9999 * 3600), ["Tempo de tela: Phenomenon"]);
+});
+
+test("o cartão mostra o Prisma+ de quem assina (insígnia e data pelo perfil da conta) e as insígnias sem emoji pelo nome", async () => {
+    const id = "200000000000000020";
+
+    // como o membro vem da API: Prisma ativo, mas sem a data nem a flag de Prisma
+    MEMBERS.push(member(id, "mal", "rich", {
+        flags: ["EARLY_SUPPORTER", "VERIFIED_BOT_DEVELOPER"],
+        prismaActive: true, prismaPlan: "prisma_plus", prismaSince: null,
+        shareSeconds: 6 * 3600
+    }));
+
+    ACCOUNTS[id] = { id, prisma: { active: true, plan: "prisma_plus", since: Date.UTC(2026, 9, 11, 22, 5) } };
+
+    clearUserLookupCache();
+
+    const embed = embedOf(await run("hui mal"));
+
+    const fields = fieldsOf(embed);
+
+    // as insígnias: Prisma+ primeiro, depois as outras, e o tempo de tela pelo nome (sem emoji)
+    assert.match(fields["🏅 Insígnias"], /^<:badge_prisma_plus:\d+> <:badge_early_supporter:\d+> <:badge_developer:\d+> · Tempo de tela: Fledgling$/);
+
+    // a data vem do perfil da conta, que a rota do membro não trouxe
+    assert.match(fields["💎 Assinante Prisma+ desde"], /^11 de outubro de 2026/);
+    assert.ok(calls.some(call => call === "GET /users/" + id));
+
+    // o menu "Mais informações" também mostra a data e as insígnias com o nome
+    const comandos = await comandosOf();
+
+    const dates = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${id}`, ["dates"]), comandos);
+
+    assert.match(JSON.stringify(dates.data.embeds[0].fields), /11 de outubro de 2026/);
+
+    const badges = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${id}`, ["badges"]), comandos);
+
+    assert.match(badges.data.embeds[0].description, /Prisma\+/);
+    assert.match(badges.data.embeds[0].description, /Tempo de tela: Fledgling/);
+});
+
+test("se o perfil da conta falhar, o cartão sai igual, com a data como não informada", async () => {
+    const id = "200000000000000021";
+
+    MEMBERS.push(member(id, "semdata", "Sem Data", { prismaActive: true, prismaPlan: "prisma_plus", prismaSince: null }));
+
+    failAccount = true;
+
+    clearUserLookupCache();
+
+    const fields = fieldsOf(embedOf(await run("hui semdata")));
+
+    assert.match(fields["🏅 Insígnias"], /badge_prisma_plus/);
+    assert.equal(fields["💎 Assinante Prisma+ desde"], UNKNOWN);
+});
+
+test("quem não assina Prisma não gasta chamada ao perfil da conta nem ganha campos de Prisma", async () => {
+    const id = "200000000000000022";
+
+    MEMBERS.push(member(id, "semprisma", "Sem Prisma"));
+
+    clearUserLookupCache();
+
+    const embed = embedOf(await run("hui semprisma"));
+
+    const fields = fieldsOf(embed);
+
+    assert.ok(!("💎 Assinante Prisma+ desde" in fields));
+    assert.ok(!("💎 Assinante Prisma desde" in fields));
+    assert.ok(!("✨ Pulser desde" in fields));
+    assert.equal(fields["🏅 Insígnias"], "Nenhuma");
+    assert.ok(!calls.some(call => call.startsWith("GET /users/")));
+
+    // quem tem a data no membro também não precisa da chamada
+    clearUserLookupCache();
+    calls.length = 0;
+
+    await run("hui soprisma");
+
+    assert.ok(!calls.some(call => call.startsWith("GET /users/")));
 });

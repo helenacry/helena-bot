@@ -39,7 +39,7 @@ A bio é o texto que aparece no cartão. Ela tem **até 160 caracteres** (cada e
 
 O `/userinfo` (atalho `/ui`) é outra coisa: mostra as **informações e insígnias de um usuário da VSync**, não do jogo. Funciona com qualquer pessoa, mesmo que ela nunca tenha jogado a Helena.
 
-O cartão mostra a **menção**, o **@usuário** e o **ID** (em caixas de código, fáceis de copiar), as **insígnias**, quando a conta foi criada e quando entrou no servidor, cada data com a **idade** em anos, meses e dias. Quem tem **Prisma** ou **Pulse** vê também desde quando, há quanto tempo pulsa (no selo atual) e quanto falta para o próximo selo. Bots levam a marca 🤖 e quem está de castigo vê até quando. No rodapé aparecem quem usou o comando, quantas vezes aquele perfil já foi consultado e a hora.
+O cartão mostra a **menção**, o **@usuário** e o **ID** (em caixas de código, fáceis de copiar), as **insígnias** (Prisma+, Pulse, tempo de tela e as da conta; as que a pessoa escondeu na VSync não aparecem, e as que não têm emoji aparecem pelo nome), quando a conta foi criada e quando entrou no servidor, cada data com a **idade** em anos, meses e dias. Quem tem **Prisma** ou **Pulse** vê também desde quando, há quanto tempo pulsa (no selo atual) e quanto falta para o próximo selo; quem não assina Prisma nem pulsa não vê esses campos. Bots levam a marca 🤖 e quem está de castigo vê até quando. No rodapé aparecem quem usou o comando, quantas vezes aquele perfil já foi consultado e a hora.
 
 Embaixo do cartão há dois menus, só para quem usou o comando:
 

@@ -4,6 +4,13 @@ import { PULSE_EMOJIS } from "./userinfo-format.mjs";
 // CATÁLOGO DE INSÍGNIAS DO VSYNC
 // ==========================================
 
+// Tempo de tela (compartilhar a tela): quem passa de cada marca, em horas, ganha a insígnia, e cada
+// uma substitui a anterior. A VSync não tem emoji cadastrado para elas, então aparecem pelo nome.
+const STREAM_TIERS = Object.freeze([
+    [1, "Newcomer"], [5, "Fledgling"], [20, "Breakout"], [75, "Standout"], [150, "Trendsetter"],
+    [300, "Headliner"], [500, "Star"], [1000, "Sensation"], [2000, "Visionary"], [5000, "Phenomenon"]
+]);
+
 const BADGES = Object.freeze({
     BADGE_SHOW_ADMIN: {
         emoji: "<:badge_admin:235402174009856000>",
@@ -21,6 +28,13 @@ const BADGES = Object.freeze({
         emoji: "<:badge_prisma_plus:235421406961487872>",
         image: "prisma.svg",
         name: "Prisma+"
+    },
+
+    // O plano básico (sem o "+"): ainda não há emoji dele cadastrado, então aparece pelo nome.
+    BADGE_SHOW_PRISMA_BASIC: {
+        emoji: "",
+        image: "prisma.svg",
+        name: "Prisma"
     },
 
     BADGE_SHOW_EARLY_SUPPORTER: {
@@ -71,6 +85,14 @@ const BADGES = Object.freeze({
         name: "Herói dos presentes"
     },
 
+    // Tempo de tela
+    ...Object.fromEntries(
+        STREAM_TIERS.map(([hours, name]) => [
+            `STREAM_${hours}H`,
+            { emoji: "", image: null, name: `Tempo de tela: ${name}` }
+        ])
+    ),
+
     // Insígnias de Pulse
     ...Object.fromEntries(
         [1, 2, 3, 6, 9, 12, 15, 18, 24].map(month => [
@@ -96,60 +118,105 @@ const BADGES = Object.freeze({
 // ALIASES
 // ==========================================
 
-const ALIASES = Object.freeze({
-    EARLY_SUPPORTER: "BADGE_SHOW_EARLY_SUPPORTER"
+// Nomes que a API usa para a mesma insígnia.
+const NAME_ALIASES = Object.freeze({
+    MODERATOR: "STAFF",
+    EARLY_VERIFIED_DEVELOPER: "VERIFIED_BOT_DEVELOPER"
 });
 
 // ==========================================
 // INSÍGNIAS VISÍVEIS
 // ==========================================
 
+// A chave do catálogo para um nome de `flags` ou de `hiddenBadges`. A API manda as insígnias da
+// conta com o nome simples (ADMIN, VERIFIED, EARLY_SUPPORTER...) e as sobrescritas do admin como
+// BADGE_SHOW_<nome>; as duas formas valem a mesma insígnia. null se não está no catálogo.
+function keyOf(flag) {
+    const name = String(flag ?? "").replace(/^BADGE_(SHOW|HIDE)_/, "");
+
+    const alias = NAME_ALIASES[name] ?? name;
+
+    return [`BADGE_SHOW_${alias}`, alias].find(key => BADGES[key]) ?? null;
+}
+
+// O nome sem prefixo: "BADGE_HIDE_PRISMA" e "PRISMA" são o mesmo.
+const bare = flag => String(flag ?? "").replace(/^BADGE_(SHOW|HIDE)_/, "");
+
 export function getUserBadges(user) {
     const flags = Array.isArray(user?.flags)
         ? user.flags
         : [];
 
-    const hidden = new Set(
-        Array.isArray(user?.hiddenBadges)
-            ? user.hiddenBadges
-            : []
-    );
+    // O que o dono escondeu (hiddenBadges) e o que o admin escondeu (BADGE_HIDE_<nome> em flags).
+    // PRISMA, PULSE e STREAM_TIME escondem o grupo todo.
+    const hiddenNames = new Set([
+        ...(Array.isArray(user?.hiddenBadges) ? user.hiddenBadges : []).map(bare),
+        ...flags.filter(flag => /^BADGE_HIDE_/.test(String(flag))).map(bare)
+    ]);
+
+    const hiddenKeys = new Set([...hiddenNames].map(keyOf).filter(Boolean));
 
     const badges = [];
     const seen = new Set();
 
-    // Respeita também aliases ocultos.
-    const hiddenCanonical = new Set(
-        [...hidden].map(flag => ALIASES[flag] || flag)
-    );
+    const add = key => {
+        const badge = BADGES[key];
 
-    for (const flag of flags) {
-        const canonical = ALIASES[flag] || flag;
-        const badge = BADGES[canonical];
-
-        if (!badge) {
-            continue;
+        if (!badge || seen.has(key) || hiddenKeys.has(key)) {
+            return;
         }
 
-        if (seen.has(canonical)) {
-            continue;
-        }
-
-        if (
-            hidden.has(flag) ||
-            hiddenCanonical.has(canonical)
-        ) {
-            continue;
-        }
-
-        seen.add(canonical);
+        seen.add(key);
 
         badges.push({
-            id: canonical,
+            id: key,
             emoji: badge.emoji,
             image: badge.image,
             name: badge.name
         });
+    };
+
+    // O Prisma não vem em `flags`: quem assina tem prismaActive (e prismaPlan diz qual plano). Quem
+    // escondeu a insígnia chega com prismaActive falso, e o PRISMA em hiddenBadges vale também aqui.
+    // Vai primeiro, como no perfil da VSync. Sem o plano na resposta, vale Prisma+ (como era).
+    const prismaKey = user?.prismaActive && !hiddenNames.has("PRISMA")
+        ? (user.prismaPlan === "prisma" ? "BADGE_SHOW_PRISMA_BASIC" : "BADGE_SHOW_PRISMA")
+        : null;
+
+    if (prismaKey) {
+        add(prismaKey);
+    }
+
+    for (const flag of flags) {
+        // o BADGE_HIDE_ só esconde; não mostra nada
+        if (/^BADGE_HIDE_/.test(String(flag))) {
+            continue;
+        }
+
+        const key = keyOf(flag);
+
+        // a assinatura de agora (prismaPlan) manda: uma flag de Prisma+ não soma ao plano básico
+        if (key && !(prismaKey && key === "BADGE_SHOW_PRISMA")) {
+            add(key);
+        }
+    }
+
+    // O selo atual de Pulse que a API informa vale mesmo quando `flags` não traz o nível.
+    const months = Number(user?.pulseBadge?.months);
+
+    if (user?.pulsing && Number.isFinite(months) && !hiddenNames.has("PULSE")) {
+        add(`BADGE_SHOW_PULSE_${months}`);
+    }
+
+    // Tempo de tela: só o nível mais alto alcançado.
+    const hours = Number(user?.shareSeconds) / 3600;
+
+    if (Number.isFinite(hours) && !hiddenNames.has("STREAM_TIME")) {
+        const tier = STREAM_TIERS.filter(([need]) => hours >= need).at(-1);
+
+        if (tier) {
+            add(`STREAM_${tier[0]}H`);
+        }
     }
 
     // Os níveis do Pulse são acumulativos: aparece só o mais alto, como um selo só.

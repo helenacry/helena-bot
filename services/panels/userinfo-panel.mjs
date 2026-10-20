@@ -3,6 +3,8 @@ import { db } from "../../database/connection.mjs";
 
 import { resolveUser } from "../platform/user-lookup.mjs";
 
+import { completeUser } from "../social/userinfo-account.mjs";
+
 import { SEARCH_VALUE } from "../social/userinfo-components.mjs";
 
 import { buildUserinfoDetail } from "../social/userinfo-view.mjs";
@@ -88,7 +90,7 @@ export async function handleUserinfoComponent(interaction, comandos) {
             return warn("Pessoa não encontrada", "Não achei essa pessoa neste servidor agora.");
         }
 
-        const embed = buildUserinfoDetail(choice, { ...found.user, ...found.user.raw });
+        const embed = buildUserinfoDetail(choice, await completeUser({ ...found.user, ...found.user.raw }));
 
         return embed
             ? privateEmbed(embed)

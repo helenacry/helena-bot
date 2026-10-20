@@ -61,12 +61,21 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
 
     const username = plain(user.username || "desconhecido", 120);
 
-    const icons = getUserBadges(user)
+    const badges = getUserBadges(user);
+
+    const icons = badges
         .map(badge => badge.emoji)
         .filter(Boolean)
         .join(" ");
 
-    const badgeText = [user.bot ? "🤖 Bot" : null, icons || null].filter(Boolean).join(" · ");
+    // As insígnias sem emoji cadastrado (o plano Prisma básico, o tempo de tela, alguns presentes)
+    // entram pelo nome, para nenhuma ficar escondida.
+    const named = badges
+        .filter(badge => !badge.emoji)
+        .map(badge => safe(badge.name))
+        .join(" · ");
+
+    const badgeText = [user.bot ? "🤖 Bot" : null, icons || null, named || null].filter(Boolean).join(" · ");
 
     const fields = [];
 
