@@ -124,10 +124,11 @@ test("o zip lido de volta tem o bot inteiro, com CRC e tamanho certos, e nada qu
         assert.ok(names.includes(must), `${must} falta no zip`);
     }
 
-    // as imagens do cartão de perfil e das insígnias
+    // a foto da Helena e as fontes do cartão de perfil
     const assets = readdirSync(path.join(ROOT, "assets"), { recursive: true }).map(String).filter(name => statSync(path.join(ROOT, "assets", name)).isFile());
 
-    assert.ok(assets.length > 10);
+    assert.ok(assets.includes("helena_pfp.png"));
+    assert.ok(assets.filter(name => name.endsWith(".ttf")).length >= 5, "as fontes Poppins");
 
     for (const asset of assets) {
         assert.ok(names.includes("assets/" + asset.replaceAll("\\", "/")), `assets/${asset} falta no zip`);

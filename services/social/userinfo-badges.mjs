@@ -14,74 +14,62 @@ const STREAM_TIERS = Object.freeze([
 const BADGES = Object.freeze({
     BADGE_SHOW_ADMIN: {
         emoji: "<:badge_admin:235402174009856000>",
-        image: "admin.svg",
         name: "Administrador do VSync"
     },
 
     BADGE_SHOW_VERIFIED: {
         emoji: "<:badge_verified:235401782727430144>",
-        image: "verified.svg",
         name: "Verificado"
     },
 
     BADGE_SHOW_PRISMA: {
         emoji: "<:badge_prisma_plus:235421406961487872>",
-        image: "prisma.svg",
         name: "Prisma+"
     },
 
     // O plano básico (sem o "+"): ainda não há emoji dele cadastrado, então aparece pelo nome.
     BADGE_SHOW_PRISMA_BASIC: {
         emoji: "",
-        image: "prisma.svg",
         name: "Prisma"
     },
 
     BADGE_SHOW_EARLY_SUPPORTER: {
         emoji: "<:badge_early_supporter:235402151960399872>",
-        image: "early-supporter.svg",
         name: "Apoiador inicial"
     },
 
     BADGE_SHOW_PARTNER: {
         emoji: "<:badge_partner:235402087548473344>",
-        image: "partner.svg",
         name: "Dono de servidor parceiro"
     },
 
     BADGE_SHOW_STAFF: {
         emoji: "<:badge_staff:235401830169202688>",
-        image: "staff.svg",
         name: "Staff do VSync"
     },
 
     BADGE_SHOW_VERIFIED_BOT_DEVELOPER: {
         emoji: "<:badge_developer:235402131815157760>",
-        image: null,
         name: "Desenvolvedor de bot verificado pioneiro"
     },
 
     GIFTING_PATRON: {
         emoji: "",
-        image: "gifting-patron.png",
         name: "Patrono dos presentes"
     },
 
     GIFTING_CHAMPION: {
         emoji: "",
-        image: "gifting-champion.png",
         name: "Campeão dos presentes"
     },
 
     GIFTING_LUMINARY: {
         emoji: "",
-        image: "gifting-luminary.png",
         name: "Luminar dos presentes"
     },
 
     BADGE_SHOW_GIFTING_HERO: {
         emoji: "<:badge_gifting_hero:235401550505594880>",
-        image: "gifting-hero.png",
         name: "Herói dos presentes"
     },
 
@@ -89,7 +77,7 @@ const BADGES = Object.freeze({
     ...Object.fromEntries(
         STREAM_TIERS.map(([hours, name]) => [
             `STREAM_${hours}H`,
-            { emoji: "", image: null, name: `Tempo de tela: ${name}` }
+            { emoji: "", name: `Tempo de tela: ${name}` }
         ])
     ),
 
@@ -99,11 +87,6 @@ const BADGES = Object.freeze({
             "BADGE_SHOW_PULSE_" + month,
             {
                 emoji: PULSE_EMOJIS[month] ?? "",
-
-                image:
-                    "pulse/pulse" +
-                    String(month).padStart(2, "0") +
-                    ".svg",
 
                 name:
                     "Pulse " +
@@ -171,7 +154,6 @@ export function getUserBadges(user) {
         badges.push({
             id: key,
             emoji: badge.emoji,
-            image: badge.image,
             name: badge.name
         });
     };
