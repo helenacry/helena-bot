@@ -30,7 +30,6 @@
 
     /* O recibo é um objeto de papel térmico: fica claro e quente nos dois temas. */
     --receipt: oklch(98.9% 0.014 92);
-    --receipt-edge: oklch(92% 0.025 92);
     --receipt-ink: oklch(24% 0.035 80);
     --receipt-ink-soft: oklch(42% 0.035 80);
     --receipt-line: oklch(74% 0.04 85);
@@ -49,7 +48,6 @@
     --on-violet: oklch(99% 0.01 300);
     --violet-wash: light-dark(oklch(93.5% 0.05 295), oklch(26% 0.085 289));
     --blush: light-dark(oklch(62% 0.21 355), oklch(76% 0.15 355));
-    --blush-wash: light-dark(oklch(94.5% 0.04 355), oklch(27% 0.07 355));
 
     /* ---- funções ---- */
     --money: light-dark(oklch(47% 0.1 78), oklch(82% 0.12 85));
@@ -91,19 +89,12 @@
     --embed-economy: #a855f7;
     --embed-primary: #8755da;
 
-    /* ---- raridade (as mesmas cinco do bot) ---- */
-    --rarity-common: light-dark(oklch(48% 0.03 290), oklch(76% 0.03 290));
-    --rarity-uncommon: light-dark(oklch(47% 0.12 158), oklch(78% 0.15 160));
-    --rarity-rare: light-dark(oklch(48% 0.16 250), oklch(78% 0.12 245));
-    --rarity-epic: light-dark(oklch(47% 0.24 305), oklch(76% 0.17 310));
-    --rarity-legendary: light-dark(oklch(48% 0.11 70), oklch(84% 0.13 85));
 
     /* ---- tipografia ---- */
     --font-display: "Bricolage Grotesque", "Bricolage Fallback", ui-sans-serif, system-ui, sans-serif;
     --font-text: "Instrument Sans", "Instrument Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-mono: "Martian Mono", "Martian Fallback", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
 
-    --step--1: clamp(0.8rem, 0.78rem + 0.1vw, 0.875rem);
     --step-0: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem);
     --step-1: clamp(1.2rem, 1.1rem + 0.45vw, 1.42rem);
     --step-2: clamp(1.45rem, 1.25rem + 0.95vw, 1.95rem);

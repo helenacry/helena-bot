@@ -276,20 +276,6 @@ export function formatUserBadges(user) {
 }
 
 // ==========================================
-// IMAGENS DAS INSÍGNIAS
-// ==========================================
-
-export function getUserBadgeImages(user) {
-    return getUserBadges(user)
-        .filter(badge => Boolean(badge.image))
-        .map(badge => ({
-            id: badge.id,
-            name: badge.name,
-            file: badge.image
-        }));
-}
-
-// ==========================================
 // PRISMA / PULSE
 // ==========================================
 

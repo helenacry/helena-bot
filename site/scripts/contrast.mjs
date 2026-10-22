@@ -157,13 +157,7 @@ const PAIRS = [
   ["chat-btn-ink", "chat-btn", TEXT, "botão do app"],
   ["on-violet", "chat-ok", TEXT, "botão verde do app"],
   ["on-violet", "chat-danger", TEXT, "botão vermelho do app"],
-  ["on-violet", "chat-primary", TEXT, "botão azul do app e selo BOT"],
-
-  ["rarity-common", "paper", TEXT, "raridade comum"],
-  ["rarity-uncommon", "paper", TEXT, "raridade incomum"],
-  ["rarity-rare", "paper", TEXT, "raridade rara"],
-  ["rarity-epic", "paper", TEXT, "raridade épica"],
-  ["rarity-legendary", "paper", TEXT, "raridade lendária"]
+  ["on-violet", "chat-primary", TEXT, "botão azul do app e selo BOT"]
 ];
 
 // O recibo é claro nos dois temas.
