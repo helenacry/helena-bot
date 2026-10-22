@@ -97,7 +97,7 @@ function makeUpstream() {
 }
 
 // Sobe a API num servidor próprio, numa porta livre, com relógio controlável.
-async function startApi(overrides = {}, { random = () => 0.5, intercept } = {}) {
+async function startApi(overrides = {}, { random = () => 0.5, intercept, sleep = async () => {} } = {}) {
     const upstream = makeUpstream();
 
     const state = { now: T0 };
@@ -110,7 +110,7 @@ async function startApi(overrides = {}, { random = () => 0.5, intercept } = {}) 
 
     const api = createWebApi(
         { ...BASE_CONFIG, ...overrides },
-        { fetch: fetchImpl, now: () => state.now, random }
+        { fetch: fetchImpl, now: () => state.now, random, sleep }
     );
 
     const server = http.createServer((req, res) => api.handle(req, res));
@@ -430,6 +430,95 @@ test("quando a VSync deixa o login falhar depois da troca, o log e a resposta di
             assert.equal(get("SELECT COUNT(*) c FROM web_sessions").c, 0, `${name}: nenhuma sessão criada`);
         }, { intercept });
     }
+});
+
+// A VSync de verdade responde assim a um acesso que ela mesma considera inválido: o nome do erro vem em "code".
+const INVALID_TOKEN = { error: "Token inválido, expirado ou revogado.", code: "invalid_token" };
+
+test("a VSync que diz 'token inválido' logo após emitir o acesso: a API espera e pergunta de novo, e o login sai", async () => {
+    let asked = 0;
+    const pauses = [];
+
+    const intercept = url => url.endsWith("/oauth2/userinfo") && ++asked === 1 ? answer(401, INVALID_TOKEN) : undefined;
+
+    await withApi({}, async ctx => {
+        const lines = await warnings(async () => {
+            const result = await login(ctx);
+
+            assert.equal(result.status, 200, "o login sai na segunda tentativa");
+            assert.ok(result.json.token);
+        });
+
+        assert.equal(asked, 2);
+        assert.deepEqual(pauses, [800]);
+        assert.equal(lines.length, 1);
+        assert.match(lines[0], /só liberou a conta na tentativa 2/);
+        assert.match(lines[0], /marca [0-9a-f]{8}/);
+        assert.equal(get("SELECT COUNT(*) c FROM web_sessions").c, 1);
+    }, { intercept, sleep: async ms => { pauses.push(ms); } });
+});
+
+test("se a VSync insistir no 401, são três perguntas e o log diz a causa, o acesso emitido (sem o token) e a marca do código", async () => {
+    let asked = 0;
+    const pauses = [];
+
+    const intercept = url => url.endsWith("/oauth2/userinfo") ? (++asked, answer(401, INVALID_TOKEN)) : undefined;
+
+    await withApi({}, async ctx => {
+        const lines = await warnings(async () => {
+            const result = await login(ctx);
+
+            assert.equal(result.status, 401);
+            assert.equal(result.json.error, "login_failed");
+            assert.equal(result.json.detail, "conta:invalid_token");
+        });
+
+        assert.equal(asked, 3);
+        assert.deepEqual(pauses, [800, 2500]);
+        assert.equal(lines.length, 1);
+        assert.match(lines[0], /invalid_token/);
+        assert.match(lines[0], /3 tentativas/);
+        assert.match(lines[0], /tipo=Bearer validade=604800 escopo="identify guilds" renovação=true/);
+        assert.match(lines[0], /marca [0-9a-f]{8}/);
+        assert.doesNotMatch(lines[0], /vsat_abc|vsrt_abc/, "o token nunca vai para o log");
+        assert.equal(get("SELECT COUNT(*) c FROM web_sessions").c, 0);
+    }, { intercept, sleep: async ms => { pauses.push(ms); } });
+});
+
+test("só o 401 ganha nova tentativa: outro erro da VSync ao ler a conta falha de uma vez", async () => {
+    let asked = 0;
+
+    const intercept = url => url.endsWith("/oauth2/userinfo") ? (++asked, answer(403, null)) : undefined;
+
+    await withApi({}, async ctx => {
+        const lines = await warnings(async () => {
+            const result = await login(ctx);
+
+            assert.equal(result.json.detail, "conta:403");
+        });
+
+        assert.equal(asked, 1);
+        assert.match(lines[0], /1 tentativa;/);
+    }, { intercept });
+});
+
+test("a marca do código é a mesma para o mesmo código e não revela o código", async () => {
+    const marks = [];
+
+    for (let i = 0; i < 2; i++) {
+        await withApi({}, async ctx => {
+            const lines = await warnings(async () => {
+                await call(ctx, "POST", "/api/auth/login", {
+                    body: { code: "codigo-secreto-123", codeVerifier: VERIFIER, redirectUri: REDIRECT }
+                });
+            });
+
+            marks.push(lines[0].match(/marca ([0-9a-f]{8})/)[1]);
+            assert.doesNotMatch(lines[0], /codigo-secreto-123/);
+        });
+    }
+
+    assert.equal(marks[0], marks[1]);
 });
 
 test("a VSync com problema (429 ou 5xx) na troca vira vsync_unavailable, não 'não deu para entrar'", async () => {

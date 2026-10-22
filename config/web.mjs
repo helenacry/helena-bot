@@ -27,6 +27,10 @@ export const WEB_CONFIG = Object.freeze({
     // Tempo máximo esperando a VSync ou a Cloudflare, em milissegundos.
     upstreamTimeoutMs: 10_000,
 
+    // Se a VSync responder 401 ao ler a conta logo depois de emitir o acesso, a
+    // API espera estes tempos (ms) e tenta de novo antes de desistir do login.
+    userinfoRetryMs: Object.freeze([800, 2500]),
+
     // Quantos dias o registro de entradas e coletas (web_claim_log, com IP e
     // navegador) fica guardado. A política de privacidade do site cita este
     // prazo: se mudar aqui, mude lá (site/privacy/index.html).

@@ -185,6 +185,7 @@ export function createWebApi(config, deps = {}) {
     const fetchImpl = deps.fetch ?? globalThis.fetch;
     const now = deps.now ?? nowSeconds;
     const random = deps.random ?? Math.random;
+    const sleep = deps.sleep ?? (ms => new Promise(resolve => setTimeout(resolve, ms)));
 
     // A imagem do avatar para os embeds (GET /img/avatar.webp?u=...): não é da API do site,
     // então fica fora das regras de origem e de JSON.
@@ -271,18 +272,31 @@ export function createWebApi(config, deps = {}) {
         });
     }
 
-    // O nome do erro que a VSync devolve ({ "error": "invalid_grant" }), só para
-    // o log. Nunca lança e só deixa passar letras e "_", então nada de
+    // O nome do erro que a VSync devolve ({ "error": "invalid_grant" } nas rotas do
+    // token, ou { "error": "texto...", "code": "invalid_token" } nas demais), só
+    // para o log. Nunca lança e só deixa passar letras e "_", então nada de
     // dentro da resposta vai parar no log.
     async function vsyncError(response) {
         try {
-            const error = (await response.json())?.error;
+            const body = await response.json();
 
-            return typeof error === "string" && /^[a-z_]{1,40}$/.test(error) ? error : "";
+            return [body?.error, body?.code].find(name => typeof name === "string" && /^[a-z_]{1,40}$/.test(name)) ?? "";
         } catch {
             return "";
         }
     }
+
+    // O que a VSync disse sobre o acesso que emitiu, SEM o token, para o log de quando
+    // a conta é recusada (validade e escopo mostram se o acesso já nasce vencido).
+    function describeGrant(tokens) {
+        const plain = value => String(value ?? "").replace(/[^\w .:,-]/g, "").slice(0, 60);
+
+        return `tipo=${plain(tokens?.token_type)} validade=${plain(tokens?.expires_in)} escopo="${plain(tokens?.scope)}" renovação=${Boolean(tokens?.refresh_token)}`;
+    }
+
+    // Uma marca curta do código de login (não dá para recuperar o código a partir dela):
+    // se a mesma marca aparecer duas vezes no log, o código foi usado duas vezes.
+    const codeTag = code => createHash("sha256").update(code).digest("hex").slice(0, 8);
 
     function logClaim({ userId, kind, guildId = null, ok, detail = "", req }) {
         db.prepare(`
@@ -510,7 +524,7 @@ export function createWebApi(config, deps = {}) {
 
                 // 429 e 5xx: o problema é da VSync, não da pessoa. Vale tentar depois.
                 if (response.status === 429 || response.status >= 500) {
-                    console.warn(`[WEB] VSync com problema na troca do código: ${shown}`);
+                    console.warn(`[WEB] VSync com problema na troca do código: ${shown} (marca ${codeTag(code)})`);
 
                     throw new HttpError(502, "vsync_unavailable");
                 }
@@ -518,7 +532,7 @@ export function createWebApi(config, deps = {}) {
                 // invalid_grant é o normal (código vencido ou já usado: a pessoa entra de
                 // novo). Qualquer outro nome é erro NOSSO e a pessoa não tem como resolver.
                 console.warn(
-                    `[WEB] VSync recusou a troca do código: ${shown}` +
+                    `[WEB] VSync recusou a troca do código: ${shown} (marca ${codeTag(code)})` +
                     (reason && reason !== "invalid_grant"
                         ? " (confira HELENA_OAUTH_CLIENT_ID, HELENA_OAUTH_CLIENT_SECRET e HELENA_OAUTH_REDIRECTS)"
                         : "")
@@ -540,7 +554,7 @@ export function createWebApi(config, deps = {}) {
         const accessToken = typeof tokens?.access_token === "string" ? tokens.access_token : "";
 
         if (!accessToken) {
-            console.warn("[WEB] A VSync aceitou a troca do código, mas não devolveu o acesso.");
+            console.warn(`[WEB] A VSync aceitou a troca do código, mas não devolveu o acesso (marca ${codeTag(code)}).`);
 
             throw new HttpError(401, "login_failed", { detail: "troca:sem_acesso" });
         }
@@ -551,15 +565,33 @@ export function createWebApi(config, deps = {}) {
         let guilds = [];
 
         try {
-            // 2. quem é a pessoa
-            const identity = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/userinfo`, { headers: auth });
+            // 2. quem é a pessoa. Às vezes a VSync responde 401 ("token inválido") logo
+            //    depois de emitir o acesso: espera um pouco e pergunta de novo antes de desistir.
+            let identity = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/userinfo`, { headers: auth });
+            let attempts = 1;
+
+            for (const pause of WEB_CONFIG.userinfoRetryMs) {
+                if (identity.status !== 401) break;
+
+                await sleep(pause);
+
+                identity = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/userinfo`, { headers: auth });
+                attempts++;
+            }
 
             if (!identity.ok) {
                 const reason = await vsyncError(identity);
 
-                console.warn(`[WEB] A VSync recusou ler a conta da pessoa: ${reason || `HTTP ${identity.status}`}`);
+                console.warn(
+                    `[WEB] A VSync recusou ler a conta da pessoa: ${reason || `HTTP ${identity.status}`} ` +
+                    `(${attempts} ${attempts === 1 ? "tentativa" : "tentativas"}; acesso emitido: ${describeGrant(tokens)}; marca ${codeTag(code)})`
+                );
 
                 throw new HttpError(401, "login_failed", { detail: `conta:${reason || identity.status}` });
+            }
+
+            if (attempts > 1) {
+                console.warn(`[WEB] A VSync só liberou a conta na tentativa ${attempts} (marca ${codeTag(code)}).`);
             }
 
             user = await identity.json();
