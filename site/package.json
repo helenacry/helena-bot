@@ -13,6 +13,7 @@
     "check": "astro check",
     "verify": "node scripts/verify.mjs",
     "icons": "node scripts/build-icons.mjs",
+    "profiles": "node scripts/build-profiles.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
