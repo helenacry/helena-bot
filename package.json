@@ -14,7 +14,13 @@
     "test": "node --test \"tests/*.test.mjs\"",
     "site:data": "node --disable-warning=ExperimentalWarning scripts/site/build-data.mjs",
     "site:card": "node --disable-warning=ExperimentalWarning scripts/site/build-card.mjs",
-    "wiki:build": "node --disable-warning=ExperimentalWarning scripts/site/build-wiki.mjs"
+    "wiki:build": "node --disable-warning=ExperimentalWarning scripts/site/build-wiki.mjs",
+    "site:install": "npm ci --prefix site",
+    "site:dev": "npm --prefix site run dev",
+    "site:build": "npm --prefix site run build",
+    "site:check": "npm --prefix site run check",
+    "site:verify": "npm --prefix site run verify",
+    "site:test": "npm --prefix site run test:e2e"
   },
   "dependencies": {
     "@twemoji/parser": "^17.0.2",

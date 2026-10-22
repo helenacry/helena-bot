@@ -1,0 +1,203 @@
+---
+import "../styles/prose.css";
+import Base from "./Base.astro";
+import WikiNav from "../components/wiki/WikiNav.astro";
+import WikiSearch from "../islands/WikiSearch";
+import Icon from "../components/ui/Icon.astro";
+import { url, withBase } from "../lib/url";
+import { SITE } from "../config";
+import type { WikiPage } from "../lib/wiki";
+
+interface Props {
+  page: WikiPage;
+}
+
+const { page } = Astro.props;
+const isHome = page.id === "index";
+const title = isHome ? "Wiki da Helena" : `${page.title} | Wiki`;
+
+const base = SITE.name;
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: page.title,
+  description: page.description,
+  inLanguage: "pt-BR",
+  isPartOf: { "@type": "WebSite", name: base },
+  ...(page.section ? { articleSection: page.section.title } : {})
+};
+
+const crumbs = [
+  { label: "Wiki", href: url("/wiki/") },
+  ...(page.section ? [{ label: page.section.title, href: undefined }] : [])
+];
+
+const html = withBase(page.html);
+---
+<Base title={title} description={page.description} path={page.path} current="wiki" jsonLd={jsonLd}>
+  <div class="wrap wiki">
+    <aside class="side" aria-label="Menu da wiki">
+      <div class="side-in">
+        <WikiSearch client:idle base={url("/")} />
+        <WikiNav current={page.id} />
+      </div>
+    </aside>
+
+    <details class="mobile-menu">
+      <summary><Icon name="menu" size={18} /> Menu da wiki</summary>
+      <div class="mobile-in">
+        <WikiSearch client:idle base={url("/")} idSuffix="-m" />
+        <WikiNav current={page.id} label="Seções da wiki (celular)" />
+      </div>
+    </details>
+
+    <article class="doc" data-pagefind-body>
+      {!isHome && (
+        <nav class="crumbs" aria-label="Você está em">
+          {crumbs.map((crumb, index) => (
+            <>
+              {index > 0 && <span aria-hidden="true">/</span>}
+              {crumb.href ? <a href={crumb.href}>{crumb.label}</a> : <span>{crumb.label}</span>}
+            </>
+          ))}
+        </nav>
+      )}
+
+      <header>
+        <h1>{page.title}</h1>
+        <p class="lede">{page.description}</p>
+      </header>
+
+      {page.section && <span data-pagefind-meta="section" hidden>{page.section.title}</span>}
+
+      <div class="prose" set:html={html} />
+
+      {!isHome && (
+        <nav class="pager" aria-label="Outras páginas">
+          {page.previous ? (
+            <a class="prev" href={url(page.previous.path)}><small>Anterior</small><b>{page.previous.title}</b></a>
+          ) : <span />}
+          {page.next ? (
+            <a class="next" href={url(page.next.path)}><small>Próxima</small><b>{page.next.title}</b></a>
+          ) : <span />}
+        </nav>
+      )}
+    </article>
+
+    {page.headings.length > 1 && (
+      <nav class="toc" aria-label="Nesta página">
+        <h2 class="label">Nesta página</h2>
+        <ol role="list">
+          {page.headings.map(heading => (
+            <li class={`l${heading.level}`}><a href={`#${heading.id}`}>{heading.text}</a></li>
+          ))}
+        </ol>
+      </nav>
+    )}
+  </div>
+</Base>
+
+<style>
+  .wiki {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5) var(--space-7);
+    padding-block: var(--space-6) var(--space-8);
+    align-items: start;
+  }
+
+  .side { display: none; }
+
+  .mobile-menu {
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-obj);
+    background: var(--paper-raised);
+  }
+
+  .mobile-menu summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: 3.25rem;
+    padding-inline: var(--space-4);
+    font-weight: 650;
+  }
+
+  .mobile-in { display: grid; gap: var(--space-4); padding: var(--space-2) var(--space-4) var(--space-5); }
+
+  .doc { min-inline-size: 0; max-inline-size: 46rem; }
+
+  .crumbs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block-end: var(--space-4); font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); }
+  .crumbs a { color: var(--violet); }
+
+  .doc header { display: grid; gap: var(--space-3); margin-block-end: var(--space-6); }
+  .doc h1 { font-size: var(--step-4); letter-spacing: -0.04em; }
+  .lede { font-size: var(--step-1); line-height: 1.45; color: var(--ink-soft); max-inline-size: 38rem; }
+
+  .pager {
+    margin-block-start: var(--space-8);
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pager a {
+    display: grid;
+    gap: 0.15rem;
+    padding: var(--space-4);
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-obj);
+    text-decoration: none;
+    transition: background-color var(--dur-1), border-color var(--dur-1);
+  }
+
+  .pager a:hover { background: var(--violet-wash); border-color: var(--violet); }
+  .pager small { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+  .pager b { font-family: var(--font-display); font-size: var(--step-1); letter-spacing: -0.02em; }
+  .pager .next { text-align: end; grid-column: 2; }
+  .pager .prev { grid-column: 1; }
+
+  .toc { display: none; }
+
+  @media (min-width: 62rem) {
+    .wiki { grid-template-columns: 15rem minmax(0, 1fr); }
+    .side { display: block; position: sticky; inset-block-start: calc(var(--header-h) + var(--space-5)); max-block-size: calc(100dvh - var(--header-h) - var(--space-7)); overflow-y: auto; padding-inline-end: var(--space-3); scrollbar-width: thin; }
+    .side-in { display: grid; gap: var(--space-5); }
+    .mobile-menu { display: none; }
+  }
+
+  @media (min-width: 82rem) {
+    .wiki { grid-template-columns: 15rem minmax(0, 46rem) 14rem; justify-content: space-between; }
+    .toc { display: block; position: sticky; inset-block-start: calc(var(--header-h) + var(--space-5)); font-size: 0.88rem; }
+    .toc ol { padding: 0; margin: var(--space-3) 0 0; display: grid; border-inline-start: 1px solid var(--line-strong); }
+    .toc a { display: block; padding: 0.3rem 0 0.3rem var(--space-3); margin-inline-start: -1px; border-inline-start: 2px solid transparent; color: var(--ink-soft); text-decoration: none; }
+    .toc .l3 a { padding-inline-start: var(--space-5); font-size: 0.85rem; }
+    .toc a:hover { color: var(--ink); }
+    .toc a[aria-current="true"] { color: var(--ink); border-inline-start-color: var(--violet); font-weight: 600; }
+  }
+</style>
+
+<script>
+  // Sumário: marca a seção que está na tela.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>(".toc a")];
+
+  if (links.length && "IntersectionObserver" in window) {
+    const targets = links
+      .map(link => document.getElementById(decodeURIComponent(link.hash.slice(1))))
+      .filter((node): node is HTMLElement => node !== null);
+
+    const mark = (id: string) => {
+      for (const link of links) {
+        if (link.hash === `#${id}`) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      }
+    };
+
+    const seen = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (visible) mark(visible.target.id);
+    }, { rootMargin: "-80px 0px -65% 0px" });
+
+    targets.forEach(node => seen.observe(node));
+  }
+</script>

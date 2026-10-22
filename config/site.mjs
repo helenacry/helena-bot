@@ -7,7 +7,8 @@
 // leem daqui. Quando o domínio próprio entrar no ar (helena.is-a.bot), troque
 // só esta linha.
 //
-// O site em si tem o seu próprio config em site/js/config.js (roda no navegador).
+// O site em si (projeto Astro) lê este arquivo no build, em site/astro.config.mjs, e tem os links e
+// as chaves públicas em site/src/config.ts.
 export const SITE_URL = "https://helenacry.github.io/helena-bot/";
 
 // O endereço público da API do bot (Discloud, atrás da Cloudflare). O bot o usa para montar o

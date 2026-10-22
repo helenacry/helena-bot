@@ -1,0 +1,188 @@
+/* Texto corrido: a wiki (HTML gerado de wiki/*.md) e as páginas de termos e
+   privacidade. Tudo sob .prose, porque o HTML vem de fora do Astro. */
+
+@layer reset, tokens, base, components, utilities;
+
+
+@layer components {
+  .prose { font-size: var(--step-0); line-height: 1.7; }
+  .prose > * + * { margin-block-start: var(--space-4); }
+
+  .prose h2 {
+    position: relative;
+    margin-block-start: var(--space-8);
+    font-size: var(--step-3);
+    letter-spacing: -0.035em;
+    padding-block-start: var(--space-4);
+    border-block-start: 2px solid var(--ink);
+  }
+
+  .prose h3 {
+    position: relative;
+    margin-block-start: var(--space-6);
+    font-size: var(--step-1);
+    letter-spacing: -0.02em;
+  }
+
+  .prose h2 + *, .prose h3 + * { margin-block-start: var(--space-3); }
+
+  /* O "#" que leva ao trecho: aparece quando a pessoa passa o mouse ou foca. */
+  .prose .anchor {
+    position: absolute;
+    inset-inline-start: -1.5rem;
+    inline-size: 1.5rem;
+    text-align: center;
+    color: var(--violet);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity var(--dur-1);
+  }
+
+  .prose :is(h2, h3):hover .anchor, .prose .anchor:focus-visible { opacity: 1; }
+  @media (max-width: 62rem) { .prose .anchor { display: none; } }
+
+  .prose a { color: var(--violet); text-decoration-color: color-mix(in oklab, var(--violet) 45%, transparent); }
+  .prose a:hover { text-decoration-color: currentColor; }
+
+  .prose ul, .prose ol { padding-inline-start: 1.3rem; display: grid; gap: var(--space-2); }
+  .prose ul { list-style: none; }
+  .prose ul > li { position: relative; }
+  .prose ul > li::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: -1.1rem;
+    inset-block-start: 0.7em;
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    background: var(--violet);
+    border-radius: 0.1rem;
+    transform: rotate(45deg);
+  }
+  .prose ol { list-style: decimal; }
+  .prose ol > li::marker { color: var(--violet); font-family: var(--font-mono); font-weight: 700; }
+  .prose li > ul, .prose li > ol { margin-block-start: var(--space-2); }
+
+  .prose pre {
+    padding: var(--space-4);
+    background: var(--chat-bg);
+    color: var(--chat-ink);
+    border: 1px solid var(--chat-line);
+    border-radius: var(--radius-ctl);
+    overflow-x: auto;
+    line-height: 1.55;
+  }
+
+  .prose pre code { background: none; padding: 0; color: inherit; font-size: 0.85rem; }
+
+  /* ------------------------------------------------------------ avisos */
+  .callout {
+    --c: var(--violet);
+    padding: var(--space-4) var(--space-5);
+    border: 1.5px solid var(--c);
+    border-inline-start-width: 6px;
+    border-radius: var(--radius-ctl);
+    background: color-mix(in oklab, var(--c) 7%, var(--paper-raised));
+  }
+
+  .callout > * + * { margin-block-start: var(--space-2); }
+  .callout.note { --c: var(--ink-soft); }
+  .callout.tip { --c: var(--violet); }
+  .callout.warning { --c: var(--danger); }
+  .callout.money { --c: var(--money); }
+  .callout.example { --c: var(--positive); }
+
+  .callout-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--c);
+  }
+
+  /* ----------------------------------------------------------- tabelas */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-obj);
+    background: var(--paper-raised);
+  }
+
+  .prose table { inline-size: 100%; font-size: 0.93rem; line-height: 1.5; }
+
+  .prose th, .prose td {
+    padding: 0.7rem var(--space-4);
+    text-align: start;
+    vertical-align: top;
+    border-block-end: 1px dotted var(--line-strong);
+  }
+
+  .prose tbody tr:last-child td { border-block-end: 0; }
+
+  .prose thead th {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--paper-sunk);
+    white-space: nowrap;
+    border-block-end: 1.5px solid var(--line-strong);
+  }
+
+  .prose td:first-child { font-weight: 600; }
+
+  @media (max-width: 40rem) {
+    .table-wrap.stack { overflow: visible; border: 0; background: none; }
+    .table-wrap.stack table, .table-wrap.stack tbody, .table-wrap.stack tr, .table-wrap.stack td { display: block; }
+    .table-wrap.stack thead { position: absolute; clip-path: inset(50%); inline-size: 1px; block-size: 1px; overflow: hidden; }
+    .table-wrap.stack tr { margin-block-end: var(--space-3); border: 1.5px solid var(--line-strong); border-radius: var(--radius-ctl); background: var(--paper-raised); overflow: hidden; }
+    .table-wrap.stack td { border: 0; border-block-end: 1px dotted var(--line-strong); padding: 0.55rem var(--space-4); }
+    .table-wrap.stack td:last-child { border-block-end: 0; }
+    .table-wrap.stack td:first-child { background: var(--paper-sunk); font-family: var(--font-display); font-size: 1.02rem; }
+    .table-wrap.stack td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+  }
+
+  /* ------------------------------------------------- lista de páginas */
+  .cards { list-style: none; padding: 0; margin: 0; border-block-start: 1.5px solid var(--line-strong); display: grid; }
+  .prose .cards { padding: 0; }
+  .prose .cards > li::before { content: none; }
+
+  .cards a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-4);
+    padding: var(--space-4) var(--space-3);
+    margin-inline: calc(var(--space-3) * -1);
+    border-block-end: 1px solid var(--line-strong);
+    text-decoration: none;
+    color: var(--ink);
+    transition: background-color var(--dur-1);
+  }
+
+  .cards a:hover { background: var(--violet-wash); }
+  .cards b { font-family: var(--font-display); font-size: var(--step-1); letter-spacing: -0.02em; line-height: 1.2; }
+  .cards span { grid-column: 1; color: var(--ink-soft); font-size: 0.93rem; line-height: 1.5; }
+  .cards a::after {
+    content: "→";
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    font-size: 1.5rem;
+    color: var(--violet);
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+  .cards a:hover::after { transform: translateX(0.3rem); }
+}

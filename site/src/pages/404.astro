@@ -1,0 +1,52 @@
+---
+import Base from "../layouts/Base.astro";
+import Plush from "../components/ui/Plush.astro";
+import Icon from "../components/ui/Icon.astro";
+import { url } from "../lib/url";
+---
+<Base title="Página não encontrada" description="Essa página não existe. Volte para o início ou procure na wiki." path="/404/" noindex>
+  <div class="wrap lost">
+    <Plush size={140} mood="dormindo" class="plush" />
+
+    <div class="copy">
+      <p class="label">Erro 404</p>
+      <h1>Essa página saiu da ficha.</h1>
+      <p class="lede">O endereço não existe ou foi movido. Dá para recomeçar por um destes caminhos.</p>
+
+      <div class="actions">
+        <a class="btn btn-primary" href={url("/")}>Voltar ao início <Icon name="arrow" size={18} /></a>
+        <a class="btn btn-quiet" href={url("/wiki/")}><Icon name="search" size={18} /> Procurar na wiki</a>
+      </div>
+
+      <ul class="links" role="list">
+        <li><a href={`${url("/")}#comandos`}>Ver os comandos</a></li>
+        <li><a href={url("/account/")}>Painel da conta</a></li>
+        <li><a href={url("/privacy/")}>Privacidade</a></li>
+      </ul>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .lost {
+    min-block-size: 60svh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6) var(--space-8);
+    align-items: center;
+    align-content: center;
+    padding-block: var(--space-8);
+  }
+
+  .lost :global(.plush) { transform: rotate(-6deg); }
+  .copy { display: grid; gap: var(--space-4); justify-items: start; }
+  .copy h1 { font-size: var(--step-4); letter-spacing: -0.04em; max-inline-size: 12ch; }
+  .lede { font-size: var(--step-1); color: var(--ink-soft); max-inline-size: 30rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+  .links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); padding: 0; margin: var(--space-2) 0 0; }
+  .links a { color: var(--violet); }
+
+  @media (min-width: 52rem) {
+    .lost { grid-template-columns: auto 1fr; }
+  }
+</style>

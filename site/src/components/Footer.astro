@@ -1,0 +1,108 @@
+---
+import Plush from "./ui/Plush.astro";
+import { SITE } from "../config";
+import { url } from "../lib/url";
+---
+<footer class="foot">
+  <div class="wrap grid">
+    <div class="about">
+      <a class="brand" href={url("/")}>
+        <Plush size={44} />
+        <span class="word">Helena</span>
+      </a>
+      <p>Bot de economia e RPG para a VSync. Um projeto independente, com os valores tirados do próprio código do bot.</p>
+      <p class="credits">
+        Criada por
+        {SITE.creators.map((creator, index) => (
+          <>{index > 0 && (index === SITE.creators.length - 1 ? " e " : ", ")}<a href={creator.url} rel="noopener">@{creator.handle}</a></>
+        ))}, da organização <a href={SITE.orgUrl} rel="noopener">{SITE.orgName}</a>.
+      </p>
+    </div>
+
+    <nav aria-label="O jogo">
+      <h2 class="label">O jogo</h2>
+      <ul role="list">
+        <li><a href={`${url("/")}#bolsos`}>Os três bolsos</a></li>
+        <li><a href={`${url("/")}#carreira`}>Carreira</a></li>
+        <li><a href={`${url("/")}#crime`}>Crime</a></li>
+        <li><a href={`${url("/")}#comandos`}>Comandos</a></li>
+      </ul>
+    </nav>
+
+    <nav aria-label="Ajuda">
+      <h2 class="label">Ajuda</h2>
+      <ul role="list">
+        <li><a href={url("/wiki/")}>Wiki</a></li>
+        <li><a href={`${url("/")}#duvidas`}>Perguntas frequentes</a></li>
+        <li><a href={SITE.supportUrl} rel="noopener">Servidor oficial</a></li>
+        {SITE.codeUrl && <li><a href={SITE.codeUrl} rel="noopener">Código no GitHub</a></li>}
+      </ul>
+    </nav>
+
+    <nav aria-label="Legal">
+      <h2 class="label">Legal</h2>
+      <ul role="list">
+        <li><a href={url("/terms/")}>Termos de uso</a></li>
+        <li><a href={url("/privacy/")}>Privacidade</a></li>
+        <li><a href={`${url("/privacy/")}#contato`}>Contato</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="wrap legal">
+    <p>A Helena não é um produto da VSync. Os valores de jogo vêm do bot e mudam com as atualizações.</p>
+    <p class="tabular">© 2026 Helena</p>
+  </div>
+</footer>
+
+<style>
+  .foot {
+    margin-block-start: var(--space-9);
+    padding-block: var(--space-8) var(--space-6);
+    background: var(--paper-sunk);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .grid {
+    display: grid;
+    gap: var(--space-6) var(--space-5);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about { grid-column: 1 / -1; max-inline-size: 28rem; }
+  .about p { color: var(--ink-soft); margin-block-start: var(--space-3); font-size: 0.95rem; }
+  .credits a { color: var(--ink); font-weight: 600; }
+
+  .brand { display: inline-flex; align-items: center; gap: var(--space-3); text-decoration: none; }
+  .word { font-family: var(--font-display); font-weight: 800; font-size: 1.9rem; letter-spacing: -0.04em; }
+
+  h2 { margin-block-end: var(--space-3); }
+  ul { padding: 0; display: grid; gap: var(--space-1); }
+
+  li a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.25rem;
+    text-decoration: none;
+    color: var(--ink-soft);
+  }
+
+  li a:hover { color: var(--ink); text-decoration: underline; }
+
+  .legal {
+    margin-block-start: var(--space-7);
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-5);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  @media (min-width: 52rem) {
+    .grid { grid-template-columns: 1.6fr repeat(3, 1fr); }
+    .about { grid-column: auto; }
+  }
+</style>

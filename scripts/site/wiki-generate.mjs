@@ -1,19 +1,19 @@
-// Lê wiki/*.md, junta com os números do bot e devolve os arquivos de site/wiki/.
+// Lê wiki/*.md, junta com os números do bot e devolve o conteúdo de
+// site/src/content/wiki.json (a lista de páginas que o Astro desenha).
 // Usado por scripts/site/build-wiki.mjs (grava) e por tests/wiki.test.mjs (confere).
 //
 // Quem importa este arquivo precisa ter apontado o banco para uma pasta
 // temporária antes (ver scripts/site/wiki-values.mjs).
 
 import { readdir, readFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 import { buildWiki } from "./wiki-pages.mjs";
 import { collectWikiBot } from "./wiki-values.mjs";
 
-const WIKI_DIR = fileURLToPath(new URL("../../wiki/", import.meta.url));
-const SITE_DIR = fileURLToPath(new URL("../../site/", import.meta.url));
+export const WIKI_DIR = fileURLToPath(new URL("../../wiki/", import.meta.url));
+export const WIKI_OUTPUT = fileURLToPath(new URL("../../site/src/content/wiki.json", import.meta.url));
 
 // wiki/index.md -> "home"; wiki/start/first-steps.md -> "start/first-steps"
 async function readSources() {
@@ -38,22 +38,24 @@ async function readSources() {
     return sources;
 }
 
-// um link site:terms/ vale se site/terms/index.html existe
-const siteHas = target => {
-    const clean = target.replace(/[?#].*$/, "");
-
-    const file = path.join(SITE_DIR, clean);
-
-    return clean === "" || existsSync(file) && (!clean.endsWith("/") || existsSync(path.join(file, "index.html")));
-};
-
 export async function generateWiki() {
     const { NAV } = await import("../../wiki/nav.mjs");
 
-    return buildWiki({
+    const pages = buildWiki({
         nav: NAV,
         sources: await readSources(),
-        bot: await collectWikiBot(),
-        siteHas
+        bot: await collectWikiBot()
     });
+
+    const nav = NAV.map(section => ({
+        id: section.id,
+        title: section.title,
+        pages: section.pages.map(page => `${section.id}/${page}`)
+    }));
+
+    return {
+        pages,
+        nav,
+        json: JSON.stringify({ nav, pages }, null, 2) + "\n"
+    };
 }

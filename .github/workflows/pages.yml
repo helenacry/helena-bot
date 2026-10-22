@@ -1,12 +1,23 @@
 name: Publicar site
 
-# Publica a pasta site/ no GitHub Pages sempre que algo nela muda na main.
-# Também dá para rodar à mão, na aba Actions.
+# O site (Astro, na pasta site/) é conferido a cada push na main e na testes, e publicado no
+# GitHub Pages só a partir da main. Também dá para rodar à mão, na aba Actions.
+#
+# A publicação só acontece se passar em tudo: tipos, build, verificação (contraste, links, peso,
+# metadados) e os testes de navegador (acessibilidade com axe, rolagem lateral, pedidos a
+# terceiros e os fluxos principais). Os testes do bot (npm test) rodam num job à parte e não
+# seguram o site.
 on:
   push:
-    branches: [main]
+    branches: [main, testes]
     paths:
       - "site/**"
+      - "wiki/**"
+      - "scripts/site/**"
+      - "config/site.mjs"
+      - "config/web.mjs"
+      - "assets/helena_pfp.png"
+      - "package.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -15,32 +26,78 @@ permissions:
   pages: write
   id-token: write
 
+# uma execução por branch: um push novo cancela a anterior da mesma branch (a testes nunca
+# cancela uma publicação da main)
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
-      # Só o que o navegador precisa. Os geradores do site moram em scripts/site/
-      # (rodam no computador de quem mantém o bot); o filtro de .mjs é só uma trava,
-      # para um script nunca ir parar na página se alguém o puser em site/.
-      - name: Montar a pasta do site
-        run: |
-          mkdir _site
-          rsync -a --exclude='*.mjs' site/ _site/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Instalar as dependências do site
+        run: npm ci --prefix site
+
+      - name: Conferir os tipos
+        run: npm --prefix site run check
+
+      - name: Montar o site
+        run: npm --prefix site run build
+
+      - name: Verificar o build (contraste, links, peso e metadados)
+        run: npm --prefix site run verify
+
+      - name: Instalar o navegador dos testes
+        run: npx --prefix site playwright install --with-deps chromium
+
+      - name: Testes de navegador (acessibilidade e fluxos)
+        working-directory: site
+        env:
+          PLAYWRIGHT_CHANNEL: chromium
+        run: npx playwright test
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: site/dist
 
+  deploy:
+    needs: build
+    # a testes só confere; quem publica é a main (ou uma execução manual na main)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # duas publicações nunca ao mesmo tempo, e nenhuma é cancelada no meio
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Os testes do bot e da lógica que o site compartilha com ele (dados, política de privacidade
+  # contra o banco, wiki). Falhar aqui avisa, mas não impede a publicação do site.
+  bot-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm test

@@ -1,0 +1,193 @@
+---
+import SectionHead from "../ui/SectionHead.astro";
+import Cmd from "../ui/Cmd.astro";
+import { data, game } from "../../lib/game";
+import { money, moneyWhole, int } from "../../lib/format";
+
+const jobs = data.jobs;
+const first = jobs[0]!;
+const last = jobs[jobs.length - 1]!;
+
+// A altura segue a raiz quadrada do salário: sem isso, só o Magnata apareceria.
+const height = (salary: number) => Math.round(Math.sqrt(salary / last.salary) * 100);
+---
+<section class="section career" id="carreira" aria-labelledby="carreira-title">
+  <div class="wrap">
+    <div class="head">
+      <SectionHead kicker="Carreira" title="Do primeiro turno à diretoria" id="carreira-title">
+        <p>Cada turno de <code>/trabalhar</code> rende {game.work.xp} XP e paga o salário do seu emprego. Subiu de nível, abriu um emprego melhor.</p>
+      </SectionHead>
+      <div class="cmds">
+        <Cmd command="/trabalhar" />
+        <Cmd command="/empregos" />
+      </div>
+    </div>
+
+    <div class="ladder" data-ladder>
+      <p class="readout" id="ladder-readout" aria-live="polite" data-default={`${first.name}, nível ${first.level}, ${money(first.salary)} por turno. Até ${last.name}, nível ${last.level}, ${money(last.salary)}.`}>
+        <span class="who">{first.name}</span>
+        <span class="what">nível {first.level} · {money(first.salary)} por turno</span>
+      </p>
+
+      <div class="scroller" role="region" aria-label="Salário de cada emprego, do nível 1 ao 85" tabindex="0">
+        <ol class="bars" role="list">
+          {jobs.map(job => (
+            <li>
+              <button
+                type="button"
+                class="bar"
+                style={`--h:${height(job.salary)}`}
+                data-name={job.name}
+                data-level={job.level}
+                data-salary={money(job.salary)}
+                aria-label={`${job.name}, nível ${job.level}, ${money(job.salary)} por turno`}
+              >
+                <span class="sr-only">{job.name}</span>
+              </button>
+              <span class="lv tabular" aria-hidden="true">{job.level}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <p class="axis">Nível necessário em cada emprego. A altura segue a raiz quadrada do salário por turno, de {moneyWhole(first.salary)} a {moneyWhole(last.salary)}.</p>
+    </div>
+
+    <details class="all">
+      <summary>Ver os {int(jobs.length)} empregos em uma tabela</summary>
+      <div class="table-scroll" role="region" aria-label="Tabela de empregos" tabindex="0">
+        <table>
+          <thead><tr><th scope="col">Emprego</th><th scope="col" class="num">Nível</th><th scope="col" class="num">Por turno</th></tr></thead>
+          <tbody>
+            {jobs.map(job => (
+              <tr><th scope="row">{job.name}</th><td class="num">{job.level}</td><td class="num">{money(job.salary)}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+</section>
+
+<style>
+  .head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-5); }
+  .cmds { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+  .ladder { margin-block-start: var(--space-7); }
+
+  .readout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-4);
+    min-block-size: 3.4rem;
+    margin-block-end: var(--space-4);
+  }
+
+  .who { font-family: var(--font-display); font-weight: 800; font-size: var(--step-3); letter-spacing: -0.035em; line-height: 1; }
+  .what { font-family: var(--font-mono); font-size: 0.9rem; color: var(--ink-soft); }
+
+  .scroller { overflow-x: auto; overflow-y: hidden; padding-block: var(--space-2) var(--space-6); margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); scrollbar-width: thin; }
+
+  .bars {
+    display: flex;
+    align-items: end;
+    gap: 0.35rem;
+    min-inline-size: 46rem;
+    block-size: 17rem;
+    margin: 0;
+    padding: 0;
+    border-block-end: 2px solid var(--ink);
+  }
+
+  .bars li { flex: 1 1 0; min-inline-size: 0; block-size: 100%; display: flex; flex-direction: column; justify-content: end; position: relative; }
+
+  .bar {
+    block-size: calc(var(--h) * 1%);
+    min-block-size: 0.6rem;
+    inline-size: 100%;
+    background: var(--money-bar);
+    border: 2px solid var(--ink);
+    border-block-end: 0;
+    border-radius: 0.35rem 0.35rem 0 0;
+    transition: background-color var(--dur-1), transform var(--dur-2) var(--ease-out);
+    transform-origin: bottom;
+  }
+
+  .bar:hover, .bar:focus-visible, .bar[aria-pressed="true"] { background: var(--violet-fill); }
+  .bar:focus-visible { outline-offset: 2px; }
+
+  .lv {
+    position: absolute;
+    inset-block-start: calc(100% + 0.4rem);
+    inset-inline: 0;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+  }
+
+  .axis { margin-block-start: var(--space-6); font-size: 0.85rem; color: var(--ink-soft); max-inline-size: 46rem; }
+
+  .all { margin-block-start: var(--space-6); border-block: 1px solid var(--line); }
+  .all summary { display: flex; align-items: center; justify-content: space-between; min-block-size: 3.25rem; font-weight: 600; }
+  .all summary::after { content: "+"; font-family: var(--font-mono); font-size: 1.4rem; color: var(--violet); transition: transform var(--dur-2) var(--ease-out); }
+  .all[open] summary::after { transform: rotate(45deg); }
+
+  .table-scroll { overflow-x: auto; padding-block-end: var(--space-4); }
+  table { inline-size: 100%; max-inline-size: 34rem; font-size: 0.95rem; }
+  th, td { padding: 0.5rem 0.75rem 0.5rem 0; text-align: start; border-block-end: 1px dotted var(--line-strong); }
+  thead th { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+  tbody th { font-weight: 600; }
+  .num { text-align: end; padding-inline-end: 0; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .bars.in .bar { animation: grow 700ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 25ms); }
+    @keyframes grow { from { transform: scaleY(0.02); } }
+  }
+</style>
+
+<script>
+  // O painel de leitura acompanha a barra que está em foco ou sob o ponteiro.
+  const root = document.querySelector<HTMLElement>("[data-ladder]");
+
+  if (root) {
+    const readout = root.querySelector<HTMLElement>("#ladder-readout")!;
+    const who = readout.querySelector<HTMLElement>(".who")!;
+    const what = readout.querySelector<HTMLElement>(".what")!;
+    const initial = { who: who.textContent ?? "", what: what.textContent ?? "" };
+    const bars = [...root.querySelectorAll<HTMLButtonElement>(".bar")];
+
+    const show = (bar: HTMLButtonElement | null) => {
+      who.textContent = bar ? bar.dataset.name ?? "" : initial.who;
+      what.textContent = bar ? `nível ${bar.dataset.level} · ${bar.dataset.salary} por turno` : initial.what;
+    };
+
+    for (const bar of bars) {
+      bar.addEventListener("pointerenter", () => show(bar));
+      bar.addEventListener("focus", () => show(bar));
+      bar.addEventListener("click", () => {
+        bars.forEach(other => other.setAttribute("aria-pressed", String(other === bar)));
+        show(bar);
+      });
+    }
+
+    root.querySelector(".bars")?.addEventListener("pointerleave", () => {
+      const pressed = bars.find(bar => bar.getAttribute("aria-pressed") === "true");
+      show(pressed ?? null);
+    });
+
+    // A subida das barras roda uma vez, quando a seção chega à tela.
+    const list = root.querySelector<HTMLElement>(".bars")!;
+    bars.forEach((bar, index) => bar.style.setProperty("--i", String(index)));
+
+    if (matchMedia("(prefers-reduced-motion: no-preference)").matches && "IntersectionObserver" in window) {
+      const seen = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          list.classList.add("in");
+          seen.disconnect();
+        }
+      }, { rootMargin: "0px 0px -15% 0px" });
+      seen.observe(list);
+    }
+  }
+</script>

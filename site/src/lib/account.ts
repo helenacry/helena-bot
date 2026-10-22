@@ -1,0 +1,232 @@
+// Painel da conta, parte sem tela: login com a VSync (OAuth2 + PKCE), formatos e
+// as regras de ordem e de texto. A API fica em services/web/web-api.mjs (veja o
+// README, "Painel do site (API)"). Tudo aqui é puro e testado em site/tests/account.test.ts.
+
+// ------------------------------------------------------------------ tipos da API
+
+export interface Prize {
+  total: number;
+  weeklyBonus: number;
+}
+
+export interface DailyStatus {
+  available: boolean;
+  remaining: number;
+  streak: number;
+  nextStreak: number;
+  nextReward: Prize;
+}
+
+export interface Guild {
+  id: string;
+  name: string;
+  icon: string | null;
+  player: { wallet: number; bank: number; level: number } | null;
+  daily: DailyStatus;
+  prison: { remaining: number } | null;
+}
+
+export interface Me {
+  user: { id?: string; username: string; displayName: string; avatarUrl: string | null };
+  expiresAt: number;
+  captcha: boolean;
+  gems: { balance: number; available: boolean; remaining: number; min: number; max: number; cooldown: number };
+  daily: { cooldown: number; ladder: number[] };
+  guilds: Guild[];
+}
+
+export interface Session {
+  token: string;
+  expiresAt: number;
+}
+
+// ------------------------------------------------------------------ PKCE
+
+export function base64url(bytes: Uint8Array): string {
+  let text = "";
+
+  for (const byte of bytes) text += String.fromCharCode(byte);
+
+  return btoa(text).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+const randomBytes = (size: number): Uint8Array => crypto.getRandomValues(new Uint8Array(size));
+
+/** O verifier fica só no navegador; a VSync recebe o desafio (S256). */
+export async function pkce(): Promise<{ verifier: string; challenge: string }> {
+  const verifier = base64url(randomBytes(32)); // 43 caracteres
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+
+  return { verifier, challenge: base64url(new Uint8Array(digest)) };
+}
+
+export const randomState = (): string => base64url(randomBytes(16));
+
+/** Endereço de retorno = a própria página, terminando em "/". Tem de ser igual ao cadastrado na VSync. */
+export function redirectUri(location: { origin: string; pathname: string }): string {
+  let path = location.pathname.replace(/index\.html$/, "");
+
+  if (!path.endsWith("/")) path += "/";
+
+  return location.origin + path;
+}
+
+export function buildAuthorizeUrl(options: { clientId: string; redirectUri: string; state: string; challenge: string }): string {
+  const query = new URLSearchParams({
+    client_id: options.clientId,
+    response_type: "code",
+    redirect_uri: options.redirectUri,
+    scope: "identify guilds",
+    state: options.state,
+    code_challenge: options.challenge,
+    code_challenge_method: "S256"
+  });
+
+  return `https://vsync.lat/oauth2/authorize?${query.toString()}`;
+}
+
+/** O que a VSync devolveu na volta do login. */
+export function parseCallback(search: string): { code: string; state: string; error: string } {
+  const query = new URLSearchParams(search);
+
+  return {
+    code: query.get("code") ?? "",
+    state: query.get("state") ?? "",
+    error: query.get("error") ?? ""
+  };
+}
+
+// ------------------------------------------------------------------ formatos
+
+/** Centavos -> "R$ 1.234,56". */
+export function formatMoney(cents: unknown): string {
+  return ((Number(cents) || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/** 3725 -> "1h 2m 5s"; menos de 1 hora -> "2m 5s". */
+export function formatDuration(seconds: unknown): string {
+  const total = Math.max(0, Math.ceil(Number(seconds) || 0));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  const parts: string[] = [];
+
+  if (hours > 0) parts.push(`${hours}h`);
+  if (hours > 0 || minutes > 0) parts.push(`${minutes}m`);
+
+  parts.push(`${secs}s`);
+
+  return parts.join(" ");
+}
+
+/** 55000 -> "550", 130000 -> "1.300": o prêmio na escada, sem "R$" e sem centavos. */
+export const shortMoney = (cents: unknown): string => Math.round((Number(cents) || 0) / 100).toLocaleString("pt-BR");
+
+/** Quanto da espera já passou (de 0 a 1): faltam `remaining` de `total` segundos. */
+export function waitProgress(remaining: unknown, total: unknown): number {
+  const whole = Number(total) > 0 ? Number(total) : 1;
+
+  return Math.min(1, Math.max(0, 1 - (Number(remaining) || 0) / whole));
+}
+
+// ------------------------------------------------------------------ regras de tela
+
+export interface Pip {
+  day: number;
+  weekly: boolean;
+  state: "done" | "next" | "todo";
+}
+
+/** Os 7 dias do ciclo: "done" já coletados, "next" o de hoje, "todo" os que faltam. O sétimo é o do bônus semanal. */
+export function weekPips(nextStreak: number): Pip[] {
+  const position = ((Math.max(1, nextStreak) - 1) % 7) + 1;
+  const pips: Pip[] = [];
+
+  for (let day = 1; day <= 7; day++) {
+    pips.push({ day, weekly: day === 7, state: day < position ? "done" : day === position ? "next" : "todo" });
+  }
+
+  return pips;
+}
+
+/** 0 = daily liberado, 1 = esperando, 2 = preso. */
+const rankOf = (guild: Guild): number => (guild.prison ? 2 : guild.daily.available ? 0 : 1);
+
+const rewardOf = (guild: Guild): number => Number(guild.daily.nextReward?.total) || 0;
+
+/**
+ * Ordem das linhas: o daily liberado vem primeiro (o prêmio maior na frente); depois
+ * quem está esperando (o que libera antes vem antes); por último, quem está preso.
+ * Empatou, fica a ordem da API.
+ */
+export function sortGuilds(guilds: readonly Guild[] | null | undefined): Guild[] {
+  return (guilds ?? [])
+    .map((guild, index) => ({ guild, index }))
+    .sort((a, b) => {
+      const diff = rankOf(a.guild) - rankOf(b.guild);
+
+      if (diff) return diff;
+
+      if (rankOf(a.guild) === 0 && rewardOf(a.guild) !== rewardOf(b.guild)) {
+        return rewardOf(b.guild) - rewardOf(a.guild);
+      }
+
+      if (rankOf(a.guild) === 1 && a.guild.daily.remaining !== b.guild.daily.remaining) {
+        return a.guild.daily.remaining - b.guild.daily.remaining;
+      }
+
+      return a.index - b.index;
+    })
+    .map(item => item.guild);
+}
+
+/** O resumo do topo da lista: quantos dailys estão liberados, quanto somam (centavos) e, se nenhum está, em quanto tempo sai o próximo. Preso não conta. */
+export function tally(guilds: readonly Guild[] | null | undefined): { ready: number; total: number; nextIn: number | null } {
+  let ready = 0;
+  let total = 0;
+  let nextIn: number | null = null;
+
+  for (const guild of guilds ?? []) {
+    if (guild.prison) continue;
+
+    if (guild.daily.available) {
+      ready += 1;
+      total += rewardOf(guild);
+    } else if (nextIn === null || guild.daily.remaining < nextIn) {
+      nextIn = guild.daily.remaining;
+    }
+  }
+
+  return { ready, total, nextIn };
+}
+
+/** A escada do exemplo da tela de entrada: os mesmos valores do bot (o teste confere contra o cálculo do daily). */
+export const SAMPLE_LADDER = [50000, 55000, 60000, 65000, 70000, 75000, 130000] as const;
+
+/** Só imagens https entram na página (nada de javascript: ou data:). */
+export const safeImage = (url: unknown): string => (typeof url === "string" && /^https:\/\//.test(url) ? url : "");
+
+/** Texto para cada resposta de erro da API. */
+export function errorText(code: string | undefined, extra: { remaining?: number; retryAfter?: number } = {}): string {
+  const wait = extra.remaining !== undefined ? formatDuration(extra.remaining) : "";
+
+  const texts: Record<string, string> = {
+    cooldown: wait ? `Ainda não liberou. Falta ${wait}.` : "Ainda não liberou.",
+    prison: `Você está preso nesse servidor${wait ? ` (falta ${wait})` : ""}. Preso não coleta o daily.`,
+    wallet_full: "Sua carteira está no limite. Deposite parte do dinheiro no banco e tente de novo.",
+    guild_not_allowed: "A Helena não está nesse servidor ou você saiu dele. Entre de novo para atualizar a lista.",
+    captcha_required: "Confirme a verificação anti-robô antes de coletar.",
+    captcha_failed: "A verificação anti-robô falhou. Tente de novo.",
+    captcha_unavailable: "Não consegui conferir a verificação agora. Tente de novo em instantes.",
+    too_many_requests: `Muitas tentativas. Espere um pouco${extra.retryAfter ? ` (${formatDuration(extra.retryAfter)})` : ""}.`,
+    session_expired: "Sua sessão acabou. Entre de novo.",
+    unauthorized: "Sua sessão acabou. Entre de novo.",
+    login_failed: "Não deu para entrar. Tente de novo.",
+    invalid_redirect: "Este endereço não está autorizado a fazer login. Avise a equipe da Helena.",
+    vsync_unavailable: "A VSync não respondeu agora. Tente de novo em instantes."
+  };
+
+  return (code && texts[code]) || "Algo deu errado. Tente de novo.";
+}
+
+export const OFFLINE = "A Helena está fora do ar agora. Tente de novo mais tarde.";

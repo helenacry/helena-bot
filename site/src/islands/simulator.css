@@ -1,0 +1,237 @@
+@layer reset, tokens, base, components, utilities;
+
+@layer components {
+  .sim {
+    --gap: 0.85rem;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    block-size: min(36rem, 78svh);
+    background: var(--chat-bg);
+    color: var(--chat-ink);
+    border: 1px solid var(--chat-line);
+    border-radius: var(--radius-obj);
+    box-shadow: var(--shadow-obj);
+    overflow: hidden;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    text-align: start;
+  }
+
+  .sim-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 0.6rem 0.9rem;
+    background: var(--chat-bar);
+    border-block-end: 1px solid var(--chat-line);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+  }
+
+  .sim-channel { font-weight: 650; color: var(--chat-ink); }
+
+  .sim-tag {
+    padding: 0.15rem 0.55rem;
+    border: 1px dashed var(--chat-ink-soft);
+    border-radius: var(--radius-pill);
+    color: var(--chat-ink-soft);
+    white-space: nowrap;
+  }
+
+  .sim-log {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--gap);
+    display: grid;
+    align-content: start;
+    gap: var(--gap);
+    scrollbar-width: thin;
+    scrollbar-color: var(--chat-line) transparent;
+  }
+
+  .sim-log:focus-visible { outline-offset: -4px; }
+
+  .sim-group { display: grid; gap: 0.7rem; }
+
+  .sim-msg { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: 0.7rem; align-items: start; }
+
+  .sim-avatar {
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--chat-btn);
+  }
+
+  .sim-avatar.user {
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: var(--chat-btn-ink);
+    background: oklch(40% 0.1 250);
+  }
+
+  .sim-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; color: var(--chat-ink-soft); }
+  .sim-meta b { color: var(--chat-ink); font-weight: 650; }
+
+  .sim-slash {
+    padding: 0 0.35rem;
+    border-radius: 0.3rem;
+    background: var(--chat-code);
+    color: var(--chat-ink);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+
+  .sim-bot {
+    padding: 0.05rem 0.35rem;
+    border-radius: 0.25rem;
+    background: var(--chat-primary);
+    color: var(--on-violet);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .sim-body { min-inline-size: 0; display: grid; gap: 0.5rem; }
+
+  .sim-card { margin: 0; max-inline-size: 26rem; }
+  .sim-card img {
+    inline-size: 100%;
+    border-radius: 0.6rem;
+    border: 1px solid var(--chat-line);
+  }
+
+  .sim-embed {
+    --accent: var(--embed-primary);
+    max-inline-size: 28rem;
+    padding: 0.75rem 0.9rem 0.8rem;
+    background: var(--chat-embed);
+    border-inline-start: 4px solid var(--accent);
+    border-radius: 0.35rem 0.6rem 0.6rem 0.35rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .sim-embed.accent-success { --accent: var(--embed-success); }
+  .sim-embed.accent-error { --accent: var(--embed-error); }
+  .sim-embed.accent-warning { --accent: var(--embed-warning); }
+  .sim-embed.accent-economy { --accent: var(--embed-economy); }
+
+  .sim-embed p { margin: 0; }
+  .sim-embed-title { font-weight: 700; font-size: 0.98rem; }
+  .sim-embed-desc { color: var(--chat-ink); }
+  .sim-line { display: block; }
+  .sim-embed code {
+    padding: 0.05rem 0.3rem;
+    border-radius: 0.25rem;
+    background: var(--chat-code);
+    color: var(--chat-ink);
+    font-size: 0.78rem;
+  }
+
+  .sim-fields { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem 0.8rem; }
+  .sim-field { min-inline-size: 0; }
+  .sim-field.wide { grid-column: 1 / -1; }
+  .sim-field dt { font-weight: 650; font-size: 0.78rem; color: var(--chat-ink); }
+  .sim-field dd { margin: 0; color: var(--chat-ink-soft); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .sim-field dd strong { color: var(--chat-ink); }
+
+  .sim-embed-foot { font-size: 0.72rem; color: var(--chat-ink-soft); }
+
+  .sim-comps { display: grid; gap: 0.35rem; }
+  .sim-select {
+    padding: 0.5rem 0.7rem;
+    background: var(--chat-code);
+    border-radius: 0.4rem;
+    color: var(--chat-ink-soft);
+    max-inline-size: 28rem;
+  }
+  .sim-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .sim-btn {
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.4rem;
+    background: var(--chat-btn);
+    color: var(--chat-btn-ink);
+    font-size: 0.8rem;
+    font-weight: 560;
+  }
+  .sim-btn.ok { background: var(--chat-ok); }
+  .sim-btn.danger { background: var(--chat-danger); }
+  .sim-btn.primary { background: var(--chat-primary); }
+  .sim-btn.off { opacity: 0.45; }
+
+  .sim-typing { display: inline-flex; gap: 0.3rem; padding: 0.35rem 0; margin: 0; }
+  .sim-typing i {
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    border-radius: 50%;
+    background: var(--chat-ink-soft);
+    animation: sim-dot 900ms var(--ease-in-out) infinite;
+  }
+  .sim-typing i:nth-child(2) { animation-delay: 150ms; }
+  .sim-typing i:nth-child(3) { animation-delay: 300ms; }
+
+  @keyframes sim-dot {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+    30% { transform: translateY(-0.25rem); opacity: 1; }
+  }
+
+  /* Mensagem nova entra deslizando; o estado final é o normal. */
+  @media (prefers-reduced-motion: no-preference) {
+    .sim-group { animation: sim-in 320ms var(--ease-out) both; }
+    @keyframes sim-in { from { opacity: 0; transform: translateY(0.6rem); } }
+  }
+
+  .sim-composer {
+    padding: 0.7rem 0.9rem 0.9rem;
+    background: var(--chat-bar);
+    border-block-start: 1px solid var(--chat-line);
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .sim-hint { margin: 0; font-size: 0.75rem; color: var(--chat-ink-soft); }
+
+  .sim-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+  .sim-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-block-size: var(--hit);
+    padding-inline: 0.85rem;
+    border: 1px solid var(--chat-line);
+    border-radius: var(--radius-pill);
+    background: var(--chat-embed);
+    color: var(--chat-ink);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: background-color var(--dur-1), border-color var(--dur-1), transform var(--dur-1) var(--ease-out);
+  }
+
+  .sim-chip small { font-weight: 500; color: var(--chat-ink-soft); font-size: 0.68rem; }
+
+  .sim-chip:hover:not(:disabled) { background: var(--chat-btn); border-color: var(--chat-ink-soft); }
+  .sim-chip:active:not(:disabled) { transform: translateY(1px); }
+  .sim-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+  .sim-chip:focus-visible { outline-color: oklch(82% 0.13 293); }
+
+  .sim-chip.ghost {
+    margin-inline-start: auto;
+    border-style: dashed;
+    color: var(--chat-ink-soft);
+    font-family: var(--font-text);
+    font-weight: 560;
+  }
+
+  @media (max-width: 30rem) {
+    .sim-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sim-msg { grid-template-columns: 2rem minmax(0, 1fr); gap: 0.55rem; }
+    .sim-avatar { inline-size: 2rem; block-size: 2rem; }
+    .sim-tag { display: none; }
+  }
+}

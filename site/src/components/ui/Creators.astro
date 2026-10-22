@@ -1,0 +1,15 @@
+---
+// Quem faz a Helena, para os textos de termos e privacidade e para o rodapé.
+//   <Creators />        "os perfis dos criadores no GitHub (@a e @b), a organização helenacry"
+//   <Creators short />  "@a e @b" (só os nomes, com o link de cada perfil)
+// Tudo vem de SITE (src/config.ts); trocar uma pessoa lá troca em todas as páginas.
+import { SITE } from "../../config";
+
+interface Props {
+  short?: boolean;
+}
+
+const { short = false } = Astro.props;
+const last = SITE.creators.length - 1;
+---
+{!short && "os perfis dos criadores no GitHub ("}{SITE.creators.map((creator, index) => (<>{index > 0 && (index === last ? " e " : ", ")}<a href={creator.url} rel="noopener">@{creator.handle}</a></>))}{!short && <>), a organização <a href={SITE.orgUrl} rel="noopener">{SITE.orgName}</a></>}

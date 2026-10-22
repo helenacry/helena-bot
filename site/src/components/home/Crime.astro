@@ -1,0 +1,151 @@
+---
+import SectionHead from "../ui/SectionHead.astro";
+import Cmd from "../ui/Cmd.astro";
+import Plush from "../ui/Plush.astro";
+import CrimeLab from "../../islands/CrimeLab";
+import { game } from "../../lib/game";
+import { moneyWhole, percent, duration } from "../../lib/format";
+
+const c = game.crime;
+const rob = game.robbery;
+const wash = game.laundering;
+const esc = game.escape;
+
+const rewardMin = Math.min(...c.successStories.map(story => story.min));
+const rewardMax = Math.max(...c.successStories.map(story => story.max));
+const scale = c.scaleAtLevel100.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+
+const dossier = [
+  {
+    title: "Crime",
+    command: "/crime",
+    rows: [
+      ["Custo", `${c.energy} de energia`],
+      ["Recarga", duration(c.cooldownSeconds)],
+      ["Chance de dar certo", percent(c.successChance)],
+      ["Se der certo", `${moneyWhole(rewardMin)} a ${moneyWhole(rewardMax)} sujos*`, "good"],
+      ["Se der errado", `${duration(c.jailSeconds)} de cadeia e multa`, "bad"]
+    ]
+  },
+  {
+    title: "Roubo",
+    command: "/roubar",
+    rows: [
+      ["Custo", `${rob.energy} de energia`],
+      ["Recarga", duration(rob.cooldownSeconds)],
+      ["Você leva", `${percent(rob.stealRate.min)} a ${percent(rob.stealRate.max)} da carteira`, "good"],
+      ["Do que levou", `${percent(rob.cleanShare)} limpo, o resto sujo`],
+      ["Se der errado", "ficha criminal e revide", "bad"]
+    ]
+  },
+  {
+    title: "Lavagem",
+    command: "/lavagem",
+    rows: [
+      ["Pública", `${percent(wash.kinds.public.rate.min)} a ${percent(wash.kinds.public.rate.max)} de retorno`],
+      ["Privada", `${percent(wash.kinds.private.rate.min)} a ${percent(wash.kinds.private.rate.max)} de retorno`, "good"],
+      ["Liberar a privada", `${wash.privateUnlockGems} gemas, uma vez`],
+      ["Por operação", `${moneyWhole(wash.minAmount)} a ${moneyWhole(wash.maxAmount)}`],
+      ["Recarga", `${duration(wash.kinds.public.cooldownSeconds)} pública, ${duration(wash.kinds.private.cooldownSeconds)} privada`]
+    ]
+  },
+  {
+    title: "Prisão",
+    command: "/prisao",
+    rows: [
+      ["Pena de um crime", duration(c.jailSeconds)],
+      ["Fuga", `minigame em ${esc.stages} etapas`],
+      ["Fuga que dá certo", `corta ${percent(esc.winCut)} da pena`, "good"],
+      ["Fuga que falha", `soma ${percent(esc.lossAdd)} à pena`, "bad"],
+      ["Entre tentativas", duration(esc.cooldownSeconds)]
+    ]
+  }
+] as const;
+---
+<section class="crime night" id="crime" aria-labelledby="crime-title">
+  <div class="wrap">
+    <div class="intro">
+      <SectionHead kicker="O outro lado" title="Dinheiro fácil tem preço" id="crime-title">
+        <p>O crime paga mais que o trabalho e cobra por isso. O dinheiro sujo não vale nada até ser lavado, e quem é pego vai para a cadeia.</p>
+      </SectionHead>
+      <Plush size={96} mood="preso" class="inmate" />
+    </div>
+
+    <div class="cols">
+      <div class="dossier">
+        {dossier.map(group => (
+          <section class="file" aria-labelledby={`file-${group.title}`}>
+            <header>
+              <h3 id={`file-${group.title}`}>{group.title}</h3>
+              <Cmd command={group.command} />
+            </header>
+            <dl>
+              {group.rows.map(([label, value, tone]) => (
+                <div class="row">
+                  <dt>{label}</dt>
+                  <dd class={tone}>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
+        <p class="foot">* Valores do nível 1. O prêmio e a multa crescem com o nível, até cerca de {scale} vezes no nível 100.</p>
+      </div>
+
+      <div class="lab-col">
+        <h3 class="lab-title">Faça as contas antes</h3>
+        <p class="lab-intro">Sorteia com a chance e os valores reais do bot. Mexa no nível e veja se compensa.</p>
+        <CrimeLab client:visible />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .crime {
+    margin-block: var(--space-8);
+    padding-block: var(--space-8);
+    position: relative;
+  }
+
+  /* A linha de picote no topo, como se a seção tivesse sido destacada de um bloco. */
+  .crime::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 0.7rem;
+    inset-inline: 0;
+    border-block-start: 2px dashed var(--line-strong);
+  }
+
+  .intro { display: flex; align-items: end; justify-content: space-between; gap: var(--space-5); }
+  .intro :global(.inmate) { flex: none; margin-block-end: -0.4rem; transform: rotate(5deg); }
+  @media (max-width: 40rem) { .intro :global(.inmate) { display: none; } }
+
+  .cols { margin-block-start: var(--space-7); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-8) var(--space-7); align-items: start; }
+
+  .dossier { display: grid; gap: var(--space-6); }
+
+  .file header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); margin-block-end: var(--space-2); }
+  .file h3 { font-size: var(--step-2); }
+
+  dl { margin: 0; }
+
+  .row { display: flex; align-items: baseline; gap: 0.5rem; padding-block: 0.28rem; }
+  /* O pontilhado entre o nome e o valor mora no próprio <dt>: <dl> só aceita dt e dd. */
+  .row dt { flex: 1 1 auto; display: flex; align-items: baseline; gap: 0.5rem; color: var(--ink-soft); }
+  .row dt::after { content: ""; flex: 1; min-inline-size: 0.75rem; border-block-end: 2px dotted var(--line-strong); transform: translateY(-0.25em); }
+  .row dd { margin: 0; text-align: end; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row dd.good { color: var(--positive); }
+  .row dd.bad { color: var(--danger); }
+
+  .foot { font-size: 0.85rem; color: var(--ink-soft); }
+
+  .lab-col { display: grid; gap: var(--space-3); }
+  .lab-title { font-size: var(--step-2); }
+  .lab-intro { color: var(--ink-soft); }
+
+  @media (min-width: 62rem) {
+    .cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .lab-col { position: sticky; inset-block-start: calc(var(--header-h) + var(--space-5)); }
+  }
+</style>

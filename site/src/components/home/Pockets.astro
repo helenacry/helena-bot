@@ -1,0 +1,140 @@
+---
+import SectionHead from "../ui/SectionHead.astro";
+import Cmd from "../ui/Cmd.astro";
+import { game } from "../../lib/game";
+import { percent } from "../../lib/format";
+
+const { laundering, robbery } = game;
+const pub = laundering.kinds.public;
+const priv = laundering.kinds.private;
+---
+<section class="section pockets" id="bolsos" aria-labelledby="bolsos-title">
+  <div class="wrap">
+    <SectionHead kicker="O jogo" title="Seu dinheiro mora em três bolsos" id="bolsos-title">
+      <p>Onde ele está decide se pode ser roubado, se compra alguma coisa e quanto você perde no caminho.</p>
+    </SectionHead>
+
+    <div class="flow">
+      <article class="pocket dirty">
+        <span class="stamp-mark warn tag">Não vale nada</span>
+        <h3>Sujo</h3>
+        <p>Vem do crime e de metade de cada roubo. Não compra nem paga nada até passar pela lavagem.</p>
+        <Cmd command="/crime" />
+      </article>
+
+      <div class="link wash" aria-label="Da lavagem para a carteira">
+        <Cmd command="/lavagem" />
+        <ul role="list">
+          <li><b>{pub.name}</b> devolve {percent(pub.rate.min)} a {percent(pub.rate.max)}</li>
+          <li><b>{priv.name}</b> devolve {percent(priv.rate.min)} a {percent(priv.rate.max)}</li>
+        </ul>
+        <p>Leva tempo de verdade. A privada custa {laundering.privateUnlockGems} gemas, uma vez.</p>
+      </div>
+
+      <article class="pocket wallet">
+        <span class="stamp-mark bad tag">Pode ser roubada</span>
+        <h3>Carteira</h3>
+        <p>O que o <code>/trabalhar</code> e o <code>/daily</code> pagam. Um ladrão armado leva de {percent(robbery.stealRate.min)} a {percent(robbery.stealRate.max)} dela com o <code>/roubar</code>.</p>
+        <Cmd command="/saldo" />
+      </article>
+
+      <div class="link bank-link" aria-label="Entre a carteira e o banco">
+        <Cmd command="/depositar" />
+        <span class="both" aria-hidden="true">⇄</span>
+        <Cmd command="/sacar" />
+      </div>
+
+      <article class="pocket bank">
+        <span class="stamp-mark ok tag">Seguro</span>
+        <h3>Banco</h3>
+        <p>Fora do alcance do roubo. Guarde antes de sair e tire só o que for gastar.</p>
+        <Cmd command="/depositar tudo" />
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .flow {
+    margin-block-start: var(--space-7);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .pocket {
+    position: relative;
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    padding: var(--space-6) var(--space-5) var(--space-5);
+    background: var(--paper-raised);
+    border: 2px solid var(--ink);
+    border-radius: 0.6rem 0.6rem 2.2rem 2.2rem;
+    box-shadow: var(--shadow-press);
+  }
+
+  /* A costura do bolso. */
+  .pocket::before {
+    content: "";
+    position: absolute;
+    inset: 0.55rem;
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 0.35rem 0.35rem 1.8rem 1.8rem;
+    pointer-events: none;
+  }
+
+  .pocket > * { position: relative; }
+
+  .pocket h3 { font-size: var(--step-3); letter-spacing: -0.035em; }
+  .pocket p { color: var(--ink-soft); max-inline-size: 30ch; }
+  .pocket p code { color: var(--ink); }
+
+  .tag { position: absolute; inset-block-start: -1.05rem; inset-inline-start: var(--space-5); background: var(--paper); }
+
+  .dirty { background: var(--money-wash); }
+  .wallet { background: var(--paper-raised); }
+  .bank { background: var(--violet-wash); }
+
+  .link {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: center;
+    text-align: center;
+    padding-inline: var(--space-3);
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+  }
+
+  .link ul { padding: 0; display: grid; gap: 0.15rem; }
+  .link b { color: var(--ink); }
+  .link p { font-size: 0.82rem; max-inline-size: 26ch; }
+  .both { font-size: 1.6rem; color: var(--violet); line-height: 1; }
+
+  .bank-link { grid-auto-flow: row; }
+
+  /* Setas: para baixo no celular, para a direita no computador. */
+  .link::after {
+    content: "↓";
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--violet);
+    font-weight: 700;
+  }
+
+  .bank-link::after { content: none; }
+
+  @media (min-width: 62rem) {
+    .flow {
+      grid-template-columns: 1fr minmax(9rem, 0.62fr) 1fr minmax(8rem, 0.5fr) 1fr;
+      align-items: center;
+      gap: 0;
+    }
+
+    .link { padding-block: var(--space-4); }
+    .link::after { content: "→"; }
+    .bank-link::after { content: none; }
+    .bank-link { grid-auto-flow: row; }
+    .pocket { min-block-size: 15rem; align-content: start; }
+  }
+</style>

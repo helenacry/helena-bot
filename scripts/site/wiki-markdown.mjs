@@ -167,8 +167,14 @@ function renderTable(rows, ctx) {
 
     const stack = head.length <= STACK_UP_TO;
 
+    // Tabela larga rola de lado dentro do próprio quadro; para o teclado alcançá-la, o
+    // quadro é uma região focável com nome. As de até 3 colunas empilham e não rolam.
+    const scroller = stack
+        ? ""
+        : ` role="region" tabindex="0" aria-label="${escapeHtml(`Tabela: ${labels.slice(0, 4).join(", ")}`)}"`;
+
     return (
-        `<div class="table-wrap${stack ? " stack" : ""}"><table>` +
+        `<div class="table-wrap${stack ? " stack" : ""}"${scroller}><table>` +
         `<thead><tr>${head.map(text => cell("th", text)).join("")}</tr></thead>` +
         `<tbody>${body.map(row =>
             `<tr>${row.map((text, column) => cell("td", text, column > 0 ? labels[column] : null)).join("")}</tr>`

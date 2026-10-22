@@ -1,0 +1,52 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "../components/home/Hero.astro";
+import Pockets from "../components/home/Pockets.astro";
+import Career from "../components/home/Career.astro";
+import Crime from "../components/home/Crime.astro";
+import Commands from "../components/home/Commands.astro";
+import Faq from "../components/home/Faq.astro";
+import Start from "../components/home/Start.astro";
+import { SITE } from "../config";
+import { absolute } from "../lib/url";
+import { questions } from "../lib/faq";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: SITE.name,
+      url: absolute("/", Astro.site),
+      inLanguage: "pt-BR",
+      description: SITE.description
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: SITE.name,
+      applicationCategory: "GameApplication",
+      operatingSystem: "VSync",
+      description: SITE.description,
+      inLanguage: "pt-BR",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "BRL" }
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: questions.map(item => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a }
+      }))
+    }
+  ]
+};
+---
+<Base title="Helena" home jsonLd={jsonLd}>
+  <Hero />
+  <Pockets />
+  <Career />
+  <Crime />
+  <Commands />
+  <Faq />
+  <Start />
+</Base>

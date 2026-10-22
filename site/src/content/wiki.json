@@ -1,0 +1,1432 @@
+{
+  "nav": [
+    {
+      "id": "start",
+      "title": "Comece por aqui",
+      "pages": [
+        "start/first-steps",
+        "start/earning-money",
+        "start/jobs"
+      ]
+    },
+    {
+      "id": "economy",
+      "title": "Economia",
+      "pages": [
+        "economy/bank-and-transfers",
+        "economy/shop-and-inventory",
+        "economy/market",
+        "economy/gems",
+        "economy/rankings"
+      ]
+    },
+    {
+      "id": "character",
+      "title": "Personagem",
+      "pages": [
+        "character/energy",
+        "character/levels-and-xp",
+        "character/achievements-and-titles",
+        "character/profile",
+        "character/marriage"
+      ]
+    },
+    {
+      "id": "combat",
+      "title": "Combate",
+      "pages": [
+        "combat/duels",
+        "combat/weapons",
+        "combat/health-and-gear"
+      ]
+    },
+    {
+      "id": "crime",
+      "title": "Crime e segurança",
+      "pages": [
+        "crime/getting-started",
+        "crime/robbery",
+        "crime/laundering",
+        "crime/wanted-and-prison",
+        "crime/prison-escape"
+      ]
+    },
+    {
+      "id": "help",
+      "title": "Ajuda e referência",
+      "pages": [
+        "help/faq",
+        "help/commands",
+        "help/cooldowns"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "index",
+      "path": "/wiki/",
+      "title": "Wiki da Helena",
+      "description": "Como a Helena funciona, sistema por sistema, para você ganhar dinheiro, subir de nível e não cair na cadeia.",
+      "section": null,
+      "html": "<p>A Helena é um bot de economia e RPG para a VSync. Cada servidor tem a sua própria economia: você trabalha, guarda dinheiro, compra na loja, casa, duela e, se tiver coragem, comete crimes.</p><p>Esta wiki explica cada parte do jogo. Os valores (preços, salários, tempos de espera, chances) saem do próprio bot quando as páginas são geradas, então o que está escrito aqui é o que o bot faz hoje.</p><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>Primeira vez por aqui? Leia <strong>Primeiros passos</strong> e depois <strong>Ganhar dinheiro</strong>. Em dez minutos você já sabe o essencial.</p></aside><h2 id=\"comece-por-aqui\"><a class=\"anchor\" href=\"#comece-por-aqui\" aria-label=\"Link para esta seção\">#</a>Comece por aqui</h2><ul class=\"cards\"><li><a href=\"/wiki/start/first-steps/\"><b>Primeiros passos</b><span>Do convite ao primeiro daily, o que fazer nos primeiros minutos com a Helena.</span></a></li><li><a href=\"/wiki/start/earning-money/\"><b>Ganhar dinheiro</b><span>As formas de ganhar dinheiro dentro da lei, quanto cada uma rende e de quanto em quanto tempo.</span></a></li><li><a href=\"/wiki/start/jobs/\"><b>Escolha seu emprego</b><span>A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.</span></a></li></ul><h2 id=\"economia\"><a class=\"anchor\" href=\"#economia\" aria-label=\"Link para esta seção\">#</a>Economia</h2><p>Carteira, banco, loja, o mercado do servidor, gemas e o ranking.</p><ul class=\"cards\"><li><a href=\"/wiki/economy/bank-and-transfers/\"><b>Banco e transferências</b><span>A diferença entre carteira e banco, como depositar, sacar e transferir dinheiro e o que o saldo mostra.</span></a></li><li><a href=\"/wiki/economy/shop-and-inventory/\"><b>Loja e inventário</b><span>O que a loja vende, como comprar e vender pelos botões, como usar os itens e como organizar o inventário.</span></a></li><li><a href=\"/wiki/economy/market/\"><b>Bolsa</b><span>O mercado do servidor: o índice que mexe nos preços da loja e o item em alta que paga mais na venda.</span></a></li><li><a href=\"/wiki/economy/gems/\"><b>Gemas</b><span>O que são as gemas, para que servem e como ganhar.</span></a></li><li><a href=\"/wiki/economy/rankings/\"><b>Ranking</b><span>Os três rankings do servidor, como a posição é calculada e o que significa o número do seu cartão de perfil.</span></a></li></ul><h2 id=\"personagem\"><a class=\"anchor\" href=\"#personagem\" aria-label=\"Link para esta seção\">#</a>Personagem</h2><p>Energia, nível, conquistas, perfil e casamento.</p><ul class=\"cards\"><li><a href=\"/wiki/character/energy/\"><b>Energia</b><span>Quanta energia você tem, quanto cada ação gasta, como ela volta sozinha e como repor mais rápido.</span></a></li><li><a href=\"/wiki/character/levels-and-xp/\"><b>Níveis e XP</b><span>Como o XP vira nível, de onde ele vem e o que cada nível libera.</span></a></li><li><a href=\"/wiki/character/achievements-and-titles/\"><b>Conquistas e títulos</b><span>As conquistas que dá para desbloquear, o título que cada uma dá e como equipar o seu no perfil.</span></a></li><li><a href=\"/wiki/character/profile/\"><b>Perfil e bio</b><span>O cartão de perfil, como ler cada parte, como mudar a bio e como ver o perfil de outra pessoa.</span></a></li><li><a href=\"/wiki/character/marriage/\"><b>Casamento</b><span>Como pedir alguém em casamento, o que muda no perfil e a vida em família com o Gozofone e os filhos.</span></a></li></ul><h2 id=\"combate\"><a class=\"anchor\" href=\"#combate\" aria-label=\"Link para esta seção\">#</a>Combate</h2><p>Duelos entre jogadores: quem pode lutar, com o quê, e como se recuperar depois.</p><ul class=\"cards\"><li><a href=\"/wiki/combat/duels/\"><b>Duelos</b><span>Como desafiar, aceitar e vencer um duelo, quem pode duelar e o que muda depois.</span></a></li><li><a href=\"/wiki/combat/weapons/\"><b>Armas</b><span>As armas da loja, o dano de cada uma, como equipar e como elas gastam munição e durabilidade.</span></a></li><li><a href=\"/wiki/combat/health-and-gear/\"><b>Vida, colete e munição</b><span>Como a vida funciona, quanto custa se curar no hospital, o que é a proteção contra duelos e como cuidar do equipamento.</span></a></li></ul><h2 id=\"crime-e-seguranca\"><a class=\"anchor\" href=\"#crime-e-seguranca\" aria-label=\"Link para esta seção\">#</a>Crime e segurança</h2><p>Dinheiro rápido, risco alto. Aqui está o que dá certo, o que dá cadeia e como lavar o que você ganhou.</p><ul class=\"cards\"><li><a href=\"/wiki/crime/getting-started/\"><b>Crime: por onde começar</b><span>Como o /crime funciona, o que você ganha, o que perde se der errado e como não parar na cadeia à toa.</span></a></li><li><a href=\"/wiki/crime/robbery/\"><b>Roubar jogadores</b><span>Como roubar a carteira de outro jogador, a chance de cada arma, quanto dá para levar e o que acontece se der errado.</span></a></li><li><a href=\"/wiki/crime/laundering/\"><b>Lavagem de dinheiro</b><span>Como transformar dinheiro sujo em dinheiro limpo, a diferença entre a lavanderia pública e a privada e quanto cada uma devolve.</span></a></li><li><a href=\"/wiki/crime/wanted-and-prison/\"><b>Polícia, procurados e prisão</b><span>A ficha criminal, a lista de procurados, como se vai preso e o que dá e o que não dá para fazer na cadeia.</span></a></li><li><a href=\"/wiki/crime/prison-escape/\"><b>Fuga da prisão</b><span>O minigame de fuga em três etapas, como não ser pego e quanto tempo de pena você corta ou ganha.</span></a></li></ul><h2 id=\"ajuda-e-referencia\"><a class=\"anchor\" href=\"#ajuda-e-referencia\" aria-label=\"Link para esta seção\">#</a>Ajuda e referência</h2><ul class=\"cards\"><li><a href=\"/wiki/help/faq/\"><b>Perguntas frequentes</b><span>Respostas curtas para as dúvidas mais comuns sobre dinheiro, cadeia, comandos e dados.</span></a></li><li><a href=\"/wiki/help/commands/\"><b>Comandos</b><span>A lista completa de comandos da Helena, com os atalhos de cada um, por categoria.</span></a></li><li><a href=\"/wiki/help/cooldowns/\"><b>Tempos de espera</b><span>Todas as esperas do jogo reunidas, de quanto em quanto tempo você pode repetir cada ação e como conferir.</span></a></li></ul><h2 id=\"como-achar-o-que-voce-procura\"><a class=\"anchor\" href=\"#como-achar-o-que-voce-procura\" aria-label=\"Link para esta seção\">#</a>Como achar o que você procura</h2><ul><li>Use a busca no topo do menu (no teclado, aperte <code>/</code>).</li><li>Cada página termina com um link para a próxima da sequência.</li><li>Dúvida sobre um comando específico? Use <code>/ajuda</code> no próprio servidor, ou veja a lista em <a href=\"/wiki/help/commands/\">Comandos</a>.</li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "comece-por-aqui",
+          "text": "Comece por aqui"
+        },
+        {
+          "level": 2,
+          "id": "economia",
+          "text": "Economia"
+        },
+        {
+          "level": 2,
+          "id": "personagem",
+          "text": "Personagem"
+        },
+        {
+          "level": 2,
+          "id": "combate",
+          "text": "Combate"
+        },
+        {
+          "level": 2,
+          "id": "crime-e-seguranca",
+          "text": "Crime e segurança"
+        },
+        {
+          "level": 2,
+          "id": "ajuda-e-referencia",
+          "text": "Ajuda e referência"
+        },
+        {
+          "level": 2,
+          "id": "como-achar-o-que-voce-procura",
+          "text": "Como achar o que você procura"
+        }
+      ],
+      "previous": null,
+      "next": null
+    },
+    {
+      "id": "start/first-steps",
+      "path": "/wiki/start/first-steps/",
+      "title": "Primeiros passos",
+      "description": "Do convite ao primeiro daily, o que fazer nos primeiros minutos com a Helena.",
+      "section": {
+        "id": "start",
+        "title": "Comece por aqui"
+      },
+      "html": "<p>A Helena roda dentro do servidor onde ela foi adicionada. Você não precisa se cadastrar em lugar nenhum: o primeiro comando que você usa já abre a sua conta ali.</p><h2 id=\"adicione-a-helena-ao-servidor\"><a class=\"anchor\" href=\"#adicione-a-helena-ao-servidor\" aria-label=\"Link para esta seção\">#</a>Adicione a Helena ao servidor</h2><p>Use o botão <strong>Adicionar à VSync</strong> no <a href=\"/\">site da Helena</a>. Se você não pode adicionar bots no seu servidor, peça para quem administra.</p><h2 id=\"sua-conta-abre-sozinha\"><a class=\"anchor\" href=\"#sua-conta-abre-sozinha\" aria-label=\"Link para esta seção\">#</a>Sua conta abre sozinha</h2><p>No primeiro comando, a Helena cria o seu perfil naquele servidor com:</p><ul><li><strong>R$ 0</strong> na carteira e no banco;</li><li><strong>nível 1</strong> e <strong>100 pontos de energia</strong>;</li><li>o emprego de <strong>Entregador</strong>, que paga R$ 150 por turno.</li></ul><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>Dinheiro, nível, itens, crime e casamento valem <strong>por servidor</strong>. Só as <strong>gemas</strong> e o nome que a Helena guarda de você valem em todos os servidores.</p></aside><h2 id=\"como-dar-comandos\"><a class=\"anchor\" href=\"#como-dar-comandos\" aria-label=\"Link para esta seção\">#</a>Como dar comandos</h2><p>Todo comando funciona de duas formas. Escolha a que preferir:</p><div class=\"table-wrap stack\"><table><thead><tr><th>Forma</th><th>Exemplo</th><th>Como é</th></tr></thead><tbody><tr><td>Comando de barra</td><td data-label=\"Exemplo\"><code>/daily</code></td><td data-label=\"Como é\">Digite <code>/</code> e escolha o comando na lista da VSync.</td></tr><tr><td>Prefixo <code>h</code></td><td data-label=\"Exemplo\"><code>hdaily</code></td><td data-label=\"Como é\">Escreva <code>h</code> colado no nome do comando, no chat.</td></tr></tbody></table></div><p>Quando o comando pede informações, no prefixo você escreve na ordem, separando por espaço, ou usa <code>nome:valor</code>:</p><pre><code>hdepositar 100\nhajuda categoria:economia</code></pre><p>Quantias são sempre em <strong>reais inteiros</strong> (<code>500</code>, não <code>500,50</code>). Para usar tudo o que você tem, escreva <code>tudo</code> ou <code>all</code>.</p><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>Muitos comandos têm atalhos, como <code>/store</code> para <code>/loja</code>. Aqui na wiki, os atalhos aparecem ao lado de cada comando.</p></aside><h2 id=\"seus-primeiros-cinco-minutos\"><a class=\"anchor\" href=\"#seus-primeiros-cinco-minutos\" aria-label=\"Link para esta seção\">#</a>Seus primeiros cinco minutos</h2><ol><li><strong><code>/daily</code></strong> para pegar a recompensa do dia (R$ 500).</li><li><strong><code>/trabalhar</code></strong> para fazer o primeiro turno: o salário de R$ 150, mais 25 de XP. Gasta 10 de energia e só dá para repetir depois de 1 hora.</li><li><strong><code>/saldo</code></strong> para ver o que você tem. Os botões dessa tela depositam, sacam e transferem.</li><li><strong><code>/depositar</code></strong> para guardar o dinheiro no banco.</li><li><strong><code>/perfil</code></strong> para ver o seu cartão de perfil.</li></ol><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>O dinheiro que fica na <strong>carteira</strong> pode ser roubado por outros jogadores. O dinheiro no <strong>banco</strong> não pode. Se não vai usar agora, deposite.</p></aside><h2 id=\"nao-sabe-o-que-fazer-a-seguir\"><a class=\"anchor\" href=\"#nao-sabe-o-que-fazer-a-seguir\" aria-label=\"Link para esta seção\">#</a>Não sabe o que fazer a seguir?</h2><ul class=\"cards\"><li><a href=\"/wiki/start/earning-money/\"><b>Ganhar dinheiro</b><span>As formas de ganhar dinheiro dentro da lei, quanto cada uma rende e de quanto em quanto tempo.</span></a></li><li><a href=\"/wiki/start/jobs/\"><b>Escolha seu emprego</b><span>A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "adicione-a-helena-ao-servidor",
+          "text": "Adicione a Helena ao servidor"
+        },
+        {
+          "level": 2,
+          "id": "sua-conta-abre-sozinha",
+          "text": "Sua conta abre sozinha"
+        },
+        {
+          "level": 2,
+          "id": "como-dar-comandos",
+          "text": "Como dar comandos"
+        },
+        {
+          "level": 2,
+          "id": "seus-primeiros-cinco-minutos",
+          "text": "Seus primeiros cinco minutos"
+        },
+        {
+          "level": 2,
+          "id": "nao-sabe-o-que-fazer-a-seguir",
+          "text": "Não sabe o que fazer a seguir?"
+        }
+      ],
+      "previous": null,
+      "next": {
+        "id": "start/earning-money",
+        "path": "/wiki/start/earning-money/",
+        "title": "Ganhar dinheiro"
+      }
+    },
+    {
+      "id": "start/earning-money",
+      "path": "/wiki/start/earning-money/",
+      "title": "Ganhar dinheiro",
+      "description": "As formas de ganhar dinheiro dentro da lei, quanto cada uma rende e de quanto em quanto tempo.",
+      "section": {
+        "id": "start",
+        "title": "Comece por aqui"
+      },
+      "html": "<p>Dinheiro é o que move o jogo: compra itens, paga multa e é o que os outros jogadores querem levar de você. Estas são as formas de ganhar sem se meter em encrenca.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th>Fonte</th><th>Quanto rende</th><th>Quando</th></tr></thead><tbody><tr><td>Recompensa diária (<code>/daily</code>)</td><td data-label=\"Quanto rende\">de R$ 500 a R$ 1.300</td><td data-label=\"Quando\">a cada 24 horas</td></tr><tr><td>Trabalho (<code>/trabalhar</code>)</td><td data-label=\"Quanto rende\">de R$ 150 a R$ 10.000 por turno, conforme o emprego</td><td data-label=\"Quando\">a cada 1 hora</td></tr><tr><td>Missões (<code>/missoes</code>)</td><td data-label=\"Quanto rende\">R$ 650 no total, mais XP</td><td data-label=\"Quando\">todo dia</td></tr><tr><td>Vender itens (<code>/vender</code>)</td><td data-label=\"Quanto rende\">metade do preço de compra</td><td data-label=\"Quando\">quando quiser</td></tr></tbody></table></div><h2 id=\"recompensa-diaria\"><a class=\"anchor\" href=\"#recompensa-diaria\" aria-label=\"Link para esta seção\">#</a>Recompensa diária</h2><p>O <code>/daily</code> paga R$ 500 e aumenta com a sua sequência de dias:</p><ul><li>cada dia seguido soma <strong>R$ 50</strong>;</li><li>no <strong>sétimo dia</strong> entra um bônus de <strong>R$ 500</strong>, e o prêmio chega a R$ 1.300;</li><li>depois do sétimo dia o ciclo recomeça do primeiro valor.</li></ul><div class=\"table-wrap\" role=\"region\" tabindex=\"0\" aria-label=\"Tabela: Dia da sequência, 1, 2, 3\"><table><thead><tr><th>Dia da sequência</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr></thead><tbody><tr><td>Prêmio</td><td data-label=\"1\">R$ 500</td><td data-label=\"2\">R$ 550</td><td data-label=\"3\">R$ 600</td><td data-label=\"4\">R$ 650</td><td data-label=\"5\">R$ 700</td><td data-label=\"6\">R$ 750</td><td data-label=\"7\">R$ 1.300</td></tr></tbody></table></div><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>Você pode demorar até <strong>48 horas</strong> entre dois resgates sem perder a sequência. Passou disso, ela volta para o primeiro dia.</p></aside><h2 id=\"trabalho\"><a class=\"anchor\" href=\"#trabalho\" aria-label=\"Link para esta seção\">#</a>Trabalho</h2><p>O <code>/trabalhar</code> paga o salário do seu emprego e dá <strong>25 de XP</strong> a cada turno. Cada turno custa <strong>10 de energia</strong> e só se repete depois de <strong>1 hora</strong>.</p><p>O emprego não muda sozinho quando você sobe de nível: é preciso trocar. Veja como na página <a href=\"/wiki/start/jobs/\">Escolha seu emprego</a>.</p><aside class=\"callout money\"><p class=\"callout-title\">Dinheiro</p><p>Entregador ganha R$ 150 por turno. Magnata ganha R$ 10.000. A diferença entre os dois é o motivo de ninguém ficar parado no primeiro emprego.</p></aside><h2 id=\"missoes-diarias\"><a class=\"anchor\" href=\"#missoes-diarias\" aria-label=\"Link para esta seção\">#</a>Missões diárias</h2><p>São 3 missões por dia, que somam R$ 650 e 85 de XP:</p><div class=\"table-wrap\" role=\"region\" tabindex=\"0\" aria-label=\"Tabela: Missão, O que fazer, Prêmio, XP\"><table><thead><tr><th>Missão</th><th>O que fazer</th><th>Prêmio</th><th>XP</th></tr></thead><tbody><tr><td>💼 Trabalhador dedicado</td><td data-label=\"O que fazer\">Trabalhe 2 vezes</td><td data-label=\"Prêmio\">R$ 300</td><td data-label=\"XP\">40</td></tr><tr><td>🏦 Organização financeira</td><td data-label=\"O que fazer\">Deposite dinheiro 2 vezes</td><td data-label=\"Prêmio\">R$ 200</td><td data-label=\"XP\">25</td></tr><tr><td>🎁 Presença diária</td><td data-label=\"O que fazer\">Resgate sua recompensa diária</td><td data-label=\"Prêmio\">R$ 150</td><td data-label=\"XP\">20</td></tr></tbody></table></div><p>Cumpra o objetivo e resgate: o <code>/missoes</code> mostra o botão <strong>Resgatar</strong> em cada missão pronta (também dá para usar <code>/missoes resgatar:&lt;missão&gt;</code>). O progresso conta por dia <strong>UTC</strong>: a virada acontece à meia-noite UTC, que é <strong>21h no horário de Brasília</strong>.</p><h2 id=\"vender-o-que-voce-nao-usa\"><a class=\"anchor\" href=\"#vender-o-que-voce-nao-usa\" aria-label=\"Link para esta seção\">#</a>Vender o que você não usa</h2><p>Itens vendáveis, como comida e ferramentas, voltam pela metade do preço de compra no <code>/vender</code>. O preço também sofre a influência do mercado do servidor, que você acompanha no <a href=\"/wiki/economy/market/\"><code>/bolsa</code></a>.</p><h2 id=\"e-o-crime\"><a class=\"anchor\" href=\"#e-o-crime\" aria-label=\"Link para esta seção\">#</a>E o crime?</h2><p>Existem formas mais rápidas de ganhar, e mais arriscadas: crime, roubo e lavagem, que podem dar cadeia. Elas têm uma seção própria, <a href=\"/wiki/crime/getting-started/\">Crime e segurança</a>.</p><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/start/jobs/\"><b>Escolha seu emprego</b><span>A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.</span></a></li><li><a href=\"/wiki/economy/market/\"><b>Bolsa</b><span>O mercado do servidor: o índice que mexe nos preços da loja e o item em alta que paga mais na venda.</span></a></li><li><a href=\"/wiki/crime/getting-started/\"><b>Crime: por onde começar</b><span>Como o /crime funciona, o que você ganha, o que perde se der errado e como não parar na cadeia à toa.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "recompensa-diaria",
+          "text": "Recompensa diária"
+        },
+        {
+          "level": 2,
+          "id": "trabalho",
+          "text": "Trabalho"
+        },
+        {
+          "level": 2,
+          "id": "missoes-diarias",
+          "text": "Missões diárias"
+        },
+        {
+          "level": 2,
+          "id": "vender-o-que-voce-nao-usa",
+          "text": "Vender o que você não usa"
+        },
+        {
+          "level": 2,
+          "id": "e-o-crime",
+          "text": "E o crime?"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "start/first-steps",
+        "path": "/wiki/start/first-steps/",
+        "title": "Primeiros passos"
+      },
+      "next": {
+        "id": "start/jobs",
+        "path": "/wiki/start/jobs/",
+        "title": "Escolha seu emprego"
+      }
+    },
+    {
+      "id": "start/jobs",
+      "path": "/wiki/start/jobs/",
+      "title": "Escolha seu emprego",
+      "description": "A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.",
+      "section": {
+        "id": "start",
+        "title": "Comece por aqui"
+      },
+      "html": "<p>O emprego define quanto o <code>/trabalhar</code> paga. São <strong>23 empregos</strong>, do Entregador (R$ 150 por turno) ao Magnata (R$ 10.000 por turno), e cada um libera num nível.</p><h2 id=\"como-trocar-de-emprego\"><a class=\"anchor\" href=\"#como-trocar-de-emprego\" aria-label=\"Link para esta seção\">#</a>Como trocar de emprego</h2><ol><li>Veja a lista com <strong><code>/empregos</code></strong>. Cada linha mostra se o emprego é o atual (👔), se já está liberado (🔓) ou se ainda está bloqueado (🔒).</li><li>Para trocar, use <code>/empregos</code> com a opção <code>cargo</code> e escolha o emprego.</li></ol><p>No prefixo, fica assim:</p><pre><code>hempregos cargo:motorista</code></pre><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p><strong>O emprego não sobe sozinho.</strong> Você começa como Entregador e continua nele mesmo depois de passar de nível. Se não trocar, vai ganhar o salário do primeiro emprego pelo resto da vida.</p></aside><p>A troca é de graça e vale na hora. Você pode voltar para um emprego mais baixo quando quiser.</p><h2 id=\"todos-os-empregos\"><a class=\"anchor\" href=\"#todos-os-empregos\" aria-label=\"Link para esta seção\">#</a>Todos os empregos</h2><div class=\"table-wrap\" role=\"region\" tabindex=\"0\" aria-label=\"Tabela: #, Emprego, Nível, Salário por turno\"><table><thead><tr><th>#</th><th>Emprego</th><th>Nível</th><th>Salário por turno</th></tr></thead><tbody><tr><td>1</td><td data-label=\"Emprego\">Entregador</td><td data-label=\"Nível\">1</td><td data-label=\"Salário por turno\">R$ 150</td></tr><tr><td>2</td><td data-label=\"Emprego\">Atendente</td><td data-label=\"Nível\">2</td><td data-label=\"Salário por turno\">R$ 180</td></tr><tr><td>3</td><td data-label=\"Emprego\">Faxineiro</td><td data-label=\"Nível\">3</td><td data-label=\"Salário por turno\">R$ 220</td></tr><tr><td>4</td><td data-label=\"Emprego\">Garçom</td><td data-label=\"Nível\">4</td><td data-label=\"Salário por turno\">R$ 270</td></tr><tr><td>5</td><td data-label=\"Emprego\">Motorista</td><td data-label=\"Nível\">5</td><td data-label=\"Salário por turno\">R$ 320</td></tr><tr><td>6</td><td data-label=\"Emprego\">Cozinheiro</td><td data-label=\"Nível\">7</td><td data-label=\"Salário por turno\">R$ 400</td></tr><tr><td>7</td><td data-label=\"Emprego\">Segurança</td><td data-label=\"Nível\">9</td><td data-label=\"Salário por turno\">R$ 480</td></tr><tr><td>8</td><td data-label=\"Emprego\">Mecânico</td><td data-label=\"Nível\">11</td><td data-label=\"Salário por turno\">R$ 580</td></tr><tr><td>9</td><td data-label=\"Emprego\">Eletricista</td><td data-label=\"Nível\">13</td><td data-label=\"Salário por turno\">R$ 700</td></tr><tr><td>10</td><td data-label=\"Emprego\">Técnico</td><td data-label=\"Nível\">15</td><td data-label=\"Salário por turno\">R$ 850</td></tr><tr><td>11</td><td data-label=\"Emprego\">Programador</td><td data-label=\"Nível\">18</td><td data-label=\"Salário por turno\">R$ 1.000</td></tr><tr><td>12</td><td data-label=\"Emprego\">Enfermeiro</td><td data-label=\"Nível\">21</td><td data-label=\"Salário por turno\">R$ 1.200</td></tr><tr><td>13</td><td data-label=\"Emprego\">Contador</td><td data-label=\"Nível\">24</td><td data-label=\"Salário por turno\">R$ 1.450</td></tr><tr><td>14</td><td data-label=\"Emprego\">Engenheiro</td><td data-label=\"Nível\">27</td><td data-label=\"Salário por turno\">R$ 1.750</td></tr><tr><td>15</td><td data-label=\"Emprego\">Advogado</td><td data-label=\"Nível\">30</td><td data-label=\"Salário por turno\">R$ 2.100</td></tr><tr><td>16</td><td data-label=\"Emprego\">Médico</td><td data-label=\"Nível\">34</td><td data-label=\"Salário por turno\">R$ 2.500</td></tr><tr><td>17</td><td data-label=\"Emprego\">Arquiteto</td><td data-label=\"Nível\">38</td><td data-label=\"Salário por turno\">R$ 3.000</td></tr><tr><td>18</td><td data-label=\"Emprego\">Supervisor</td><td data-label=\"Nível\">42</td><td data-label=\"Salário por turno\">R$ 3.600</td></tr><tr><td>19</td><td data-label=\"Emprego\">Gerente</td><td data-label=\"Nível\">47</td><td data-label=\"Salário por turno\">R$ 4.300</td></tr><tr><td>20</td><td data-label=\"Emprego\">Diretor</td><td data-label=\"Nível\">53</td><td data-label=\"Salário por turno\">R$ 5.200</td></tr><tr><td>21</td><td data-label=\"Emprego\">Executivo</td><td data-label=\"Nível\">60</td><td data-label=\"Salário por turno\">R$ 6.300</td></tr><tr><td>22</td><td data-label=\"Emprego\">Presidente</td><td data-label=\"Nível\">70</td><td data-label=\"Salário por turno\">R$ 7.800</td></tr><tr><td>23</td><td data-label=\"Emprego\">Magnata</td><td data-label=\"Nível\">85</td><td data-label=\"Salário por turno\">R$ 10.000</td></tr></tbody></table></div><p>O salário é pago por turno de <code>/trabalhar</code>, e o turno repete a cada 1 hora.</p><h2 id=\"como-subir-de-nivel\"><a class=\"anchor\" href=\"#como-subir-de-nivel\" aria-label=\"Link para esta seção\">#</a>Como subir de nível</h2><p>O nível vem de XP, e o XP vem de quase tudo que você faz:</p><ul><li><strong>trabalhar</strong>: 25 de XP por turno;</li><li><strong>missões diárias</strong>: 85 de XP se fizer as 3;</li><li><strong>crime</strong>: de 30 a 80 de XP por crime que dá certo;</li><li><strong>duelos</strong>: 30 de XP para quem vence.</li></ul><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>O nível máximo é <strong>100</strong>. O Magnata libera no nível 85.</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/start/earning-money/\"><b>Ganhar dinheiro</b><span>As formas de ganhar dinheiro dentro da lei, quanto cada uma rende e de quanto em quanto tempo.</span></a></li><li><a href=\"/wiki/economy/market/\"><b>Bolsa</b><span>O mercado do servidor: o índice que mexe nos preços da loja e o item em alta que paga mais na venda.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "como-trocar-de-emprego",
+          "text": "Como trocar de emprego"
+        },
+        {
+          "level": 2,
+          "id": "todos-os-empregos",
+          "text": "Todos os empregos"
+        },
+        {
+          "level": 2,
+          "id": "como-subir-de-nivel",
+          "text": "Como subir de nível"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "start/earning-money",
+        "path": "/wiki/start/earning-money/",
+        "title": "Ganhar dinheiro"
+      },
+      "next": {
+        "id": "economy/bank-and-transfers",
+        "path": "/wiki/economy/bank-and-transfers/",
+        "title": "Banco e transferências"
+      }
+    },
+    {
+      "id": "economy/bank-and-transfers",
+      "path": "/wiki/economy/bank-and-transfers/",
+      "title": "Banco e transferências",
+      "description": "A diferença entre carteira e banco, como depositar, sacar e transferir dinheiro e o que o saldo mostra.",
+      "section": {
+        "id": "economy",
+        "title": "Economia"
+      },
+      "html": "<p>Seu dinheiro fica em dois lugares, e a diferença entre eles é a regra mais importante da economia da Helena.</p><div class=\"table-wrap stack\"><table><thead><tr><th>Onde</th><th>Para que serve</th><th>Risco</th></tr></thead><tbody><tr><td><strong>Carteira</strong></td><td data-label=\"Para que serve\">gasta na loja, paga multa e recebe o salário</td><td data-label=\"Risco\">pode ser <strong>roubada</strong> por outros jogadores</td></tr><tr><td><strong>Banco</strong></td><td data-label=\"Para que serve\">guarda o dinheiro</td><td data-label=\"Risco\"><strong>não pode ser roubado</strong></td></tr></tbody></table></div><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>Salário, daily e prêmios caem na <strong>carteira</strong>. Se não vai gastar agora, deposite. Veja como os ladrões agem em <a href=\"/wiki/crime/robbery/\">Roubar jogadores</a>.</p></aside><h2 id=\"ver-o-que-voce-tem-saldo\"><a class=\"anchor\" href=\"#ver-o-que-voce-tem-saldo\" aria-label=\"Link para esta seção\">#</a>Ver o que você tem: <code>/saldo</code></h2><p>O <code>/saldo</code> (atalhos <code>/bal</code> e <code>/carteira</code>) mostra carteira, banco, gemas, nível e XP, e o dinheiro sujo se você tiver. Os botões da tela abrem formulários para <strong>Depositar</strong>, <strong>Sacar</strong> e <strong>Transferir</strong>.</p><h2 id=\"depositar-e-sacar\"><a class=\"anchor\" href=\"#depositar-e-sacar\" aria-label=\"Link para esta seção\">#</a>Depositar e sacar</h2><div class=\"table-wrap stack\"><table><thead><tr><th>Comando</th><th>Atalho</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/depositar quantia:500</code></td><td data-label=\"Atalho\"><code>/dep</code></td><td data-label=\"O que faz\">tira da carteira e põe no banco</td></tr><tr><td><code>/sacar quantia:500</code></td><td data-label=\"Atalho\"></td><td data-label=\"O que faz\">tira do banco e põe na carteira</td></tr></tbody></table></div><p>No prefixo: <code>hdepositar 500</code> ou <code>hsacar tudo</code>.</p><h2 id=\"transferir-para-outro-jogador\"><a class=\"anchor\" href=\"#transferir-para-outro-jogador\" aria-label=\"Link para esta seção\">#</a>Transferir para outro jogador</h2><p><strong><code>/transferir usuario:@pessoa quantia:200</code></strong> (atalho <code>/pagar</code>) manda dinheiro <strong>da sua carteira</strong> para a carteira de outro jogador do servidor.</p><ul><li>Não tem <strong>taxa</strong>: quem recebe leva o valor inteiro.</li><li>Não dá para transferir para si mesmo.</li><li>Pelo botão <strong>Transferir</strong> do <code>/saldo</code>, você pode informar a pessoa por nome, @menção ou ID.</li></ul><h2 id=\"como-informar-a-quantia\"><a class=\"anchor\" href=\"#como-informar-a-quantia\" aria-label=\"Link para esta seção\">#</a>Como informar a quantia</h2><ul><li>Sempre em <strong>reais inteiros</strong>: <code>500</code>, não <code>500,50</code>.</li><li><code>tudo</code> ou <code>all</code> usa todo o saldo disponível.</li><li>Valor maior do que você tem dá erro e não muda nada.</li></ul><h2 id=\"dinheiro-sujo-e-a-parte\"><a class=\"anchor\" href=\"#dinheiro-sujo-e-a-parte\" aria-label=\"Link para esta seção\">#</a>Dinheiro sujo é à parte</h2><p>O dinheiro de crime e de roubo não passa pelo banco: ele fica numa conta separada até ser <a href=\"/wiki/crime/laundering/\">lavado</a>.</p><h2 id=\"preso-o-banco-fecha\"><a class=\"anchor\" href=\"#preso-o-banco-fecha\" aria-label=\"Link para esta seção\">#</a>Preso, o banco fecha</h2><p><code>/depositar</code>, <code>/sacar</code> e <code>/transferir</code> ficam <strong>bloqueados na cadeia</strong>. Consultar o <code>/saldo</code> continua liberado.</p><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>Os depósitos contam para uma das <a href=\"/wiki/start/earning-money/\">missões diárias</a> (depositar duas vezes).</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/economy/shop-and-inventory/\"><b>Loja e inventário</b><span>O que a loja vende, como comprar e vender pelos botões, como usar os itens e como organizar o inventário.</span></a></li><li><a href=\"/wiki/economy/rankings/\"><b>Ranking</b><span>Os três rankings do servidor, como a posição é calculada e o que significa o número do seu cartão de perfil.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "ver-o-que-voce-tem-saldo",
+          "text": "Ver o que você tem: /saldo"
+        },
+        {
+          "level": 2,
+          "id": "depositar-e-sacar",
+          "text": "Depositar e sacar"
+        },
+        {
+          "level": 2,
+          "id": "transferir-para-outro-jogador",
+          "text": "Transferir para outro jogador"
+        },
+        {
+          "level": 2,
+          "id": "como-informar-a-quantia",
+          "text": "Como informar a quantia"
+        },
+        {
+          "level": 2,
+          "id": "dinheiro-sujo-e-a-parte",
+          "text": "Dinheiro sujo é à parte"
+        },
+        {
+          "level": 2,
+          "id": "preso-o-banco-fecha",
+          "text": "Preso, o banco fecha"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "start/jobs",
+        "path": "/wiki/start/jobs/",
+        "title": "Escolha seu emprego"
+      },
+      "next": {
+        "id": "economy/shop-and-inventory",
+        "path": "/wiki/economy/shop-and-inventory/",
+        "title": "Loja e inventário"
+      }
+    },
+    {
+      "id": "economy/shop-and-inventory",
+      "path": "/wiki/economy/shop-and-inventory/",
+      "title": "Loja e inventário",
+      "description": "O que a loja vende, como comprar e vender pelos botões, como usar os itens e como organizar o inventário.",
+      "section": {
+        "id": "economy",
+        "title": "Economia"
+      },
+      "html": "<p>A loja e o inventário são painéis com botões: você navega, escolhe um item e informa a quantidade num formulário.</p><h2 id=\"loja-loja\"><a class=\"anchor\" href=\"#loja-loja\" aria-label=\"Link para esta seção\">#</a>Loja: <code>/loja</code></h2><p>O <code>/loja</code> (atalho <code>/store</code>) abre a vitrine, com uma prateleira para cada tipo de item. Cada prateleira mostra <strong>5 itens por página</strong>, com o preço de compra, o de venda, o que você já tem e se cabe na sua carteira (✅ quantos dá para comprar, 🔒 quanto falta, 📦 limite do item atingido). O botão do item fica <strong>verde</strong> quando você pode comprar.</p><ul><li><strong>Número do item</strong>: abre o formulário de quantidade (um número, ou <code>max</code> para o máximo que dá).</li><li><strong>Por nome</strong>: compra digitando o nome ou o ID do item.</li><li><strong>Vender</strong>: formulário de venda, que aceita <code>metade</code> e <code>tudo</code>.</li></ul><p>Para ir direto a uma prateleira, use a opção <code>categoria</code>, como em <code>hloja categoria:weapon</code>.</p><p>Também funcionam os comandos diretos <strong><code>/comprar</code></strong> e <strong><code>/vender</code></strong>, com <code>item</code> e <code>quantidade</code>.</p><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>Cada compra aceita de 1 a 99 unidades, e cada item tem um <strong>limite</strong> no inventário (na tabela abaixo). Passou do limite, a compra é recusada.</p></aside><h2 id=\"o-que-a-loja-vende\"><a class=\"anchor\" href=\"#o-que-a-loja-vende\" aria-label=\"Link para esta seção\">#</a>O que a loja vende</h2><p>As armas ficam em <a href=\"/wiki/combat/weapons/\">Armas</a>. O resto:</p><div class=\"table-wrap\" role=\"region\" tabindex=\"0\" aria-label=\"Tabela: Item, Compra, Venda, Para que serve\"><table><thead><tr><th>Item</th><th>Compra</th><th>Venda</th><th>Para que serve</th></tr></thead><tbody><tr><td>🍎 Maçã (Consumíveis, até 99)</td><td data-label=\"Compra\">R$ 3</td><td data-label=\"Venda\">R$ 1,50</td><td data-label=\"Para que serve\">Uma maçã fresquinha. Repõe 10 de energia.</td></tr><tr><td>☕ Café (Consumíveis, até 99)</td><td data-label=\"Compra\">R$ 7</td><td data-label=\"Venda\">R$ 3,50</td><td data-label=\"Para que serve\">Um café para começar o expediente. Repõe 25 de energia.</td></tr><tr><td>⚡ Energético (Consumíveis, até 50)</td><td data-label=\"Compra\">R$ 15</td><td data-label=\"Venda\">R$ 7,50</td><td data-label=\"Para que serve\">Uma bebida energética. Repõe 50 de energia.</td></tr><tr><td>🎁 Caixa misteriosa (Caixas, até 25)</td><td data-label=\"Compra\">R$ 100</td><td data-label=\"Venda\">Não vende</td><td data-label=\"Para que serve\">Uma caixa com conteúdo desconhecido.</td></tr><tr><td>🎣 Vara de pesca (Ferramentas, até 1)</td><td data-label=\"Compra\">R$ 50</td><td data-label=\"Venda\">R$ 25</td><td data-label=\"Para que serve\">Ferramenta para futuras atividades de pesca.</td></tr><tr><td>🎒 Mochila (Equipamentos, até 1)</td><td data-label=\"Compra\">R$ 80</td><td data-label=\"Venda\">R$ 40</td><td data-label=\"Para que serve\">Equipamento para futuras expansões.</td></tr></tbody></table></div><p>Itens vendáveis voltam pela <strong>metade do preço</strong> de compra.</p><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>A caixa misteriosa, a vara de pesca e a mochila <strong>ainda não fazem nada</strong>: a própria descrição fala em &quot;futuras&quot; atividades e expansões. Compre só se quiser colecionar.</p></aside><h2 id=\"precos-mudam-a-bolsa\"><a class=\"anchor\" href=\"#precos-mudam-a-bolsa\" aria-label=\"Link para esta seção\">#</a>Preços mudam: a bolsa</h2><p>Os preços da loja não são fixos. O índice do mercado do servidor sobe e desce, e um item fica em alta na venda. Veja em <a href=\"/wiki/economy/market/\">Bolsa</a>.</p><h2 id=\"inventario-inventario\"><a class=\"anchor\" href=\"#inventario-inventario\" aria-label=\"Link para esta seção\">#</a>Inventário: <code>/inventario</code></h2><p>O <code>/inventario</code> (atalho <code>/inv</code>) lista o que você tem por prateleira, <strong>12 itens por página</strong>, com o preço de venda de agora ao lado. 🟢 marca a arma equipada e 🔥 marca o item em alta.</p><ul><li><strong>Descartar</strong> destrói itens, <strong>sem reembolso</strong>, depois de uma tela de confirmação com o botão <strong>Confirmar descarte</strong>. Também existe o comando <strong><code>/descartar</code></strong>.</li><li><strong>Atualizar</strong> recarrega a tela.</li></ul><h2 id=\"usar-itens-usaritem\"><a class=\"anchor\" href=\"#usar-itens-usaritem\" aria-label=\"Link para esta seção\">#</a>Usar itens: <code>/usaritem</code></h2><p>O <code>/usaritem</code> (atalho <code>/usar</code>) abre um menu com o que dá para usar. Sem opções, ele mostra o painel; com <code>item</code> e <code>quantidade</code>, usa direto.</p><ul><li><strong>Comida e bebida</strong> repõem energia, um item por vez. Veja os valores em <a href=\"/wiki/character/energy/\">Energia</a>.</li><li>Com a <strong>energia cheia</strong>, o uso é recusado e o item <strong>não é gasto</strong>. O que passaria de 100 se perderia.</li><li><strong>Armas</strong> são equipadas, e equipar não gasta o item.</li><li><strong><code>max</code></strong> usa quantos itens forem preciso para a energia encher.</li></ul><h2 id=\"na-cadeia\"><a class=\"anchor\" href=\"#na-cadeia\" aria-label=\"Link para esta seção\">#</a>Na cadeia</h2><p><code>/comprar</code>, <code>/vender</code>, <code>/descartar</code> e <code>/usaritem</code> ficam <strong>bloqueados</strong> enquanto você cumpre pena. Abrir a loja e o inventário para olhar continua liberado.</p><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/economy/market/\"><b>Bolsa</b><span>O mercado do servidor: o índice que mexe nos preços da loja e o item em alta que paga mais na venda.</span></a></li><li><a href=\"/wiki/character/energy/\"><b>Energia</b><span>Quanta energia você tem, quanto cada ação gasta, como ela volta sozinha e como repor mais rápido.</span></a></li><li><a href=\"/wiki/combat/weapons/\"><b>Armas</b><span>As armas da loja, o dano de cada uma, como equipar e como elas gastam munição e durabilidade.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "loja-loja",
+          "text": "Loja: /loja"
+        },
+        {
+          "level": 2,
+          "id": "o-que-a-loja-vende",
+          "text": "O que a loja vende"
+        },
+        {
+          "level": 2,
+          "id": "precos-mudam-a-bolsa",
+          "text": "Preços mudam: a bolsa"
+        },
+        {
+          "level": 2,
+          "id": "inventario-inventario",
+          "text": "Inventário: /inventario"
+        },
+        {
+          "level": 2,
+          "id": "usar-itens-usaritem",
+          "text": "Usar itens: /usaritem"
+        },
+        {
+          "level": 2,
+          "id": "na-cadeia",
+          "text": "Na cadeia"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "economy/bank-and-transfers",
+        "path": "/wiki/economy/bank-and-transfers/",
+        "title": "Banco e transferências"
+      },
+      "next": {
+        "id": "economy/market",
+        "path": "/wiki/economy/market/",
+        "title": "Bolsa"
+      }
+    },
+    {
+      "id": "economy/market",
+      "path": "/wiki/economy/market/",
+      "title": "Bolsa",
+      "description": "O mercado do servidor: o índice que mexe nos preços da loja e o item em alta que paga mais na venda.",
+      "section": {
+        "id": "economy",
+        "title": "Economia"
+      },
+      "html": "<p>O <code>/bolsa</code> (atalho: <code>/mercado</code>) mostra o mercado do seu servidor. Apesar do nome, não tem ação para comprar: a bolsa é um <strong>índice</strong> que sobe e desce e muda o preço de tudo na loja.</p><p>Cada servidor tem o seu mercado. O que acontece no seu não mexe no de outro.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th>O que</th><th>Como funciona</th></tr></thead><tbody><tr><td>Índice</td><td data-label=\"Como funciona\">Vai de 0 a 90. Um novo é sorteado a cada 30 minutos.</td></tr><tr><td>Preço</td><td data-label=\"Como funciona\">O índice 0 deixa tudo em 90% da tabela e o 90 em 110%. O meio (45) é o preço de tabela.</td></tr><tr><td>Item em alta</td><td data-label=\"Como funciona\">A cada sorteio, um item que dá para vender paga de +5,5% a +24,5% a mais na venda.</td></tr><tr><td>Onde vale</td><td data-label=\"Como funciona\">Loja, inventário, <code>/comprar</code> e <code>/vender</code>.</td></tr></tbody></table></div><h2 id=\"o-indice\"><a class=\"anchor\" href=\"#o-indice\" aria-label=\"Link para esta seção\">#</a>O índice</h2><p>O índice é sorteado com a mesma chance para cada número de 0 a 90, <strong>sem olhar o anterior</strong>. Ele serve para tudo o que você compra ou vende:</p><ul><li><strong>índice baixo</strong>: a loja fica mais barata, e a venda paga menos;</li><li><strong>índice alto</strong>: a loja fica mais cara, e a venda paga mais.</li></ul><p>O painel do <code>/bolsa</code> agrupa o índice em três faixas, só para facilitar a leitura:</p><div class=\"table-wrap stack\"><table><thead><tr><th>Faixa</th><th>Índice</th><th>Preço</th></tr></thead><tbody><tr><td>📉 Baixo</td><td data-label=\"Índice\">0 a 29</td><td data-label=\"Preço\">de 90% a 96,4% da tabela</td></tr><tr><td>➖ Médio</td><td data-label=\"Índice\">30 a 60</td><td data-label=\"Preço\">de 96,7% a 103,3% da tabela</td></tr><tr><td>📈 Alto</td><td data-label=\"Índice\">61 a 90</td><td data-label=\"Preço\">de 103,6% a 110% da tabela</td></tr></tbody></table></div><p>Cada faixa sai mais ou menos uma vez em cada três sorteios.</p><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>A <strong>tendência</strong> que aparece no painel compara só o índice de agora com o do sorteio anterior (subiu, caiu ou ficou igual). Ela não prevê o próximo, porque o próximo é sorteado do zero.</p></aside><h2 id=\"o-item-em-alta\"><a class=\"anchor\" href=\"#o-item-em-alta\" aria-label=\"Link para esta seção\">#</a>O item em alta</h2><p>A cada sorteio, a Helena escolhe <strong>um item que dá para vender</strong> para ficar em alta. Hoje são: Maçã, Café, Energético, Vara de pesca e Mochila. Esse item paga um bônus a mais <strong>só na venda</strong>, por cima do preço que o índice já definiu. Armas não se vendem, então nunca ficam em alta.</p><aside class=\"callout example\"><p class=\"callout-title\">Exemplo</p><p>A maçã custa R$ 3 na tabela e vende por R$ 1,50. No índice 90 (110%), ela custa R$ 3,30 e vende por R$ 1,65. Se ela estiver em alta com o bônus máximo, a venda sobe para R$ 2,05.</p></aside><h2 id=\"quando-o-sorteio-acontece\"><a class=\"anchor\" href=\"#quando-o-sorteio-acontece\" aria-label=\"Link para esta seção\">#</a>Quando o sorteio acontece</h2><p>Ninguém precisa &quot;ligar&quot; a bolsa. O índice novo sai na <strong>primeira consulta de preço depois dos 30 minutos</strong>: uma compra, uma venda ou um <code>/bolsa</code>. O prazo seguinte conta a partir daí.</p><p>Se ninguém mexer na loja por horas, o sorteio não acumula: sai um só, na primeira consulta.</p><h2 id=\"o-preco-que-vale\"><a class=\"anchor\" href=\"#o-preco-que-vale\" aria-label=\"Link para esta seção\">#</a>O preço que vale</h2><p>O preço cobrado é o <strong>da hora em que você confirma</strong>, não o que estava na tela quando você abriu a loja. Se o mercado virou nesse meio tempo, o valor muda, e uma carteira que cobria o preço baixo pode não cobrir o novo.</p><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>Não dá para lucrar só com o mercado. Mesmo comprando no índice mais baixo e vendendo no mais alto, com o item em alta e o bônus máximo, você ainda perde dinheiro. A bolsa muda a hora certa de comprar e de vender, não cria dinheiro do nada.</p></aside><h2 id=\"comandos\"><a class=\"anchor\" href=\"#comandos\" aria-label=\"Link para esta seção\">#</a>Comandos</h2><ul><li><strong><code>/bolsa</code></strong>: abre o painel com o índice, a tendência, o item em alta e os preços de agora dos itens que vendem. Os botões levam à loja, atualizam e fecham.</li><li><strong><code>/loja</code></strong>: mostra o índice no topo e os preços já ajustados.</li><li><strong><code>/inventario</code></strong>: mostra o preço de venda de agora ao lado de cada item, com 🔥 no item em alta.</li></ul><p>O <code>/bolsa</code> também funciona preso, porque só mostra informação.</p><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/start/earning-money/\"><b>Ganhar dinheiro</b><span>As formas de ganhar dinheiro dentro da lei, quanto cada uma rende e de quanto em quanto tempo.</span></a></li><li><a href=\"/wiki/start/jobs/\"><b>Escolha seu emprego</b><span>A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "o-indice",
+          "text": "O índice"
+        },
+        {
+          "level": 2,
+          "id": "o-item-em-alta",
+          "text": "O item em alta"
+        },
+        {
+          "level": 2,
+          "id": "quando-o-sorteio-acontece",
+          "text": "Quando o sorteio acontece"
+        },
+        {
+          "level": 2,
+          "id": "o-preco-que-vale",
+          "text": "O preço que vale"
+        },
+        {
+          "level": 2,
+          "id": "comandos",
+          "text": "Comandos"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "economy/shop-and-inventory",
+        "path": "/wiki/economy/shop-and-inventory/",
+        "title": "Loja e inventário"
+      },
+      "next": {
+        "id": "economy/gems",
+        "path": "/wiki/economy/gems/",
+        "title": "Gemas"
+      }
+    },
+    {
+      "id": "economy/gems",
+      "path": "/wiki/economy/gems/",
+      "title": "Gemas",
+      "description": "O que são as gemas, para que servem e como ganhar.",
+      "section": {
+        "id": "economy",
+        "title": "Economia"
+      },
+      "html": "<p>As gemas são a moeda rara da Helena. Ao contrário do dinheiro, elas <strong>valem em todos os servidores</strong>: são da sua conta, não de um servidor.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th>O quê</th><th>Como é</th></tr></thead><tbody><tr><td>Ver o saldo</td><td data-label=\"Como é\"><code>/gemas</code></td></tr><tr><td>Coletar o bônus</td><td data-label=\"Como é\"><code>/coletargemas</code> ou o painel do site</td></tr><tr><td>Valem onde</td><td data-label=\"Como é\">em todos os servidores onde você joga</td></tr><tr><td>Onde aparecem</td><td data-label=\"Como é\">no cartão de perfil e no ranking de gemas</td></tr><tr><td>Para que servem hoje</td><td data-label=\"Como é\">liberar a lavanderia privada, por 10 gemas</td></tr></tbody></table></div><h2 id=\"ver-o-seu-saldo\"><a class=\"anchor\" href=\"#ver-o-seu-saldo\" aria-label=\"Link para esta seção\">#</a>Ver o seu saldo</h2><p>O <strong><code>/gemas</code></strong> mostra quantas gemas você tem e se o bônus de gemas já está disponível para coletar. O mesmo número aparece no <code>/saldo</code> e no seu <code>/perfil</code>.</p><h2 id=\"como-ganhar\"><a class=\"anchor\" href=\"#como-ganhar\" aria-label=\"Link para esta seção\">#</a>Como ganhar</h2><ul><li><strong>Pelo bônus de gemas</strong>, de duas formas: com o comando <strong><code>/coletargemas</code></strong> (atalho <code>/bonusgemas</code>) ou pelo <strong>painel do site</strong>, quando ele está ativado no bot. Cada coleta rende de <strong>1 a 3 gemas</strong>, com <strong>5 horas</strong> de espera entre uma coleta e outra.</li><li><strong>Os dois caminhos são o mesmo bônus.</strong> A espera é da conta, então coletar pelo comando já vale para o site, e o contrário também, e vale para todos os servidores de uma vez. Quem coletou em um lado vê a espera no outro, sem coletar em dobro.</li><li><strong>Pela administração do bot</strong>, que consegue dar gemas a um jogador.</li></ul><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>A loja não vende gemas, e o dinheiro do jogo não compra gemas.</p></aside><h2 id=\"para-que-servem\"><a class=\"anchor\" href=\"#para-que-servem\" aria-label=\"Link para esta seção\">#</a>Para que servem</h2><p>Hoje, as gemas têm um uso: <strong>liberar a lavanderia privada</strong> em um servidor, uma única vez, por 10 gemas. A privada devolve bem mais que a pública. Veja em <a href=\"/wiki/crime/laundering/\">Lavagem de dinheiro</a>.</p><p>Elas também contam para conquistas e para o <strong>ranking de gemas</strong> do <code>/ranking</code>.</p><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/crime/laundering/\"><b>Lavagem de dinheiro</b><span>Como transformar dinheiro sujo em dinheiro limpo, a diferença entre a lavanderia pública e a privada e quanto cada uma devolve.</span></a></li><li><a href=\"/wiki/economy/rankings/\"><b>Ranking</b><span>Os três rankings do servidor, como a posição é calculada e o que significa o número do seu cartão de perfil.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "ver-o-seu-saldo",
+          "text": "Ver o seu saldo"
+        },
+        {
+          "level": 2,
+          "id": "como-ganhar",
+          "text": "Como ganhar"
+        },
+        {
+          "level": 2,
+          "id": "para-que-servem",
+          "text": "Para que servem"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "economy/market",
+        "path": "/wiki/economy/market/",
+        "title": "Bolsa"
+      },
+      "next": {
+        "id": "economy/rankings",
+        "path": "/wiki/economy/rankings/",
+        "title": "Ranking"
+      }
+    },
+    {
+      "id": "economy/rankings",
+      "path": "/wiki/economy/rankings/",
+      "title": "Ranking",
+      "description": "Os três rankings do servidor, como a posição é calculada e o que significa o número do seu cartão de perfil.",
+      "section": {
+        "id": "economy",
+        "title": "Economia"
+      },
+      "html": "<p>O <code>/ranking</code> (atalho <code>/top</code>) mostra os 10 melhores jogadores do servidor em três classificações.</p><h2 id=\"os-tres-rankings\"><a class=\"anchor\" href=\"#os-tres-rankings\" aria-label=\"Link para esta seção\">#</a>Os três rankings</h2><div class=\"table-wrap stack\"><table><thead><tr><th>Ranking</th><th>Quem fica na frente</th></tr></thead><tbody><tr><td><strong>Patrimônio</strong></td><td data-label=\"Quem fica na frente\">quem tem mais dinheiro, somando <strong>carteira e banco</strong></td></tr><tr><td><strong>Nível</strong></td><td data-label=\"Quem fica na frente\">quem tem o nível mais alto</td></tr><tr><td><strong>Gemas</strong></td><td data-label=\"Quem fica na frente\">quem tem mais gemas</td></tr></tbody></table></div><p>Escolha com a opção <code>tipo</code> (Patrimônio, Nível ou Gemas). No prefixo, escreva <code>hranking tipo:level</code>. Os botões embaixo do ranking trocam de classificação na mesma mensagem, só para quem abriu.</p><p>Se você não está entre os 10 primeiros, o ranking mostra também a <strong>sua posição</strong>.</p><h2 id=\"como-o-empate-e-decidido\"><a class=\"anchor\" href=\"#como-o-empate-e-decidido\" aria-label=\"Link para esta seção\">#</a>Como o empate é decidido</h2><p>Quando dois jogadores têm o mesmo valor, quem tem <strong>mais XP</strong> fica na frente. Se o XP também empata, o desempate final é o ID do jogador, que nunca se repete.</p><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>O dinheiro sujo <strong>não conta</strong> no patrimônio. Só o que está na carteira e no banco.</p></aside><h2 id=\"o-numero-do-cartao-de-perfil\"><a class=\"anchor\" href=\"#o-numero-do-cartao-de-perfil\" aria-label=\"Link para esta seção\">#</a>O número do cartão de perfil</h2><p>O <strong>RANK</strong> que aparece no seu cartão de perfil é a sua posição no ranking de <strong>patrimônio</strong>, calculada do mesmo jeito. Os dois números nunca divergem.</p><h2 id=\"um-ranking-por-servidor\"><a class=\"anchor\" href=\"#um-ranking-por-servidor\" aria-label=\"Link para esta seção\">#</a>Um ranking por servidor</h2><p>Patrimônio e nível valem <strong>por servidor</strong>. Já as gemas são da conta: o ranking de gemas mostra o saldo global de cada pessoa, mas só entre quem joga naquele servidor.</p><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/character/profile/\"><b>Perfil e bio</b><span>O cartão de perfil, como ler cada parte, como mudar a bio e como ver o perfil de outra pessoa.</span></a></li><li><a href=\"/wiki/economy/bank-and-transfers/\"><b>Banco e transferências</b><span>A diferença entre carteira e banco, como depositar, sacar e transferir dinheiro e o que o saldo mostra.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "os-tres-rankings",
+          "text": "Os três rankings"
+        },
+        {
+          "level": 2,
+          "id": "como-o-empate-e-decidido",
+          "text": "Como o empate é decidido"
+        },
+        {
+          "level": 2,
+          "id": "o-numero-do-cartao-de-perfil",
+          "text": "O número do cartão de perfil"
+        },
+        {
+          "level": 2,
+          "id": "um-ranking-por-servidor",
+          "text": "Um ranking por servidor"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "economy/gems",
+        "path": "/wiki/economy/gems/",
+        "title": "Gemas"
+      },
+      "next": {
+        "id": "character/energy",
+        "path": "/wiki/character/energy/",
+        "title": "Energia"
+      }
+    },
+    {
+      "id": "character/energy",
+      "path": "/wiki/character/energy/",
+      "title": "Energia",
+      "description": "Quanta energia você tem, quanto cada ação gasta, como ela volta sozinha e como repor mais rápido.",
+      "section": {
+        "id": "character",
+        "title": "Personagem"
+      },
+      "html": "<p>Energia é o que limita o quanto você faz seguido. Trabalhar, cometer crimes, roubar e lavar dinheiro gastam energia, e ela volta com o tempo.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th>O quê</th><th>Como é</th></tr></thead><tbody><tr><td>Máximo</td><td data-label=\"Como é\">100 pontos</td></tr><tr><td>Volta sozinha</td><td data-label=\"Como é\">1 ponto a cada 5 minutos (12 por hora)</td></tr><tr><td>De zero a cheia</td><td data-label=\"Como é\">8 h 20 min</td></tr><tr><td>Ver</td><td data-label=\"Como é\"><code>/energia</code></td></tr></tbody></table></div><h2 id=\"quanto-cada-acao-gasta\"><a class=\"anchor\" href=\"#quanto-cada-acao-gasta\" aria-label=\"Link para esta seção\">#</a>Quanto cada ação gasta</h2><div class=\"table-wrap stack\"><table><thead><tr><th>Ação</th><th>Custo em energia</th></tr></thead><tbody><tr><td>Trabalhar (<code>/trabalhar</code>)</td><td data-label=\"Custo em energia\">10</td></tr><tr><td>Crime (<code>/crime</code>)</td><td data-label=\"Custo em energia\">30</td></tr><tr><td>Roubar (<code>/roubar</code>)</td><td data-label=\"Custo em energia\">50</td></tr><tr><td>Lavar dinheiro (<code>/lavagem</code>)</td><td data-label=\"Custo em energia\">40</td></tr></tbody></table></div><p>Se a energia não cobre o custo, a ação <strong>não acontece</strong> e nada é gasto: a Helena avisa quantos pontos faltam.</p><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>No crime e no roubo, a energia é gasta <strong>mesmo que a tentativa dê errado</strong>.</p></aside><h2 id=\"como-ela-volta\"><a class=\"anchor\" href=\"#como-ela-volta\" aria-label=\"Link para esta seção\">#</a>Como ela volta</h2><p>A regeneração conta em pontos inteiros: a cada 5 minutos cheios, entra 1 ponto, e o tempo que sobra continua contando. Quando a energia chega ao máximo, o relógio reinicia, então <strong>não dá para acumular</strong> energia além de 100.</p><p>O <code>/energia</code> mostra a energia de agora, o tempo até o próximo ponto e o custo do trabalho.</p><h2 id=\"repor-mais-rapido\"><a class=\"anchor\" href=\"#repor-mais-rapido\" aria-label=\"Link para esta seção\">#</a>Repor mais rápido</h2><p>Comida e bebida repõem energia na hora. Use com o <code>/usaritem</code>, pelo painel ou com o item e a quantidade direto no comando.</p><div class=\"table-wrap stack\"><table><thead><tr><th>Item</th><th>Repõe</th><th>Preço</th></tr></thead><tbody><tr><td>🍎 Maçã</td><td data-label=\"Repõe\">10 de energia</td><td data-label=\"Preço\">R$ 3</td></tr><tr><td>☕ Café</td><td data-label=\"Repõe\">25 de energia</td><td data-label=\"Preço\">R$ 7</td></tr><tr><td>⚡ Energético</td><td data-label=\"Repõe\">50 de energia</td><td data-label=\"Preço\">R$ 15</td></tr></tbody></table></div><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>Com a energia cheia, o <code>/usaritem</code> recusa o uso e <strong>não gasta o item</strong>. O que passaria de 100 se perderia, então use quando já tiver gasto energia suficiente para caber.</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/economy/shop-and-inventory/\"><b>Loja e inventário</b><span>O que a loja vende, como comprar e vender pelos botões, como usar os itens e como organizar o inventário.</span></a></li><li><a href=\"/wiki/crime/getting-started/\"><b>Crime: por onde começar</b><span>Como o /crime funciona, o que você ganha, o que perde se der errado e como não parar na cadeia à toa.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "quanto-cada-acao-gasta",
+          "text": "Quanto cada ação gasta"
+        },
+        {
+          "level": 2,
+          "id": "como-ela-volta",
+          "text": "Como ela volta"
+        },
+        {
+          "level": 2,
+          "id": "repor-mais-rapido",
+          "text": "Repor mais rápido"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "economy/rankings",
+        "path": "/wiki/economy/rankings/",
+        "title": "Ranking"
+      },
+      "next": {
+        "id": "character/levels-and-xp",
+        "path": "/wiki/character/levels-and-xp/",
+        "title": "Níveis e XP"
+      }
+    },
+    {
+      "id": "character/levels-and-xp",
+      "path": "/wiki/character/levels-and-xp/",
+      "title": "Níveis e XP",
+      "description": "Como o XP vira nível, de onde ele vem e o que cada nível libera.",
+      "section": {
+        "id": "character",
+        "title": "Personagem"
+      },
+      "html": "<p>O seu nível mostra o quanto você já jogou no servidor. Ele sobe com o <strong>XP</strong>, e o XP vem de quase tudo que você faz.</p><h2 id=\"como-o-nivel-sobe\"><a class=\"anchor\" href=\"#como-o-nivel-sobe\" aria-label=\"Link para esta seção\">#</a>Como o nível sobe</h2><p>O nível máximo é <strong>100</strong>, e cada nível pede mais XP do que o anterior. O XP total necessário cresce assim:</p><div class=\"table-wrap stack\"><table><thead><tr><th>Nível</th><th>XP total necessário</th></tr></thead><tbody><tr><td>2</td><td data-label=\"XP total necessário\">100</td></tr><tr><td>5</td><td data-label=\"XP total necessário\">1.000</td></tr><tr><td>10</td><td data-label=\"XP total necessário\">4.500</td></tr><tr><td>20</td><td data-label=\"XP total necessário\">19.000</td></tr><tr><td>30</td><td data-label=\"XP total necessário\">43.500</td></tr><tr><td>50</td><td data-label=\"XP total necessário\">122.500</td></tr><tr><td>75</td><td data-label=\"XP total necessário\">277.500</td></tr><tr><td>100</td><td data-label=\"XP total necessário\">495.000</td></tr></tbody></table></div><p>O XP e o nível valem <strong>por servidor</strong>.</p><h2 id=\"de-onde-vem-o-xp\"><a class=\"anchor\" href=\"#de-onde-vem-o-xp\" aria-label=\"Link para esta seção\">#</a>De onde vem o XP</h2><div class=\"table-wrap stack\"><table><thead><tr><th>Ação</th><th>XP</th></tr></thead><tbody><tr><td>Trabalhar (<code>/trabalhar</code>)</td><td data-label=\"XP\">25 por turno</td></tr><tr><td>Missões diárias (<code>/missoes</code>)</td><td data-label=\"XP\">85 se fizer as 3</td></tr><tr><td>Crime que dá certo (<code>/crime</code>)</td><td data-label=\"XP\">30 a 80</td></tr><tr><td>Vencer um duelo</td><td data-label=\"XP\">30</td></tr></tbody></table></div><h2 id=\"o-que-o-nivel-libera\"><a class=\"anchor\" href=\"#o-que-o-nivel-libera\" aria-label=\"Link para esta seção\">#</a>O que o nível libera</h2><ul><li><strong>Empregos melhores.</strong> Cada emprego libera num nível, do Entregador (nível 1) ao Magnata (nível 85). Veja a escada em <a href=\"/wiki/start/jobs/\">Escolha seu emprego</a>.</li><li><strong>Crimes maiores.</strong> O nível multiplica o prêmio e a multa do crime. Veja a tabela em <a href=\"/wiki/crime/getting-started/\">Crime: por onde começar</a>.</li><li><strong>Conquistas.</strong> Algumas pedem um nível, e rendem títulos. Veja em <a href=\"/wiki/character/achievements-and-titles/\">Conquistas e títulos</a>.</li></ul><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>O multiplicador do crime vale para a <strong>multa</strong> também. Quanto maior o nível, maior o prejuízo de um crime que dá errado.</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/start/jobs/\"><b>Escolha seu emprego</b><span>A escada de empregos, de Entregador a Magnata, o nível de cada um e como trocar.</span></a></li><li><a href=\"/wiki/character/achievements-and-titles/\"><b>Conquistas e títulos</b><span>As conquistas que dá para desbloquear, o título que cada uma dá e como equipar o seu no perfil.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "como-o-nivel-sobe",
+          "text": "Como o nível sobe"
+        },
+        {
+          "level": 2,
+          "id": "de-onde-vem-o-xp",
+          "text": "De onde vem o XP"
+        },
+        {
+          "level": 2,
+          "id": "o-que-o-nivel-libera",
+          "text": "O que o nível libera"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "character/energy",
+        "path": "/wiki/character/energy/",
+        "title": "Energia"
+      },
+      "next": {
+        "id": "character/achievements-and-titles",
+        "path": "/wiki/character/achievements-and-titles/",
+        "title": "Conquistas e títulos"
+      }
+    },
+    {
+      "id": "character/achievements-and-titles",
+      "path": "/wiki/character/achievements-and-titles/",
+      "title": "Conquistas e títulos",
+      "description": "As conquistas que dá para desbloquear, o título que cada uma dá e como equipar o seu no perfil.",
+      "section": {
+        "id": "character",
+        "title": "Personagem"
+      },
+      "html": "<p>Conquistas são metas que a Helena confere sozinha enquanto você joga. Cada uma desbloqueia um <strong>título</strong>, que você pode exibir no cartão de perfil.</p><h2 id=\"como-funciona\"><a class=\"anchor\" href=\"#como-funciona\" aria-label=\"Link para esta seção\">#</a>Como funciona</h2><ul><li>As conquistas são <strong>por servidor</strong>: o que você desbloqueia num servidor não vale no outro.</li><li>Elas <strong>desbloqueiam sozinhas</strong> quando você atinge a meta. Não precisa pedir nada.</li><li>O prêmio é o <strong>título</strong>. Não há dinheiro nem XP extra.</li><li>Cada conquista tem uma <strong>raridade</strong>: comum, incomum, rara, épica ou lendária.</li></ul><h2 id=\"as-conquistas\"><a class=\"anchor\" href=\"#as-conquistas\" aria-label=\"Link para esta seção\">#</a>As conquistas</h2><div class=\"table-wrap\" role=\"region\" tabindex=\"0\" aria-label=\"Tabela: Conquista, Raridade, Como conseguir, Título e identificador\"><table><thead><tr><th>Conquista</th><th>Raridade</th><th>Como conseguir</th><th>Título e identificador</th></tr></thead><tbody><tr><td>🌱 Primeiros Passos</td><td data-label=\"Raridade\">Comum</td><td data-label=\"Como conseguir\">Alcance o nível 2.</td><td data-label=\"Título e identificador\">🌱 Iniciante <code>first_steps</code></td></tr><tr><td>🏆 Veterano</td><td data-label=\"Raridade\">Raro</td><td data-label=\"Como conseguir\">Alcance o nível 10.</td><td data-label=\"Título e identificador\">🏆 Veterano <code>veteran</code></td></tr><tr><td>👑 Elite da Helena</td><td data-label=\"Raridade\">Lendário</td><td data-label=\"Como conseguir\">Alcance o nível 25.</td><td data-label=\"Título e identificador\">👑 Elite <code>elite</code></td></tr><tr><td>💵 Primeiras Economias</td><td data-label=\"Raridade\">Comum</td><td data-label=\"Como conseguir\">Acumule R$ 1.000 em patrimônio.</td><td data-label=\"Título e identificador\">💵 Poupador <code>first_savings</code></td></tr><tr><td>💰 Vida de Rico</td><td data-label=\"Raridade\">Raro</td><td data-label=\"Como conseguir\">Acumule R$ 10.000 em patrimônio.</td><td data-label=\"Título e identificador\">💰 Rico <code>rich</code></td></tr><tr><td>💎 Magnata</td><td data-label=\"Raridade\">Lendário</td><td data-label=\"Como conseguir\">Acumule R$ 100.000 em patrimônio.</td><td data-label=\"Título e identificador\">💎 Magnata <code>magnate</code></td></tr><tr><td>🔥 Começando Bem</td><td data-label=\"Raridade\">Comum</td><td data-label=\"Como conseguir\">Alcance 3 dias de sequência diária.</td><td data-label=\"Título e identificador\">🔥 Persistente <code>daily_3</code></td></tr><tr><td>🔥 Uma Semana de Dedicação</td><td data-label=\"Raridade\">Raro</td><td data-label=\"Como conseguir\">Alcance 7 dias de sequência diária.</td><td data-label=\"Título e identificador\">🔥 Dedicado <code>daily_7</code></td></tr><tr><td>🌟 Disciplina Absoluta</td><td data-label=\"Raridade\">Lendário</td><td data-label=\"Como conseguir\">Alcance 30 dias de sequência diária.</td><td data-label=\"Título e identificador\">🌟 Imparável <code>daily_30</code></td></tr><tr><td>⚔️ Duelista</td><td data-label=\"Raridade\">Raro</td><td data-label=\"Como conseguir\">Vença 10 duelos.</td><td data-label=\"Título e identificador\">⚔️ Duelista <code>duelist</code></td></tr><tr><td>🏅 Campeão da Arena</td><td data-label=\"Raridade\">Épico</td><td data-label=\"Como conseguir\">Vença 50 duelos.</td><td data-label=\"Título e identificador\">🏅 Campeão <code>champion</code></td></tr><tr><td>💎 Colecionador de Gemas</td><td data-label=\"Raridade\">Incomum</td><td data-label=\"Como conseguir\">Acumule 100 gemas.</td><td data-label=\"Título e identificador\">💎 Colecionador <code>gem_collector</code></td></tr></tbody></table></div><p>O identificador (o código em cada linha) é o que você usa para equipar o título.</p><h2 id=\"comandos\"><a class=\"anchor\" href=\"#comandos\" aria-label=\"Link para esta seção\">#</a>Comandos</h2><div class=\"table-wrap stack\"><table><thead><tr><th>Comando</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/conquistas</code></td><td data-label=\"O que faz\">mostra as suas conquistas, os títulos e o progresso. Com <code>jogador:@pessoa</code>, mostra as de outra pessoa</td></tr><tr><td><code>/titulos</code></td><td data-label=\"O que faz\">lista os títulos que você já desbloqueou e o que está equipado</td></tr><tr><td><code>/equipartitulo titulo:first_steps</code></td><td data-label=\"O que faz\">equipa um título pelo identificador</td></tr><tr><td><code>/desequipartitulo</code></td><td data-label=\"O que faz\">tira o título, sem perder a conquista</td></tr></tbody></table></div><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>Tirar o título do perfil <strong>não desfaz a conquista</strong>: você pode equipar de novo quando quiser.</p></aside><h2 id=\"onde-o-titulo-aparece\"><a class=\"anchor\" href=\"#onde-o-titulo-aparece\" aria-label=\"Link para esta seção\">#</a>Onde o título aparece</h2><p>O título equipado aparece no seu <strong>cartão de perfil</strong>, logo abaixo do seu nome. Veja mais em <a href=\"/wiki/character/profile/\">Perfil e bio</a>.</p><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/character/profile/\"><b>Perfil e bio</b><span>O cartão de perfil, como ler cada parte, como mudar a bio e como ver o perfil de outra pessoa.</span></a></li><li><a href=\"/wiki/character/levels-and-xp/\"><b>Níveis e XP</b><span>Como o XP vira nível, de onde ele vem e o que cada nível libera.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "como-funciona",
+          "text": "Como funciona"
+        },
+        {
+          "level": 2,
+          "id": "as-conquistas",
+          "text": "As conquistas"
+        },
+        {
+          "level": 2,
+          "id": "comandos",
+          "text": "Comandos"
+        },
+        {
+          "level": 2,
+          "id": "onde-o-titulo-aparece",
+          "text": "Onde o título aparece"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "character/levels-and-xp",
+        "path": "/wiki/character/levels-and-xp/",
+        "title": "Níveis e XP"
+      },
+      "next": {
+        "id": "character/profile",
+        "path": "/wiki/character/profile/",
+        "title": "Perfil e bio"
+      }
+    },
+    {
+      "id": "character/profile",
+      "path": "/wiki/character/profile/",
+      "title": "Perfil e bio",
+      "description": "O cartão de perfil, como ler cada parte, como mudar a bio e como ver o perfil de outra pessoa.",
+      "section": {
+        "id": "character",
+        "title": "Personagem"
+      },
+      "html": "<p>O <strong><code>/perfil</code></strong> (atalho <code>/profile</code>) mostra o seu cartão de perfil: uma imagem com o resumo de quem você é no servidor.</p><h2 id=\"o-que-o-cartao-mostra\"><a class=\"anchor\" href=\"#o-que-o-cartao-mostra\" aria-label=\"Link para esta seção\">#</a>O que o cartão mostra</h2><ul><li><strong>RANK</strong>: a sua posição no ranking de patrimônio (veja <a href=\"/wiki/economy/rankings/\">Ranking</a>);</li><li>o <strong>estado civil</strong>, solteiro(a) ou casado(a) (veja <a href=\"/wiki/character/marriage/\">Casamento</a>);</li><li>o <strong>nível</strong>, num anel que mostra quanto falta para o próximo (com 0% sobra um pequeno trecho do anel, à esquerda do topo);</li><li>a sua <strong>foto</strong>, o <strong>nome</strong> (os emojis do nome aparecem em cores) e o <strong>título</strong> equipado, com o emoji do título ao lado do texto (💰 Rico, 🔥 Persistente...);</li><li>o selo <strong>DEV</strong>, para o dono do bot;</li><li>a <strong>bio</strong>;</li><li>o <strong>banco</strong>, a <strong>carteira</strong> e as <strong>gemas</strong>;</li><li>a <strong>arma equipada</strong> (com o dano) e o <strong>emprego atual</strong>.</li></ul><h2 id=\"ver-o-perfil-de-outra-pessoa\"><a class=\"anchor\" href=\"#ver-o-perfil-de-outra-pessoa\" aria-label=\"Link para esta seção\">#</a>Ver o perfil de outra pessoa</h2><p>Use a opção <code>usuario</code> com o nome, uma @menção ou o ID: <code>/perfil usuario:@pessoa</code>, ou <code>hperfil @pessoa</code> no prefixo.</p><h2 id=\"mudar-a-bio\"><a class=\"anchor\" href=\"#mudar-a-bio\" aria-label=\"Link para esta seção\">#</a>Mudar a bio</h2><p>A bio é o texto que aparece no cartão. Ela tem <strong>até 160 caracteres</strong> (cada emoji conta como 1).</p><ul><li><strong><code>/bio texto:Seu texto aqui</code></strong> troca na hora.</li><li><strong><code>/bio</code></strong> sem texto abre um editor, com o botão <strong>Editar bio</strong>, já preenchido com a bio atual.</li></ul><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>O cartão desenha letras latinas, números, a pontuação comum e os <strong>emojis comuns, em cores</strong> (rostos, bandeiras, tons de pele, 1️⃣, 👨‍👩‍👧, 🏳️‍🌈...), na bio, no nome e no nome do cônjuge. <strong>Símbolos decorativos (★, ✿, ꒰), emojis personalizados da VSync, menções e outros alfabetos (japonês, coreano, árabe, cirílico) ficam de fora do cartão</strong>, para não aparecerem como quadradinhos, e o mesmo vale para emojis lançados de 2023 em diante, que ainda não têm desenho. A bio guardada continua inteira, e o <code>/bio</code> avisa como ela fica no cartão quando algo fica de fora. Letras em fonte estilizada (𝓑𝓲𝓸) viram letras comuns.</p><p>Os emojis do cartão são do <a href=\"https://github.com/jdecked/twemoji\" target=\"_blank\" rel=\"noopener\">Twemoji</a> (© Twitter, Inc. e colaboradores), usados sob a licença <a href=\"https://creativecommons.org/licenses/by/4.0/\" target=\"_blank\" rel=\"noopener\">CC-BY 4.0</a>.</p></aside><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>A bio aparece para qualquer pessoa que veja o seu perfil. Os <a href=\"/terms/\">termos de uso</a> pedem que ela não tenha conteúdo ilegal, ofensivo ou que exponha dados de outras pessoas.</p></aside><h2 id=\"perfil-da-vsync-userinfo\"><a class=\"anchor\" href=\"#perfil-da-vsync-userinfo\" aria-label=\"Link para esta seção\">#</a>Perfil da VSync: <code>/userinfo</code></h2><p>O <code>/userinfo</code> (atalho <code>/ui</code>) é outra coisa: mostra as <strong>informações e insígnias de um usuário da VSync</strong>, não do jogo. Funciona com qualquer pessoa, mesmo que ela nunca tenha jogado a Helena.</p><p>O cartão mostra a <strong>menção</strong>, o <strong>@usuário</strong> e o <strong>ID</strong> (em caixas de código, fáceis de copiar), as <strong>insígnias</strong> (Prisma+, Pulse, tempo de tela e as da conta; as que a pessoa escondeu na VSync não aparecem, e as que não têm emoji aparecem pelo nome), quando a conta foi criada e quando entrou no servidor, cada data com a <strong>idade</strong> em anos, meses e dias. Quem tem <strong>Prisma</strong> ou <strong>Pulse</strong> vê também desde quando, há quanto tempo pulsa (no selo atual) e quanto falta para o próximo selo; quem não assina Prisma nem pulsa não vê esses campos. Bots levam a marca 🤖 e quem está de castigo vê até quando. No rodapé aparecem quem usou o comando, quantas vezes aquele perfil já foi consultado e a hora.</p><p>Embaixo do cartão há dois menus, só para quem usou o comando:</p><ul><li><strong>Mais informações.</strong> abre o <strong>avatar</strong> (inteiro e sem cortar), o <strong>banner</strong>, o nome de cada <strong>insígnia</strong>, as <strong>datas e idades</strong>, a <strong>evolução do Pulse</strong> (cada nível e quando chega), os <strong>cargos</strong> e o <strong>status e a atividade</strong> (online, status personalizado, o que está fazendo). Só aparece o que a pessoa tem, e o que ela escondeu na VSync não aparece.</li><li><strong>Ver informações de outros membros no servidor.</strong> lista quem já joga ali e tem a opção <strong>Procurar por @usuário...</strong>, que abre um formulário. O resultado também aparece só para você.</li></ul><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/character/achievements-and-titles/\"><b>Conquistas e títulos</b><span>As conquistas que dá para desbloquear, o título que cada uma dá e como equipar o seu no perfil.</span></a></li><li><a href=\"/wiki/character/marriage/\"><b>Casamento</b><span>Como pedir alguém em casamento, o que muda no perfil e a vida em família com o Gozofone e os filhos.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "o-que-o-cartao-mostra",
+          "text": "O que o cartão mostra"
+        },
+        {
+          "level": 2,
+          "id": "ver-o-perfil-de-outra-pessoa",
+          "text": "Ver o perfil de outra pessoa"
+        },
+        {
+          "level": 2,
+          "id": "mudar-a-bio",
+          "text": "Mudar a bio"
+        },
+        {
+          "level": 2,
+          "id": "perfil-da-vsync-userinfo",
+          "text": "Perfil da VSync: /userinfo"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "character/achievements-and-titles",
+        "path": "/wiki/character/achievements-and-titles/",
+        "title": "Conquistas e títulos"
+      },
+      "next": {
+        "id": "character/marriage",
+        "path": "/wiki/character/marriage/",
+        "title": "Casamento"
+      }
+    },
+    {
+      "id": "character/marriage",
+      "path": "/wiki/character/marriage/",
+      "title": "Casamento",
+      "description": "Como pedir alguém em casamento, o que muda no perfil e a vida em família com o Gozofone e os filhos.",
+      "section": {
+        "id": "character",
+        "title": "Personagem"
+      },
+      "html": "<p>O casamento na Helena aparece no perfil dos dois e abre a vida em família: o <strong>Gozofone</strong> (uma ligação para o seu cônjuge) e os <strong>filhos</strong> do casal. Casar não custa nada e não muda o seu nível nem o seu dinheiro.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th>O quê</th><th>Como é</th></tr></thead><tbody><tr><td>Pedir</td><td data-label=\"Como é\"><code>/casar usuario:@pessoa</code></td></tr><tr><td>Aceitar</td><td data-label=\"Como é\"><code>/aceitarcasamento</code></td></tr><tr><td>Recusar</td><td data-label=\"Como é\"><code>/recusarcasamento</code></td></tr><tr><td>Terminar</td><td data-label=\"Como é\"><code>/divorciar</code></td></tr><tr><td>Ligar para o cônjuge</td><td data-label=\"Como é\"><code>/gozofone</code> (ou <code>/gf</code>)</td></tr><tr><td>Ver a família</td><td data-label=\"Como é\"><code>/familia</code></td></tr><tr><td>O pedido vale</td><td data-label=\"Como é\">24 horas</td></tr><tr><td>Custo</td><td data-label=\"Como é\">nenhum</td></tr></tbody></table></div><h2 id=\"como-funciona\"><a class=\"anchor\" href=\"#como-funciona\" aria-label=\"Link para esta seção\">#</a>Como funciona</h2><ol><li>Quem pede usa <strong><code>/casar</code></strong> e escolhe a pessoa. O pedido dura <strong>24 horas</strong>.</li><li>Quem recebeu responde com <strong><code>/aceitarcasamento</code></strong> ou <strong><code>/recusarcasamento</code></strong>.</li><li>Aceito, os dois passam a aparecer como <strong>casados</strong> no perfil.</li></ol><h2 id=\"regras\"><a class=\"anchor\" href=\"#regras\" aria-label=\"Link para esta seção\">#</a>Regras</h2><ul><li>O casamento é <strong>por servidor</strong>.</li><li>Cada pessoa casa com <strong>uma pessoa por vez</strong>. Quem já está casado(a) não pede, e não pode receber pedido.</li><li>Cada pessoa <strong>envia um pedido por vez</strong>: enquanto o seu não for respondido (ou vencer), não dá para enviar outro.</li><li>Cada pessoa <strong>recebe um pedido por vez</strong>: se alguém já pediu aquela pessoa, é preciso esperar a resposta ou o prazo.</li><li>Você não pode pedir a si mesmo.</li><li>Se um dos dois casar com outra pessoa antes de o pedido ser aceito, o casamento <strong>não acontece</strong>.</li></ul><h2 id=\"gozofone\"><a class=\"anchor\" href=\"#gozofone\" aria-label=\"Link para esta seção\">#</a>Gozofone</h2><p>O <strong><code>/gozofone</code></strong> liga para o seu cônjuge. A mensagem menciona a pessoa, que tem <strong>10 segundos</strong> para tocar em <strong>Atender</strong>.</p><ul><li><strong>Atendeu:</strong> com <strong>20%</strong> de chance nasce um filho. Sem filho, quem atendeu <strong>recebe de R$ 100 a R$ 500</strong> (quem ligou não ganha nada, o dinheiro é de quem atende).</li><li><strong>Recusou ou ninguém atendeu:</strong> a ligação não conta, e você pode ligar de novo.</li><li><strong>Cancelou</strong> (botão de quem ligou): a espera fica.</li><li>A espera é de <strong>1 hora</strong> e é <strong>pessoal</strong>: o seu cônjuge também pode ligar para você.</li><li>Só atende o cônjuge. Uma ligação por vez para o casal.</li></ul><p>Se a carteira de quem atendeu estiver cheia, nada é pago, mas a ligação conta.</p><h2 id=\"filhos\"><a class=\"anchor\" href=\"#filhos\" aria-label=\"Link para esta seção\">#</a>Filhos</h2><p>Quando nasce um bebê (<strong>5%</strong> das vezes são <strong>gêmeos</strong>), a Helena mostra o botão <strong>Registrar filho</strong>. Um dos pais toca nele e escolhe o nome em <strong>2 minutos</strong>. Passou o prazo, o bebê não é registrado.</p><ul><li>O nome tem de <strong>2 a 32 letras</strong>, com espaço se for composto, e não repete o de um irmão.</li><li>Enquanto um bebê espera nome, não nasce outro, e o limite é de <strong>10 filhos</strong> por casal. Nesses casos, atender rende só o dinheiro.</li><li>O <strong><code>/familia</code></strong> mostra o casal, os filhos e o bebê que espera nome.</li></ul><h2 id=\"terminar\"><a class=\"anchor\" href=\"#terminar\" aria-label=\"Link para esta seção\">#</a>Terminar</h2><p>O <strong><code>/divorciar</code></strong> encerra o casamento atual. O estado civil dos dois volta para <strong>solteiro(a)</strong>, e os <strong>filhos do casal saem da família</strong> junto com o casamento.</p><h2 id=\"na-cadeia\"><a class=\"anchor\" href=\"#na-cadeia\" aria-label=\"Link para esta seção\">#</a>Na cadeia</h2><p><code>/casar</code>, <code>/aceitarcasamento</code> e <code>/gozofone</code> ficam <strong>bloqueados</strong> enquanto você cumpre pena, e ligar para quem está preso também não funciona. Recusar, se divorciar e ver a família continuam liberados.</p><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/character/profile/\"><b>Perfil e bio</b><span>O cartão de perfil, como ler cada parte, como mudar a bio e como ver o perfil de outra pessoa.</span></a></li><li><a href=\"/wiki/economy/rankings/\"><b>Ranking</b><span>Os três rankings do servidor, como a posição é calculada e o que significa o número do seu cartão de perfil.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "como-funciona",
+          "text": "Como funciona"
+        },
+        {
+          "level": 2,
+          "id": "regras",
+          "text": "Regras"
+        },
+        {
+          "level": 2,
+          "id": "gozofone",
+          "text": "Gozofone"
+        },
+        {
+          "level": 2,
+          "id": "filhos",
+          "text": "Filhos"
+        },
+        {
+          "level": 2,
+          "id": "terminar",
+          "text": "Terminar"
+        },
+        {
+          "level": 2,
+          "id": "na-cadeia",
+          "text": "Na cadeia"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "character/profile",
+        "path": "/wiki/character/profile/",
+        "title": "Perfil e bio"
+      },
+      "next": {
+        "id": "combat/duels",
+        "path": "/wiki/combat/duels/",
+        "title": "Duelos"
+      }
+    },
+    {
+      "id": "combat/duels",
+      "path": "/wiki/combat/duels/",
+      "title": "Duelos",
+      "description": "Como desafiar, aceitar e vencer um duelo, quem pode duelar e o que muda depois.",
+      "section": {
+        "id": "combat",
+        "title": "Combate"
+      },
+      "html": "<p>O duelo é uma luta entre dois jogadores do mesmo servidor. Não vale dinheiro: o que está em jogo é a vida, o XP e a sua fama.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th>O quê</th><th>Como é</th></tr></thead><tbody><tr><td>Desafiar</td><td data-label=\"Como é\"><code>/atacar usuario:@pessoa</code></td></tr><tr><td>Aceitar ou recusar</td><td data-label=\"Como é\"><code>/aceitarduelo</code> ou <code>/recusarduelo</code></td></tr><tr><td>O desafio vale</td><td data-label=\"Como é\">10 minutos</td></tr><tr><td>Vida mínima</td><td data-label=\"Como é\">20, dos dois lados</td></tr><tr><td>Espera entre duelos</td><td data-label=\"Como é\">5 minutos</td></tr><tr><td>Quem vence ganha</td><td data-label=\"Como é\">30 de XP</td></tr></tbody></table></div><h2 id=\"como-acontece\"><a class=\"anchor\" href=\"#como-acontece\" aria-label=\"Link para esta seção\">#</a>Como acontece</h2><ol><li>Você desafia alguém com <strong><code>/atacar</code></strong>. A Helena <strong>marca a pessoa</strong> na mensagem do desafio, então ela é avisada.</li><li>A pessoa tem 10 minutos para usar <strong><code>/aceitarduelo</code></strong>. Se não quiser, usa <code>/recusarduelo</code>, e quem desafiou é avisado da recusa.</li><li>Quando ela aceita, o duelo <strong>é resolvido na hora</strong>: os dois golpeiam ao mesmo tempo, e a mensagem do resultado marca os dois.</li></ol><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>A Helena não usa sorte no duelo. O resultado vem <strong>só das armas e da vida</strong> de cada um. Quem causa mais dano termina com mais vida e vence.</p></aside><h2 id=\"o-dano\"><a class=\"anchor\" href=\"#o-dano\" aria-label=\"Link para esta seção\">#</a>O dano</h2><p>Cada um causa o dano da arma que tem equipada:</p><ul><li><strong>sem arma</strong>, o golpe vale 5;</li><li><strong>com arma</strong>, vale o dano dela (as armas que não definem o próprio dano valem 10). A tabela está em <a href=\"/wiki/combat/weapons/\">Armas</a>;</li><li>o <strong>colete de quem apanha</strong> tira pontos do golpe recebido, até <strong>15 pontos</strong> por golpe, e o dano nunca fica abaixo de 1. O colete protege só quem o veste: o golpe dele continua valendo o dano inteiro da arma. Veja em <a href=\"/wiki/combat/health-and-gear/\">Vida, colete e munição</a>.</li></ul><p>A <strong>arma de fogo</strong> gasta <strong>1 munição</strong> por duelo e <strong>toda arma</strong> gasta <strong>1 ponto de durabilidade</strong>. Arma de fogo sem munição, ou arma sem durabilidade, impede o duelo: nada é gasto, e o desafio continua esperando.</p><h2 id=\"quem-vence\"><a class=\"anchor\" href=\"#quem-vence\" aria-label=\"Link para esta seção\">#</a>Quem vence</h2><p>Vence quem termina com <strong>mais vida</strong>. Empatou, <strong>ninguém vence</strong>: nenhum dos dois ganha XP, vitória ou derrota. O vencedor soma 1 vitória, o perdedor soma 1 derrota, e o duelo vai para o histórico.</p><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>Entre no duelo com a vida cheia. Um ferimento de crime ou de roubo, ou um duelo recente, deixa você com menos vida do que o adversário, e o resultado só depende dos números.</p></aside><h2 id=\"o-que-impede-um-duelo\"><a class=\"anchor\" href=\"#o-que-impede-um-duelo\" aria-label=\"Link para esta seção\">#</a>O que impede um duelo</h2><ul><li>Algum dos dois está com <strong>menos de 20 de vida</strong>.</li><li>Algum dos dois está com <strong>proteção do hospital</strong> (veja <a href=\"/wiki/combat/health-and-gear/\">Vida, colete e munição</a>).</li><li>Um dos dois <strong>duelou há menos de 5 minutos</strong>.</li><li>Já existe <strong>um desafio pendente</strong> envolvendo qualquer um dos dois.</li><li>Você tentou desafiar a si mesmo.</li><li>Você está <strong>preso</strong>: <code>/atacar</code> e <code>/aceitarduelo</code> ficam bloqueados na cadeia.</li></ul><h2 id=\"acompanhe-os-seus-numeros\"><a class=\"anchor\" href=\"#acompanhe-os-seus-numeros\" aria-label=\"Link para esta seção\">#</a>Acompanhe os seus números</h2><ul><li><strong><code>/statuscombate</code></strong>: vida, vitórias, derrotas, arma, munição, defesa, durabilidade e proteção.</li><li><strong><code>/historico</code></strong>: os últimos 5 duelos em que você lutou, com quem venceu e para quem perdeu.</li><li><strong><code>/protecaopvp</code></strong>: quanto falta da proteção do hospital.</li></ul><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/combat/weapons/\"><b>Armas</b><span>As armas da loja, o dano de cada uma, como equipar e como elas gastam munição e durabilidade.</span></a></li><li><a href=\"/wiki/combat/health-and-gear/\"><b>Vida, colete e munição</b><span>Como a vida funciona, quanto custa se curar no hospital, o que é a proteção contra duelos e como cuidar do equipamento.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "como-acontece",
+          "text": "Como acontece"
+        },
+        {
+          "level": 2,
+          "id": "o-dano",
+          "text": "O dano"
+        },
+        {
+          "level": 2,
+          "id": "quem-vence",
+          "text": "Quem vence"
+        },
+        {
+          "level": 2,
+          "id": "o-que-impede-um-duelo",
+          "text": "O que impede um duelo"
+        },
+        {
+          "level": 2,
+          "id": "acompanhe-os-seus-numeros",
+          "text": "Acompanhe os seus números"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "character/marriage",
+        "path": "/wiki/character/marriage/",
+        "title": "Casamento"
+      },
+      "next": {
+        "id": "combat/weapons",
+        "path": "/wiki/combat/weapons/",
+        "title": "Armas"
+      }
+    },
+    {
+      "id": "combat/weapons",
+      "path": "/wiki/combat/weapons/",
+      "title": "Armas",
+      "description": "As armas da loja, o dano de cada uma, como equipar e como elas gastam munição e durabilidade.",
+      "section": {
+        "id": "combat",
+        "title": "Combate"
+      },
+      "html": "<p>Arma serve para duelar e é <strong>obrigatória para roubar</strong>. Há armas brancas, que não gastam munição, e armas de fogo, que gastam.</p><h2 id=\"as-armas\"><a class=\"anchor\" href=\"#as-armas\" aria-label=\"Link para esta seção\">#</a>As armas</h2><p>O preço da tabela é o da <code>/loja</code> quando o índice da <a href=\"/wiki/economy/market/\">bolsa</a> está no meio. A coluna de chance é a de um <a href=\"/wiki/crime/robbery/\">roubo</a>.</p><div class=\"table-wrap\" role=\"region\" tabindex=\"0\" aria-label=\"Tabela: Arma, Tipo, Dano, Preço de tabela\"><table><thead><tr><th>Arma</th><th>Tipo</th><th>Dano</th><th>Preço de tabela</th><th>Chance no roubo</th></tr></thead><tbody><tr><td>🗡️ Espada de madeira <code>wooden_sword</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">10</td><td data-label=\"Preço de tabela\">R$ 50</td><td data-label=\"Chance no roubo\">8%</td></tr><tr><td>⚔️ Espada de ferro <code>iron_sword</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">10</td><td data-label=\"Preço de tabela\">R$ 250</td><td data-label=\"Chance no roubo\">12%</td></tr><tr><td>⚔️ Espada de aço <code>steel_sword</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">10</td><td data-label=\"Preço de tabela\">R$ 750</td><td data-label=\"Chance no roubo\">18%</td></tr><tr><td>🔪 Canivete <code>pocket_knife</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">8</td><td data-label=\"Preço de tabela\">R$ 35</td><td data-label=\"Chance no roubo\">10%</td></tr><tr><td>🔪 Faca de combate <code>combat_knife</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">15</td><td data-label=\"Preço de tabela\">R$ 85</td><td data-label=\"Chance no roubo\">15%</td></tr><tr><td>🗡️ Facão <code>machete</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">22</td><td data-label=\"Preço de tabela\">R$ 180</td><td data-label=\"Chance no roubo\">20%</td></tr><tr><td>⚔️ Katana <code>katana</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">35</td><td data-label=\"Preço de tabela\">R$ 650</td><td data-label=\"Chance no roubo\">30%</td></tr><tr><td>🌌 Lâmina lendária <code>legendary_blade</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">55</td><td data-label=\"Preço de tabela\">R$ 2.500</td><td data-label=\"Chance no roubo\">45%</td></tr><tr><td>🔫 Revólver <code>revolver</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">20</td><td data-label=\"Preço de tabela\">R$ 300</td><td data-label=\"Chance no roubo\">25%</td></tr><tr><td>🔫 Pistola <code>pistol</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">28</td><td data-label=\"Preço de tabela\">R$ 550</td><td data-label=\"Chance no roubo\">40%</td></tr><tr><td>🔫 Submetralhadora <code>smg</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">38</td><td data-label=\"Preço de tabela\">R$ 1.200</td><td data-label=\"Chance no roubo\">60%</td></tr><tr><td>🔫 Escopeta <code>shotgun</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">48</td><td data-label=\"Preço de tabela\">R$ 1.600</td><td data-label=\"Chance no roubo\">70%</td></tr><tr><td>🔫 Fuzil de assalto <code>assault_rifle</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">58</td><td data-label=\"Preço de tabela\">R$ 3.500</td><td data-label=\"Chance no roubo\">85%</td></tr><tr><td>🎯 Rifle de precisão <code>sniper_rifle</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">80</td><td data-label=\"Preço de tabela\">R$ 7.500</td><td data-label=\"Chance no roubo\">30%</td></tr></tbody></table></div><p>O <strong>ID</strong> (o código na primeira coluna) é o que você usa para equipar.</p><h2 id=\"como-equipar\"><a class=\"anchor\" href=\"#como-equipar\" aria-label=\"Link para esta seção\">#</a>Como equipar</h2><ul><li><strong><code>/comprar</code></strong> ou a <code>/loja</code> (prateleira <strong>Armas</strong>) para comprar.</li><li><strong><code>/equipar item:revolver</code></strong> equipa a arma pelo ID. Também dá para equipar pelo menu do <strong><code>/usaritem</code></strong>.</li><li><strong><code>/desequipar</code></strong> guarda a arma de volta no inventário.</li><li><strong><code>/armas</code></strong> mostra a arma que você tem equipada e os atributos dela.</li></ul><p>Só uma arma fica equipada por vez, e ela precisa estar no seu inventário. <strong>Armas não podem ser vendidas.</strong></p><h2 id=\"municao\"><a class=\"anchor\" href=\"#municao\" aria-label=\"Link para esta seção\">#</a>Munição</h2><p>Armas de fogo precisam de munição:</p><ul><li>cada <strong>duelo</strong> gasta <strong>1 munição</strong> de quem usa arma de fogo;</li><li>cada <strong>roubo bem-sucedido</strong> gasta <strong>1 munição</strong>. Roubo que falha <strong>não gasta</strong>;</li><li>a munição custa <strong>R$ 1</strong> cada, comprada com <strong><code>/municao quantidade:N</code></strong> (de 1 a 100 por compra);</li><li><strong><code>/recarregar</code></strong> mostra quanta munição você tem com a arma de fogo equipada.</li></ul><h2 id=\"durabilidade\"><a class=\"anchor\" href=\"#durabilidade\" aria-label=\"Link para esta seção\">#</a>Durabilidade</h2><p>Toda arma tem <strong>100 pontos</strong> de durabilidade e gasta <strong>1 ponto por duelo</strong> (e 1 por roubo bem-sucedido). Sem durabilidade, a arma não duela nem rouba.</p><p><strong><code>/reparar</code></strong> custa <strong>R$ 50</strong> e leva a durabilidade de volta a 100. Precisa de uma arma equipada.</p><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>Comprar, equipar, reparar e comprar munição ficam bloqueados enquanto você está na cadeia. Deixe a arma pronta antes de arriscar um crime.</p></aside><h2 id=\"qual-comprar\"><a class=\"anchor\" href=\"#qual-comprar\" aria-label=\"Link para esta seção\">#</a>Qual comprar?</h2><ul><li><strong>Para duelar</strong>, o que conta é o dano: a tabela mostra o de cada uma.</li><li><strong>Para roubar</strong>, o que conta é a chance. Compare as duas colunas com o preço antes de gastar.</li></ul><ul class=\"cards\"><li><a href=\"/wiki/combat/duels/\"><b>Duelos</b><span>Como desafiar, aceitar e vencer um duelo, quem pode duelar e o que muda depois.</span></a></li><li><a href=\"/wiki/combat/health-and-gear/\"><b>Vida, colete e munição</b><span>Como a vida funciona, quanto custa se curar no hospital, o que é a proteção contra duelos e como cuidar do equipamento.</span></a></li><li><a href=\"/wiki/crime/robbery/\"><b>Roubar jogadores</b><span>Como roubar a carteira de outro jogador, a chance de cada arma, quanto dá para levar e o que acontece se der errado.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "as-armas",
+          "text": "As armas"
+        },
+        {
+          "level": 2,
+          "id": "como-equipar",
+          "text": "Como equipar"
+        },
+        {
+          "level": 2,
+          "id": "municao",
+          "text": "Munição"
+        },
+        {
+          "level": 2,
+          "id": "durabilidade",
+          "text": "Durabilidade"
+        },
+        {
+          "level": 2,
+          "id": "qual-comprar",
+          "text": "Qual comprar?"
+        }
+      ],
+      "previous": {
+        "id": "combat/duels",
+        "path": "/wiki/combat/duels/",
+        "title": "Duelos"
+      },
+      "next": {
+        "id": "combat/health-and-gear",
+        "path": "/wiki/combat/health-and-gear/",
+        "title": "Vida, colete e munição"
+      }
+    },
+    {
+      "id": "combat/health-and-gear",
+      "path": "/wiki/combat/health-and-gear/",
+      "title": "Vida, colete e munição",
+      "description": "Como a vida funciona, quanto custa se curar no hospital, o que é a proteção contra duelos e como cuidar do equipamento.",
+      "section": {
+        "id": "combat",
+        "title": "Combate"
+      },
+      "html": "<p>Duelar, errar um crime ou levar um revide custa vida. Esta página mostra como recuperar e como se equipar.</p><h2 id=\"vida\"><a class=\"anchor\" href=\"#vida\" aria-label=\"Link para esta seção\">#</a>Vida</h2><p>A vida vai até <strong>100</strong>. Você perde vida quando:</p><ul><li><strong>duela</strong>;</li><li><strong>erra um crime</strong> e a história termina em ferimento;</li><li><strong>leva revide</strong> de um alvo armado num roubo que falhou, ou se <strong>fere na fuga</strong> de um roubo bem-sucedido.</li></ul><p>Algumas coisas exigem vida mínima: o <strong>crime</strong> (30), o <strong>roubo</strong> (30) e o <strong>duelo</strong> (20).</p><p>Veja a sua vida em <strong><code>/statuscombate</code></strong> ou <strong><code>/hospital</code></strong>.</p><h2 id=\"hospital\"><a class=\"anchor\" href=\"#hospital\" aria-label=\"Link para esta seção\">#</a>Hospital</h2><ul><li><strong><code>/hospital</code></strong> mostra a sua vida, quanto custaria se curar e quanto falta da proteção.</li><li><strong><code>/curar</code></strong> leva a vida de volta a 100. Custa <strong>R$ 1 por ponto de vida que falta</strong>, pago com o dinheiro da <strong>carteira</strong>.</li></ul><p>Se a vida já está cheia, o <code>/curar</code> não faz nada. Se a carteira não cobre o valor, também não.</p><aside class=\"callout example\"><p class=\"callout-title\">Exemplo</p><p>Com 40 de vida, faltam 60 pontos, e curar custa 60 x R$ 1.</p></aside><h2 id=\"protecao-contra-duelos\"><a class=\"anchor\" href=\"#protecao-contra-duelos\" aria-label=\"Link para esta seção\">#</a>Proteção contra duelos</h2><p>Quem se cura no hospital ganha <strong>10 minutos de proteção</strong>: nesse tempo, ninguém consegue desafiar essa pessoa e ela também não pode desafiar. <strong><code>/protecaopvp</code></strong> mostra quanto falta.</p><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>A proteção vale só para <strong>duelos</strong>. Ela não impede que roubem a sua carteira.</p></aside><h2 id=\"colete\"><a class=\"anchor\" href=\"#colete\" aria-label=\"Link para esta seção\">#</a>Colete</h2><p>O <strong><code>/colete</code></strong> custa <strong>R$ 100</strong> e dá <strong>10 pontos de defesa</strong>. Comprar de novo substitui o colete que você tem.</p><p>Num duelo, o colete tira os pontos de defesa de <strong>cada golpe que você recebe</strong>, até <strong>15 pontos</strong> por golpe, e o golpe nunca cai abaixo de 1. Ele protege só você: o <strong>seu</strong> golpe continua valendo o dano inteiro da sua arma. O colete não se desgasta com o uso.</p><aside class=\"callout example\"><p class=\"callout-title\">Exemplo</p><p>Um adversário com revólver (dano 20) acerta você. Com o colete de 10 pontos, o golpe passa a valer 10. Se ele estivesse sem arma, o golpe valeria 5 e cairia para 1.</p></aside><h2 id=\"municao-e-conserto\"><a class=\"anchor\" href=\"#municao-e-conserto\" aria-label=\"Link para esta seção\">#</a>Munição e conserto</h2><ul><li><strong><code>/municao quantidade:N</code></strong>: <strong>R$ 1</strong> cada, de 1 a 100 por compra.</li><li><strong><code>/reparar</code></strong>: <strong>R$ 50</strong>, devolve a durabilidade da arma a 100.</li><li><strong><code>/recarregar</code></strong>: mostra a munição que você tem com a arma de fogo equipada.</li></ul><p>Os detalhes de cada arma estão em <a href=\"/wiki/combat/weapons/\">Armas</a>.</p><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p><code>/curar</code>, <code>/colete</code>, <code>/municao</code> e <code>/reparar</code> ficam bloqueados na cadeia. Se vai arriscar um crime, resolva isso antes.</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/combat/duels/\"><b>Duelos</b><span>Como desafiar, aceitar e vencer um duelo, quem pode duelar e o que muda depois.</span></a></li><li><a href=\"/wiki/combat/weapons/\"><b>Armas</b><span>As armas da loja, o dano de cada uma, como equipar e como elas gastam munição e durabilidade.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "vida",
+          "text": "Vida"
+        },
+        {
+          "level": 2,
+          "id": "hospital",
+          "text": "Hospital"
+        },
+        {
+          "level": 2,
+          "id": "protecao-contra-duelos",
+          "text": "Proteção contra duelos"
+        },
+        {
+          "level": 2,
+          "id": "colete",
+          "text": "Colete"
+        },
+        {
+          "level": 2,
+          "id": "municao-e-conserto",
+          "text": "Munição e conserto"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "combat/weapons",
+        "path": "/wiki/combat/weapons/",
+        "title": "Armas"
+      },
+      "next": {
+        "id": "crime/getting-started",
+        "path": "/wiki/crime/getting-started/",
+        "title": "Crime: por onde começar"
+      }
+    },
+    {
+      "id": "crime/getting-started",
+      "path": "/wiki/crime/getting-started/",
+      "title": "Crime: por onde começar",
+      "description": "Como o /crime funciona, o que você ganha, o que perde se der errado e como não parar na cadeia à toa.",
+      "section": {
+        "id": "crime",
+        "title": "Crime e segurança"
+      },
+      "html": "<p>O crime é a forma mais rápida de ganhar dinheiro na Helena, e a mais arriscada. O dinheiro que ele rende vem <strong>sujo</strong>: você só consegue gastar depois de <a href=\"/wiki/crime/laundering/\">lavar</a>.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th>O quê</th><th>Como é</th></tr></thead><tbody><tr><td>Comando</td><td data-label=\"Como é\"><code>/crime</code> (no prefixo, <code>hcrime</code>)</td></tr><tr><td>Custo</td><td data-label=\"Como é\">30 de energia por tentativa</td></tr><tr><td>Espera</td><td data-label=\"Como é\">1 hora depois de cada tentativa, deu certo ou não</td></tr><tr><td>Chance de dar certo</td><td data-label=\"Como é\">50%, em qualquer nível</td></tr><tr><td>Você precisa</td><td data-label=\"Como é\">estar solto e ter pelo menos 30 de vida</td></tr><tr><td>Se der certo</td><td data-label=\"Como é\">dinheiro sujo e de 30 a 80 de XP</td></tr><tr><td>Se der errado</td><td data-label=\"Como é\">multa, às vezes ferimento e 30 minutos de cadeia</td></tr></tbody></table></div><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>O nível <strong>não muda a chance</strong>. Ele muda o tamanho do prêmio e da multa.</p></aside><h2 id=\"se-der-certo\"><a class=\"anchor\" href=\"#se-der-certo\" aria-label=\"Link para esta seção\">#</a>Se der certo</h2><p>Você ganha <strong>dinheiro sujo</strong>, que fica numa conta à parte e não serve para comprar nada. Um crime comum rende entre R$ 300 a R$ 1.800 antes do multiplicador do seu nível. De vez em quando (cerca de 1 em 16 sucessos) sai uma história rara (um cofre aberto num escritório vazio) que rende R$ 4.000 a R$ 8.000, também antes do multiplicador.</p><p>Você ainda ganha <strong>30 a 80 de XP</strong>, e o XP do crime conta para subir de nível na hora.</p><h2 id=\"se-der-errado\"><a class=\"anchor\" href=\"#se-der-errado\" aria-label=\"Link para esta seção\">#</a>Se der errado</h2><ul><li><strong>Multa</strong>: de R$ 80 a R$ 600, antes do multiplicador, tirada da <strong>carteira</strong>. Ela nunca passa do que você tem nela.</li><li><strong>Ferimento</strong>: em 4 de 8 das histórias de fracasso você sai ferido e perde de 15 a 35 de vida.</li><li><strong>Cadeia</strong>: 30 minutos presa. Veja <a href=\"/wiki/crime/wanted-and-prison/\">o que dá e o que não dá para fazer na cadeia</a>.</li></ul><p>Dando certo ou errado, a tentativa entra na sua <strong>ficha criminal</strong>.</p><h2 id=\"o-nivel-mexe-no-valor\"><a class=\"anchor\" href=\"#o-nivel-mexe-no-valor\" aria-label=\"Link para esta seção\">#</a>O nível mexe no valor</h2><p>O multiplicador começa em 1x no nível 1 e chega a cerca de 12,9x no nível 100.</p><div class=\"table-wrap\" role=\"region\" tabindex=\"0\" aria-label=\"Tabela: Nível, Multiplicador, Prêmio de um crime comum, Multa se falhar\"><table><thead><tr><th>Nível</th><th>Multiplicador</th><th>Prêmio de um crime comum</th><th>Multa se falhar</th></tr></thead><tbody><tr><td>1</td><td data-label=\"Multiplicador\">1x</td><td data-label=\"Prêmio de um crime comum\">R$ 300 a R$ 1.800</td><td data-label=\"Multa se falhar\">R$ 80 a R$ 600</td></tr><tr><td>10</td><td data-label=\"Multiplicador\">2,08x</td><td data-label=\"Prêmio de um crime comum\">R$ 624 a R$ 3.744</td><td data-label=\"Multa se falhar\">R$ 166 a R$ 1.248</td></tr><tr><td>25</td><td data-label=\"Multiplicador\">3,88x</td><td data-label=\"Prêmio de um crime comum\">R$ 1.164 a R$ 6.984</td><td data-label=\"Multa se falhar\">R$ 310 a R$ 2.328</td></tr><tr><td>50</td><td data-label=\"Multiplicador\">6,88x</td><td data-label=\"Prêmio de um crime comum\">R$ 2.064 a R$ 12.384</td><td data-label=\"Multa se falhar\">R$ 550 a R$ 4.128</td></tr><tr><td>75</td><td data-label=\"Multiplicador\">9,88x</td><td data-label=\"Prêmio de um crime comum\">R$ 2.964 a R$ 17.784</td><td data-label=\"Multa se falhar\">R$ 790 a R$ 5.928</td></tr><tr><td>100</td><td data-label=\"Multiplicador\">12,88x</td><td data-label=\"Prêmio de um crime comum\">R$ 3.864 a R$ 23.184</td><td data-label=\"Multa se falhar\">R$ 1.030 a R$ 7.728</td></tr></tbody></table></div><h2 id=\"dicas-para-nao-se-dar-mal\"><a class=\"anchor\" href=\"#dicas-para-nao-se-dar-mal\" aria-label=\"Link para esta seção\">#</a>Dicas para não se dar mal</h2><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>A multa sai da carteira, então deposite o dinheiro limpo no banco antes de tentar um crime. O que está no banco não é tocado.</p></aside><ul><li>Se a vida estiver abaixo de 30, o crime nem começa. Use <code>/curar</code> no hospital.</li><li>Cada tentativa gasta 30 da energia, que enche 1 ponto a cada 5 minutos. Veja <code>/energia</code> para acompanhar.</li><li>O dinheiro sujo não rende nada parado. Quanto antes você lava, antes ele vira dinheiro de verdade.</li></ul><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/crime/laundering/\"><b>Lavagem de dinheiro</b><span>Como transformar dinheiro sujo em dinheiro limpo, a diferença entre a lavanderia pública e a privada e quanto cada uma devolve.</span></a></li><li><a href=\"/wiki/crime/robbery/\"><b>Roubar jogadores</b><span>Como roubar a carteira de outro jogador, a chance de cada arma, quanto dá para levar e o que acontece se der errado.</span></a></li><li><a href=\"/wiki/crime/wanted-and-prison/\"><b>Polícia, procurados e prisão</b><span>A ficha criminal, a lista de procurados, como se vai preso e o que dá e o que não dá para fazer na cadeia.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "se-der-certo",
+          "text": "Se der certo"
+        },
+        {
+          "level": 2,
+          "id": "se-der-errado",
+          "text": "Se der errado"
+        },
+        {
+          "level": 2,
+          "id": "o-nivel-mexe-no-valor",
+          "text": "O nível mexe no valor"
+        },
+        {
+          "level": 2,
+          "id": "dicas-para-nao-se-dar-mal",
+          "text": "Dicas para não se dar mal"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "combat/health-and-gear",
+        "path": "/wiki/combat/health-and-gear/",
+        "title": "Vida, colete e munição"
+      },
+      "next": {
+        "id": "crime/robbery",
+        "path": "/wiki/crime/robbery/",
+        "title": "Roubar jogadores"
+      }
+    },
+    {
+      "id": "crime/robbery",
+      "path": "/wiki/crime/robbery/",
+      "title": "Roubar jogadores",
+      "description": "Como roubar a carteira de outro jogador, a chance de cada arma, quanto dá para levar e o que acontece se der errado.",
+      "section": {
+        "id": "crime",
+        "title": "Crime e segurança"
+      },
+      "html": "<p>O <code>/roubar</code> tira dinheiro da <strong>carteira</strong> de outro jogador do servidor. O banco é seguro: só o que está na carteira corre risco. Para roubar, você precisa de uma arma equipada.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th>O quê</th><th>Como é</th></tr></thead><tbody><tr><td>Comando</td><td data-label=\"Como é\"><code>/roubar alvo:&lt;nome, @menção ou ID&gt;</code> (atalho <code>/assaltar</code>)</td></tr><tr><td>Custo</td><td data-label=\"Como é\">50 de energia por tentativa, mesmo se falhar</td></tr><tr><td>Espera</td><td data-label=\"Como é\">1 hora depois de cada tentativa</td></tr><tr><td>Você precisa</td><td data-label=\"Como é\">estar solto, ter pelo menos 30 de vida e uma arma equipada</td></tr><tr><td>O alvo precisa</td><td data-label=\"Como é\">ter <strong>mais de R$ 100</strong> na carteira</td></tr><tr><td>Se der certo</td><td data-label=\"Como é\">você leva de 10% a 25% da carteira do alvo, com um teto</td></tr></tbody></table></div><p>No prefixo, escreva <code>hroubar</code> e a pessoa: <code>hroubar @fulano</code>.</p><h2 id=\"a-arma-decide-a-chance\"><a class=\"anchor\" href=\"#a-arma-decide-a-chance\" aria-label=\"Link para esta seção\">#</a>A arma decide a chance</h2><p>Cada arma tem a sua chance de sucesso. Arma que não está na tabela usa <strong>10%</strong>.</p><div class=\"table-wrap\" role=\"region\" tabindex=\"0\" aria-label=\"Tabela: Arma, Tipo, Dano, Preço de tabela\"><table><thead><tr><th>Arma</th><th>Tipo</th><th>Dano</th><th>Preço de tabela</th><th>Chance no roubo</th></tr></thead><tbody><tr><td>🗡️ Espada de madeira <code>wooden_sword</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">10</td><td data-label=\"Preço de tabela\">R$ 50</td><td data-label=\"Chance no roubo\">8%</td></tr><tr><td>⚔️ Espada de ferro <code>iron_sword</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">10</td><td data-label=\"Preço de tabela\">R$ 250</td><td data-label=\"Chance no roubo\">12%</td></tr><tr><td>⚔️ Espada de aço <code>steel_sword</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">10</td><td data-label=\"Preço de tabela\">R$ 750</td><td data-label=\"Chance no roubo\">18%</td></tr><tr><td>🔪 Canivete <code>pocket_knife</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">8</td><td data-label=\"Preço de tabela\">R$ 35</td><td data-label=\"Chance no roubo\">10%</td></tr><tr><td>🔪 Faca de combate <code>combat_knife</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">15</td><td data-label=\"Preço de tabela\">R$ 85</td><td data-label=\"Chance no roubo\">15%</td></tr><tr><td>🗡️ Facão <code>machete</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">22</td><td data-label=\"Preço de tabela\">R$ 180</td><td data-label=\"Chance no roubo\">20%</td></tr><tr><td>⚔️ Katana <code>katana</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">35</td><td data-label=\"Preço de tabela\">R$ 650</td><td data-label=\"Chance no roubo\">30%</td></tr><tr><td>🌌 Lâmina lendária <code>legendary_blade</code></td><td data-label=\"Tipo\">Branca</td><td data-label=\"Dano\">55</td><td data-label=\"Preço de tabela\">R$ 2.500</td><td data-label=\"Chance no roubo\">45%</td></tr><tr><td>🔫 Revólver <code>revolver</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">20</td><td data-label=\"Preço de tabela\">R$ 300</td><td data-label=\"Chance no roubo\">25%</td></tr><tr><td>🔫 Pistola <code>pistol</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">28</td><td data-label=\"Preço de tabela\">R$ 550</td><td data-label=\"Chance no roubo\">40%</td></tr><tr><td>🔫 Submetralhadora <code>smg</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">38</td><td data-label=\"Preço de tabela\">R$ 1.200</td><td data-label=\"Chance no roubo\">60%</td></tr><tr><td>🔫 Escopeta <code>shotgun</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">48</td><td data-label=\"Preço de tabela\">R$ 1.600</td><td data-label=\"Chance no roubo\">70%</td></tr><tr><td>🔫 Fuzil de assalto <code>assault_rifle</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">58</td><td data-label=\"Preço de tabela\">R$ 3.500</td><td data-label=\"Chance no roubo\">85%</td></tr><tr><td>🎯 Rifle de precisão <code>sniper_rifle</code></td><td data-label=\"Tipo\">Fogo</td><td data-label=\"Dano\">80</td><td data-label=\"Preço de tabela\">R$ 7.500</td><td data-label=\"Chance no roubo\">30%</td></tr></tbody></table></div><ul><li><strong>Arma de fogo</strong> precisa de <strong>pelo menos 1 munição</strong> para tentar, e só gasta a munição quando o roubo <strong>dá certo</strong>.</li><li><strong>Arma branca</strong> não usa munição.</li><li>A arma precisa ter durabilidade. Cada roubo bem-sucedido gasta 1 ponto.</li><li>Equipe com <code>/equipar</code> ou pelo <code>/usaritem</code>.</li></ul><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>Compare a coluna de preço com a de chance antes de comprar: a arma mais cara nem sempre é a melhor para roubar.</p></aside><h2 id=\"quanto-da-para-levar\"><a class=\"anchor\" href=\"#quanto-da-para-levar\" aria-label=\"Link para esta seção\">#</a>Quanto dá para levar</h2><p>Um roubo bem-sucedido leva uma parte sorteada entre <strong>10% a 25%</strong> da carteira do alvo, mas nunca passa de um teto: carteiras até R$ 16.000 rendem no máximo R$ 4.000. Acima disso o teto cresce devagar e para em R$ 15.000.</p><div class=\"table-wrap stack\"><table><thead><tr><th>Carteira do alvo</th><th>Um roubo leva de</th><th>até</th></tr></thead><tbody><tr><td>R$ 500</td><td data-label=\"Um roubo leva de\">R$ 50</td><td data-label=\"até\">R$ 125</td></tr><tr><td>R$ 2.000</td><td data-label=\"Um roubo leva de\">R$ 200</td><td data-label=\"até\">R$ 500</td></tr><tr><td>R$ 10.000</td><td data-label=\"Um roubo leva de\">R$ 1.000</td><td data-label=\"até\">R$ 2.500</td></tr><tr><td>R$ 16.000</td><td data-label=\"Um roubo leva de\">R$ 1.600</td><td data-label=\"até\">R$ 4.000</td></tr><tr><td>R$ 50.000</td><td data-label=\"Um roubo leva de\">R$ 5.000</td><td data-label=\"até\">R$ 5.122</td></tr><tr><td>R$ 200.000</td><td data-label=\"Um roubo leva de\">R$ 10.072</td><td data-label=\"até\">R$ 10.072</td></tr></tbody></table></div><p>Do que você leva, <strong>50% vem limpo</strong> para a sua carteira e <strong>50% vira dinheiro sujo</strong>, que precisa de <a href=\"/wiki/crime/laundering/\">lavagem</a>.</p><p>Depois de um roubo bem-sucedido ainda existe a chance de <strong>18%</strong> de se ferir na fuga. O ferimento é leve, moderado ou grave: leve (10 de vida, em 20% dos casos), moderado (25 de vida, em 60% dos casos), grave (45 de vida, em 20% dos casos).</p><h2 id=\"se-der-errado\"><a class=\"anchor\" href=\"#se-der-errado\" aria-label=\"Link para esta seção\">#</a>Se der errado</h2><ul><li>Você <strong>não vai preso</strong>. Perde a energia e a espera, e a tentativa entra na sua ficha criminal.</li><li>Se o alvo estava <strong>armado</strong> (e, com arma de fogo, tinha munição), existe <strong>50% de chance de revide</strong>: você perde de 30 a 50 de vida.</li><li>Se a carteira do alvo tinha <strong>R$ 100 ou menos</strong>, o roubo <strong>sempre falha</strong>. Não vale tentar.</li></ul><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>Toda tentativa de roubo, dando certo ou não, soma um registro na ficha criminal e coloca você em <code>/procurados</code>.</p></aside><h2 id=\"como-nao-ser-roubado\"><a class=\"anchor\" href=\"#como-nao-ser-roubado\" aria-label=\"Link para esta seção\">#</a>Como não ser roubado</h2><ul><li><strong>Deposite</strong> o que não vai usar agora. O banco não pode ser roubado.</li><li>Ter uma arma equipada e com munição dá ao ladrão frustrado o risco do revide.</li></ul><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/crime/laundering/\"><b>Lavagem de dinheiro</b><span>Como transformar dinheiro sujo em dinheiro limpo, a diferença entre a lavanderia pública e a privada e quanto cada uma devolve.</span></a></li><li><a href=\"/wiki/crime/wanted-and-prison/\"><b>Polícia, procurados e prisão</b><span>A ficha criminal, a lista de procurados, como se vai preso e o que dá e o que não dá para fazer na cadeia.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "a-arma-decide-a-chance",
+          "text": "A arma decide a chance"
+        },
+        {
+          "level": 2,
+          "id": "quanto-da-para-levar",
+          "text": "Quanto dá para levar"
+        },
+        {
+          "level": 2,
+          "id": "se-der-errado",
+          "text": "Se der errado"
+        },
+        {
+          "level": 2,
+          "id": "como-nao-ser-roubado",
+          "text": "Como não ser roubado"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "crime/getting-started",
+        "path": "/wiki/crime/getting-started/",
+        "title": "Crime: por onde começar"
+      },
+      "next": {
+        "id": "crime/laundering",
+        "path": "/wiki/crime/laundering/",
+        "title": "Lavagem de dinheiro"
+      }
+    },
+    {
+      "id": "crime/laundering",
+      "path": "/wiki/crime/laundering/",
+      "title": "Lavagem de dinheiro",
+      "description": "Como transformar dinheiro sujo em dinheiro limpo, a diferença entre a lavanderia pública e a privada e quanto cada uma devolve.",
+      "section": {
+        "id": "crime",
+        "title": "Crime e segurança"
+      },
+      "html": "<p>O dinheiro do <code>/crime</code> e metade do que você leva num roubo chegam <strong>sujos</strong>. Dinheiro sujo não paga a loja, não vai para o banco e não vale nada até passar pela lavagem.</p><h2 id=\"resumo\"><a class=\"anchor\" href=\"#resumo\" aria-label=\"Link para esta seção\">#</a>Resumo</h2><div class=\"table-wrap stack\"><table><thead><tr><th></th><th>Pública</th><th>Privada</th></tr></thead><tbody><tr><td>Devolve</td><td data-label=\"Pública\">de 35% a 55% do que você lava</td><td data-label=\"Privada\">de 75% a 85% do que você lava</td></tr><tr><td>Velocidade</td><td data-label=\"Pública\">R$ 750 por minuto</td><td data-label=\"Privada\">R$ 1.200 por minuto</td></tr><tr><td>Espera até a próxima</td><td data-label=\"Pública\">24 horas</td><td data-label=\"Privada\">5 horas</td></tr><tr><td>Quem pode usar</td><td data-label=\"Pública\">todos, mas só uma pública por vez em todo o servidor</td><td data-label=\"Privada\">só quem liberou, por 10 gemas</td></tr></tbody></table></div><p>Em qualquer uma, cada lavagem aceita de <strong>R$ 1.000 a R$ 30.000</strong> de dinheiro sujo e custa <strong>40 de energia</strong>.</p><h2 id=\"como-lavar\"><a class=\"anchor\" href=\"#como-lavar\" aria-label=\"Link para esta seção\">#</a>Como lavar</h2><ul><li><strong><code>/lavagem</code></strong> sem nada mostra a sua situação: dinheiro sujo, recarga e lavagem em andamento, com botões para lavar.</li><li><strong><code>/lavagem valor:5000</code></strong> lava R$ 5.000 na lavanderia pública. Também aceita <code>tudo</code> (o máximo que cabe numa lavagem).</li><li><strong><code>/lavagem valor:5000 tipo:privada</code></strong> lava na privada.</li><li><strong><code>/lavageminfo</code></strong> mostra o tempo que falta.</li></ul><p>Os atalhos são <code>/lavar</code> e <code>/lav</code>. No prefixo:</p><pre><code>hlavagem 5000 privada</code></pre><h2 id=\"quanto-tempo-leva-e-quanto-volta\"><a class=\"anchor\" href=\"#quanto-tempo-leva-e-quanto-volta\" aria-label=\"Link para esta seção\">#</a>Quanto tempo leva e quanto volta</h2><p>A lavagem anda <strong>por lotes de 1 minuto</strong>, cada um com a taxa sorteada dentro da faixa da lavanderia. Por isso, quanto maior a lavagem, mais o resultado se aproxima da média.</p><p>O dinheiro sujo sai da sua conta na hora, e o resultado é decidido no começo, mas só cai na carteira <strong>no fim</strong>. Você não vê o valor antes.</p><aside class=\"callout example\"><p class=\"callout-title\">Exemplo</p><p>Lavando o máximo (R$ 30.000): na <strong>pública</strong> leva 40 minutos e devolve em média R$ 13.500. Na <strong>privada</strong> leva 25 minutos e devolve em média R$ 24.000.</p></aside><h2 id=\"regras-que-pegam-gente-de-surpresa\"><a class=\"anchor\" href=\"#regras-que-pegam-gente-de-surpresa\" aria-label=\"Link para esta seção\">#</a>Regras que pegam gente de surpresa</h2><ul><li>Só <strong>uma lavagem por vez</strong> por jogador.</li><li>A <strong>espera é uma só</strong> para as duas lavanderias. Usou a pública, ficou 24 horas sem lavar em nenhuma. Usou a privada, são 5 horas.</li><li>A lavanderia <strong>pública é de todo o servidor</strong>: se alguém já tem uma lavagem pública rodando, você espera ela terminar.</li><li>A <strong>privada</strong> é liberada <strong>uma única vez por servidor</strong> com <code>/lavagem valor:desbloquear</code>, e custa 10 gemas. Pelo botão <strong>Liberar privada</strong>, é preciso digitar <code>LIBERAR</code> para confirmar.</li><li>Preso, <strong>você não começa uma lavagem</strong>. As que já estavam rodando ficam em pausa: o fim de cada uma é adiado pelo tempo da pena.</li></ul><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>Cadeia atrasa o seu dinheiro. Se você foi preso no meio de uma lavagem, o fim dela é empurrado pelo tamanho da pena.</p></aside><h2 id=\"qual-escolher\"><a class=\"anchor\" href=\"#qual-escolher\" aria-label=\"Link para esta seção\">#</a>Qual escolher?</h2><aside class=\"callout money\"><p class=\"callout-title\">Dinheiro</p><p>A privada devolve bem mais que a pública para o mesmo valor, e espera menos entre uma lavagem e outra. Se você vai lavar com frequência, as 10 gemas se pagam rápido. A pública serve para quem ainda não tem gemas e aceita devolver menos.</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/crime/wanted-and-prison/\"><b>Polícia, procurados e prisão</b><span>A ficha criminal, a lista de procurados, como se vai preso e o que dá e o que não dá para fazer na cadeia.</span></a></li><li><a href=\"/wiki/crime/prison-escape/\"><b>Fuga da prisão</b><span>O minigame de fuga em três etapas, como não ser pego e quanto tempo de pena você corta ou ganha.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "resumo",
+          "text": "Resumo"
+        },
+        {
+          "level": 2,
+          "id": "como-lavar",
+          "text": "Como lavar"
+        },
+        {
+          "level": 2,
+          "id": "quanto-tempo-leva-e-quanto-volta",
+          "text": "Quanto tempo leva e quanto volta"
+        },
+        {
+          "level": 2,
+          "id": "regras-que-pegam-gente-de-surpresa",
+          "text": "Regras que pegam gente de surpresa"
+        },
+        {
+          "level": 2,
+          "id": "qual-escolher",
+          "text": "Qual escolher?"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "crime/robbery",
+        "path": "/wiki/crime/robbery/",
+        "title": "Roubar jogadores"
+      },
+      "next": {
+        "id": "crime/wanted-and-prison",
+        "path": "/wiki/crime/wanted-and-prison/",
+        "title": "Polícia, procurados e prisão"
+      }
+    },
+    {
+      "id": "crime/wanted-and-prison",
+      "path": "/wiki/crime/wanted-and-prison/",
+      "title": "Polícia, procurados e prisão",
+      "description": "A ficha criminal, a lista de procurados, como se vai preso e o que dá e o que não dá para fazer na cadeia.",
+      "section": {
+        "id": "crime",
+        "title": "Crime e segurança"
+      },
+      "html": "<p>Crime deixa rastro. A Helena guarda a sua ficha criminal, mostra quem é procurado no servidor e manda para a cadeia quem se dá mal num crime.</p><h2 id=\"ficha-criminal-e-procurados\"><a class=\"anchor\" href=\"#ficha-criminal-e-procurados\" aria-label=\"Link para esta seção\">#</a>Ficha criminal e procurados</h2><p>Entra um registro na sua ficha por cada:</p><ul><li>crime, deu certo ou não;</li><li>tentativa de roubo, deu certo ou não;</li><li>lavagem de dinheiro que você começa.</li></ul><p>A ficha <strong>nunca expira</strong>. Quem tem pelo menos 1 registro aparece em <strong><code>/procurados</code></strong>, com mais registros primeiro, 8 por página, e com a marca de quem está preso agora.</p><h2 id=\"como-se-vai-preso\"><a class=\"anchor\" href=\"#como-se-vai-preso\" aria-label=\"Link para esta seção\">#</a>Como se vai preso</h2><p>Hoje, de uma forma: <strong>errando um crime</strong>, que dá 30 minutos de cadeia. Se você já estava preso, a pena nova <strong>se soma</strong> ao tempo que faltava.</p><h2 id=\"sua-situacao-prisao\"><a class=\"anchor\" href=\"#sua-situacao-prisao\" aria-label=\"Link para esta seção\">#</a>Sua situação: <code>/prisao</code></h2><p>O <code>/prisao</code> (no prefixo, <code>hprisao</code>) mostra, preso ou não:</p><ul><li>o tempo que falta e a pena total, e o motivo;</li><li>a sua ficha: crimes, sucessos, capturas e o total arrecadado em dinheiro sujo;</li><li>o botão <strong>Tentar fuga</strong>, quando você está preso (veja <a href=\"/wiki/crime/prison-escape/\">Fuga da prisão</a>).</li></ul><p>Quando a pena acaba, você é solto sozinho.</p><h2 id=\"o-que-nao-da-para-fazer-preso\"><a class=\"anchor\" href=\"#o-que-nao-da-para-fazer-preso\" aria-label=\"Link para esta seção\">#</a>O que não dá para fazer preso</h2><p>Estes comandos ficam bloqueados enquanto você cumpre pena:</p><p><code>/crime</code>, <code>/roubar</code>, <code>/trabalhar</code>, <code>/daily</code>, <code>/comprar</code>, <code>/vender</code>, <code>/depositar</code>, <code>/sacar</code>, <code>/transferir</code>, <code>/casar</code>, <code>/aceitarcasamento</code>, <code>/gozofone</code>, <code>/atacar</code>, <code>/aceitarduelo</code>, <code>/curar</code>, <code>/descartar</code>, <code>/usaritem</code>, <code>/municao</code>, <code>/colete</code>, <code>/reparar</code></p><p>O que é só consulta continua liberado: <code>/saldo</code>, <code>/perfil</code>, <code>/inventario</code>, <code>/bolsa</code>, <code>/procurados</code>, <code>/prisao</code> e o resto.</p><p>Você também <strong>não começa uma lavagem</strong>, e as que já estavam rodando ficam em pausa até a pena acabar.</p><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>Antes de arriscar um crime, resolva o que precisa fazer fora da cadeia: comprar, depositar, transferir e resgatar o daily. Depois da cadeia você volta a tudo.</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/crime/prison-escape/\"><b>Fuga da prisão</b><span>O minigame de fuga em três etapas, como não ser pego e quanto tempo de pena você corta ou ganha.</span></a></li><li><a href=\"/wiki/crime/laundering/\"><b>Lavagem de dinheiro</b><span>Como transformar dinheiro sujo em dinheiro limpo, a diferença entre a lavanderia pública e a privada e quanto cada uma devolve.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "ficha-criminal-e-procurados",
+          "text": "Ficha criminal e procurados"
+        },
+        {
+          "level": 2,
+          "id": "como-se-vai-preso",
+          "text": "Como se vai preso"
+        },
+        {
+          "level": 2,
+          "id": "sua-situacao-prisao",
+          "text": "Sua situação: /prisao"
+        },
+        {
+          "level": 2,
+          "id": "o-que-nao-da-para-fazer-preso",
+          "text": "O que não dá para fazer preso"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "crime/laundering",
+        "path": "/wiki/crime/laundering/",
+        "title": "Lavagem de dinheiro"
+      },
+      "next": {
+        "id": "crime/prison-escape",
+        "path": "/wiki/crime/prison-escape/",
+        "title": "Fuga da prisão"
+      }
+    },
+    {
+      "id": "crime/prison-escape",
+      "path": "/wiki/crime/prison-escape/",
+      "title": "Fuga da prisão",
+      "description": "O minigame de fuga em três etapas, como não ser pego e quanto tempo de pena você corta ou ganha.",
+      "section": {
+        "id": "crime",
+        "title": "Crime e segurança"
+      },
+      "html": "<p>Preso, você pode tentar fugir. Não é um jeito de ficar livre na hora: vencer <strong>corta</strong> uma parte da pena, e ser pego <strong>acrescenta</strong>.</p><h2 id=\"como-comecar\"><a class=\"anchor\" href=\"#como-comecar\" aria-label=\"Link para esta seção\">#</a>Como começar</h2><p>Abra <strong><code>/prisao</code></strong> e aperte <strong>Tentar fuga</strong>. Você só pode tentar uma vez a cada <strong>10 minutos</strong>, contados do começo da tentativa anterior, e a tela da fuga é só sua.</p><h2 id=\"as-tres-etapas\"><a class=\"anchor\" href=\"#as-tres-etapas\" aria-label=\"Link para esta seção\">#</a>As três etapas</h2><p>São <strong>3 etapas</strong>, sempre iguais. Em cada uma:</p><ol><li>🔴 <strong>O guarda vigia.</strong> Qualquer clique nessa hora é ser pego. Espere.</li><li>🟠 <strong>Às vezes ele finge virar as costas.</strong> Clicar agora também é ser pego, e o corredor <strong>nunca abre logo depois do truque</strong>.</li><li>🟢 <strong>O corredor abre.</strong> A tela diz qual das <strong>8 saídas</strong> apertar. Você tem <strong>4 segundos</strong>.</li></ol><p>Ser pego acontece se você:</p><ul><li>clicar com o guarda vigiando ou durante o truque;</li><li>apertar a saída errada;</li><li>demorar mais que o tempo do corredor.</li></ul><p>Acertando as três etapas, você escapa.</p><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>O truque do guarda e o tempo de vigia são sorteados a cada etapa, então não dá para decorar o ritmo. O que ajuda é esperar o verde e só então olhar qual saída apertar.</p></aside><h2 id=\"o-que-muda-na-pena\"><a class=\"anchor\" href=\"#o-que-muda-na-pena\" aria-label=\"Link para esta seção\">#</a>O que muda na pena</h2><div class=\"table-wrap stack\"><table><thead><tr><th>Resultado</th><th>Efeito na pena</th></tr></thead><tbody><tr><td>Escapou</td><td data-label=\"Efeito na pena\">tira 15% da pena original</td></tr><tr><td>Foi pego</td><td data-label=\"Efeito na pena\">soma 10% da pena original</td></tr><tr><td>Limite</td><td data-label=\"Efeito na pena\">as fugas, juntas, nunca passam de 50% para nenhum dos lados</td></tr></tbody></table></div><aside class=\"callout example\"><p class=\"callout-title\">Exemplo</p><p>Numa pena de crime comum (30 minutos), uma fuga bem-sucedida corta 4,5 minutos e ser pego acrescenta 3 minutos. O total acumulado por fugas nunca passa de 15 minutos para cima ou para baixo.</p></aside><p>Se a pena chegar a zero, você sai livre.</p><h2 id=\"vale-a-pena\"><a class=\"anchor\" href=\"#vale-a-pena\" aria-label=\"Link para esta seção\">#</a>Vale a pena?</h2><aside class=\"callout warning\"><p class=\"callout-title\">Atenção</p><p>A espera de 10 minutos é gasta mesmo se a tentativa der errado, e ser pego aumenta a pena. Se a cadeia está acabando, esperar costuma sair mais barato que arriscar.</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/crime/getting-started/\"><b>Crime: por onde começar</b><span>Como o /crime funciona, o que você ganha, o que perde se der errado e como não parar na cadeia à toa.</span></a></li><li><a href=\"/wiki/crime/laundering/\"><b>Lavagem de dinheiro</b><span>Como transformar dinheiro sujo em dinheiro limpo, a diferença entre a lavanderia pública e a privada e quanto cada uma devolve.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "como-comecar",
+          "text": "Como começar"
+        },
+        {
+          "level": 2,
+          "id": "as-tres-etapas",
+          "text": "As três etapas"
+        },
+        {
+          "level": 2,
+          "id": "o-que-muda-na-pena",
+          "text": "O que muda na pena"
+        },
+        {
+          "level": 2,
+          "id": "vale-a-pena",
+          "text": "Vale a pena?"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "crime/wanted-and-prison",
+        "path": "/wiki/crime/wanted-and-prison/",
+        "title": "Polícia, procurados e prisão"
+      },
+      "next": {
+        "id": "help/faq",
+        "path": "/wiki/help/faq/",
+        "title": "Perguntas frequentes"
+      }
+    },
+    {
+      "id": "help/faq",
+      "path": "/wiki/help/faq/",
+      "title": "Perguntas frequentes",
+      "description": "Respostas curtas para as dúvidas mais comuns sobre dinheiro, cadeia, comandos e dados.",
+      "section": {
+        "id": "help",
+        "title": "Ajuda e referência"
+      },
+      "html": "<h2 id=\"dinheiro\"><a class=\"anchor\" href=\"#dinheiro\" aria-label=\"Link para esta seção\">#</a>Dinheiro</h2><h3 id=\"meu-dinheiro-sumiu-o-que-aconteceu\"><a class=\"anchor\" href=\"#meu-dinheiro-sumiu-o-que-aconteceu\" aria-label=\"Link para esta seção\">#</a>Meu dinheiro sumiu. O que aconteceu?</h3><p>Os motivos possíveis são: um <strong>roubo</strong> (só a carteira é roubada), uma <strong>multa</strong> de crime que deu errado, uma compra ou uma transferência. O dinheiro no <strong>banco</strong> não pode ser roubado. Veja <a href=\"/wiki/economy/bank-and-transfers/\">Banco e transferências</a>.</p><h3 id=\"da-para-recuperar-o-dinheiro-que-me-roubaram\"><a class=\"anchor\" href=\"#da-para-recuperar-o-dinheiro-que-me-roubaram\" aria-label=\"Link para esta seção\">#</a>Dá para recuperar o dinheiro que me roubaram?</h3><p>Não existe comando para isso. O melhor jeito é não deixar dinheiro na carteira: <strong>deposite</strong> o que não vai usar agora.</p><h3 id=\"por-que-nao-consigo-comprar-com-o-dinheiro-do-crime\"><a class=\"anchor\" href=\"#por-que-nao-consigo-comprar-com-o-dinheiro-do-crime\" aria-label=\"Link para esta seção\">#</a>Por que não consigo comprar com o dinheiro do crime?</h3><p>Porque ele vem <strong>sujo</strong>. Dinheiro sujo fica numa conta à parte e só vale depois de lavado. Veja <a href=\"/wiki/crime/laundering/\">Lavagem de dinheiro</a>.</p><h3 id=\"posso-mandar-dinheiro-para-outro-jogador\"><a class=\"anchor\" href=\"#posso-mandar-dinheiro-para-outro-jogador\" aria-label=\"Link para esta seção\">#</a>Posso mandar dinheiro para outro jogador?</h3><p>Pode, com <code>/transferir</code>, da sua carteira para a dele. Não tem taxa. Veja <a href=\"/wiki/economy/bank-and-transfers/\">Banco e transferências</a>.</p><h2 id=\"carreira\"><a class=\"anchor\" href=\"#carreira\" aria-label=\"Link para esta seção\">#</a>Carreira</h2><h3 id=\"subi-de-nivel-mas-o-meu-salario-nao-mudou-por-que\"><a class=\"anchor\" href=\"#subi-de-nivel-mas-o-meu-salario-nao-mudou-por-que\" aria-label=\"Link para esta seção\">#</a>Subi de nível, mas o meu salário não mudou. Por quê?</h3><p>O emprego <strong>não muda sozinho</strong>. Escolha o novo com <code>/empregos</code> e a opção <code>cargo</code>. A troca é de graça. Veja <a href=\"/wiki/start/jobs/\">Escolha seu emprego</a>.</p><h3 id=\"o-bolsa-e-uma-bolsa-de-acoes\"><a class=\"anchor\" href=\"#o-bolsa-e-uma-bolsa-de-acoes\" aria-label=\"Link para esta seção\">#</a>O <code>/bolsa</code> é uma bolsa de ações?</h3><p>Não. Ela é um <strong>índice de mercado</strong> do servidor, que muda os preços da loja e põe um item em alta na venda. Não tem ação para comprar. Veja <a href=\"/wiki/economy/market/\">Bolsa</a>.</p><h3 id=\"para-que-servem-as-gemas\"><a class=\"anchor\" href=\"#para-que-servem-as-gemas\" aria-label=\"Link para esta seção\">#</a>Para que servem as gemas?</h3><p>Hoje, para liberar a <strong>lavanderia privada</strong>. Elas valem em todos os servidores. Veja <a href=\"/wiki/economy/gems/\">Gemas</a>.</p><h2 id=\"comandos-que-nao-funcionam\"><a class=\"anchor\" href=\"#comandos-que-nao-funcionam\" aria-label=\"Link para esta seção\">#</a>Comandos que não funcionam</h2><h3 id=\"o-comando-diz-que-eu-nao-posso-usa-lo-agora-o-que-verifico\"><a class=\"anchor\" href=\"#o-comando-diz-que-eu-nao-posso-usa-lo-agora-o-que-verifico\" aria-label=\"Link para esta seção\">#</a>O comando diz que eu não posso usá-lo agora. O que verifico?</h3><ul><li>Você está <strong>preso</strong>? Muitos comandos ficam bloqueados na cadeia. Veja <a href=\"/wiki/crime/wanted-and-prison/\">Polícia, procurados e prisão</a>.</li><li>Falta <strong>energia</strong>? Veja <a href=\"/wiki/character/energy/\">Energia</a>.</li><li>Está com <strong>pouca vida</strong>? Crime e roubo pedem 30 de vida, e o duelo pede 20. Use <code>/curar</code>.</li><li>Está no <strong>tempo de espera</strong>? Veja <a href=\"/wiki/help/cooldowns/\">Tempos de espera</a>.</li></ul><h3 id=\"o-bot-respondeu-devagar-e-nao-fez-o-comando-por-que\"><a class=\"anchor\" href=\"#o-bot-respondeu-devagar-e-nao-fez-o-comando-por-que\" aria-label=\"Link para esta seção\">#</a>O bot respondeu &quot;Devagar!&quot; e não fez o comando. Por quê?</h3><p>A Helena espera <strong>3 segundos</strong> entre um comando seu e o seguinte, para não ficar sobrecarregada. Vale para os comandos de barra e para o prefixo <code>h</code>, em qualquer servidor. O comando que chega antes disso <strong>não é executado</strong> (nada é gasto nem acontece): espere o tempo que o aviso mostra e mande de novo.</p><p>Os botões e menus das mensagens não contam, e o aviso aparece só uma vez por rodada: se você insistir, as outras tentativas são ignoradas em silêncio. Veja também <a href=\"/wiki/help/cooldowns/\">Tempos de espera</a>.</p><h3 id=\"o-bot-nao-responde-como-sei-se-ele-esta-no-ar\"><a class=\"anchor\" href=\"#o-bot-nao-responde-como-sei-se-ele-esta-no-ar\" aria-label=\"Link para esta seção\">#</a>O bot não responde. Como sei se ele está no ar?</h3><p>Use <strong><code>/ping</code></strong> (ou <code>hping</code>): se o bot estiver funcionando, ele responde na hora. Se nem o <code>/ping</code> responde, o bot está fora do ar ou reiniciando, e não há nada a fazer do seu lado além de tentar de novo mais tarde.</p><h3 id=\"qual-a-diferenca-entre-daily-e-hdaily\"><a class=\"anchor\" href=\"#qual-a-diferenca-entre-daily-e-hdaily\" aria-label=\"Link para esta seção\">#</a>Qual a diferença entre <code>/daily</code> e <code>hdaily</code>?</h3><p>Nenhuma. O comando de barra e o do prefixo <code>h</code> têm as mesmas regras. Veja <a href=\"/wiki/help/commands/\">Comandos</a>.</p><h3 id=\"aperto-o-botao-e-ele-diz-que-o-painel-e-de-outra-pessoa\"><a class=\"anchor\" href=\"#aperto-o-botao-e-ele-diz-que-o-painel-e-de-outra-pessoa\" aria-label=\"Link para esta seção\">#</a>Aperto o botão e ele diz que o painel é de outra pessoa.</h3><p>Os botões de painéis pessoais, como o do <code>/saldo</code> e o do <code>/lavagem</code>, só funcionam para quem abriu o comando. Use o comando para abrir o seu.</p><h2 id=\"crime\"><a class=\"anchor\" href=\"#crime\" aria-label=\"Link para esta seção\">#</a>Crime</h2><h3 id=\"qual-a-chance-de-um-crime-dar-certo\"><a class=\"anchor\" href=\"#qual-a-chance-de-um-crime-dar-certo\" aria-label=\"Link para esta seção\">#</a>Qual a chance de um crime dar certo?</h3><p><strong>50%</strong>, em qualquer nível. O nível só muda o valor do prêmio e da multa. Veja <a href=\"/wiki/crime/getting-started/\">Crime: por onde começar</a>.</p><h3 id=\"roubar-manda-para-a-cadeia\"><a class=\"anchor\" href=\"#roubar-manda-para-a-cadeia\" aria-label=\"Link para esta seção\">#</a>Roubar manda para a cadeia?</h3><p>Não. Um roubo que falha <strong>não manda para a cadeia</strong>, mas gasta energia e a espera, e todo roubo entra na sua ficha criminal. Quem vai preso é quem <strong>erra um crime</strong>. Veja <a href=\"/wiki/crime/robbery/\">Roubar jogadores</a>.</p><h2 id=\"dados-e-privacidade\"><a class=\"anchor\" href=\"#dados-e-privacidade\" aria-label=\"Link para esta seção\">#</a>Dados e privacidade</h2><h3 id=\"que-dados-a-helena-guarda-sobre-mim\"><a class=\"anchor\" href=\"#que-dados-a-helena-guarda-sobre-mim\" aria-label=\"Link para esta seção\">#</a>Que dados a Helena guarda sobre mim?</h3><p>Os dados do jogo, o seu ID e o nome de exibição. As mensagens que não são comandos <strong>não são guardadas</strong>. Tudo está detalhado na <a href=\"/privacy/\">Política de Privacidade</a>.</p><h3 id=\"como-peco-para-apagar-os-meus-dados\"><a class=\"anchor\" href=\"#como-peco-para-apagar-os-meus-dados\" aria-label=\"Link para esta seção\">#</a>Como peço para apagar os meus dados?</h3><p>Siga os passos da seção de direitos na <a href=\"/privacy/#direitos\">Política de Privacidade</a>.</p><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/start/first-steps/\"><b>Primeiros passos</b><span>Do convite ao primeiro daily, o que fazer nos primeiros minutos com a Helena.</span></a></li><li><a href=\"/wiki/help/commands/\"><b>Comandos</b><span>A lista completa de comandos da Helena, com os atalhos de cada um, por categoria.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "dinheiro",
+          "text": "Dinheiro"
+        },
+        {
+          "level": 3,
+          "id": "meu-dinheiro-sumiu-o-que-aconteceu",
+          "text": "Meu dinheiro sumiu. O que aconteceu?"
+        },
+        {
+          "level": 3,
+          "id": "da-para-recuperar-o-dinheiro-que-me-roubaram",
+          "text": "Dá para recuperar o dinheiro que me roubaram?"
+        },
+        {
+          "level": 3,
+          "id": "por-que-nao-consigo-comprar-com-o-dinheiro-do-crime",
+          "text": "Por que não consigo comprar com o dinheiro do crime?"
+        },
+        {
+          "level": 3,
+          "id": "posso-mandar-dinheiro-para-outro-jogador",
+          "text": "Posso mandar dinheiro para outro jogador?"
+        },
+        {
+          "level": 2,
+          "id": "carreira",
+          "text": "Carreira"
+        },
+        {
+          "level": 3,
+          "id": "subi-de-nivel-mas-o-meu-salario-nao-mudou-por-que",
+          "text": "Subi de nível, mas o meu salário não mudou. Por quê?"
+        },
+        {
+          "level": 3,
+          "id": "o-bolsa-e-uma-bolsa-de-acoes",
+          "text": "O /bolsa é uma bolsa de ações?"
+        },
+        {
+          "level": 3,
+          "id": "para-que-servem-as-gemas",
+          "text": "Para que servem as gemas?"
+        },
+        {
+          "level": 2,
+          "id": "comandos-que-nao-funcionam",
+          "text": "Comandos que não funcionam"
+        },
+        {
+          "level": 3,
+          "id": "o-comando-diz-que-eu-nao-posso-usa-lo-agora-o-que-verifico",
+          "text": "O comando diz que eu não posso usá-lo agora. O que verifico?"
+        },
+        {
+          "level": 3,
+          "id": "o-bot-respondeu-devagar-e-nao-fez-o-comando-por-que",
+          "text": "O bot respondeu \"Devagar!\" e não fez o comando. Por quê?"
+        },
+        {
+          "level": 3,
+          "id": "o-bot-nao-responde-como-sei-se-ele-esta-no-ar",
+          "text": "O bot não responde. Como sei se ele está no ar?"
+        },
+        {
+          "level": 3,
+          "id": "qual-a-diferenca-entre-daily-e-hdaily",
+          "text": "Qual a diferença entre /daily e hdaily?"
+        },
+        {
+          "level": 3,
+          "id": "aperto-o-botao-e-ele-diz-que-o-painel-e-de-outra-pessoa",
+          "text": "Aperto o botão e ele diz que o painel é de outra pessoa."
+        },
+        {
+          "level": 2,
+          "id": "crime",
+          "text": "Crime"
+        },
+        {
+          "level": 3,
+          "id": "qual-a-chance-de-um-crime-dar-certo",
+          "text": "Qual a chance de um crime dar certo?"
+        },
+        {
+          "level": 3,
+          "id": "roubar-manda-para-a-cadeia",
+          "text": "Roubar manda para a cadeia?"
+        },
+        {
+          "level": 2,
+          "id": "dados-e-privacidade",
+          "text": "Dados e privacidade"
+        },
+        {
+          "level": 3,
+          "id": "que-dados-a-helena-guarda-sobre-mim",
+          "text": "Que dados a Helena guarda sobre mim?"
+        },
+        {
+          "level": 3,
+          "id": "como-peco-para-apagar-os-meus-dados",
+          "text": "Como peço para apagar os meus dados?"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "crime/prison-escape",
+        "path": "/wiki/crime/prison-escape/",
+        "title": "Fuga da prisão"
+      },
+      "next": {
+        "id": "help/commands",
+        "path": "/wiki/help/commands/",
+        "title": "Comandos"
+      }
+    },
+    {
+      "id": "help/commands",
+      "path": "/wiki/help/commands/",
+      "title": "Comandos",
+      "description": "A lista completa de comandos da Helena, com os atalhos de cada um, por categoria.",
+      "section": {
+        "id": "help",
+        "title": "Ajuda e referência"
+      },
+      "html": "<p>A Helena tem <strong>56 comandos</strong> e 26 atalhos. Esta lista é gerada do próprio bot, então sempre bate com o que está no ar.</p><h2 id=\"como-ler\"><a class=\"anchor\" href=\"#como-ler\" aria-label=\"Link para esta seção\">#</a>Como ler</h2><ul><li>Todo comando funciona de duas formas: <strong>de barra</strong> (<code>/daily</code>) e com o <strong>prefixo <code>h</code></strong> (<code>hdaily</code>).</li><li>Os <strong>atalhos</strong> são nomes alternativos do mesmo comando. <code>/bal</code> e <code>/saldo</code> são o mesmo comando, com as mesmas regras.</li><li>No prefixo, as opções vão na ordem, separadas por espaço, ou como <code>nome:valor</code>: <code>hdepositar 100</code>, <code>hajuda categoria:economia</code>.</li><li>Quantias são em reais inteiros. <code>tudo</code> ou <code>all</code> usa todo o saldo disponível.</li></ul><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>Esqueceu o nome de um comando? Use <code>/ajuda</code> (atalhos <code>/help</code> e <code>/comandos</code>). É um painel com um menu de categorias, o detalhe de cada comando (opções, atalhos e como usar) e um botão <strong>Buscar</strong>, que acha um comando pelo nome ou pelo que ele faz. Dá para ir direto: <code>/ajuda comando:daily</code> ou <code>/ajuda categoria:combate</code>.</p></aside><h2 id=\"economia\"><a class=\"anchor\" href=\"#economia\" aria-label=\"Link para esta seção\">#</a>Economia</h2><p>Dinheiro, banco, loja, inventário, trabalho e missões.</p><div class=\"table-wrap stack\"><table><thead><tr><th>Comando</th><th>Atalhos</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/bolsa</code></td><td data-label=\"Atalhos\"><code>/mercado</code></td><td data-label=\"O que faz\">Veja o índice do mercado, o item em alta e os preços de agora</td></tr><tr><td><code>/coletargemas</code></td><td data-label=\"Atalhos\"><code>/bonusgemas</code></td><td data-label=\"O que faz\">Colete seu bônus de gemas (vale em todos os servidores)</td></tr><tr><td><code>/comprar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Compre itens utilizando sua carteira</td></tr><tr><td><code>/cooldowns</code></td><td data-label=\"Atalhos\"><code>/cd</code></td><td data-label=\"O que faz\">Consulte o tempo restante das suas atividades</td></tr><tr><td><code>/daily</code></td><td data-label=\"Atalhos\"><code>/diario</code></td><td data-label=\"O que faz\">Resgate sua recompensa diária e aumente sua sequência</td></tr><tr><td><code>/depositar</code></td><td data-label=\"Atalhos\"><code>/dep</code></td><td data-label=\"O que faz\">Guarda seu dinheiro no banco da Helena</td></tr><tr><td><code>/descartar</code></td><td data-label=\"Atalhos\"><code>/dropitem</code></td><td data-label=\"O que faz\">Descarte itens do inventário (sem reembolso)</td></tr><tr><td><code>/empregos</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Consulte os empregos e avance na carreira</td></tr><tr><td><code>/energia</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Consulte sua energia e regeneração</td></tr><tr><td><code>/gemas</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Consulta seu saldo global de gemas</td></tr><tr><td><code>/inventario</code></td><td data-label=\"Atalhos\"><code>/inv</code></td><td data-label=\"O que faz\">Abra seu inventário: veja, organize e descarte itens</td></tr><tr><td><code>/loja</code></td><td data-label=\"Atalhos\"><code>/store</code></td><td data-label=\"O que faz\">Abra a loja: compre e venda itens</td></tr><tr><td><code>/missoes</code></td><td data-label=\"Atalhos\"><code>/missao</code></td><td data-label=\"O que faz\">Consulte e resgate suas missões diárias</td></tr><tr><td><code>/ranking</code></td><td data-label=\"Atalhos\"><code>/top</code></td><td data-label=\"O que faz\">Consulte os melhores jogadores do servidor</td></tr><tr><td><code>/sacar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Retira dinheiro do banco da Helena</td></tr><tr><td><code>/saldo</code></td><td data-label=\"Atalhos\"><code>/bal</code>, <code>/carteira</code></td><td data-label=\"O que faz\">Consulta sua situação financeira</td></tr><tr><td><code>/trabalhar</code></td><td data-label=\"Atalhos\"><code>/work</code></td><td data-label=\"O que faz\">Trabalhe para ganhar dinheiro e experiência</td></tr><tr><td><code>/transferir</code></td><td data-label=\"Atalhos\"><code>/pagar</code></td><td data-label=\"O que faz\">Transfere dinheiro para outro jogador</td></tr><tr><td><code>/usaritem</code></td><td data-label=\"Atalhos\"><code>/usar</code></td><td data-label=\"O que faz\">Use itens: coma, beba ou equipe uma arma</td></tr><tr><td><code>/vender</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Venda itens do seu inventário</td></tr></tbody></table></div><h2 id=\"crime\"><a class=\"anchor\" href=\"#crime\" aria-label=\"Link para esta seção\">#</a>Crime</h2><p>Crime, roubo, lavagem e a cadeia.</p><div class=\"table-wrap stack\"><table><thead><tr><th>Comando</th><th>Atalhos</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/crime</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Cometa um crime em busca de dinheiro sujo</td></tr><tr><td><code>/lavagem</code></td><td data-label=\"Atalhos\"><code>/lavar</code>, <code>/lav</code></td><td data-label=\"O que faz\">Lave seu dinheiro sujo e receba-o limpo</td></tr><tr><td><code>/lavageminfo</code></td><td data-label=\"Atalhos\"><code>/lavstatus</code></td><td data-label=\"O que faz\">Veja o tempo da lavagem de dinheiro em andamento</td></tr><tr><td><code>/prisao</code></td><td data-label=\"Atalhos\"><code>/cadeia</code></td><td data-label=\"O que faz\">Consulte sua pena e sua ficha criminal</td></tr><tr><td><code>/procurados</code></td><td data-label=\"Atalhos\"><code>/wanted</code></td><td data-label=\"O que faz\">Veja quem tem ficha criminal no servidor</td></tr><tr><td><code>/roubar</code></td><td data-label=\"Atalhos\"><code>/assaltar</code></td><td data-label=\"O que faz\">Roube dinheiro da carteira de outro jogador</td></tr></tbody></table></div><h2 id=\"combate\"><a class=\"anchor\" href=\"#combate\" aria-label=\"Link para esta seção\">#</a>Combate</h2><p>Duelos, armas, vida e equipamento.</p><div class=\"table-wrap stack\"><table><thead><tr><th>Comando</th><th>Atalhos</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/aceitarduelo</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Aceita o desafio de duelo que você recebeu</td></tr><tr><td><code>/armas</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Mostra a arma equipada, o dano e o desgaste</td></tr><tr><td><code>/atacar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Desafia outro jogador para um duelo</td></tr><tr><td><code>/colete</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Compra um colete (10 pontos de defesa)</td></tr><tr><td><code>/curar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Cure sua vida no hospital (R$ 1 por ponto)</td></tr><tr><td><code>/desequipar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Guarda a arma equipada de volta no inventário</td></tr><tr><td><code>/equipar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Equipa uma arma do seu inventário</td></tr><tr><td><code>/historico</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Mostra os seus últimos duelos</td></tr><tr><td><code>/hospital</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Mostra sua vida e quanto custa se curar</td></tr><tr><td><code>/municao</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Compra munição (R$ 1 cada)</td></tr><tr><td><code>/protecaopvp</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Mostra quanto falta da sua proteção contra duelos</td></tr><tr><td><code>/recarregar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Mostra a munição da arma de fogo equipada</td></tr><tr><td><code>/recusarduelo</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Recusa o desafio de duelo que você recebeu</td></tr><tr><td><code>/reparar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Conserta a arma equipada (R$ 50)</td></tr><tr><td><code>/statuscombate</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Mostra sua vida, vitórias, derrotas e equipamento</td></tr></tbody></table></div><h2 id=\"progresso\"><a class=\"anchor\" href=\"#progresso\" aria-label=\"Link para esta seção\">#</a>Progresso</h2><p>Conquistas e títulos.</p><div class=\"table-wrap stack\"><table><thead><tr><th>Comando</th><th>Atalhos</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/conquistas</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Consulte suas conquistas, títulos e progresso</td></tr><tr><td><code>/desequipartitulo</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Remova seu título equipado sem perder a conquista</td></tr><tr><td><code>/equipartitulo</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Equipe um título que você desbloqueou</td></tr><tr><td><code>/titulos</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Consulte seus títulos desbloqueados</td></tr></tbody></table></div><h2 id=\"social\"><a class=\"anchor\" href=\"#social\" aria-label=\"Link para esta seção\">#</a>Social</h2><p>Perfil, casamento e informações de usuário.</p><div class=\"table-wrap stack\"><table><thead><tr><th>Comando</th><th>Atalhos</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/aceitarcasamento</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Aceita um pedido de casamento recebido</td></tr><tr><td><code>/bio</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Personalize a descrição do seu perfil</td></tr><tr><td><code>/casar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Envia um pedido de casamento</td></tr><tr><td><code>/divorciar</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Encerra seu casamento atual</td></tr><tr><td><code>/familia</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Veja o seu casal e os seus filhos</td></tr><tr><td><code>/gozofone</code></td><td data-label=\"Atalhos\"><code>/gf</code></td><td data-label=\"O que faz\">Ligue para o seu cônjuge: pode render um filho ou um dinheiro</td></tr><tr><td><code>/perfil</code></td><td data-label=\"Atalhos\"><code>/profile</code></td><td data-label=\"O que faz\">Consulte o cartão de perfil na Helena</td></tr><tr><td><code>/recusarcasamento</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Recusa um pedido de casamento recebido</td></tr><tr><td><code>/userinfo</code></td><td data-label=\"Atalhos\"><code>/ui</code></td><td data-label=\"O que faz\">Veja as informações e insígnias de um usuário do VSync</td></tr></tbody></table></div><h2 id=\"utilidades\"><a class=\"anchor\" href=\"#utilidades\" aria-label=\"Link para esta seção\">#</a>Utilidades</h2><div class=\"table-wrap stack\"><table><thead><tr><th>Comando</th><th>Atalhos</th><th>O que faz</th></tr></thead><tbody><tr><td><code>/ajuda</code></td><td data-label=\"Atalhos\"><code>/help</code>, <code>/comandos</code></td><td data-label=\"O que faz\">Consulte os comandos e sistemas da Helena</td></tr><tr><td><code>/ping</code></td><td data-label=\"Atalhos\">—</td><td data-label=\"O que faz\">Verifica se o bot está funcionando</td></tr></tbody></table></div><h2 id=\"os-comandos-de-cada-assunto\"><a class=\"anchor\" href=\"#os-comandos-de-cada-assunto\" aria-label=\"Link para esta seção\">#</a>Os comandos de cada assunto</h2><p>Cada sistema tem a sua página, com as regras e os números:</p><ul class=\"cards\"><li><a href=\"/wiki/start/first-steps/\"><b>Primeiros passos</b><span>Do convite ao primeiro daily, o que fazer nos primeiros minutos com a Helena.</span></a></li><li><a href=\"/wiki/economy/shop-and-inventory/\"><b>Loja e inventário</b><span>O que a loja vende, como comprar e vender pelos botões, como usar os itens e como organizar o inventário.</span></a></li><li><a href=\"/wiki/crime/getting-started/\"><b>Crime: por onde começar</b><span>Como o /crime funciona, o que você ganha, o que perde se der errado e como não parar na cadeia à toa.</span></a></li><li><a href=\"/wiki/combat/duels/\"><b>Duelos</b><span>Como desafiar, aceitar e vencer um duelo, quem pode duelar e o que muda depois.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "como-ler",
+          "text": "Como ler"
+        },
+        {
+          "level": 2,
+          "id": "economia",
+          "text": "Economia"
+        },
+        {
+          "level": 2,
+          "id": "crime",
+          "text": "Crime"
+        },
+        {
+          "level": 2,
+          "id": "combate",
+          "text": "Combate"
+        },
+        {
+          "level": 2,
+          "id": "progresso",
+          "text": "Progresso"
+        },
+        {
+          "level": 2,
+          "id": "social",
+          "text": "Social"
+        },
+        {
+          "level": 2,
+          "id": "utilidades",
+          "text": "Utilidades"
+        },
+        {
+          "level": 2,
+          "id": "os-comandos-de-cada-assunto",
+          "text": "Os comandos de cada assunto"
+        }
+      ],
+      "previous": {
+        "id": "help/faq",
+        "path": "/wiki/help/faq/",
+        "title": "Perguntas frequentes"
+      },
+      "next": {
+        "id": "help/cooldowns",
+        "path": "/wiki/help/cooldowns/",
+        "title": "Tempos de espera"
+      }
+    },
+    {
+      "id": "help/cooldowns",
+      "path": "/wiki/help/cooldowns/",
+      "title": "Tempos de espera",
+      "description": "Todas as esperas do jogo reunidas, de quanto em quanto tempo você pode repetir cada ação e como conferir.",
+      "section": {
+        "id": "help",
+        "title": "Ajuda e referência"
+      },
+      "html": "<p>Quase tudo na Helena tem um tempo de espera. Esta é a lista de todos, com o comando de cada um.</p><h2 id=\"todas-as-esperas\"><a class=\"anchor\" href=\"#todas-as-esperas\" aria-label=\"Link para esta seção\">#</a>Todas as esperas</h2><div class=\"table-wrap stack\"><table><thead><tr><th>O quê</th><th>Comando</th><th>Espera</th></tr></thead><tbody><tr><td>Trabalho</td><td data-label=\"Comando\"><code>/trabalhar</code></td><td data-label=\"Espera\">1 hora</td></tr><tr><td>Recompensa diária</td><td data-label=\"Comando\"><code>/daily</code></td><td data-label=\"Espera\">24 horas</td></tr><tr><td>Coletar gemas (painel do site)</td><td data-label=\"Comando\">site</td><td data-label=\"Espera\">5 horas</td></tr><tr><td>Gozofone (ligar para o cônjuge)</td><td data-label=\"Comando\"><code>/gozofone</code></td><td data-label=\"Espera\">1 hora</td></tr><tr><td>Crime</td><td data-label=\"Comando\"><code>/crime</code></td><td data-label=\"Espera\">1 hora</td></tr><tr><td>Roubar</td><td data-label=\"Comando\"><code>/roubar</code></td><td data-label=\"Espera\">1 hora</td></tr><tr><td>Lavagem pública</td><td data-label=\"Comando\"><code>/lavagem</code></td><td data-label=\"Espera\">24 horas</td></tr><tr><td>Lavagem privada</td><td data-label=\"Comando\"><code>/lavagem</code></td><td data-label=\"Espera\">5 horas</td></tr><tr><td>Fuga da prisão</td><td data-label=\"Comando\"><code>/prisao</code></td><td data-label=\"Espera\">10 minutos</td></tr><tr><td>Duelo</td><td data-label=\"Comando\"><code>/atacar</code></td><td data-label=\"Espera\">5 minutos</td></tr><tr><td>Novo sorteio da bolsa</td><td data-label=\"Comando\"><code>/bolsa</code></td><td data-label=\"Espera\">30 minutos</td></tr></tbody></table></div><h2 id=\"conferir-o-que-esta-liberado-cooldowns\"><a class=\"anchor\" href=\"#conferir-o-que-esta-liberado-cooldowns\" aria-label=\"Link para esta seção\">#</a>Conferir o que está liberado: <code>/cooldowns</code></h2><p>O <code>/cooldowns</code> (atalho <code>/cd</code>) mostra o tempo que falta para o <strong>daily</strong>, o <strong>trabalho</strong>, o <strong>bônus de gemas</strong>, o <strong>crime</strong>, o <strong>roubo</strong> e a <strong>lavagem</strong>, separados em <strong>Legal</strong> e <strong>Ilegal</strong>, com ✅ para o que já está liberado e ⏳ com o tempo que falta. Quem é casado(a) vê também o <strong>Gozofone</strong>, e quem está preso vê a <strong>cadeia</strong>. O botão <strong>Atualizar</strong> refaz a lista com a hora de agora.</p><aside class=\"callout note\"><p class=\"callout-title\">Nota</p><p>O <code>/cooldowns</code> não mostra tudo desta tabela. Duelos, fugas e o sorteio da bolsa têm a espera tratada em outro lugar: veja a página de cada um.</p></aside><h2 id=\"o-intervalo-entre-comandos\"><a class=\"anchor\" href=\"#o-intervalo-entre-comandos\" aria-label=\"Link para esta seção\">#</a>O intervalo entre comandos</h2><p>Separado de tudo isso, a Helena espera <strong>3 segundos</strong> entre um comando seu e o próximo, seja de barra ou com o prefixo <code>h</code>. É só para ela não ficar sobrecarregada: o comando que chega cedo demais é ignorado e o aviso diz quanto falta. Mais em <a href=\"/wiki/help/faq/\">Perguntas frequentes</a>.</p><h2 id=\"detalhes-que-pegam-gente-de-surpresa\"><a class=\"anchor\" href=\"#detalhes-que-pegam-gente-de-surpresa\" aria-label=\"Link para esta seção\">#</a>Detalhes que pegam gente de surpresa</h2><ul><li><strong>Crime e roubo</strong> gastam a espera mesmo quando a tentativa <strong>dá errado</strong>.</li><li>A <strong>lavagem</strong> tem <strong>uma espera só</strong> para as duas lavanderias: depois de lavar na pública, você espera o tempo da pública antes de usar qualquer uma. Veja em <a href=\"/wiki/crime/laundering/\">Lavagem de dinheiro</a>.</li><li>O <strong>daily</strong> espera 24 horas depois do último resgate. As <strong>missões</strong> contam por <strong>dia UTC</strong>, que vira à meia-noite UTC (21h em Brasília).</li><li>A <strong>fuga da prisão</strong> conta a espera do <strong>começo</strong> da tentativa anterior, e não do fim.</li><li>A cadeia <strong>não pausa</strong> as esperas de crime, roubo, trabalho e daily: o tempo continua correndo enquanto você está preso. Só as lavagens em andamento ficam em pausa.</li></ul><aside class=\"callout tip\"><p class=\"callout-title\">Dica</p><p>Quer fazer tudo em ordem? Resgate o daily, trabalhe, resgate as missões e só então pense em crime.</p></aside><h2 id=\"proximo-passo\"><a class=\"anchor\" href=\"#proximo-passo\" aria-label=\"Link para esta seção\">#</a>Próximo passo</h2><ul class=\"cards\"><li><a href=\"/wiki/character/energy/\"><b>Energia</b><span>Quanta energia você tem, quanto cada ação gasta, como ela volta sozinha e como repor mais rápido.</span></a></li><li><a href=\"/wiki/start/earning-money/\"><b>Ganhar dinheiro</b><span>As formas de ganhar dinheiro dentro da lei, quanto cada uma rende e de quanto em quanto tempo.</span></a></li></ul>",
+      "headings": [
+        {
+          "level": 2,
+          "id": "todas-as-esperas",
+          "text": "Todas as esperas"
+        },
+        {
+          "level": 2,
+          "id": "conferir-o-que-esta-liberado-cooldowns",
+          "text": "Conferir o que está liberado: /cooldowns"
+        },
+        {
+          "level": 2,
+          "id": "o-intervalo-entre-comandos",
+          "text": "O intervalo entre comandos"
+        },
+        {
+          "level": 2,
+          "id": "detalhes-que-pegam-gente-de-surpresa",
+          "text": "Detalhes que pegam gente de surpresa"
+        },
+        {
+          "level": 2,
+          "id": "proximo-passo",
+          "text": "Próximo passo"
+        }
+      ],
+      "previous": {
+        "id": "help/commands",
+        "path": "/wiki/help/commands/",
+        "title": "Comandos"
+      },
+      "next": null
+    }
+  ]
+}

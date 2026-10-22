@@ -1,0 +1,17 @@
+---
+import Wiki from "../../layouts/Wiki.astro";
+import { wiki, type WikiPage } from "../../lib/wiki";
+
+export function getStaticPaths() {
+  return wiki.pages
+    .filter(page => page.id !== "index")
+    .map(page => ({ params: { slug: page.id }, props: { page } }));
+}
+
+interface Props {
+  page: WikiPage;
+}
+
+const { page } = Astro.props;
+---
+<Wiki page={page} />

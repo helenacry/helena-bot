@@ -1,0 +1,57 @@
+---
+import SectionHead from "../ui/SectionHead.astro";
+import { questions } from "../../lib/faq";
+import { url } from "../../lib/url";
+---
+<section class="section faq" id="duvidas" aria-labelledby="duvidas-title">
+  <div class="wrap grid">
+    <SectionHead kicker="Dúvidas" title="O que mais perguntam" id="duvidas-title">
+      <p>Não achou aqui? A <a href={url("/wiki/")}>wiki</a> explica cada sistema, com os números atuais.</p>
+    </SectionHead>
+
+    <div class="list">
+      {questions.map(item => (
+        <details name="faq">
+          <summary><span>{item.q}</span></summary>
+          <p>{item.a}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6) var(--space-8); align-items: start; }
+
+  .list { border-block-start: 1px solid var(--line-strong); }
+
+  details { border-block-end: 1px solid var(--line-strong); }
+
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-block-size: 3.75rem;
+    padding-block: var(--space-3);
+    font-weight: 620;
+    font-size: 1.05rem;
+  }
+
+  summary::after {
+    content: "+";
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    color: var(--violet);
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+
+  details[open] summary::after { transform: rotate(45deg); }
+
+  details p { padding-block-end: var(--space-4); color: var(--ink-soft); max-inline-size: 60ch; }
+
+  @media (min-width: 62rem) {
+    .grid { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); }
+  }
+</style>

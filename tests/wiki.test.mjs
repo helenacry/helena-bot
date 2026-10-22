@@ -2,7 +2,6 @@ import "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import vm from "node:vm";
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -12,11 +11,12 @@ const {
 } = await import("../scripts/site/wiki-markdown.mjs");
 
 const { reais, percent, duration, range, table } = await import("../scripts/site/wiki-values.mjs");
-const { generateWiki } = await import("../scripts/site/wiki-generate.mjs");
+const { generateWiki, WIKI_OUTPUT } = await import("../scripts/site/wiki-generate.mjs");
+const { SITE_PAGES } = await import("../scripts/site/wiki-pages.mjs");
 const { NAV } = await import("../wiki/nav.mjs");
 
-const SITE = fileURLToPath(new URL("../site/", import.meta.url));
-const WIKI_OUT = path.join(SITE, "wiki");
+const ROOT = fileURLToPath(new URL("../", import.meta.url));
+const SITE_PAGES_DIR = path.join(ROOT, "site", "src", "pages");
 const WIKI_SRC = fileURLToPath(new URL("../wiki/", import.meta.url));
 
 // ==========================================
@@ -74,7 +74,7 @@ test("tabelas: as curtas empilham no celular (data-label), as largas não", () =
 
     const wide = render("| A | B | C | D |\n| --- | --- | --- | --- |\n| 1 | 2 | 3 | 4 |\n").html;
 
-    assert.match(wide, /<div class="table-wrap"><table>/);
+    assert.match(wide, /<div class="table-wrap" role="region" tabindex="0" aria-label="Tabela: A, B, C, D"><table>/);
     assert.match(wide, /<td data-label="D">4<\/td>/);
 
     const piped = render("| Comando | O que faz |\n| --- | --- |\n| `/x` | a \\| b |\n").html;
@@ -170,37 +170,30 @@ test("dinheiro, porcentagem e tempo saem em português", () => {
 // A WIKI GERADA
 // ==========================================
 
-const files = await generateWiki();
+const { pages, json } = await generateWiki();
 
-const pages = [...files.keys()].filter(file => file.endsWith(".html"));
+const byId = new Map(pages.map(page => [page.id, page]));
+
+const order = NAV.flatMap(section => section.pages.map(page => `${section.id}/${page}`));
 
 const diskFiles = dir => readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter(entry => entry.isFile())
     .map(entry => path.relative(dir, path.join(entry.parentPath, entry.name)).replace(/\\/g, "/"));
 
-test("site/wiki está em dia com wiki/*.md e com o bot (rode npm run wiki:build se falhar)", () => {
-    assert.deepEqual(diskFiles(WIKI_OUT).sort(), [...files.keys()].sort(), "sobrou ou faltou arquivo em site/wiki");
-
-    for (const [file, content] of files) {
-        assert.equal(
-            readFileSync(path.join(WIKI_OUT, file), "utf8").replace(/\r\n/g, "\n"),
-            content.replace(/\r\n/g, "\n"),
-            `site/wiki/${file} está desatualizado`
-        );
-    }
+test("site/src/content/wiki.json está em dia com wiki/*.md e com o bot (rode npm run wiki:build se falhar)", () => {
+    assert.equal(
+        readFileSync(WIKI_OUTPUT, "utf8").replace(/\r\n/g, "\n"),
+        json.replace(/\r\n/g, "\n"),
+        "o arquivo gerado está desatualizado"
+    );
 });
 
 test("o menu, os arquivos de wiki/ e as páginas geradas contam a mesma história", () => {
-    const expected = ["index.html", ...NAV.flatMap(section => section.pages.map(page => `${section.id}/${page}/index.html`))];
-
-    assert.deepEqual(pages.sort(), expected.sort());
+    assert.deepEqual([...byId.keys()].sort(), ["index", ...order].sort());
 
     const sources = diskFiles(WIKI_SRC).filter(file => file.endsWith(".md")).map(file => file.replace(/\.md$/, ""));
 
-    assert.deepEqual(
-        sources.sort(),
-        ["index", ...NAV.flatMap(section => section.pages.map(page => `${section.id}/${page}`))].sort()
-    );
+    assert.deepEqual(sources.sort(), ["index", ...order].sort());
 
     // slugs em inglês, em kebab-case (veja a memória "nomes em inglês")
     for (const section of NAV) {
@@ -210,28 +203,27 @@ test("o menu, os arquivos de wiki/ e as páginas geradas contam a mesma históri
             assert.match(page, /^[a-z]+(-[a-z]+)*$/, `${section.id}/${page}`);
         }
     }
+
+    for (const page of pages) {
+        assert.equal(page.path, page.id === "index" ? "/wiki/" : `/wiki/${page.id}/`);
+    }
 });
 
-test("cada página tem um título, uma descrição, um único h1 e ids sem repetição", () => {
-    for (const file of pages) {
-        const html = files.get(file);
+test("cada página tem título, descrição, ids sem repetição e nenhum h1 no corpo (o título vem do site)", () => {
+    for (const page of pages) {
+        assert.ok(page.title && page.description, `${page.id}: título e descrição`);
+        assert.doesNotMatch(page.html, /<h1[ >]/, `${page.id}: o h1 é do layout`);
 
-        assert.match(html, /<html lang="pt-BR">/, file);
-        assert.match(html, /<title>[^<]+<\/title>/, file);
-        assert.match(html, /<meta name="description" content="[^"]+">/, file);
-        assert.equal((html.match(/<h1>/g) ?? []).length, 1, `${file}: um h1`);
+        const ids = [...page.html.matchAll(/ id="([^"]+)"/g)].map(match => match[1]);
 
-        const ids = [...html.matchAll(/ id="([^"]+)"/g)].map(match => match[1]);
-
-        assert.equal(new Set(ids).size, ids.length, `${file}: id repetido`);
+        assert.equal(new Set(ids).size, ids.length, `${page.id}: id repetido`);
+        assert.deepEqual(page.headings.map(heading => heading.id), ids, `${page.id}: o sumário tem um item por título`);
     }
 });
 
 test("nada de {{...}} sobrando, e nenhum HTML escrito à mão passa pelo conversor", () => {
-    for (const file of pages) {
-        const html = files.get(file);
-
-        assert.doesNotMatch(html, /\{\{|\}\}/, `${file}: marcador não resolvido`);
+    for (const page of pages) {
+        assert.doesNotMatch(page.html, /\{\{|\}\}/, `${page.id}: marcador não resolvido`);
     }
 
     for (const source of diskFiles(WIKI_SRC).filter(file => file.endsWith(".md"))) {
@@ -241,36 +233,48 @@ test("nada de {{...}} sobrando, e nenhum HTML escrito à mão passa pelo convers
     }
 });
 
-test("todo link e arquivo carregado pelas páginas existe, e as âncoras também", () => {
-    const exists = absolute => {
-        const relative = path.relative(WIKI_OUT, absolute).replace(/\\/g, "/");
+test("todo link da wiki leva a uma página, a uma página do site ou a https; as âncoras existem", () => {
+    const wikiPaths = new Map(pages.map(page => [page.path, page]));
 
-        if (!relative.startsWith("..")) {
-            return files.has(relative) || files.has(`${relative}/index.html`.replace(/^\/|\/\/+/g, ""));
-        }
+    let internal = 0;
 
-        return existsSync(absolute) && (!statSync(absolute).isDirectory() || existsSync(path.join(absolute, "index.html")));
-    };
+    for (const page of pages) {
+        const own = new Set(page.headings.map(heading => heading.id));
 
-    for (const file of pages) {
-        const html = files.get(file);
-        const dir = path.join(WIKI_OUT, path.dirname(file));
+        for (const [, href] of page.html.matchAll(/href="([^"]+)"/g)) {
+            if (href.startsWith("https://")) continue;
 
-        const own = new Set([...html.matchAll(/ id="([^"]+)"/g)].map(match => match[1]));
+            if (href.startsWith("#")) {
+                assert.ok(own.has(href.slice(1)), `${page.id}: âncora ${href} não existe na página`);
+                continue;
+            }
 
-        for (const [, ref] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
-            if (/^(https?:|mailto:|data:)/.test(ref)) continue;
+            assert.ok(href.startsWith("/"), `${page.id}: link "${href}" não é interno nem https`);
 
-            if (ref.startsWith("#")) {
-                assert.ok(own.has(ref.slice(1)), `${file}: âncora ${ref} não existe na página`);
+            const [target, anchor] = href.split("#");
+
+            internal++;
+
+            if (wikiPaths.has(target)) {
+                if (anchor) {
+                    assert.ok(wikiPaths.get(target).headings.some(heading => heading.id === anchor), `${page.id}: ${href}, a seção não existe`);
+                }
 
                 continue;
             }
 
-            const target = path.resolve(dir, ref.replace(/[?#].*$/, ""));
-
-            assert.ok(exists(target), `${file} aponta para ${ref}, que não existe`);
+            assert.ok(SITE_PAGES.includes(target.slice(1)), `${page.id}: ${href} não é uma página da wiki nem do site`);
         }
+    }
+
+    assert.ok(internal > 40, "achou os links internos");
+});
+
+test("as páginas do site que a wiki pode citar existem de verdade em site/src/pages", () => {
+    for (const target of SITE_PAGES) {
+        const file = target === "" ? path.join(SITE_PAGES_DIR, "index.astro") : path.join(SITE_PAGES_DIR, target, "index.astro");
+
+        assert.ok(existsSync(file), `site:${target} não tem página (${path.relative(ROOT, file)})`);
     }
 });
 
@@ -284,9 +288,9 @@ test("todo comando público do bot é citado em alguma página, fora da lista ge
     assert.ok(names.length > 40);
 
     // o texto de todas as páginas, menos a lista gerada de comandos (que cita todos por construção)
-    const prose = [...files]
-        .filter(([file]) => file.endsWith(".html") && file !== "help/commands/index.html")
-        .map(([, html]) => html.replace(/<[^>]+>/g, " "))
+    const prose = pages
+        .filter(page => page.id !== "help/commands")
+        .map(page => page.html.replace(/<[^>]+>/g, " "))
         .join("\n");
 
     const missing = names.filter(name => !new RegExp(`/${name}(?![a-z])`).test(prose));
@@ -306,10 +310,10 @@ test("os atalhos de cada comando que a wiki cita existem de verdade", async () =
     let checked = 0;
 
     // atalhos que as páginas escrevem à mão, no formato (atalho `/x`) ou (atalhos `/x` e `/y`)
-    for (const [file, html] of files) {
-        for (const [, group] of html.matchAll(/atalhos? ((?:<code>\/[a-z]+<\/code>(?:,| e )? ?)+)/g)) {
+    for (const page of pages) {
+        for (const [, group] of page.html.matchAll(/atalhos? ((?:<code>\/[a-z]+<\/code>(?:,| e )? ?)+)/g)) {
             for (const [, alias] of group.matchAll(/<code>\/([a-z]+)<\/code>/g)) {
-                assert.ok(aliases.has(alias) || all.has(alias), `${file}: o atalho /${alias} não existe`);
+                assert.ok(aliases.has(alias) || all.has(alias), `${page.id}: o atalho /${alias} não existe`);
 
                 checked++;
             }
@@ -319,160 +323,26 @@ test("os atalhos de cada comando que a wiki cita existem de verdade", async () =
     assert.ok(checked >= 10, `só ${checked} atalhos conferidos: o formato do texto mudou?`);
 });
 
-test("o menu lateral lista todas as páginas, na ordem, com a atual marcada", () => {
-    const expected = NAV.flatMap(section => section.pages.map(page => `${section.id}/${page}`));
-
-    for (const file of pages) {
-        const html = files.get(file);
-
-        const menu = html.match(/<nav class="wiki-nav"[\s\S]*?<\/nav>/)[0];
-
-        assert.equal((menu.match(/<li>/g) ?? []).length, expected.length, `${file}: uma linha por página`);
-
-        const current = [...menu.matchAll(/aria-current="page"/g)].length;
-
-        assert.equal(current, 1, `${file}: exatamente uma página marcada`);
-    }
-});
-
-test("anterior e próxima seguem a ordem do menu", () => {
-    const order = NAV.flatMap(section => section.pages.map(page => `${section.id}/${page}`));
-
+test("anterior e próxima seguem a ordem do menu; a inicial não tem nenhuma das duas", () => {
     order.forEach((slug, index) => {
-        const html = files.get(`${slug}/index.html`);
+        const page = byId.get(slug);
 
-        const pager = html.match(/<nav class="pager"[\s\S]*?<\/nav>/)[0];
-
-        assert.equal(pager.includes('class="prev"'), index > 0, `${slug}: anterior`);
-        assert.equal(pager.includes('class="next"'), index < order.length - 1, `${slug}: próxima`);
+        assert.equal(page.previous?.id ?? null, index > 0 ? order[index - 1] : null, `${slug}: anterior`);
+        assert.equal(page.next?.id ?? null, index < order.length - 1 ? order[index + 1] : null, `${slug}: próxima`);
     });
 
-    assert.doesNotMatch(files.get("index.html"), /class="pager"/, "o início não tem anterior nem próxima");
+    const home = byId.get("index");
+
+    assert.equal(home.previous, null);
+    assert.equal(home.section, null);
 });
 
-test("as páginas usam os estilos e scripts da wiki, e o índice da busca abre", () => {
-    for (const file of pages) {
-        const html = files.get(file);
+test("tabelas largas da wiki são regiões focáveis com nome (o teclado alcança a rolagem)", () => {
+    const wide = pages.flatMap(page => [...page.html.matchAll(/<div class="table-wrap"([^>]*)>/g)].map(match => [page.id, match[1]]));
 
-        assert.match(html, /css\/wiki\.css/);
-        assert.match(html, /js\/wiki\.js/);
-        assert.match(html, /search-index\.js/);
+    assert.ok(wide.length > 0, "há pelo menos uma tabela larga");
+
+    for (const [id, attributes] of wide) {
+        assert.match(attributes, /role="region" tabindex="0" aria-label="Tabela: [^"]+"/, id);
     }
-
-    const index = files.get("search-index.js");
-
-    const sandbox = { window: {} };
-
-    vm.runInNewContext(index, sandbox);
-
-    const entries = sandbox.window.Helena.wikiIndex;
-
-    assert.equal(entries.length, pages.length);
-
-    for (const entry of entries) {
-        assert.ok(entry.t && entry.s && entry.d && entry.x.length > 40, `entrada de busca ${entry.t}`);
-        assert.ok(entry.u === "" || /^[a-z-]+\/[a-z-]+\/$/.test(entry.u), `endereço ${entry.u}`);
-    }
-});
-
-// ==========================================
-// A BUSCA (site/js/wiki.js)
-// ==========================================
-
-// Um DOM de mentira, só com o que o script usa.
-function fakeDom() {
-    const make = tag => {
-        const node = {
-            tag, children: [], attrs: {}, listeners: {}, hidden: false, textContent: "", value: "",
-            classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
-            setAttribute(name, value) { node.attrs[name] = value; },
-            getAttribute(name) { return node.attrs[name] ?? null; },
-            appendChild(child) { node.children.push(child); return child; },
-            addEventListener(type, fn) { (node.listeners[type] ??= []).push(fn); },
-            contains: () => false,
-            closest: () => null,
-            focus() {}
-        };
-
-        Object.defineProperty(node, "textContent", {
-            get() { return node._text ?? ""; },
-            set(value) { node._text = value; if (value === "") node.children = []; }
-        });
-
-        return node;
-    };
-
-    const nodes = {
-        "#wiki-search-box": make("form"),
-        "#wiki-search": make("input"),
-        "#wiki-results": make("ul")
-    };
-
-    nodes["#wiki-search-box"].hidden = true;
-    nodes["#wiki-results"].hidden = true;
-
-    const document = {
-        documentElement: { classList: { add() {} } },
-        body: { getAttribute: () => "../../" },
-        createElement: make,
-        getElementById: () => null,
-        querySelector: selector => nodes[selector] ?? null,
-        querySelectorAll: () => [],
-        addEventListener() {}
-    };
-
-    return { document, nodes };
-}
-
-function loadSearch() {
-    const { document, nodes } = fakeDom();
-
-    const window = { Helena: {}, location: { href: "" }, addEventListener() {} };
-
-    const context = { window, document, IntersectionObserver: undefined };
-
-    vm.runInNewContext(readFileSync(path.join(SITE, "js/config.js"), "utf8"), context);
-    vm.runInNewContext(readFileSync(path.join(SITE, "js/util.js"), "utf8").replace("window.matchMedia(\"(prefers-reduced-motion: reduce)\").matches", "false").replace("window.matchMedia(\"(pointer: fine)\").matches", "false"), context);
-
-    vm.runInNewContext(files.get("search-index.js"), context);
-    vm.runInNewContext(readFileSync(path.join(SITE, "js/wiki.js"), "utf8"), context);
-
-    const type = value => {
-        nodes["#wiki-search"].value = value;
-
-        for (const listener of nodes["#wiki-search"].listeners.input ?? []) listener();
-    };
-
-    const results = () => nodes["#wiki-results"].children.map(item => {
-        const link = item.children[0];
-
-        return link?.attrs?.href ?? item._text;
-    });
-
-    return { nodes, type, results };
-}
-
-test("a busca aparece só com JavaScript, acha a página pelo título e pelo texto, sem acento", () => {
-    const { nodes, type, results } = loadSearch();
-
-    assert.equal(nodes["#wiki-search-box"].hidden, false, "o campo de busca é mostrado pelo script");
-
-    type("bolsa");
-    assert.equal(nodes["#wiki-results"].hidden, false);
-    assert.equal(results()[0], "../../economy/market/", "o título da página vem primeiro, com o caminho a partir da raiz da wiki");
-
-    type("EMPREGO magnata");
-    assert.ok(results().includes("../../start/jobs/"), "vários termos: todos precisam estar na página");
-
-    type("indice");
-    assert.ok(results().includes("../../economy/market/"), "acha 'índice' sem o acento");
-
-    type("zzzzz");
-    assert.deepEqual(results(), ["Nada encontrado para “zzzzz”."]);
-
-    type("a");
-    assert.deepEqual(results(), ["Nada encontrado para “a”."], "um termo de uma letra só não conta (2 ou mais)");
-
-    type("");
-    assert.equal(nodes["#wiki-results"].hidden, true);
 });

@@ -1,0 +1,194 @@
+---
+import { getImage } from "astro:assets";
+
+import Simulator from "../../islands/Simulator";
+import Plush from "../ui/Plush.astro";
+import Icon from "../ui/Icon.astro";
+
+import cardSource from "../../assets/helena-card.webp";
+import avatarSource from "../../../../assets/helena_pfp.png";
+
+import { stats } from "../../lib/game";
+import { int } from "../../lib/format";
+import { SITE } from "../../config";
+import { url } from "../../lib/url";
+
+const card = await getImage({ src: cardSource, width: 832, format: "webp", quality: 82 });
+const avatar = await getImage({ src: avatarSource, width: 80, height: 80, format: "webp", quality: 80 });
+
+const facts = [
+  { value: stats.commands, label: "comandos" },
+  { value: stats.jobs, label: "empregos" },
+  { value: stats.shopItems, label: "itens na loja" },
+  { value: stats.achievements, label: "conquistas" }
+];
+---
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap grid">
+    <div class="copy">
+      <p class="stamp label">Bot de economia e RPG para a VSync</p>
+
+      <h1 id="hero-title">
+        <span class="verb earn">Trabalhe,</span>
+        <span class="verb money">lave dinheiro,</span>
+        <span class="verb love">case</span> ou
+        <span class="verb risk">vá preso.</span>
+      </h1>
+
+      <p class="lede">
+        A Helena guarda a sua carteira, o seu banco e a sua ficha criminal. Cada servidor tem a própria economia, e cada jogador, o próprio cartão de perfil.
+      </p>
+
+      <div class="actions">
+        <a class="btn btn-primary" href={SITE.inviteUrl} rel="noopener">
+          Adicionar à VSync <Icon name="arrow" size={18} />
+        </a>
+        <a class="btn btn-quiet" href={url("/wiki/")}>
+          <Icon name="book" size={18} /> Ler a wiki
+        </a>
+      </div>
+
+      <p class="note">Sem cadastro: o seu primeiro comando já abre a conta. Use <code>/daily</code> ou <code>hdaily</code>.</p>
+
+      <ul class="facts" role="list" aria-label="O que a Helena tem hoje, lido do código do bot">
+        {facts.map(fact => (
+          <li>
+            <b class="num">{int(fact.value)}</b>
+            <span>{fact.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="stage">
+      <span class="slab" aria-hidden="true"></span>
+      <Plush size={132} class="peek" />
+      <Simulator client:load card={{ src: card.src, width: Number(card.attributes.width), height: Number(card.attributes.height) }} avatar={{ src: avatar.src, width: 40, height: 40 }} />
+      <p class="caption">Simulação com as regras e os textos reais do bot. No servidor, os botões da loja e da fuga também funcionam.</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-block: var(--space-7) var(--space-8);
+    overflow-x: clip;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8) var(--space-6);
+    align-items: start;
+  }
+
+  .copy { display: grid; gap: var(--space-5); justify-items: start; }
+
+  .stamp {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    color: var(--violet);
+    border: 2px solid currentColor;
+    border-radius: 0.35rem;
+    outline: 1px solid currentColor;
+    outline-offset: 2px;
+    transform: rotate(-1.6deg);
+    font-weight: 700;
+  }
+
+  h1 { font-size: clamp(2.7rem, 1.1rem + 5.8vw, 5.6rem); max-inline-size: 9.5em; line-height: 1; }
+
+  /* Cada verbo ganha o marca-texto da sua função: renda, dinheiro, carinho, risco. */
+  .verb {
+    --mark: var(--violet);
+    background-image: linear-gradient(to bottom, transparent 78%, var(--mark) 78% 93%, transparent 93%);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    padding-inline: 0.04em;
+  }
+  .verb.earn { --mark: var(--mark-earn); }
+  .verb.money { --mark: var(--mark-money); }
+  .verb.love { --mark: var(--mark-love); }
+  .verb.risk { --mark: var(--mark-risk); }
+
+  .lede { font-size: var(--step-1); line-height: 1.45; color: var(--ink-soft); max-inline-size: 34rem; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+  .note { font-size: 0.92rem; color: var(--ink-soft); max-inline-size: 32rem; }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    justify-content: start;
+    gap: 0;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    border-block: 1px dashed var(--line-strong);
+  }
+
+  .facts li {
+    display: grid;
+    padding: var(--space-3) var(--space-5) var(--space-3) 0;
+    margin-inline-end: var(--space-5);
+    border-inline-end: 1px dashed var(--line-strong);
+  }
+  .facts li:last-child { border-inline-end: 0; margin-inline-end: 0; padding-inline-end: 0; }
+
+  .facts b {
+    font-family: var(--font-mono);
+    font-size: var(--step-2);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+  }
+  .facts span { font-size: 0.8rem; color: var(--ink-soft); }
+
+  .stage { position: relative; isolation: isolate; max-inline-size: 34rem; inline-size: 100%; justify-self: center; margin-block-start: var(--space-7); }
+
+  .slab {
+    position: absolute;
+    inset: 1.2rem -1.1rem -1.2rem 1.1rem;
+    z-index: -2;
+    background: var(--violet-fill);
+    border-radius: var(--radius-obj);
+    transform: rotate(2.4deg);
+  }
+
+  .stage :global(.peek) {
+    position: absolute;
+    z-index: -1;
+    inset-block-start: -5rem;
+    inset-inline-end: 3.5rem;
+    transform: rotate(-7deg);
+  }
+
+  .caption { margin-block-start: var(--space-7); font-size: 0.82rem; color: var(--ink-soft); max-inline-size: 30rem; }
+
+  @media (min-width: 62rem) {
+    .grid { grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr); }
+    .stage { justify-self: end; }
+  }
+
+  @media (max-width: 36rem) {
+    .facts { grid-template-columns: repeat(2, 1fr); }
+    .facts li { margin: 0; padding-inline: 0; border-inline-end: 0; }
+    .facts li:nth-child(odd) { border-inline-end: 1px dashed var(--line-strong); padding-inline-end: var(--space-3); }
+    .facts li:nth-child(even) { padding-inline-start: var(--space-4); }
+    .slab { inset: 0.8rem -0.4rem -0.8rem 0.5rem; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .copy > * { animation: rise var(--dur-3) var(--ease-out) both; }
+    .copy > :nth-child(2) { animation-delay: 70ms; }
+    .copy > :nth-child(3) { animation-delay: 140ms; }
+    .copy > :nth-child(4) { animation-delay: 200ms; }
+    .copy > :nth-child(5) { animation-delay: 250ms; }
+    .copy > :nth-child(6) { animation-delay: 300ms; }
+    .stage { animation: rise var(--dur-3) 180ms var(--ease-out) both; }
+    .stage :global(.peek) { animation: peek 700ms 520ms var(--ease-out) both; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(1rem); } }
+    @keyframes peek { from { transform: translateY(3rem) rotate(-7deg); } }
+  }
+</style>

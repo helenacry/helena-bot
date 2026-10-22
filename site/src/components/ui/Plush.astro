@@ -1,0 +1,75 @@
+---
+// A pelúcia preta da Helena, redesenhada em vetor a partir da foto de perfil:
+// corpo de blob, orelhinhas, olhos fechados em arco que brilham em violeta,
+// bochechas e a boquinha com as gotinhas. É o logotipo, o carimbo e a ilustração
+// de estados vazios. Sempre preta, nos dois temas.
+interface Props {
+  size?: number | string;
+  /** Rosto: "feliz" (olhos em arco), "dormindo" (linhas retas), "preso" (olhos em X). */
+  mood?: "feliz" | "dormindo" | "preso";
+  title?: string;
+  class?: string;
+}
+
+const { size = 64, mood = "feliz", title, class: className } = Astro.props;
+const labelled = Boolean(title);
+---
+<svg
+  class:list={["plush", className]}
+  width={size}
+  height={Number(size) * 0.875}
+  viewBox="0 0 128 112"
+  role={labelled ? "img" : undefined}
+  aria-label={title}
+  aria-hidden={labelled ? undefined : "true"}
+  focusable="false"
+>
+  {title && <title>{title}</title>}
+  <path class="body" d="M26 34C19 15 27 6 44 19Zm76 0c7-19-1-28-18-15Z" />
+  <path class="body" d="M14 62C14 30 36 14 64 14s50 16 50 48c0 28-22 42-50 42S14 90 14 62Z" />
+  <ellipse class="shine" cx="42" cy="32" rx="16" ry="7" transform="rotate(-22 42 32)" />
+  {mood === "feliz" && (
+    <g class="eyes">
+      <path d="M33 61q11-16 22 0" />
+      <path d="M73 61q11-16 22 0" />
+    </g>
+  )}
+  {mood === "dormindo" && (
+    <g class="eyes">
+      <path d="M33 58h22" />
+      <path d="M73 58h22" />
+    </g>
+  )}
+  {mood === "preso" && (
+    <g class="eyes">
+      <path d="M36 50l16 14m0-14L36 64" />
+      <path d="M76 50l16 14m0-14L76 64" />
+    </g>
+  )}
+  <ellipse class="blush" cx="30" cy="73" rx="9" ry="5.5" />
+  <ellipse class="blush" cx="98" cy="73" rx="9" ry="5.5" />
+  <g class="mouth">
+    <path d="M55 73q9 9 18 0" />
+    <path d="M58 79l-.8 6M70 79l.8 6" />
+  </g>
+</svg>
+
+<style>
+  .plush { overflow: visible; }
+  .body {
+    fill: oklch(15% 0.03 290);
+    stroke: oklch(42% 0.13 292);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+  }
+  .shine { fill: oklch(100% 0 0 / 0.09); }
+  .eyes path, .mouth path {
+    fill: none;
+    stroke: oklch(82% 0.13 300);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mouth path { stroke-width: 3.6; }
+  .blush { fill: oklch(66% 0.25 320 / 0.7); }
+</style>

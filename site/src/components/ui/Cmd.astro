@@ -1,0 +1,24 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+  /** O que a pessoa digita, como "/daily". */
+  command: string;
+  /** Texto do botão, se for diferente do comando. */
+  label?: string;
+}
+
+const { command, label = command } = Astro.props;
+---
+<button class="cmd" type="button" data-copy={command} title={`Copiar ${command}`}>
+  <span>{label}</span>
+  <Icon name="copy" size={14} class="i-copy" />
+  <Icon name="check" size={14} class="i-ok" />
+  <span class="sr-only">Copiar comando</span>
+</button>
+
+<style>
+  .cmd :global(.i-ok) { display: none; }
+  .cmd[data-copied] :global(.i-copy) { display: none; }
+  .cmd[data-copied] :global(.i-ok) { display: block; }
+</style>

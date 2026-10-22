@@ -1,0 +1,98 @@
+---
+import "../styles/fonts.css";
+import "../styles/tokens.css";
+import "../styles/base.css";
+import "../styles/components.css";
+
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { SITE } from "../config";
+import { url, absolute } from "../lib/url";
+
+import displayFont from "../assets/fonts/bricolage-grotesque-latin-wght-normal.woff2?url";
+import textFont from "../assets/fonts/instrument-sans-latin-wght-normal.woff2?url";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Caminho da página dentro do site ("/wiki/"), para canonical e og:url. */
+  path?: string;
+  /** Imagem de compartilhamento (caminho público, 1200 × 630). */
+  image?: string;
+  noindex?: boolean;
+  /** JSON-LD já pronto. */
+  jsonLd?: Record<string, unknown>;
+  current?: "wiki" | "account" | "";
+  home?: boolean;
+  /** Página sem o rodapé grande (a wiki tem o seu). */
+  slimFooter?: boolean;
+}
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, "");
+
+const {
+  title,
+  description = SITE.description,
+  path = Astro.url.pathname.slice(base.length) || "/",
+  image = "/og-default.png",
+  noindex = false,
+  jsonLd,
+  current = "",
+  home = false,
+  slimFooter = false
+} = Astro.props;
+
+const fullTitle = home ? `${title} | Bot de economia e RPG para a VSync` : `${title} | ${SITE.name}`;
+const canonical = absolute(path, Astro.site);
+const imageUrl = absolute(image, Astro.site);
+
+// Pinta o tema e marca "tem JS" antes da primeira pintura, para não piscar.
+const bootstrap = `(function(){var r=document.documentElement;r.classList.add("js");var t=null;try{t=localStorage.getItem("helena-theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}r.dataset.theme=t;})();`;
+---
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f6f1fd" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#12111e" media="(prefers-color-scheme: dark)" />
+
+    <link rel="icon" href={url("/favicon.svg")} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={url("/apple-touch-icon.png")} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={textFont} as="font" type="font/woff2" crossorigin />
+
+    <script is:inline set:html={bootstrap} />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+    <Header current={current} home={home} />
+    <main id="conteudo" tabindex="-1">
+      <slot />
+    </main>
+    {!slimFooter && <Footer />}
+    <div class="sr-only" id="announce" role="status" aria-live="polite"></div>
+    <script>
+      import "../scripts/copy";
+    </script>
+  </body>
+</html>

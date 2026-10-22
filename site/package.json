@@ -1,0 +1,31 @@
+{
+  "name": "helena-site",
+  "private": true,
+  "type": "module",
+  "description": "Site da Helena: página inicial, wiki, painel da conta, termos e privacidade (publicado no GitHub Pages)",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && pagefind --site dist --output-subdir pagefind",
+    "preview": "astro preview",
+    "check": "astro check",
+    "verify": "node scripts/verify.mjs",
+    "icons": "node scripts/build-icons.mjs",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@astrojs/preact": "6.1.1",
+    "@astrojs/sitemap": "3.7.4",
+    "astro": "7.4.2",
+    "preact": "11.0.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
+    "pagefind": "1.5.2",
+    "typescript": "6.0.3"
+  }
+}

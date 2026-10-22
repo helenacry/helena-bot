@@ -1,0 +1,124 @@
+---
+import "../styles/prose.css";
+import Base from "./Base.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  eyebrow: string;
+  heading: string;
+  lede: string;
+  version: string;
+  since: string;
+  /** [id da seção, título] na ordem do documento. */
+  toc: readonly (readonly [string, string])[];
+}
+
+const { title, description, path, eyebrow, heading, lede, version, since, toc } = Astro.props;
+---
+<Base title={title} description={description} path={path}>
+  <div class="wrap legal">
+    <header class="head">
+      <p class="kicker label">{eyebrow}</p>
+      <h1>{heading}</h1>
+      <p class="lede">{lede}</p>
+      <ul class="meta" role="list">
+        <li class="label">Versão {version}</li>
+        <li class="label">Em vigor desde {since}</li>
+      </ul>
+    </header>
+
+    <div class="grid">
+      <nav class="toc" aria-label="Neste documento">
+        <h2 class="label">Neste documento</h2>
+        <ol role="list">
+          {toc.map(([id, label], index) => (
+            <li><a href={`#${id}`}><span class="num tabular">{String(index + 1).padStart(2, "0")}</span>{label}</a></li>
+          ))}
+        </ol>
+      </nav>
+
+      <article class="body prose">
+        <slot />
+      </article>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .legal { padding-block: var(--space-7) var(--space-8); }
+
+  .head { display: grid; gap: var(--space-3); max-inline-size: 46rem; margin-block-end: var(--space-7); }
+  .head h1 { font-size: var(--step-4); letter-spacing: -0.04em; }
+  .lede { font-size: var(--step-1); line-height: 1.45; color: var(--ink-soft); }
+  .meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: 0; margin: var(--space-2) 0 0; }
+  .meta li { padding: 0.2rem 0.6rem; border: 1.5px dashed var(--line-strong); border-radius: var(--radius-pill); }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6) var(--space-8); align-items: start; }
+
+  .toc { font-size: 0.92rem; }
+  .toc ol { padding: 0; margin: var(--space-3) 0 0; display: grid; border-inline-start: 1px solid var(--line-strong); }
+  .toc a {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+    min-block-size: 2.25rem;
+    padding: 0.25rem 0 0.25rem var(--space-3);
+    margin-inline-start: -1px;
+    border-inline-start: 2px solid transparent;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+  .toc a:hover { color: var(--ink); border-inline-start-color: var(--violet); }
+  .num { font-family: var(--font-mono); font-size: 0.72rem; color: var(--violet); }
+
+  .body { min-inline-size: 0; max-inline-size: 46rem; }
+
+  .body :global(section) { padding-block-start: var(--space-7); }
+  .body :global(section:first-child) { padding-block-start: 0; }
+  .body :global(section > * + *) { margin-block-start: var(--space-4); }
+
+  .body :global(h2) {
+    font-size: var(--step-2);
+    letter-spacing: -0.03em;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding-block-start: var(--space-4);
+    border-block-start: 2px solid var(--ink);
+  }
+
+  .body :global(h2 .n) { font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--violet); letter-spacing: 0; }
+  .body :global(h3) { font-size: var(--step-1); margin-block-start: var(--space-5); }
+
+  .body :global(.sum) {
+    padding: var(--space-5);
+    background: var(--violet-wash);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-obj);
+    box-shadow: var(--shadow-press);
+  }
+  .body :global(.sum h2) { border: 0; padding: 0; font-size: var(--step-1); }
+  .body :global(.note) { font-size: 0.88rem; color: var(--ink-soft); }
+
+  .body :global(ul), .body :global(ol) { padding-inline-start: 1.3rem; display: grid; gap: var(--space-2); }
+  .body :global(ul) { list-style: none; }
+  .body :global(ul > li) { position: relative; }
+  .body :global(ul > li::before) {
+    content: "";
+    position: absolute;
+    inset-inline-start: -1.1rem;
+    inset-block-start: 0.7em;
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    background: var(--violet);
+    border-radius: 0.1rem;
+    transform: rotate(45deg);
+  }
+
+  @media (min-width: 62rem) {
+    .grid { grid-template-columns: 15rem minmax(0, 1fr); }
+    .toc { position: sticky; inset-block-start: calc(var(--header-h) + var(--space-5)); }
+  }
+</style>

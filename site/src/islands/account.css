@@ -1,0 +1,163 @@
+@layer reset, tokens, base, components, utilities;
+
+@layer components {
+  .acc-box, .acc-sheet, .acc-row {
+    background: var(--paper-raised);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-obj);
+    box-shadow: var(--shadow-press);
+  }
+
+  .acc-small { font-size: 0.85rem; color: var(--ink-soft); }
+
+  .acc-notice { padding: var(--space-6); display: grid; gap: var(--space-4); justify-items: start; max-inline-size: 36rem; }
+  .acc-notice h1, .acc-notice h2 { font-size: var(--step-3); }
+  .acc-notice p { color: var(--ink-soft); }
+
+  .acc-captcha { padding: var(--space-4) var(--space-5); margin-block-end: var(--space-5); display: grid; gap: var(--space-3); max-inline-size: 22rem; }
+  .acc-captcha[hidden] { display: none; }
+
+  /* O foco programático vai para o título da tela nova (leitor de tela); ele não é um controle, então sem anel. */
+  [tabindex="-1"]:focus, [tabindex="-1"]:focus-visible { outline: none; }
+
+  /* ----------------------------------------------------------- entrada */
+  .acc-login-wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-8); align-items: center; }
+
+  .acc-login { display: grid; gap: var(--space-4); justify-items: start; }
+  .acc-login h1 { font-size: var(--step-4); letter-spacing: -0.04em; max-inline-size: 14ch; }
+  .acc-lede { font-size: var(--step-1); line-height: 1.45; color: var(--ink-soft); max-inline-size: 34rem; }
+
+  .acc-warn {
+    padding: var(--space-3) var(--space-4);
+    border: 1.5px solid var(--danger);
+    border-radius: var(--radius-ctl);
+    background: var(--danger-wash);
+    color: var(--ink);
+    max-inline-size: 34rem;
+  }
+
+  .acc-facts { padding: 0; margin: var(--space-3) 0 0; list-style: none; display: grid; gap: var(--space-2); max-inline-size: 34rem; }
+  .acc-facts li { position: relative; padding-inline-start: 1.6rem; color: var(--ink-soft); font-size: 0.93rem; }
+  .acc-facts li::before { content: "✓"; position: absolute; inset-inline-start: 0; color: var(--positive); font-weight: 800; }
+
+  .acc-sample { position: relative; pointer-events: none; user-select: none; transform: rotate(1.4deg); opacity: 0.96; }
+  .acc-sample-tag {
+    position: absolute;
+    inset-block-start: -0.9rem;
+    inset-inline-start: var(--space-4);
+    z-index: 1;
+    padding: 0.1rem 0.6rem;
+    background: var(--paper);
+    border: 2px dashed var(--ink-soft);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  /* ------------------------------------------------------------ painel */
+  .acc-sheet { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); padding: var(--space-5); margin-block-end: var(--space-4); }
+
+  .acc-who { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+  .acc-who-text { display: grid; gap: 0.15rem; min-inline-size: 0; flex: 1 1 10rem; }
+  .acc-who h1 { font-size: var(--step-3); letter-spacing: -0.035em; overflow-wrap: break-word; }
+  .acc-handle { font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+
+  .acc-exit {
+    min-block-size: var(--hit);
+    padding-inline: var(--space-4);
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+  }
+  .acc-exit:hover { background: var(--violet-wash); border-color: var(--violet); }
+
+  .acc-avatar { inline-size: 3rem; block-size: 3rem; border-radius: 50%; object-fit: cover; background: var(--violet-wash); border: 2px solid var(--ink); flex: none; }
+  .acc-who .acc-avatar { inline-size: 4.75rem; block-size: 4.75rem; }
+  @media (max-width: 30rem) { .acc-who .acc-avatar { inline-size: 3.5rem; block-size: 3.5rem; } }
+  .acc-initial { display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; color: var(--violet); }
+
+  .acc-purse { display: grid; gap: var(--space-3); justify-items: start; padding: var(--space-4) var(--space-5); background: var(--money-wash); border: 1.5px dashed var(--line-strong); border-radius: var(--radius-ctl); }
+  .acc-purse-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+  .acc-purse-num { font-family: var(--font-mono); font-size: var(--step-4); font-weight: 800; letter-spacing: -0.06em; line-height: 1; color: var(--money); }
+  .acc-purse-note { font-size: 0.9rem; color: var(--ink-soft); }
+
+  .acc-say { min-block-size: 1.5rem; margin-block: var(--space-3); font-weight: 600; }
+  .acc-say.ok { color: var(--positive); }
+  .acc-say.bad { color: var(--danger); }
+
+  .acc-servers { display: grid; gap: var(--space-3); }
+  .acc-servers-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); }
+  .acc-servers-head h2 { font-size: var(--step-3); }
+  .acc-tally { font-size: 0.92rem; color: var(--ink-soft); }
+  .acc-tally b { color: var(--ink); }
+
+  .acc-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-5); container-type: inline-size; }
+
+  .acc-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); padding: var(--space-5); }
+  .acc-row.jail { background: var(--danger-wash); }
+  .acc-row.ready { background: var(--positive-wash); }
+
+  .acc-row-id { display: flex; gap: var(--space-3); align-items: center; min-inline-size: 0; }
+  .acc-row-id > div { display: grid; gap: 0.1rem; min-inline-size: 0; }
+  .acc-row-id h3 { font-size: var(--step-1); overflow-wrap: anywhere; }
+  .acc-stats { font-size: 0.85rem; color: var(--ink-soft); }
+  .acc-stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .acc-streak { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--violet); text-transform: uppercase; }
+
+  /* A escada de 7 dias: moedas ligadas por uma linha. */
+  .acc-track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    position: relative;
+  }
+
+  .acc-track::before {
+    content: "";
+    position: absolute;
+    inset-inline: calc(100% / 14);
+    inset-block-start: 0.7rem;
+    border-block-start: 2px dashed var(--line-strong);
+    z-index: 0;
+  }
+
+  .stop { position: relative; z-index: 1; display: grid; justify-items: center; gap: 0.3rem; }
+  .stop i { inline-size: 1.4rem; block-size: 1.4rem; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); }
+  .stop span:not(.sr-only) { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 600; color: var(--ink-soft); }
+  .stop.done i { background: var(--positive); }
+  .stop.next i { background: var(--violet-fill); box-shadow: 0 0 0 4px color-mix(in oklab, var(--violet-fill) 30%, transparent); }
+  .stop.next span:not(.sr-only) { color: var(--ink); font-weight: 800; }
+  .stop.weekly i { border-radius: 0.3rem; transform: rotate(45deg) scale(0.85); }
+
+  .acc-row-act { display: grid; gap: var(--space-2); justify-items: start; align-content: center; }
+  .acc-go { min-block-size: 3rem; }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .acc-note { font-size: 0.82rem; color: var(--ink-soft); }
+  .acc-jail { color: var(--ink); }
+
+  .acc-wait { display: grid; gap: var(--space-2); inline-size: 100%; }
+  .acc-wait p { font-size: 0.92rem; color: var(--ink-soft); }
+  .acc-clock { font-family: var(--font-mono); color: var(--ink); }
+  .acc-meter { display: block; block-size: 0.5rem; border-radius: var(--radius-pill); background: var(--paper-sunk); border: 1.5px solid var(--line-strong); overflow: hidden; }
+  .acc-meter i { display: block; block-size: 100%; inline-size: calc(var(--p, 0) * 100%); background: var(--violet-fill); transition: inline-size 900ms linear; }
+
+  @media (min-width: 62rem) {
+    .acc-login-wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr); gap: var(--space-9); }
+    .acc-sheet { grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); align-items: center; }
+  }
+
+  /* A linha se desenha pela largura da lista (a do exemplo é estreita), não pela da janela. */
+  @container (min-width: 46rem) {
+    .acc-row { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 0.9fr); align-items: center; }
+  }
+
+  @media (max-width: 40rem) {
+    .acc-sheet, .acc-row, .acc-box { box-shadow: 0.15rem 0.15rem 0 light-dark(var(--ink), oklch(0% 0 0)); }
+  }
+}

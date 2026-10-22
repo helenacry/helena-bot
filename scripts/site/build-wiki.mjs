@@ -1,33 +1,23 @@
-// Gera as páginas da wiki (site/wiki/) a partir de wiki/*.md e dos números do
-// bot. Rode depois de editar uma página, mudar o menu (wiki/nav.mjs) ou mudar
-// uma regra do jogo que a wiki cita:
+// Gera o conteúdo da wiki (site/src/content/wiki.json) a partir de wiki/*.md e dos
+// números do bot. Rode depois de editar uma página, mudar o menu (wiki/nav.mjs) ou
+// mudar uma regra do jogo que a wiki cita:
 //
 //   npm run wiki:build
 //
-// site/wiki/ é inteiro gerado: não edite nada lá à mão.
+// O arquivo é inteiro gerado: não edite à mão. O site (Astro) o lê no build.
 
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 // Usa um banco temporário (e roda as migrações) para importar os comandos sem
 // encostar em data/. É o mesmo preparo dos testes.
 await import("../../tests/helpers.mjs");
 
-const { generateWiki } = await import("./wiki-generate.mjs");
+const { generateWiki, WIKI_OUTPUT } = await import("./wiki-generate.mjs");
 
-const OUTPUT = fileURLToPath(new URL("../../site/wiki/", import.meta.url));
+const { pages, json } = await generateWiki();
 
-const files = await generateWiki();
+await mkdir(path.dirname(WIKI_OUTPUT), { recursive: true });
+await writeFile(WIKI_OUTPUT, json);
 
-// começa do zero, para página apagada ou renomeada não deixar arquivo velho
-await rm(OUTPUT, { recursive: true, force: true });
-
-for (const [file, content] of files) {
-    const target = path.join(OUTPUT, file);
-
-    await mkdir(path.dirname(target), { recursive: true });
-    await writeFile(target, content);
-}
-
-console.log(`site/wiki/ atualizado: ${files.size - 1} páginas e o índice da busca.`);
+console.log(`site/src/content/wiki.json atualizado: ${pages.length} páginas.`);

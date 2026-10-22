@@ -1,0 +1,7 @@
+---
+import Wiki from "../../layouts/Wiki.astro";
+import { pageById } from "../../lib/wiki";
+
+const page = pageById("index");
+---
+<Wiki page={page} />

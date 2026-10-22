@@ -1,0 +1,66 @@
+@layer reset, tokens, base, components, utilities;
+
+@layer components {
+  .lab { display: grid; gap: var(--space-5); }
+
+  .lab-controls { display: grid; gap: var(--space-5); }
+
+  .lab-level { display: grid; gap: var(--space-2); }
+  .lab-level label { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); font-weight: 650; }
+  .lab-level output { font-family: var(--font-mono); font-size: var(--step-2); font-weight: 700; color: var(--violet); }
+  .lab-level p { font-size: 0.88rem; color: var(--ink-soft); }
+
+  .lab-level input[type="range"] {
+    inline-size: 100%;
+    block-size: var(--hit);
+    accent-color: var(--violet-fill);
+    cursor: pointer;
+  }
+
+  .lab-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+
+  .lab-reset {
+    min-block-size: var(--hit);
+    padding-inline: var(--space-3);
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    border-radius: var(--radius-ctl);
+  }
+  .lab-reset:hover:not(:disabled) { color: var(--ink); }
+  .lab-reset:disabled { opacity: 0.45; cursor: default; }
+
+  .lab-receipt { max-inline-size: 26rem; margin-inline: auto; inline-size: 100%; }
+  .lab-sub { text-align: center; color: var(--receipt-ink-soft); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .lab-empty { color: var(--receipt-ink-soft); text-align: center; padding-block: var(--space-4); }
+
+  .lab-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+  .lab-log li small { display: block; color: var(--receipt-ink-soft); padding-inline-start: 2.2rem; font-size: 0.72rem; }
+  .lab-more { color: var(--receipt-ink-soft); font-size: 0.74rem; text-align: center; }
+  .lab-n { color: var(--receipt-ink-soft); inline-size: 1.7rem; flex: none; }
+  .lab-what { white-space: nowrap; }
+
+  .lab-sums { margin: 0; display: grid; gap: 0.35rem; }
+  .lab-sums .row { display: flex; align-items: baseline; gap: 0.5rem; }
+  .lab-sums dt { flex: 1 1 auto; display: flex; align-items: baseline; gap: 0.5rem; font-weight: 500; }
+  .lab-sums dt::after { content: ""; flex: 1; min-inline-size: 1rem; border-block-end: 2px dotted var(--receipt-line); transform: translateY(-0.25em); }
+  .lab-sums dd { margin: 0; font-weight: 700; text-align: end; white-space: nowrap; }
+  .lab-sums .plus { color: oklch(40% 0.12 158); }
+  .lab-sums .minus { color: oklch(46% 0.19 25); }
+  .lab-sums .after-rule { margin-block-start: 0.35rem; padding-block-start: 0.6rem; border-block-start: 2px dashed var(--receipt-line); }
+
+  .lab-verdict { text-align: center; margin: var(--space-4) 0 0; }
+  .lab-verdict .stamp-mark { font-size: 1rem; background: var(--receipt); }
+  .lab-receipt .stamp-mark.ok { color: oklch(40% 0.13 158); }
+  .lab-receipt .stamp-mark.bad { color: oklch(46% 0.2 25); }
+
+  .lab-avg { font-size: 0.95rem; color: var(--ink-soft); }
+  .lab-avg b { color: var(--ink); }
+  .lab-note { font-size: 0.82rem; color: var(--ink-soft); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* O recibo "imprime": a linha nova desce de dentro da impressora. */
+    .lab-log li { animation: print 380ms var(--ease-out) both; }
+    @keyframes print { from { clip-path: inset(0 0 100% 0); transform: translateY(-0.4rem); } }
+  }
+}

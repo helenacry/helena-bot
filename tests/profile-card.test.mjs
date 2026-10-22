@@ -357,11 +357,11 @@ test("o rank do cartão é a posição do /ranking de patrimônio", () => {
 });
 
 test("a imagem de exemplo do site existe e tem o tamanho certo", async () => {
-    const file = new URL("../site/assets/img/helena-card.webp", import.meta.url);
+    const file = new URL("../site/src/assets/helena-card.webp", import.meta.url);
 
     const meta = await sharp(readFileSync(file)).metadata();
 
-    assert.deepEqual([meta.width, meta.height], [1200, 900]);
+    assert.deepEqual([meta.width, meta.height], [1600, 1200]);
 });
 
 

@@ -1,0 +1,168 @@
+---
+import SectionHead from "../ui/SectionHead.astro";
+import Cmd from "../ui/Cmd.astro";
+import Plush from "../ui/Plush.astro";
+import Icon from "../ui/Icon.astro";
+import { game } from "../../lib/game";
+import { moneyWhole } from "../../lib/format";
+import { SITE } from "../../config";
+
+const ladder = game.daily.ladder;
+const top = Math.max(...ladder);
+const grace = game.daily.graceSeconds / 3600;
+---
+<section class="section start" id="comecar" aria-labelledby="comecar-title">
+  <div class="wrap">
+    <SectionHead kicker="Começar" title="Três passos e você já joga" id="comecar-title" />
+
+    <ol class="steps" role="list">
+      <li>
+        <span class="n" aria-hidden="true">1</span>
+        <h3>Adicione a Helena</h3>
+        <p>Escolha o servidor da VSync onde ela vai morar e confirme as permissões.</p>
+        <a class="btn btn-primary" href={SITE.inviteUrl} rel="noopener">Adicionar <Icon name="arrow" size={18} /></a>
+      </li>
+      <li>
+        <span class="n" aria-hidden="true">2</span>
+        <h3>Peça ajuda</h3>
+        <p>Veja as categorias e o que cada comando faz, sem sair do chat.</p>
+        <Cmd command="/ajuda" />
+      </li>
+      <li>
+        <span class="n" aria-hidden="true">3</span>
+        <h3>Resgate o primeiro prêmio</h3>
+        <p>O seu primeiro <code>/daily</code> já abre a conta e começa a sequência.</p>
+        <Cmd command="/daily" />
+      </li>
+    </ol>
+
+    <div class="streak">
+      <div class="streak-copy">
+        <h3>Volte todo dia</h3>
+        <p>O prêmio do <code>/daily</code> sobe a cada dia seguido e, no sétimo, entra o bônus da semana. Dá para pular até {grace} horas sem perder a sequência.</p>
+      </div>
+
+      <ol class="days" role="list" aria-label="Prêmio de cada dia da sequência">
+        {ladder.map((value, index) => (
+          <li class:list={{ weekly: index === ladder.length - 1 }} style={`--h:${Math.round((value / top) * 100)}`}>
+            <b class="tabular">{moneyWhole(value)}</b>
+            <i aria-hidden="true"></i>
+            <span>dia {index + 1}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    <div class="final">
+      <Plush size={112} mood="dormindo" class="sleepy" />
+      <div>
+        <h2>Sua ficha está em branco.</h2>
+        <p>Adicione a Helena, use o primeiro comando e a conta nasce sozinha.</p>
+      </div>
+      <div class="final-actions">
+        <a class="btn btn-paper" href={SITE.inviteUrl} rel="noopener">Adicionar à VSync <Icon name="arrow" size={18} /></a>
+        <a class="btn btn-ghost" href={SITE.supportUrl} rel="noopener">Servidor oficial</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .steps {
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    counter-reset: step;
+  }
+
+  .steps li {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    align-content: start;
+    padding-block-start: var(--space-4);
+    border-block-start: 2px solid var(--ink);
+  }
+
+  .n {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: var(--step-5);
+    line-height: 0.85;
+    letter-spacing: -0.08em;
+    color: var(--violet);
+  }
+
+  .steps p { color: var(--ink-soft); max-inline-size: 30ch; }
+
+  .streak {
+    margin-block-start: var(--space-9);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6) var(--space-8);
+    align-items: end;
+  }
+
+  .streak-copy { display: grid; gap: var(--space-3); max-inline-size: 28rem; }
+  .streak-copy h3 { font-size: var(--step-3); letter-spacing: -0.035em; }
+  .streak-copy p { color: var(--ink-soft); }
+
+  .days {
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--space-2);
+    align-items: end;
+    block-size: 13rem;
+  }
+
+  .days li { display: grid; grid-template-rows: auto 1fr auto; gap: 0.35rem; justify-items: center; block-size: 100%; text-align: center; }
+  .days b { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; }
+  .days i {
+    align-self: end;
+    inline-size: 100%;
+    block-size: calc(var(--h) * 1%);
+    background: var(--money-bar);
+    border: 2px solid var(--ink);
+    border-block-end-width: 0;
+    border-radius: 0.35rem 0.35rem 0 0;
+  }
+  .days span { font-family: var(--font-mono); font-size: 0.66rem; color: var(--ink-soft); }
+  .days .weekly i { background: var(--violet-fill); }
+  .days .weekly b { color: var(--violet); }
+
+  .final {
+    margin-block-start: var(--space-9);
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: center;
+    padding: var(--space-7) var(--space-6);
+    background: var(--violet-fill);
+    color: var(--on-violet);
+    border: 2px solid light-dark(var(--ink), oklch(0% 0 0));
+    border-radius: var(--radius-obj);
+    box-shadow: var(--shadow-press);
+  }
+
+  .final h2 { font-size: var(--step-3); }
+  .final p { color: color-mix(in oklab, var(--on-violet) 85%, transparent); max-inline-size: 34ch; margin-block-start: var(--space-2); }
+  .final :global(.sleepy) { transform: rotate(-6deg); }
+
+  .final-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+  .btn-paper { background: var(--on-violet); color: oklch(30% 0.2 289); border: 2px solid oklch(15% 0.03 290); box-shadow: 0.2rem 0.2rem 0 oklch(15% 0.03 290); }
+  .btn-paper:hover { transform: translate(-0.1rem, -0.1rem); box-shadow: 0.3rem 0.3rem 0 oklch(15% 0.03 290); }
+  .btn-ghost { color: var(--on-violet); border: 2px solid color-mix(in oklab, var(--on-violet) 60%, transparent); }
+  .btn-ghost:hover { background: color-mix(in oklab, var(--on-violet) 15%, transparent); }
+
+  @media (min-width: 52rem) {
+    .steps { grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+    .streak { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
+    .final { grid-template-columns: auto 1fr auto; padding-inline: var(--space-7); }
+  }
+</style>

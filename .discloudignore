@@ -17,3 +17,5 @@ Dockerfile
 .gitattributes
 .gitignore
 README.md
+
+docs

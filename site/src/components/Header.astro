@@ -1,0 +1,230 @@
+---
+import Plush from "./ui/Plush.astro";
+import Icon from "./ui/Icon.astro";
+import { SITE, hasAccountPanel } from "../config";
+import { url } from "../lib/url";
+
+interface Props {
+  /** Qual item do menu está aberto: "wiki", "account" ou nada (home). */
+  current?: "wiki" | "account" | "";
+  /** Mostra o menu de seções da home (#bolsos, #carreira...). Nas outras páginas leva à home. */
+  home?: boolean;
+}
+
+const { current = "", home = false } = Astro.props;
+
+const section = (hash: string) => (home ? hash : `${url("/")}${hash}`);
+
+const links = [
+  { href: section("#bolsos"), label: "O jogo" },
+  { href: section("#carreira"), label: "Carreira" },
+  { href: section("#crime"), label: "Crime" },
+  { href: section("#comandos"), label: "Comandos" },
+  { href: url("/wiki/"), label: "Wiki", key: "wiki" },
+  ...(hasAccountPanel ? [{ href: url("/account/"), label: "Painel", key: "account" }] : [])
+];
+---
+<header class="top" id="top">
+  <div class="bar wrap">
+    <a class="brand" href={url("/")} aria-label="Helena, início">
+      <Plush size={38} class="mark" />
+      <span class="word">Helena</span>
+    </a>
+
+    <nav class="nav" id="nav" aria-label="Principal">
+      <ul role="list">
+        {links.map(link => (
+          <li>
+            <a href={link.href} aria-current={link.key && link.key === current ? "page" : undefined}>{link.label}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="tools">
+      <button class="theme" type="button" id="theme-toggle" aria-label="Trocar o tema" aria-pressed="false">
+        <Icon name="sun" class="i-sun" />
+        <Icon name="moon" class="i-moon" />
+      </button>
+      <a class="cta" href={SITE.inviteUrl} rel="noopener">Adicionar<span class="long">&nbsp;à VSync</span></a>
+      <button class="burger" type="button" id="menu-btn" aria-expanded="false" aria-controls="nav">
+        <Icon name="menu" class="i-open" />
+        <Icon name="close" class="i-close" />
+        <span class="sr-only">Menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .top {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    block-size: var(--header-h);
+    background: color-mix(in oklab, var(--paper) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(14px);
+    border-block-end: 1px solid var(--line);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    block-size: 100%;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    text-decoration: none;
+    margin-inline-end: auto;
+  }
+
+  .word {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.55rem;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .nav ul { display: flex; gap: var(--space-1); padding: 0; margin: 0; }
+
+  .nav a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--hit);
+    padding-inline: var(--space-3);
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    font-weight: 560;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    transition: color var(--dur-1), background-color var(--dur-1);
+  }
+
+  .nav a:hover { color: var(--ink); background: var(--violet-wash); }
+  .nav a[aria-current="page"] { color: var(--ink); background: var(--violet-wash); font-weight: 650; }
+
+  .tools { display: flex; align-items: center; gap: var(--space-2); }
+
+  .theme, .burger {
+    display: inline-grid;
+    place-items: center;
+    inline-size: var(--hit);
+    block-size: var(--hit);
+    border-radius: var(--radius-pill);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    transition: background-color var(--dur-1), border-color var(--dur-1);
+  }
+
+  .theme:hover, .burger:hover { background: var(--violet-wash); border-color: var(--line-strong); }
+
+  /* O ícone mostra o tema que o clique vai ativar. */
+  :global(:root[data-theme="dark"]) .theme :global(.i-moon) { display: none; }
+  :global(:root:not([data-theme="dark"])) .theme :global(.i-sun) { display: none; }
+
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--hit);
+    padding-inline: var(--space-4);
+    border-radius: var(--radius-pill);
+    background: var(--violet-fill);
+    color: var(--on-violet);
+    font-weight: 650;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background-color var(--dur-1);
+  }
+
+  .cta:hover { background: var(--violet-fill-hover); }
+
+  .long { display: none; }
+  @media (min-width: 480px) { .long { display: inline; } }
+
+  .burger { display: none; }
+  .burger :global(.i-close) { display: none; }
+  .burger[aria-expanded="true"] :global(.i-open) { display: none; }
+  .burger[aria-expanded="true"] :global(.i-close) { display: block; }
+
+  /* Menu em tela estreita: sem JS fica uma faixa que rola; com JS vira gaveta. */
+  @media (max-width: 30rem) {
+    .bar { gap: var(--space-2); }
+    .word { font-size: 1.4rem; }
+    .cta { padding-inline: var(--space-3); font-size: 0.88rem; }
+    .tools { gap: var(--space-1); }
+  }
+
+  @media (max-width: 62rem) {
+    .bar { gap: var(--space-3); }
+
+    .nav {
+      position: absolute;
+      inset-inline: 0;
+      inset-block-start: 100%;
+      background: var(--paper);
+      border-block-end: 1px solid var(--line);
+      padding: var(--space-2) var(--gutter) var(--space-4);
+    }
+
+    .nav ul { flex-direction: column; gap: 0; }
+    .nav a { inline-size: 100%; min-block-size: 3rem; font-size: 1.05rem; border-radius: var(--radius-ctl); }
+
+    :global(html.js) .nav { display: none; }
+    :global(html.js) .top[data-open] .nav { display: block; }
+    :global(html.js) .burger { display: inline-grid; }
+
+    :global(html:not(.js)) .nav { position: static; order: 5; flex-basis: 100%; padding: 0; border: 0; background: none; overflow-x: auto; }
+    :global(html:not(.js)) .nav ul { flex-direction: row; }
+    :global(html:not(.js)) .top { block-size: auto; position: static; }
+    :global(html:not(.js)) .bar { flex-wrap: wrap; padding-block: var(--space-2); }
+  }
+</style>
+
+<script>
+  const top = document.getElementById("top");
+  const button = document.getElementById("menu-btn");
+  const nav = document.getElementById("nav");
+  const toggle = document.getElementById("theme-toggle");
+
+  function setMenu(open: boolean) {
+    if (!top || !button) return;
+    top.toggleAttribute("data-open", open);
+    button.setAttribute("aria-expanded", String(open));
+  }
+
+  button?.addEventListener("click", () => setMenu(button.getAttribute("aria-expanded") !== "true"));
+
+  nav?.addEventListener("click", event => {
+    if ((event.target as HTMLElement).closest("a")) setMenu(false);
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && button?.getAttribute("aria-expanded") === "true") {
+      setMenu(false);
+      button.focus();
+    }
+  });
+
+  // Tema: o script do <head> já pôs data-theme; aqui só trocamos e guardamos.
+  const root = document.documentElement;
+
+  function paint() {
+    const dark = root.dataset.theme === "dark";
+    toggle?.setAttribute("aria-pressed", String(dark));
+    toggle?.setAttribute("aria-label", dark ? "Usar o tema claro" : "Usar o tema escuro");
+  }
+
+  paint();
+
+  toggle?.addEventListener("click", () => {
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = next;
+    try { localStorage.setItem("helena-theme", next); } catch { /* sem armazenamento: vale só nesta visita */ }
+    paint();
+  });
+</script>

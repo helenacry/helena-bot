@@ -1,0 +1,35 @@
+---
+import Base from "../../layouts/Base.astro";
+import Account from "../../islands/Account";
+import { SITE } from "../../config";
+import { url } from "../../lib/url";
+---
+<Base
+  title="Painel da conta"
+  description="Entre com a sua conta da VSync para resgatar o daily e coletar gemas da Helena."
+  path="/account/"
+  current="account"
+  noindex
+>
+  <div class="wrap page">
+    <noscript>
+      <section class="box">
+        <h1>Precisa de JavaScript</h1>
+        <p>O painel da conta só funciona com JavaScript ligado no navegador. Enquanto isso, use o comando <code>/daily</code> direto na VSync.</p>
+      </section>
+    </noscript>
+
+    <Account client:load apiUrl={SITE.apiUrl} clientId={SITE.clientId} turnstileSiteKey={SITE.turnstileSiteKey} />
+
+    <p class="privacy">
+      Para a sua segurança, cada entrada, coleta e recusa é registrada com data, IP e navegador. Automação para coletar não é permitida.
+      Leia os <a href={url("/terms/")}>Termos de uso</a> e a <a href={url("/privacy/")}>Política de Privacidade</a>.
+    </p>
+  </div>
+</Base>
+
+<style>
+  .page { padding-block: var(--space-7) var(--space-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-7); }
+  .box { padding: var(--space-6); border: 2px solid var(--ink); border-radius: var(--radius-obj); max-inline-size: 36rem; }
+  .privacy { font-size: 0.85rem; color: var(--ink-soft); max-inline-size: 46rem; }
+</style>

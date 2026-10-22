@@ -1,10 +1,10 @@
-// Atualiza os números e a lista de comandos do site com o que o bot
-// realmente tem hoje. Rode depois de criar, renomear ou remover comandos,
+// Atualiza os números, a lista de comandos e as regras do jogo que o site
+// mostra com o que o bot realmente tem hoje. Rode depois de criar, renomear ou remover comandos,
 // empregos, itens ou conquistas:
 //
 //   npm run site:data
 //
-// Grava site/data/site-data.js.
+// Grava site/src/data/game.json (o Astro lê esse arquivo no build).
 
 import { writeFile } from "node:fs/promises";
 
@@ -17,12 +17,12 @@ const { collectSiteData, renderSiteDataFile } = await import("./data-source.mjs"
 const data = await collectSiteData();
 
 await writeFile(
-    new URL("../../site/data/site-data.js", import.meta.url),
+    new URL("../../site/src/data/game.json", import.meta.url),
     renderSiteDataFile(data)
 );
 
 console.log(
-    `site/data/site-data.js atualizado: ${data.stats.commands} comandos ` +
+    `site/src/data/game.json atualizado: ${data.stats.commands} comandos ` +
     `(${data.stats.aliases} aliases), ${data.stats.jobs} empregos, ` +
     `${data.stats.shopItems} itens na loja, ` +
     `${data.stats.achievements} conquistas.`

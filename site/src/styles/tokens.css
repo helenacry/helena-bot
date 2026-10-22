@@ -1,0 +1,150 @@
+/* Sistema de design da Helena.
+
+   Conceito: o livro-caixa. Papel lilás, tinta quase preta, recibos de papel
+   térmico e a pelúcia preta da Helena como carimbo. A cor da marca é um violeta
+   elétrico de tinta (não o ameixa escuro do site antigo) e o escuro é um
+   azul-violeta, não vinho.
+
+   Regras de cor, com função e nada decorativo:
+     violeta  = marca, ação e foco
+     rosa     = carinho (coração, casamento, destaque pequeno)
+     dourado  = dinheiro
+     verde    = renda
+     vermelho = risco
+   Todo par de texto e fundo usado junto é conferido por `npm run verify`
+   (scripts/contrast.mjs): 4,5:1 para texto, 3:1 para texto grande e controles.
+
+   Tema: segue o sistema (prefers-color-scheme) e o botão do cabeçalho grava a
+   escolha em <html data-theme="light|dark">. `light-dark()` lê o color-scheme. */
+
+@layer reset, tokens, base, components, utilities;
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* ---- superfícies ---- */
+    --paper: light-dark(oklch(97.8% 0.012 305), oklch(17.5% 0.03 280));
+    --paper-sunk: light-dark(oklch(94.6% 0.022 305), oklch(14% 0.03 280));
+    --paper-raised: light-dark(oklch(99.6% 0.004 305), oklch(22% 0.036 280));
+
+    /* O recibo é um objeto de papel térmico: fica claro e quente nos dois temas. */
+    --receipt: oklch(98.9% 0.014 92);
+    --receipt-edge: oklch(92% 0.025 92);
+    --receipt-ink: oklch(24% 0.035 80);
+    --receipt-ink-soft: oklch(42% 0.035 80);
+    --receipt-line: oklch(74% 0.04 85);
+
+    /* ---- tinta ---- */
+    --ink: light-dark(oklch(21% 0.045 292), oklch(95.5% 0.014 300));
+    --ink-soft: light-dark(oklch(43% 0.05 292), oklch(79% 0.035 295));
+    --ink-faint: light-dark(oklch(54% 0.045 292), oklch(66% 0.04 292));
+    --line: light-dark(oklch(86% 0.03 300), oklch(31% 0.04 285));
+    --line-strong: light-dark(oklch(60% 0.08 295), oklch(57% 0.08 285));
+
+    /* ---- marca ---- */
+    --violet: light-dark(oklch(47% 0.25 289), oklch(76% 0.15 293));
+    --violet-fill: light-dark(oklch(47% 0.25 289), oklch(52% 0.25 289));
+    --violet-fill-hover: light-dark(oklch(41% 0.25 289), oklch(58% 0.25 289));
+    --on-violet: oklch(99% 0.01 300);
+    --violet-wash: light-dark(oklch(93.5% 0.05 295), oklch(26% 0.085 289));
+    --blush: light-dark(oklch(62% 0.21 355), oklch(76% 0.15 355));
+    --blush-wash: light-dark(oklch(94.5% 0.04 355), oklch(27% 0.07 355));
+
+    /* ---- funções ---- */
+    --money: light-dark(oklch(47% 0.1 78), oklch(82% 0.12 85));
+    --money-bar: light-dark(oklch(76% 0.15 82), oklch(80% 0.14 85));
+    --money-wash: light-dark(oklch(95% 0.05 88), oklch(27% 0.06 85));
+    --positive: light-dark(oklch(47% 0.12 158), oklch(78% 0.16 160));
+    --positive-wash: light-dark(oklch(94.5% 0.05 160), oklch(25% 0.06 160));
+    --danger: light-dark(oklch(51% 0.21 25), oklch(75% 0.17 22));
+    --danger-wash: light-dark(oklch(95% 0.035 22), oklch(26% 0.08 22));
+
+    /* ---- foco ---- */
+    /* marca-texto do título do herói: só decoração, por isso mais claro que a cor de função no tema claro */
+    --mark-earn: light-dark(oklch(80% 0.17 155), var(--positive));
+    --mark-money: light-dark(oklch(84% 0.15 85), var(--money));
+    --mark-love: light-dark(oklch(80% 0.15 355), var(--blush));
+    --mark-risk: light-dark(oklch(76% 0.15 22), var(--danger));
+
+    --focus: light-dark(oklch(47% 0.25 289), oklch(82% 0.13 293));
+
+    /* ---- o que é "foto de tela": a conversa do bot é escura nos dois temas ---- */
+    --chat-bg: oklch(18.5% 0.022 275);
+    --chat-bar: oklch(15.5% 0.022 275);
+    --chat-line: oklch(30% 0.03 275);
+    --chat-ink: oklch(94% 0.012 290);
+    --chat-ink-soft: oklch(74% 0.03 290);
+    --chat-embed: oklch(22.5% 0.03 275);
+    --chat-code: oklch(27% 0.035 280);
+    --chat-btn: oklch(33% 0.045 285);
+    --chat-btn-ink: oklch(94% 0.02 290);
+    --chat-ok: oklch(46% 0.12 158);
+    --chat-danger: oklch(50% 0.17 18);
+    --chat-primary: oklch(52% 0.22 289);
+
+    /* As cores das barras dos embeds do bot (HELENA_COLORS em utils/embed.mjs):
+       aparecem nas simulações como no app, não são cores do site. */
+    --embed-success: #22c55e;
+    --embed-error: #ef4444;
+    --embed-warning: #f59e0b;
+    --embed-economy: #a855f7;
+    --embed-primary: #8755da;
+
+    /* ---- raridade (as mesmas cinco do bot) ---- */
+    --rarity-common: light-dark(oklch(48% 0.03 290), oklch(76% 0.03 290));
+    --rarity-uncommon: light-dark(oklch(47% 0.12 158), oklch(78% 0.15 160));
+    --rarity-rare: light-dark(oklch(48% 0.16 250), oklch(78% 0.12 245));
+    --rarity-epic: light-dark(oklch(47% 0.24 305), oklch(76% 0.17 310));
+    --rarity-legendary: light-dark(oklch(48% 0.11 70), oklch(84% 0.13 85));
+
+    /* ---- tipografia ---- */
+    --font-display: "Bricolage Grotesque", "Bricolage Fallback", ui-sans-serif, system-ui, sans-serif;
+    --font-text: "Instrument Sans", "Instrument Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Martian Mono", "Martian Fallback", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+
+    --step--1: clamp(0.8rem, 0.78rem + 0.1vw, 0.875rem);
+    --step-0: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem);
+    --step-1: clamp(1.2rem, 1.1rem + 0.45vw, 1.42rem);
+    --step-2: clamp(1.45rem, 1.25rem + 0.95vw, 1.95rem);
+    --step-3: clamp(1.8rem, 1.4rem + 1.9vw, 2.85rem);
+    --step-4: clamp(2.3rem, 1.6rem + 3.4vw, 4.4rem);
+    --step-5: clamp(2.9rem, 1.5rem + 6.4vw, 7rem);
+
+    /* ---- espaçamento (a escala toda; valor fora dela é bug) ---- */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+    --space-7: 3rem;
+    --space-8: 4.5rem;
+    --space-9: 7rem;
+
+    /* ---- forma ---- */
+    --radius-ctl: 0.65rem;
+    --radius-obj: 1.15rem;
+    --radius-pill: 999px;
+    --hit: 2.75rem; /* alvo de toque mínimo: 44 px */
+
+    --shadow-obj: 0 1px 0 oklch(0% 0 0 / 0.05), 0 18px 36px -18px light-dark(oklch(30% 0.13 290 / 0.38), oklch(0% 0 0 / 0.7));
+    --shadow-press: 0.2rem 0.2rem 0 light-dark(var(--ink), oklch(0% 0 0));
+
+    /* ---- movimento ---- */
+    --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --dur-1: 150ms;
+    --dur-2: 280ms;
+    --dur-3: 520ms;
+
+    /* ---- layout ---- */
+    --gutter: clamp(1rem, 4.2vw, 2.5rem);
+    --wrap: 76rem;
+    --wrap-read: 46rem;
+    --header-h: 4.25rem;
+  }
+
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"] { color-scheme: dark; }
+}

@@ -1,4 +1,4 @@
-// Gera a imagem de exemplo do cartão de perfil que aparece no herói do site,
+// Gera a imagem de exemplo do cartão de perfil que aparece no site (herói e simulador),
 // usando o MESMO gerador do comando /perfil (services/social/profile-card.mjs).
 // Assim a imagem do site nunca fica diferente do cartão que o bot envia.
 //
@@ -16,7 +16,7 @@ import { renderProfileCard } from "../../services/social/profile-card.mjs";
 
 import { getItem } from "../../config/items.mjs";
 
-const OUTPUT = new URL("../../site/assets/img/helena-card.webp", import.meta.url);
+const OUTPUT = new URL("../../site/src/assets/helena-card.webp", import.meta.url);
 
 const avatarBuffer = await readFile(
     new URL("../../assets/helena_pfp.png", import.meta.url)
@@ -56,10 +56,10 @@ const png = await renderProfileCard({
 const file = fileURLToPath(OUTPUT);
 
 await sharp(png)
-    .resize(1200)
-    .webp({ quality: 86 })
+    .resize(1600)
+    .webp({ quality: 90 })
     .toFile(file);
 
 const meta = await sharp(file).metadata();
 
-console.log(`site/assets/img/helena-card.webp atualizado (${meta.width}x${meta.height}).`);
+console.log(`site/src/assets/helena-card.webp atualizado (${meta.width}x${meta.height}).`);

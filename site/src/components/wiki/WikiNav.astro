@@ -1,0 +1,60 @@
+---
+import { menu } from "../../lib/wiki";
+import { url } from "../../lib/url";
+
+interface Props {
+  /** id da página aberta ("index" na inicial). */
+  current: string;
+  label?: string;
+}
+
+const { current, label = "Seções da wiki" } = Astro.props;
+---
+<nav class="wiki-nav" aria-label={label}>
+  <a class="home" href={url("/wiki/")} aria-current={current === "index" ? "page" : undefined}>Início da wiki</a>
+  {menu.map(section => (
+    <section>
+      <h2 class="label">{section.title}</h2>
+      <ul role="list">
+        {section.items.map(item => (
+          <li>
+            <a href={url(item.path)} aria-current={item.id === current ? "page" : undefined}>{item.title}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</nav>
+
+<style>
+  .wiki-nav { display: grid; gap: var(--space-5); font-size: 0.95rem; }
+
+  .home, li a {
+    display: flex;
+    align-items: center;
+    min-block-size: 2.5rem;
+    padding-inline: var(--space-3);
+    margin-inline: calc(var(--space-3) * -1);
+    border-radius: var(--radius-ctl);
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-inline-start: 3px solid transparent;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    transition: background-color var(--dur-1), color var(--dur-1);
+  }
+
+  .home { font-weight: 650; color: var(--ink); }
+
+  .home:hover, li a:hover { background: var(--violet-wash); color: var(--ink); }
+
+  a[aria-current="page"] {
+    color: var(--ink);
+    font-weight: 650;
+    background: var(--violet-wash);
+    border-inline-start-color: var(--violet);
+  }
+
+  h2 { margin-block-end: var(--space-1); }
+  ul { padding: 0; display: grid; }
+</style>

@@ -1,0 +1,23 @@
+---
+import SectionHead from "../ui/SectionHead.astro";
+import CommandExplorer from "../../islands/CommandExplorer";
+import { data } from "../../lib/game";
+import { int } from "../../lib/format";
+---
+<section class="section" id="comandos" aria-labelledby="comandos-title">
+  <div class="wrap">
+    <SectionHead kicker="Comandos" title="Tudo o que a Helena entende" id="comandos-title">
+      <p>
+        {int(data.stats.commands)} comandos, de duas formas: <code>/saldo</code> com a barra ou <code>hsaldo</code> com o prefixo. Toque em um para copiar.
+      </p>
+    </SectionHead>
+
+    <div class="body">
+      <CommandExplorer client:visible categories={data.categories} />
+    </div>
+  </div>
+</section>
+
+<style>
+  .body { margin-block-start: var(--space-6); }
+</style>
