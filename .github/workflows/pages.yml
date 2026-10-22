@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
@@ -75,7 +75,7 @@ jobs:
     needs: build
     # a testes só confere; quem publica é a main (ou uma execução manual na main)
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # duas publicações nunca ao mesmo tempo, e nenhuma é cancelada no meio
     concurrency:
       group: pages-deploy
@@ -90,7 +90,7 @@ jobs:
   # Os testes do bot e da lógica que o site compartilha com ele (dados, política de privacidade
   # contra o banco, wiki). Falhar aqui avisa, mas não impede a publicação do site.
   bot-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
