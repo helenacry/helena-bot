@@ -16,7 +16,7 @@
 
 A **Helena** é um bot de economia e RPG para a [VSync](https://vsync.lat). Cada servidor tem a sua própria economia: você trabalha, guarda dinheiro, compra na loja, casa, duela e, se tiver coragem, comete crimes, lava o dinheiro sujo e tenta fugir da cadeia. Tudo vira um **cartão de perfil** com a sua cara.
 
-| | |
+| Recurso | O que tem |
 |---|---|
 | 💼 **Trabalho e banco** | 23 empregos, daily com sequência, missões, banco e transferências |
 | 🛒 **Loja e bolsa** | loja com botões, inventário e um mercado que mexe nos preços |
