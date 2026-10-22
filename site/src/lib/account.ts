@@ -207,8 +207,10 @@ export const SAMPLE_LADDER = [50000, 55000, 60000, 65000, 70000, 75000, 130000] 
 export const safeImage = (url: unknown): string => (typeof url === "string" && /^https:\/\//.test(url) ? url : "");
 
 /** Texto para cada resposta de erro da API. */
-export function errorText(code: string | undefined, extra: { remaining?: number; retryAfter?: number } = {}): string {
+export function errorText(code: string | undefined, extra: { remaining?: number; retryAfter?: number; detail?: string } = {}): string {
   const wait = extra.remaining !== undefined ? formatDuration(extra.remaining) : "";
+  // Um código curto do motivo (ex.: "conta:401"), para a equipe achar a causa sem adivinhar. Só texto simples.
+  const detail = typeof extra.detail === "string" && /^[\w:.-]{1,60}$/.test(extra.detail) ? ` (código: ${extra.detail})` : "";
 
   const texts: Record<string, string> = {
     cooldown: wait ? `Ainda não liberou. Falta ${wait}.` : "Ainda não liberou.",
@@ -221,7 +223,7 @@ export function errorText(code: string | undefined, extra: { remaining?: number;
     too_many_requests: `Muitas tentativas. Espere um pouco${extra.retryAfter ? ` (${formatDuration(extra.retryAfter)})` : ""}.`,
     session_expired: "Sua sessão acabou. Entre de novo.",
     unauthorized: "Sua sessão acabou. Entre de novo.",
-    login_failed: "Não deu para entrar. Tente de novo.",
+    login_failed: `Não deu para entrar. Tente de novo.${detail}`,
     invalid_redirect: "Este endereço não está autorizado a fazer login. Avise a equipe da Helena.",
     vsync_unavailable: "A VSync não respondeu agora. Tente de novo em instantes."
   };

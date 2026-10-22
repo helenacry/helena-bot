@@ -524,7 +524,7 @@ export function createWebApi(config, deps = {}) {
                         : "")
                 );
 
-                throw new HttpError(401, "login_failed");
+                throw new HttpError(401, "login_failed", { detail: `troca:${reason || response.status}` });
             }
 
             tokens = await response.json();
@@ -540,7 +540,9 @@ export function createWebApi(config, deps = {}) {
         const accessToken = typeof tokens?.access_token === "string" ? tokens.access_token : "";
 
         if (!accessToken) {
-            throw new HttpError(401, "login_failed");
+            console.warn("[WEB] A VSync aceitou a troca do código, mas não devolveu o acesso.");
+
+            throw new HttpError(401, "login_failed", { detail: "troca:sem_acesso" });
         }
 
         const auth = { Authorization: `Bearer ${accessToken}` };
@@ -553,7 +555,11 @@ export function createWebApi(config, deps = {}) {
             const identity = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/userinfo`, { headers: auth });
 
             if (!identity.ok) {
-                throw new HttpError(401, "login_failed");
+                const reason = await vsyncError(identity);
+
+                console.warn(`[WEB] A VSync recusou ler a conta da pessoa: ${reason || `HTTP ${identity.status}`}`);
+
+                throw new HttpError(401, "login_failed", { detail: `conta:${reason || identity.status}` });
             }
 
             user = await identity.json();
@@ -604,7 +610,9 @@ export function createWebApi(config, deps = {}) {
         const userId = String(user?.id ?? "");
 
         if (!/^[\w-]{1,64}$/.test(userId)) {
-            throw new HttpError(401, "login_failed");
+            console.warn("[WEB] A VSync devolveu uma conta sem identificador válido.");
+
+            throw new HttpError(401, "login_failed", { detail: "conta:sem_id" });
         }
 
         // Só os servidores em que a Helena também está.

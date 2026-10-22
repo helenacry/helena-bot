@@ -398,12 +398,38 @@ test("código vencido ou já usado (invalid_grant) é normal: login_failed, sem 
 
             assert.equal(result.status, 401);
             assert.equal(result.json.error, "login_failed");
+            assert.equal(result.json.detail, "troca:invalid_grant");
         });
 
         assert.equal(lines.length, 1);
         assert.match(lines[0], /invalid_grant/);
         assert.doesNotMatch(lines[0], /HELENA_OAUTH/);
     });
+});
+
+test("quando a VSync deixa o login falhar depois da troca, o log e a resposta dizem em que passo", async () => {
+    const cases = [
+        ["troca sem acesso", url => url.endsWith("/oauth2/token") ? answer(200, {}) : undefined, "troca:sem_acesso", /não devolveu o acesso/],
+        ["conta recusada com nome", url => url.endsWith("/oauth2/userinfo") ? answer(401, { error: "invalid_token" }) : undefined, "conta:invalid_token", /invalid_token/],
+        ["conta recusada sem nome", url => url.endsWith("/oauth2/userinfo") ? answer(403, null) : undefined, "conta:403", /HTTP 403/],
+        ["conta sem id", url => url.endsWith("/oauth2/userinfo") ? answer(200, { username: "ninguem" }) : undefined, "conta:sem_id", /sem identificador/]
+    ];
+
+    for (const [name, intercept, detail, logged] of cases) {
+        await withApi({}, async ctx => {
+            const lines = await warnings(async () => {
+                const result = await login(ctx);
+
+                assert.equal(result.status, 401, name);
+                assert.equal(result.json.error, "login_failed", name);
+                assert.equal(result.json.detail, detail, name);
+            });
+
+            assert.equal(lines.length, 1, name);
+            assert.match(lines[0], logged, name);
+            assert.equal(get("SELECT COUNT(*) c FROM web_sessions").c, 0, `${name}: nenhuma sessão criada`);
+        }, { intercept });
+    }
 });
 
 test("a VSync com problema (429 ou 5xx) na troca vira vsync_unavailable, não 'não deu para entrar'", async () => {

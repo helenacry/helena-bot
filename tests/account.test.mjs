@@ -178,6 +178,16 @@ test("as recusas trazem o tempo que falta quando há", () => {
     assert.match(lib.errorText("coisa_que_nao_existe"), /Algo deu errado/);
 });
 
+test("'Não deu para entrar' leva o código curto do motivo, e só se for texto simples", () => {
+    assert.equal(lib.errorText("login_failed"), "Não deu para entrar. Tente de novo.");
+    assert.equal(lib.errorText("login_failed", { detail: "conta:401" }), "Não deu para entrar. Tente de novo. (código: conta:401)");
+    assert.equal(lib.errorText("login_failed", { detail: "vsync:server_error" }), "Não deu para entrar. Tente de novo. (código: vsync:server_error)");
+
+    for (const detail of ["<b>oi</b>", "a b", "", "x".repeat(61)]) {
+        assert.equal(lib.errorText("login_failed", { detail }), "Não deu para entrar. Tente de novo.", JSON.stringify(detail));
+    }
+});
+
 test("toda recusa que a API pode mostrar à pessoa tem texto próprio na tela", () => {
     const api = readFileSync(new URL("../services/web/web-api.mjs", import.meta.url), "utf8");
 

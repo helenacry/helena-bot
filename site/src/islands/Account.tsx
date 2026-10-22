@@ -321,7 +321,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
     window.history.replaceState(null, "", window.location.pathname);
 
     if (params.error) {
-      loginScreen(params.error === "access_denied" ? "Login cancelado. Você pode tentar de novo quando quiser." : errorText("login_failed"));
+      loginScreen(params.error === "access_denied" ? "Login cancelado. Você pode tentar de novo quando quiser." : errorText("login_failed", { detail: `vsync:${params.error}` }));
       return;
     }
 
