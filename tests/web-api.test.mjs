@@ -1424,3 +1424,95 @@ test("startWebApi liga pela configuração do ambiente e stopWebApi desliga", as
 
     await stopWebApi(); // chamar de novo não quebra
 });
+
+// ==========================================
+// ENDURECIMENTO (revisão de backend)
+// ==========================================
+
+test("toda resposta JSON da API leva cabeçalhos que impedem execução, embutir em outro site e vazar a origem", async () => {
+    await withApi({}, async ctx => {
+        const token = await loggedIn(ctx);
+
+        const responses = [
+            await call(ctx, "GET", "/api/health"),
+            await call(ctx, "GET", "/api/me", { token }),
+            await call(ctx, "GET", "/api/me"),                 // 401
+            await call(ctx, "GET", "/api/nao-existe"),         // 404
+            await call(ctx, "POST", "/api/auth/login", { raw: "{lixo" }) // 400
+        ];
+
+        assert.deepEqual(responses.map(r => r.status), [200, 200, 401, 404, 400]);
+
+        for (const response of responses) {
+            assert.equal(response.headers.get("content-security-policy"), "default-src 'none'; frame-ancestors 'none'");
+            assert.equal(response.headers.get("referrer-policy"), "no-referrer");
+            assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+            assert.equal(response.headers.get("cache-control"), "no-store");
+        }
+    });
+});
+
+test("token falso em enxurrada também tem limite por IP, antes de consultar o banco", async () => {
+    await withApi({}, async ctx => {
+        const fake = "f".repeat(40);
+
+        for (let i = 0; i < WEB_CONFIG.limits.auth.max; i++) {
+            assert.equal((await call(ctx, "GET", "/api/me", { token: fake })).status, 401, `pedido ${i + 1}`);
+        }
+
+        const blocked = await call(ctx, "GET", "/api/me", { token: fake });
+
+        assert.equal(blocked.status, 429);
+        assert.equal(blocked.json.error, "too_many_requests");
+        assert.ok(Number(blocked.headers.get("retry-after")) > 0);
+
+        // as outras rotas que pedem sessão dividem o mesmo limite
+        assert.equal((await call(ctx, "POST", "/api/claim/daily", { token: fake, body: { guildId: G1 } })).status, 429);
+        assert.equal((await call(ctx, "POST", "/api/auth/logout", { token: fake })).status, 429);
+
+        // rota pública não é afetada
+        assert.equal((await call(ctx, "GET", "/api/health")).status, 200);
+
+        // passada a janela, volta
+        ctx.state.now += WEB_CONFIG.limits.auth.windowSeconds + 1;
+
+        assert.equal((await call(ctx, "GET", "/api/me", { token: fake })).status, 401);
+    });
+});
+
+test("o limite por IP não atrapalha o uso normal: o painel (uma consulta por minuto) fica longe do teto", () => {
+    // o painel consulta /api/me ao abrir e a cada coleta; 240 por minuto por IP é folga de sobra,
+    // mesmo para uma escola ou um provedor com vários jogadores no mesmo endereço
+    assert.ok(WEB_CONFIG.limits.auth.max >= 2 * WEB_CONFIG.limits.read.max);
+    assert.equal(WEB_CONFIG.limits.auth.windowSeconds, WEB_CONFIG.limits.read.windowSeconds);
+});
+
+test("o limitador tem teto de chaves: uma enxurrada de IPs novos não enche a memória", async () => {
+    const { RateLimiter } = await import("../services/web/web-api.mjs");
+
+    const limiter = new RateLimiter(100);
+    const rule = { max: 5, windowSeconds: 60 };
+
+    for (let i = 0; i < 10_000; i++) {
+        assert.equal(limiter.hit(`ip:${i}`, rule, T0).ok, true);
+    }
+
+    assert.equal(limiter.hits.size, 100, "nunca passa do teto");
+
+    // as mais recentes ficam; as mais antigas saíram
+    assert.ok(limiter.hits.has("ip:9999"));
+    assert.ok(!limiter.hits.has("ip:0"));
+
+    // quem já estava e continua chegando não é expulso por isso
+    const first = [...limiter.hits.keys()][0];
+
+    for (let i = 0; i < 5; i++) limiter.hit(first, rule, T0);
+
+    assert.equal(limiter.hit(first, rule, T0).ok, false, "o limite continua valendo para a mesma chave");
+    assert.equal(limiter.hits.size, 100);
+
+    // a limpeza periódica continua tirando o que venceu
+    limiter.prune(T0 + 3600, 60);
+
+    assert.equal(limiter.hits.size, 0);
+});

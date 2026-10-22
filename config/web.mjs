@@ -40,6 +40,9 @@ export const WEB_CONFIG = Object.freeze({
 
     // Pedidos permitidos por janela, por IP e por pessoa.
     limits: Object.freeze({
+        // Qualquer chamada que pede sessão (/api/me, coletas, sair), por IP e ANTES de
+        // consultar o banco: segura quem inunda a API com token falso.
+        auth: Object.freeze({ max: 240, windowSeconds: 60 }),
         login: Object.freeze({ max: 10, windowSeconds: 10 * 60 }),
         claim: Object.freeze({ max: 20, windowSeconds: 10 * 60 }),
         read: Object.freeze({ max: 120, windowSeconds: 60 })

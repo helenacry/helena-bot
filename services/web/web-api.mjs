@@ -36,7 +36,11 @@ import { createAvatarPreview, PREVIEW_PATH } from "./avatar-preview.mjs";
 const JSON_HEADERS = {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff"
+    "X-Content-Type-Options": "nosniff",
+    // A resposta é só JSON: se algum navegador a abrisse como página, nada roda nem carrega
+    // e ela não pode ser embutida em outro site.
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+    "Referrer-Policy": "no-referrer"
 };
 
 // ==========================================
@@ -109,9 +113,15 @@ export function loadWebConfig(env = process.env) {
 // LIMITE DE REQUISIÇÕES (EM MEMÓRIA)
 // ==========================================
 
-class RateLimiter {
-    constructor() {
+// Teto de chaves guardadas ao mesmo tempo. A limpeza periódica (prune) tira o que venceu, mas
+// uma enxurrada de IPs diferentes entre duas limpezas não pode encher a memória: passado o
+// teto, a chave mais antiga sai para dar lugar à nova.
+export const RATE_LIMIT_MAX_KEYS = 20_000;
+
+export class RateLimiter {
+    constructor(maxKeys = RATE_LIMIT_MAX_KEYS) {
         this.hits = new Map();
+        this.maxKeys = maxKeys;
     }
 
     // Conta um pedido. Devolve { ok, retryAfter } (segundos).
@@ -127,6 +137,12 @@ class RateLimiter {
         }
 
         recent.push(now);
+
+        if (!this.hits.has(key) && this.hits.size >= this.maxKeys) {
+            // o Map guarda a ordem de inserção: a primeira chave é a mais antiga
+            this.hits.delete(this.hits.keys().next().value);
+        }
+
         this.hits.set(key, recent);
 
         return { ok: true, retryAfter: 0 };
@@ -348,6 +364,10 @@ export function createWebApi(config, deps = {}) {
     // ----------------------------------
 
     function sessionFrom(req) {
+        // Antes de olhar o banco: quem manda token falso em enxurrada também esbarra no limite
+        // (cada pedido gasta um hash e uma consulta), sem precisar de uma sessão válida.
+        limit("ip:auth:" + clientIp(req), WEB_CONFIG.limits.auth);
+
         const match = /^Bearer ([A-Za-z0-9_-]{20,128})$/.exec(
             String(req.headers.authorization ?? "")
         );
