@@ -131,6 +131,17 @@ test.describe("celular", () => {
     await link.click();
     await expect(page).toHaveURL(/#carreira$/);
   });
+
+  test("os números da home ocupam a largura toda do texto, não só a metade esquerda", async ({ page }) => {
+    await page.goto("./", { waitUntil: "networkidle" });
+
+    const facts = await page.locator(".facts").boundingBox();
+    const copy = await page.locator(".hero .copy").boundingBox();
+
+    expect(facts).not.toBeNull();
+    expect(copy).not.toBeNull();
+    expect(facts!.width).toBeGreaterThanOrEqual(copy!.width - 1);
+  });
 });
 
 test.describe("wiki", () => {

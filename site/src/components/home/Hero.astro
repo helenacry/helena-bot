@@ -171,7 +171,8 @@ const facts = [
   }
 
   @media (max-width: 36rem) {
-    .facts { grid-template-columns: repeat(2, 1fr); }
+    /* .copy alinha os filhos ao início e o bloco encolheria até o conteúdo: no celular ele ocupa a largura toda. */
+    .facts { grid-template-columns: repeat(2, 1fr); justify-self: stretch; }
     .facts li { margin: 0; padding-inline: 0; border-inline-end: 0; }
     .facts li:nth-child(odd) { border-inline-end: 1px dashed var(--line-strong); padding-inline-end: var(--space-3); }
     .facts li:nth-child(even) { padding-inline-start: var(--space-4); }
