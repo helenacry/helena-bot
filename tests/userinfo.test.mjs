@@ -917,10 +917,13 @@ test("o Prisma+ vem de prismaActive e prismaPlan, não de uma flag: a insígnia 
     assert.equal(plus[0].name, "Prisma+");
     assert.match(plus[0].emoji, /badge_prisma_plus/);
 
-    // plano básico: "Prisma", sem emoji cadastrado (aparece pelo nome)
+    // plano básico: "Prisma", com o emoji do pacote de ícones
     const basic = getUserBadges({ prismaActive: true, prismaPlan: "prisma" });
 
-    assert.deepEqual(basic.map(badge => [badge.id, badge.name, badge.emoji]), [["BADGE_SHOW_PRISMA_BASIC", "Prisma", ""]]);
+    assert.deepEqual(
+        basic.map(badge => [badge.id, badge.name, badge.emoji]),
+        [["BADGE_SHOW_PRISMA_BASIC", "Prisma", "<:auto_prisma:239479157123600384>"]]
+    );
 
     // sem o plano na resposta, vale Prisma+ (como era); e a flag junto com a assinatura não duplica
     assert.deepEqual(ids({ prismaActive: true, flags: ["BADGE_SHOW_PRISMA"] }), ["BADGE_SHOW_PRISMA"]);
@@ -985,7 +988,7 @@ test("o selo de Pulse vem de pulseBadge quando as flags não trazem o nível; se
     assert.deepEqual(ids({ pulsing: true, flags: ["BADGE_SHOW_PULSE_3"], pulseBadge: { id: "PULSE_12", months: 12 } }), ["BADGE_SHOW_PULSE_12"]);
 });
 
-test("tempo de tela: só o nível mais alto, pelo nome, com as marcas da página de insígnias da VSync", () => {
+test("tempo de tela: só o nível mais alto, com o nome e as marcas da página de insígnias da VSync", () => {
     const tier = seconds => getUserBadges({ shareSeconds: seconds }).map(badge => badge.name);
 
     assert.deepEqual(tier(3600), ["Tempo de tela: Newcomer"]);
@@ -995,7 +998,7 @@ test("tempo de tela: só o nível mais alto, pelo nome, com as marcas da página
     assert.deepEqual(tier(9999 * 3600), ["Tempo de tela: Phenomenon"]);
 });
 
-test("o cartão mostra o Prisma+ de quem assina (insígnia e data pelo perfil da conta) e as insígnias sem emoji pelo nome", async () => {
+test("o cartão mostra o Prisma+ de quem assina (insígnia e data pelo perfil da conta) e o tempo de tela como emoji", async () => {
     const id = "200000000000000020";
 
     // como o membro vem da API: Prisma ativo, mas sem a data nem a flag de Prisma
@@ -1013,8 +1016,10 @@ test("o cartão mostra o Prisma+ de quem assina (insígnia e data pelo perfil da
 
     const fields = fieldsOf(embed);
 
-    // as insígnias: Prisma+ primeiro, depois as outras, e o tempo de tela pelo nome (sem emoji)
-    assert.match(fields["🏅 Insígnias"], /^<:badge_prisma_plus:\d+> <:badge_early_supporter:\d+> <:badge_developer:\d+>\nTempo de tela: Fledgling$/);
+    // as insígnias: Prisma+ primeiro, depois as outras e o tempo de tela, todas como emoji, sem
+    // nome por extenso embaixo ("Tempo de tela: Fledgling" aparecia escrito e não como ícone)
+    assert.match(fields["🏅 Insígnias"], /^<:badge_prisma_plus:\d+> <:badge_early_supporter:\d+> <:badge_developer:\d+> <:auto_stream_5h:\d+>$/);
+    assert.doesNotMatch(fields["🏅 Insígnias"], /Tempo de tela/);
 
     // a data vem do perfil da conta, que a rota do membro não trouxe
     assert.match(fields["💎 Assinante Prisma+ desde"], /^11 de outubro de 2026/);

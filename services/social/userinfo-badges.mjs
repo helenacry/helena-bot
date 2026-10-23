@@ -7,15 +7,25 @@ import { emojiNamed } from "./badge-emojis.mjs";
 // ==========================================
 
 // Cada insígnia tem o nome, o "icon" (o nome do emoji no pacote de ícones oficiais, lido do
-// servidor por badge-emojis.mjs) e o "emoji" fixo de antes, que vale quando o pacote não está lá.
-// Sem nenhum dos dois, a insígnia aparece pelo nome.
+// servidor por badge-emojis.mjs) e o "emoji" fixo (<:nome:id>, do servidor de suporte), que vale
+// quando a leitura do servidor não traz o ícone. Sem nenhum dos dois, aparece o nome.
+//
+// Os fixos existem para o /userinfo não depender da leitura: em produção ela não trouxe nada,
+// e "Tempo de tela: Newcomer" aparecia por extenso mesmo com o emoji no servidor.
 
 // Tempo de tela (compartilhar a tela): quem passa de cada marca, em horas, ganha a insígnia, e cada
-// uma substitui a anterior. O sufixo do ícone é o da marca: auto_stream_5h, auto_stream_5khplus.
+// uma substitui a anterior. [horas, nome, sufixo do ícone (auto_stream_<sufixo>), ID do emoji].
 const STREAM_TIERS = Object.freeze([
-    [1, "Newcomer", "1h"], [5, "Fledgling", "5h"], [20, "Breakout", "20h"], [75, "Standout", "75h"],
-    [150, "Trendsetter", "150h"], [300, "Headliner", "300h"], [500, "Star", "500h"],
-    [1000, "Sensation", "1kh"], [2000, "Visionary", "2kh"], [5000, "Phenomenon", "5khplus"]
+    [1, "Newcomer", "1h", "239478654474014720"],
+    [5, "Fledgling", "5h", "239478758538891264"],
+    [20, "Breakout", "20h", "239478785357271040"],
+    [75, "Standout", "75h", "239478812435697664"],
+    [150, "Trendsetter", "150h", "239478916198584320"],
+    [300, "Headliner", "300h", "239478943029547008"],
+    [500, "Star", "500h", "239478970187665408"],
+    [1000, "Sensation", "1kh", "239478997018628096"],
+    [2000, "Visionary", "2kh", "239479024164163584"],
+    [5000, "Phenomenon", "5khplus", "239479130078728192"]
 ]);
 
 const BADGES = Object.freeze({
@@ -37,10 +47,10 @@ const BADGES = Object.freeze({
         name: "Prisma+"
     },
 
-    // O plano básico (sem o "+"): sem o pacote, não há emoji fixo dele e aparece pelo nome.
+    // O plano básico (sem o "+").
     BADGE_SHOW_PRISMA_BASIC: {
         icon: "auto_prisma",
-        emoji: "",
+        emoji: "<:auto_prisma:239479157123600384>",
         name: "Prisma"
     },
 
@@ -70,19 +80,19 @@ const BADGES = Object.freeze({
 
     GIFTING_PATRON: {
         icon: "auto_gifting_patron",
-        emoji: "",
+        emoji: "<:auto_gifting_patron:239479184579514368>",
         name: "Patrono dos presentes"
     },
 
     GIFTING_CHAMPION: {
         icon: "auto_gifting_champion",
-        emoji: "",
+        emoji: "<:auto_gifting_champion:239479210919743488>",
         name: "Campeão dos presentes"
     },
 
     GIFTING_LUMINARY: {
         icon: "auto_gifting_luminary",
-        emoji: "",
+        emoji: "<:auto_gifting_luminary:239479237847175168>",
         name: "Luminar dos presentes"
     },
 
@@ -94,9 +104,13 @@ const BADGES = Object.freeze({
 
     // Tempo de tela
     ...Object.fromEntries(
-        STREAM_TIERS.map(([hours, name, suffix]) => [
+        STREAM_TIERS.map(([hours, name, suffix, emojiId]) => [
             `STREAM_${hours}H`,
-            { icon: `auto_stream_${suffix}`, emoji: "", name: `Tempo de tela: ${name}` }
+            {
+                icon: `auto_stream_${suffix}`,
+                emoji: `<:auto_stream_${suffix}:${emojiId}>`,
+                name: `Tempo de tela: ${name}`
+            }
         ])
     ),
 
@@ -120,7 +134,8 @@ const BADGES = Object.freeze({
 // Os nomes de emoji que o catálogo usa (a lista que o servidor precisa ter, e que o teste confere).
 export const BADGE_ICON_NAMES = Object.freeze(Object.values(BADGES).map(badge => badge.icon));
 
-// Os que ainda não têm emoji fixo no catálogo: sem o pacote no servidor, esses aparecem pelo nome.
+// Os que ainda não têm emoji fixo no catálogo (hoje nenhum): sem o pacote no servidor, esses
+// aparecem pelo nome. É o que o --faltantes do script de envio manda.
 export const BADGE_ICONS_WITHOUT_EMOJI = Object.freeze(
     Object.values(BADGES).filter(badge => !badge.emoji).map(badge => badge.icon)
 );

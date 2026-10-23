@@ -79,14 +79,36 @@ test("o catálogo pede exatamente os 31 nomes do pacote de ícones, sem repetir"
     assert.deepEqual([...BADGE_ICON_NAMES].sort(), [...PACK].sort());
 });
 
-test("os ícones sem emoji fixo são os do tempo de tela, o Prisma básico e os três presentes (scripts/dev/upload-badge-emojis.mjs --faltantes)", () => {
-    assert.deepEqual([...BADGE_ICONS_WITHOUT_EMOJI].sort(), [
-        "auto_gifting_champion", "auto_gifting_luminary", "auto_gifting_patron", "auto_prisma",
-        ...["1h", "5h", "20h", "75h", "150h", "300h", "500h", "1kh", "2kh", "5khplus"].map(tier => `auto_stream_${tier}`)
-    ].sort());
+test("toda insígnia do catálogo tem emoji fixo: nenhuma aparece por extenso mesmo se a leitura do servidor falhar", () => {
+    // o /userinfo mostrava "Tempo de tela: Newcomer" por extenso porque dependia só da leitura
+    assert.deepEqual(BADGE_ICONS_WITHOUT_EMOJI, []);
+
+    const everyone = {
+        flags: ["ADMIN", "VERIFIED", "EARLY_SUPPORTER", "PARTNER", "STAFF", "VERIFIED_BOT_DEVELOPER", "GIFTING_PATRON", "GIFTING_CHAMPION", "GIFTING_LUMINARY", "GIFTING_HERO"]
+    };
+
+    for (const badge of getUserBadges(everyone)) {
+        assert.match(badge.emoji, /^<a?:\w+:\d+>$/, `${badge.name} sem emoji fixo`);
+    }
+
+    // os 10 níveis do tempo de tela e os dois planos do Prisma
+    for (const hours of [1, 5, 20, 75, 150, 300, 500, 1000, 2000, 5000]) {
+        const [badge] = getUserBadges({ shareSeconds: hours * 3600 });
+
+        assert.match(badge.emoji, /^<:auto_stream_\w+:\d+>$/, `${hours} h`);
+        assert.match(badge.name, /^Tempo de tela: /);
+    }
+
+    assert.match(getUserBadges({ prismaActive: true, prismaPlan: "prisma" })[0].emoji, /^<:auto_prisma:\d+>$/);
+    assert.match(getUserBadges({ prismaActive: true, prismaPlan: "prisma_plus" })[0].emoji, /^<:badge_prisma_plus:\d+>$/);
+
+    // o nome do emoji fixo do pacote é o mesmo do ícone que o catálogo pede ao servidor
+    const [newcomer] = getUserBadges({ shareSeconds: 3600 });
+
+    assert.equal(newcomer.emoji, "<:auto_stream_1h:239478654474014720>");
 });
 
-test("sem o pacote no servidor, nada muda: emoji fixo onde existe, nome onde não existe", () => {
+test("sem o pacote no servidor, nada muda: o emoji fixo vale", () => {
     const admin = getUserBadges({ flags: ["ADMIN"] })[0];
 
     assert.equal(admin.emoji, "<:badge_admin:235402174009856000>");
@@ -94,7 +116,7 @@ test("sem o pacote no servidor, nada muda: emoji fixo onde existe, nome onde nã
     const basic = getUserBadges({ prismaActive: true, prismaPlan: "prisma" })[0];
 
     assert.equal(basic.name, "Prisma");
-    assert.equal(basic.emoji, "");
+    assert.equal(basic.emoji, "<:auto_prisma:239479157123600384>");
 });
 
 // ==========================================
@@ -167,7 +189,7 @@ test("a busca às cegas olha no máximo 10 servidores", async () => {
         ...Object.fromEntries(ids.map(id => [`/guilds/${id}/emojis`, emojisOf(["outro"])]))
     });
 
-    await loadBadgeEmojis({ now: 1 });
+    await silently(() => loadBadgeEmojis({ now: 1 }));
 
     assert.equal(calls.length, 1 + 10);
 });
@@ -206,11 +228,17 @@ test("sem permissão (403) ou servidor fora do ar: não lança, guarda o que já
     // sem permissão: lembra e não pergunta de novo por uma hora
     const denied = api({ [route]: 403 });
 
-    await loadBadgeEmojis({ now: 60_000 });
-    await loadBadgeEmojis({ now: 120_000 });
+    const refused = await silently(async () => {
+        await loadBadgeEmojis({ now: 60_000 });
+        await loadBadgeEmojis({ now: 120_000 });
+    });
 
     assert.equal(denied.length, 1, "o servidor que recusou fica de fora por um tempo");
     assert.equal(emojiNamed("auto_admin"), "<:auto_admin:1000>", "o que foi lido antes continua valendo");
+
+    // e o log diz o que houve, uma vez só (antes a falha era silenciosa)
+    assert.equal(refused.warnings.length, 1);
+    assert.match(refused.warnings[0], /Nenhum emoji auto_\* em 1 servidor\(es\) \(1 sem permissão de leitura\)/);
 
     // erro do servidor da API: avisa uma vez, mesmo tentando de novo
     resetBadgeEmojis();
@@ -290,10 +318,11 @@ test("o cartão mostra o ícone no lugar do nome, e o Pulse usa o selo do pacote
 
     const fieldOf = (embed, name) => embed.fields.find(field => field.name.includes(name))?.value;
 
-    // sem o pacote: o plano básico aparece pelo nome, o Pulse pelo emoji fixo
+    // sem o pacote: o plano básico e o Pulse saem pelos emojis fixos, sem o nome por extenso
     const before = buildUserinfoEmbed({ user, actorName: "eu", now: Date.UTC(2026, 3, 1) });
 
-    assert.match(fieldOf(before, "Insígnias"), /\nPrisma$|^Prisma/m);
+    assert.match(fieldOf(before, "Insígnias"), /<:auto_prisma:239479157123600384>/);
+    assert.doesNotMatch(fieldOf(before, "Insígnias"), /Prisma(?!\+)\b/);
     assert.equal(pulseEmoji(12), PULSE_EMOJIS[12]);
     assert.ok(fieldOf(before, "Insígnia de Pulser atual").startsWith(PULSE_EMOJIS[12]));
 

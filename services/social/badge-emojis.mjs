@@ -38,6 +38,14 @@ const denied = new Map();
 // Para a mesma falha não encher o log a cada minuto.
 let lastWarning = "";
 
+function warnOnce(message) {
+    if (message !== lastWarning) {
+        lastWarning = message;
+
+        console.warn("[INSÍGNIAS]", message);
+    }
+}
+
 export function resetBadgeEmojis() {
     loaded = { at: -Infinity, map: {} };
     denied.clear();
@@ -129,8 +137,12 @@ export async function loadBadgeEmojis({ now = Date.now() } = {}) {
 
         const found = {};
 
+        // quantos servidores a VSync não deixou ler (sem permissão ou não encontrado)
+        let refused = 0;
+
         for (const id of ids) {
             if ((denied.get(id) ?? 0) > now) {
+                refused++;
                 continue;
             }
 
@@ -138,6 +150,7 @@ export async function loadBadgeEmojis({ now = Date.now() } = {}) {
 
             if (data === null) {
                 denied.set(id, now + DENIED_MS);
+                refused++;
                 continue;
             }
 
@@ -158,14 +171,17 @@ export async function loadBadgeEmojis({ now = Date.now() } = {}) {
         if (Object.keys(found).length) {
             loaded = { at: now, map: found };
             lastWarning = "";
+
+        } else {
+            // sem erro, mas sem nada: o log diz por quê (sem isso a falha era silenciosa)
+            warnOnce(
+                `Nenhum emoji ${BADGE_EMOJI_PREFIX}* em ${ids.length} servidor(es)` +
+                ` (${refused} sem permissão de leitura); uso os emojis fixos.`
+            );
         }
 
     } catch (error) {
-        if (error.message !== lastWarning) {
-            lastWarning = error.message;
-
-            console.warn("[INSÍGNIAS] Emojis indisponíveis, uso os fixos:", error.message);
-        }
+        warnOnce(`Emojis indisponíveis, uso os fixos: ${error.message}`);
     }
 
     return loaded.map;
