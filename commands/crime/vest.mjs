@@ -1,11 +1,13 @@
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
     warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
@@ -39,34 +41,24 @@ export default {
         try {
             const cost = buyVest(guildId, userId);
 
-            const embed = createEmbed({
+            const embed = ledgerEmbed({
+                section: "Arsenal",
                 title: "🛡️ Colete equipado",
 
-                description:
+                say:
                     `Cada golpe que você recebe num duelo causa **${ARMORY_RULES.vestDefense}** ` +
                     "pontos a menos de dano (nunca menos de 1).",
 
-                color: HELENA_COLORS.success,
-
-                fields: [
-                    {
-                        name: "🛡️ Defesa",
-                        value: `${ARMORY_RULES.vestDefense} pontos`,
-                        inline: true
-                    },
-                    {
-                        name: "💸 Valor pago",
-                        value: formatMoney(cost),
-                        inline: true
-                    },
-                    {
-                        name: "👛 Carteira",
-                        value: formatMoney(getPlayer(guildId, userId).wallet),
-                        inline: true
-                    }
+                rows: [
+                    ["Defesa", `${ARMORY_RULES.vestDefense} pontos`],
+                    ["Pagou", signed(-cost, formatMoney(cost))],
+                    ["Carteira", formatMoney(getPlayer(guildId, userId).wallet)]
                 ],
 
-                footer: `Helena • Arsenal • o colete segura até ${DUEL_RULES.vestCap} pontos por golpe`
+                color: HELENA_COLORS.success,
+                mood: "bravo",
+
+                footer: `O colete segura até ${DUEL_RULES.vestCap} pontos por golpe`
             });
 
             return embedResponse(embed);

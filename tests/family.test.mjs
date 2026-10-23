@@ -639,7 +639,7 @@ test("/gozofone: menciona o cônjuge, traz os botões e pede a edição ao vivo"
 
     const r = await run("hgozofone");
 
-    assert.equal(r.title, "📞 Gozofone");
+    assert.equal(r.title, "📞 Gozofone tocando");
     assert.equal(r.body, `<@${PARTNER.id}>`);
     assert.equal(r.components[0].components.length, 3);
     assert.match(r.components[0].components[0].customId, /^gf:aceitar:/);
@@ -650,7 +650,7 @@ test("o apelido gf chama o mesmo comando", async () => {
 
     const r = await run("hgf");
 
-    assert.equal(r.title, "📞 Gozofone");
+    assert.equal(r.title, "📞 Gozofone tocando");
 });
 
 test("/gozofone sem casamento e na espera explica o motivo", async () => {

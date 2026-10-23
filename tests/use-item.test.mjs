@@ -300,7 +300,7 @@ test("o painel sem itens avisa e desliga o Usar vários", () => {
 
     const view = buildUseView({ ownerId: ME, guildId: G, userId: ME });
 
-    assert.match(view.embed.description, /Energia:\*\* 70\/100/);
+    assert.match(view.embed.description, /⚡ [█░]{10}\s+\*\*70\/100\*\*/);
     assert.match(view.embed.description, /nenhum item/);
 
     assert.equal(view.components.length, 1, "só a fileira de botões");
@@ -338,7 +338,7 @@ test("escolher no menu usa 1 unidade e atualiza o painel", () => {
 
     assert.equal(response.type, "update");
     assert.match(response.data.embeds[0].description, /\+10 de energia/);
-    assert.match(response.data.embeds[0].description, /Energia:\*\* 50\/100/);
+    assert.match(response.data.embeds[0].description, /⚡ [█░]{10}\s+\*\*50\/100\*\*/);
     assert.equal(owned("apple"), 2);
 });
 

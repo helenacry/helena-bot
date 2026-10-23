@@ -1,4 +1,4 @@
-import { db, getPlayer, set, createPrefixRunner, fieldsOf } from "./helpers.mjs";
+import { db, getPlayer, set, createPrefixRunner } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -58,16 +58,13 @@ test("o pedido de casamento cita as duas pessoas por menção, não pelo ID", as
 
     assert.equal(r.title, "💍 Pedido de casamento");
 
-    const f = fieldsOf(embed(r));
+    // as duas pessoas ficam na primeira linha da descrição, por menção
+    const text = embed(r).description;
 
-    assert.equal(f["❤️ Quem pediu"], `<@${ME.id}>`);
-    assert.equal(f["💌 Destinatário"], `<@${PARTNER.id}>`);
-
-    for (const value of Object.values(f)) {
-        assert.doesNotMatch(value, rawId(ME.id), "ID cru de quem pediu");
-        assert.doesNotMatch(value, rawId(PARTNER.id), "ID cru do destinatário");
-        assert.doesNotMatch(value, /`\d{6,}`/, "ID entre crases");
-    }
+    assert.ok(text.startsWith(`<@${ME.id}> 💌 <@${PARTNER.id}>\n`), "quem pediu e o destinatário");
+    assert.doesNotMatch(text, rawId(ME.id), "ID cru de quem pediu");
+    assert.doesNotMatch(text, rawId(PARTNER.id), "ID cru do destinatário");
+    assert.doesNotMatch(text, /`\d{6,}`/, "ID entre crases");
 
     // quem foi pedido continua sendo avisado (só o texto da mensagem notifica)
     assert.equal(r.body, `<@${PARTNER.id}>`);
@@ -80,12 +77,13 @@ test("o casamento aceito mostra o casal por menção e avisa os dois", async () 
 
     const r = await run("haceitarcasamento", PARTNER);
 
-    assert.equal(r.title, "💍 Casamento realizado!");
+    assert.equal(r.title, "💍 Casamento realizado");
 
-    const f = fieldsOf(embed(r));
+    const text = embed(r).description;
 
-    assert.equal(f["💑 Casal"], `<@${ME.id}>\n❤️\n<@${PARTNER.id}>`);
-    assert.doesNotMatch(f["💑 Casal"], rawId(ME.id));
+    assert.match(text, new RegExp(`<@${ME.id}> ❤️ <@${PARTNER.id}>`));
+    assert.doesNotMatch(text, rawId(ME.id));
+    assert.doesNotMatch(text, rawId(PARTNER.id));
 
     assert.equal(r.body, `<@${ME.id}> <@${PARTNER.id}>`);
 });
@@ -100,11 +98,10 @@ test("a transferência cita o destinatário por menção", async () => {
 
     const r = await run(`htransferir <@${PARTNER.id}> 100`);
 
-    assert.equal(r.title, "💸 Helena Pay");
+    assert.equal(r.title, "💸 Transferência feita");
 
-    const f = fieldsOf(embed(r));
-
-    assert.equal(f["👤 Destinatário"], `<@${PARTNER.id}>`);
+    assert.match(embed(r).description, new RegExp(`Você pagou <@${PARTNER.id}>\\.`));
+    assert.doesNotMatch(embed(r).description, rawId(PARTNER.id));
 });
 
 // ==========================================
@@ -134,6 +131,7 @@ test("nas conquistas de outra pessoa sem nome salvo, ela aparece por menção", 
 
     const r = await run(`hconquistas <@${STRANGER}>`);
 
-    assert.match(embed(r).description, new RegExp(`\\*\\*Jogador:\\*\\* <@${STRANGER}>`));
-    assert.doesNotMatch(embed(r).description, /Jogador #/);
+    // o nome vai no título; sem nome salvo, ele é a menção
+    assert.equal(embed(r).title, `🏆 Conquistas de <@${STRANGER}>`);
+    assert.doesNotMatch(embed(r).title, /Jogador #/);
 });

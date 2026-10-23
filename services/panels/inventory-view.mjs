@@ -20,9 +20,11 @@ import {
 } from "../economy/market.mjs";
 
 import {
-    createEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { plural } from "../../utils/plural.mjs";
 
 import { button, row } from "./panel-kit.mjs";
 
@@ -133,7 +135,7 @@ export function buildInventoryView({
 
     for (const entry of slice) {
         if (shelf === ALL_SHELVES && entry.category !== lastCategory) {
-            lines.push(`\n**📂 ${getCategoryName(entry.category)}**`);
+            lines.push(`### 📂 ${getCategoryName(entry.category)}`);
 
             groups.push({ title: getCategoryName(entry.category), lines: [] });
 
@@ -148,7 +150,7 @@ export function buildInventoryView({
 
         // O preço de venda de agora (mercado do servidor); 🔥 = item em alta.
         const sells = entry.item?.sellable
-            ? ` • 💵 ${formatMoney(sellPriceOf(entry.item, market))}` +
+            ? ` · venda ${formatMoney(sellPriceOf(entry.item, market))}` +
                 (isHot(entry.item, market) ? " 🔥" : "")
             : "";
 
@@ -163,36 +165,26 @@ export function buildInventoryView({
         ? "Todas"
         : getCategoryName(shelf);
 
-    const embed = createEmbed({
-        title: "🎒 Helena Inventário",
+    const summary =
+        `📂 **${label}** · **${plural(stats.uniqueItems, "item diferente", "itens diferentes")}** · ` +
+        `**${stats.totalQuantity}** no total` +
+        (equipped ? "\n🟢 arma equipada" : "");
+
+    const embed = ledgerEmbed({
+        section: "Inventário",
+        title: `🎒 Inventário de ${username}`,
+
+        say: summary,
 
         description:
-            "👤 **Jogador:** " + username + "\n" +
-            "📂 **Prateleira:** " + label + "\n" +
-            (equipped ? "🟢 = arma equipada\n" : "") +
-            (
-                filtered.length === 0
-                    ? "\n📦 Nenhum item nesta seleção.\n\n" +
-                      "Visite `/loja` para adquirir novos itens."
-                    : "\n" + lines.join("\n").trim()
-            ),
+            filtered.length === 0
+                ? "📦 Nenhum item nesta seleção.\nVisite a `/loja` para adquirir novos itens."
+                : lines.join("\n").trim(),
 
         color: HELENA_COLORS.inventory,
+        mood: "feliz",
 
-        fields: [
-            {
-                name: "📦 Itens diferentes",
-                value: String(stats.uniqueItems),
-                inline: true
-            },
-            {
-                name: "🔢 Quantidade total",
-                value: String(stats.totalQuantity),
-                inline: true
-            }
-        ],
-
-        footer: `Helena • Página ${current}/${pages}`
+        footer: `Página ${current}/${pages}`
     });
 
     // ==================================
@@ -258,14 +250,11 @@ export function buildInventoryView({
     // O V2: quem é, o resumo, um bloco por prateleira e os controles embaixo.
     const layout = [
         container([
-            text("## 🎒 Helena Inventário"),
+            text("-# HELENA · INVENTÁRIO"),
 
-            text(
-                `**${username}** · 📂 ${label}` +
-                (equipped ? " · 🟢 arma equipada" : "") +
-                `\n📦 **${stats.uniqueItems}** ${stats.uniqueItems === 1 ? "item diferente" : "itens diferentes"}` +
-                ` · 🔢 **${stats.totalQuantity}** no total`
-            ),
+            text(`## 🎒 Inventário de ${username}`),
+
+            text(summary),
 
             divider(),
 
@@ -280,7 +269,7 @@ export function buildInventoryView({
             ...components
         ], { color: HELENA_COLORS.inventory }),
 
-        subtext(`Helena • Página ${current}/${pages}`)
+        subtext(`Página ${current}/${pages}`)
     ];
 
     return {
@@ -315,22 +304,26 @@ export function buildDiscardConfirm({ ownerId, prepared }) {
         );
     }
 
-    const embed = createEmbed({
+    const embed = ledgerEmbed({
+        section: "Inventário",
         title: "🗑️ Descartar itens?",
 
-        description:
-            `Você vai destruir **${quantity}× ${item.emoji} ${item.name}**.\n\n` +
+        say:
+            `Você vai destruir **${quantity}× ${item.emoji} ${item.name}**. ` +
             "Isso **não tem reembolso** e **não dá para desfazer**." +
-            (warnings.length ? "\n\n" + warnings.join("\n") : ""),
+            (warnings.length ? "\n" + warnings.map(line => "> " + line).join("\n") : ""),
 
-        color: HELENA_COLORS.warning,
-
-        fields: [
-            { name: "📦 Você tem", value: String(owned), inline: true },
-            { name: "📉 Sobrará", value: String(owned - quantity), inline: true }
+        rows: [
+            ["Você tem", String(owned)],
+            ["Vai descartar", String(quantity)],
+            null,
+            ["Sobrará", String(owned - quantity)]
         ],
 
-        footer: "Helena • Confirme para descartar."
+        color: HELENA_COLORS.warning,
+        mood: "alerta",
+
+        footer: "Confirme para descartar"
     });
 
     return {

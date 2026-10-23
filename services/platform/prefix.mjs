@@ -26,7 +26,16 @@ import { deliverMessage } from "./v2-delivery.mjs";
 
 import { LIVE_CONFIG } from "../../config/live.mjs";
 
+import { createEmbed, HELENA_COLORS } from "../../utils/embed.mjs";
+
 export const PREFIX = "h";
+
+// Os avisos do próprio prefixo (manutenção, bloqueio, uso errado e falha) saem como embed, no
+// mesmo desenho das outras respostas. O aviso de intervalo entre comandos (anti-spam) continua
+// uma linha de texto: é curto de propósito, para o aviso não virar spam no canal.
+const notice = ({ title, description, color, mood }) => ({
+    embeds: [createEmbed({ section: "Aviso", title, description, color, mood })]
+});
 
 // Monta a dica de uso exibida quando os argumentos
 // estão incorretos: hcomprar <item> [quantidade]
@@ -127,17 +136,23 @@ export async function processarPrefixo({
 
     if (!isOwner(actorId)) {
         if (maintenance()) {
-            await send(message, {
-                body: "🛠️ Helena está em manutenção."
-            });
+            await send(message, notice({
+                title: "🛠️ Helena está em manutenção",
+                description: "Estou sendo ajustada e volto já, já.",
+                color: HELENA_COLORS.warning,
+                mood: "dormindo"
+            }));
 
             return true;
         }
 
         if (blocked(actorId)) {
-            await send(message, {
-                body: "🚫 Seu acesso à Helena foi bloqueado."
-            });
+            await send(message, notice({
+                title: "🚫 Acesso bloqueado",
+                description: "Seu acesso à Helena foi bloqueado.",
+                color: HELENA_COLORS.error,
+                mood: "triste"
+            }));
 
             return true;
         }
@@ -193,11 +208,12 @@ export async function processarPrefixo({
             throw error;
         }
 
-        await send(message, {
-            body:
-                `❌ ${error.message}\n` +
-                usageHint(commandName, comando.options)
-        });
+        await send(message, notice({
+            title: "⚠️ Confira o comando",
+            description: `${error.message}\n${usageHint(commandName, comando.options)}`,
+            color: HELENA_COLORS.warning,
+            mood: "alerta"
+        }));
 
         return true;
     }
@@ -255,9 +271,12 @@ export async function processarPrefixo({
             error
         );
 
-        await send(message, {
-            body: "❌ Ocorreu um erro ao executar este comando."
-        });
+        await send(message, notice({
+            title: "❌ Algo deu errado",
+            description: "Ocorreu um erro ao executar este comando. Tente de novo em instantes.",
+            color: HELENA_COLORS.error,
+            mood: "triste"
+        }));
 
         return true;
     }

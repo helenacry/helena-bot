@@ -271,24 +271,18 @@ export default {
                     : mention(targetId);
 
             const description = [
-                "**Jogador:** " + playerText,
+                progressBar(unlocked.length, total) +
+                    "  **" + unlocked.length + "/" + total +
+                    "** (" + completion + "%)",
 
-                "**Progresso geral:** " +
-                    unlocked.length +
-                    "/" +
-                    total +
-                    " (" +
-                    completion +
-                    "%)",
-
-                "**Título equipado:** " +
+                "🏷️ Título equipado: " +
                     (
                         equipped?.formatted ||
-                        "Nenhum"
+                        "nenhum"
                     ),
 
                 newlyUnlocked.length > 0
-                    ? "\n🎉 **Novas conquistas desbloqueadas: " +
+                    ? "> 🎉 **Novas conquistas desbloqueadas: " +
                       newlyUnlocked.length +
                       "**"
                     : ""
@@ -300,11 +294,14 @@ export default {
 
             return embedResponse(
                 createEmbed({
-                    title: "🏆 Helena Conquistas",
+                    section: "Conquistas",
+                    title: "🏆 Conquistas de " + playerText,
 
                     description,
 
                     color: HELENA_COLORS.primary,
+                    thumbnail: ownProfile ? interaction.user?.avatarUrl : undefined,
+                    mood: "festa",
 
                     fields: [
                         {
@@ -335,7 +332,7 @@ export default {
                     ],
 
                     footer:
-                        "Helena • Conquistas e títulos"
+                        "/titulos mostra os títulos que você já pode usar"
                 })
             );
 

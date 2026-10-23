@@ -437,13 +437,15 @@ export async function handleShopModal(interaction, comandos) {
 // INVENTÁRIO: CLIQUES
 // ==========================================
 
-function resultScreen({ title, description, color }) {
+function resultScreen({ title, description, color, mood }) {
     return update({
         embed: createEmbed({
+            section: "Inventário",
             title,
             description,
             color,
-            footer: "Helena • Inventário"
+            mood,
+            footer: "/inventario mostra o que sobrou"
         }),
         components: []
     });
@@ -485,7 +487,8 @@ export function handleInventoryClick(interaction) {
         return resultScreen({
             title: "✖️ Descarte cancelado",
             description: "Nada foi descartado.",
-            color: HELENA_COLORS.primary
+            color: HELENA_COLORS.wait,
+            mood: "dormindo"
         });
     }
 
@@ -523,14 +526,16 @@ export function handleInventoryClick(interaction) {
                     `${result.item.emoji} ${result.item.name}**.\n` +
                     `Restam **${result.remaining}**.`,
 
-                color: HELENA_COLORS.success
+                color: HELENA_COLORS.success,
+                mood: "feliz"
             });
 
         } catch (error) {
             return resultScreen({
                 title: "❌ Não foi possível descartar",
                 description: error.message,
-                color: HELENA_COLORS.error
+                color: HELENA_COLORS.error,
+                mood: "triste"
             });
         }
     }

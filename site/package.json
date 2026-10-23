@@ -14,6 +14,7 @@
     "verify": "node scripts/verify.mjs",
     "icons": "node scripts/build-icons.mjs",
     "profiles": "node scripts/build-profiles.mjs",
+    "bot-images": "node scripts/build-bot-images.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

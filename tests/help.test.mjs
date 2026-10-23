@@ -227,7 +227,7 @@ test("o início tem o menu de categorias, a busca, o como usar e a wiki", () => 
 
     assertFits(view, "início");
 
-    assert.match(view.embed.title, /Central de Ajuda/);
+    assert.match(view.embed.title, /Central de ajuda/);
     assert.match(view.embed.description, /`\/daily`/);
     assert.match(view.embed.description, /`hdaily`/);
     assert.match(view.embed.description, /<assim>/);
@@ -243,7 +243,7 @@ test("o início tem o menu de categorias, a busca, o como usar e a wiki", () => 
         assert.ok(field.value.includes(`${category.commands.length} comando`));
     });
 
-    assert.equal(view.embed.fields.at(-1).name, "📚 Wiki");
+    assert.equal(view.embed.fields.at(-1).name, "📚 Wiki e site");
     assert.ok(view.embed.fields.at(-1).value.includes(HELP_CONFIG.wikiUrl));
 
     const [menu] = selects(view.components);
@@ -405,7 +405,7 @@ test("o menu de categorias abre a categoria, e os botões navegam entre as pági
 
     const home = handlePanelClick(click(`ajuda:home:${OWNER}`));
 
-    assert.match(home.data.embeds[0].title, /Central de Ajuda/);
+    assert.match(home.data.embeds[0].title, /Central de ajuda/);
 
     assert.equal(handlePanelClick(click(`ajuda:noop:${OWNER}`)).type, "defer_update");
 });
@@ -482,7 +482,7 @@ test("o botão Buscar abre o formulário, e o envio mostra os resultados só par
 test("/ajuda abre o início, com os componentes", async () => {
     const response = await runHelp({});
 
-    assert.match(embedOf(response).title, /Central de Ajuda/);
+    assert.match(embedOf(response).title, /Central de ajuda/);
     assert.deepEqual(selects(response.data.components).map(item => item.customId), [`ajuda:cat:${OWNER}`]);
 });
 
@@ -524,7 +524,7 @@ test("pelo prefixo: hajuda, hajuda categoria:combate e hajuda comando:daily", as
 
     const home = await run("hajuda");
 
-    assert.match(home.title, /Central de Ajuda/);
+    assert.match(home.title, /Central de ajuda/);
     assert.ok(idsOf(home.components).includes(`ajuda:cat:${OWNER}`));
 
     assert.match((await run("hajuda categoria:combate")).title, /Combate/);
@@ -532,8 +532,8 @@ test("pelo prefixo: hajuda, hajuda categoria:combate e hajuda comando:daily", as
     // o nome antigo "outros" foi trocado por "utilidades": o prefixo recusa e lista as opções
     const old = await run("hajuda categoria:outros");
 
-    assert.match(old.body, /Valor inválido para "categoria"/);
-    assert.match(old.body, /utilidades/);
+    assert.match(old.text, /Valor inválido para \\"categoria\\"/);
+    assert.match(old.text, /utilidades/);
     assert.match((await run("hajuda comando:daily")).title, /\/daily/);
-    assert.match((await run("hhelp")).title, /Central de Ajuda/, "atalho help");
+    assert.match((await run("hhelp")).title, /Central de ajuda/, "atalho help");
 });

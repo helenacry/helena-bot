@@ -1,10 +1,13 @@
 
 import { getUserBadges } from "./userinfo-badges.mjs";
 
+import { pulseEmoji } from "./badge-emojis.mjs";
+
 import { avatarPreviewUrl } from "../web/avatar-preview.mjs";
 
+import { PALETTE } from "../../config/theme.mjs";
+
 import {
-    PULSE_EMOJIS,
     PULSE_LEVELS,
     PULSE_MONTH,
     UNKNOWN,
@@ -27,7 +30,7 @@ import {
 // description e o valor dos campos aceitam markdown, bloco de código e menção (que no embed
 // é só visual, não notifica); o timestamp (em ms) aparece ao lado do rodapé.
 
-export const USERINFO_COLOR = "#8755DA";
+export const USERINFO_COLOR = PALETTE.violet;
 
 const MAX_FIELD = 1024;
 
@@ -101,7 +104,7 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
 
         add(fields, "✨ Pulser desde", dateWithAge(start, now));
 
-        const currentEmoji = PULSE_EMOJIS[user.pulseBadge?.months] ?? "";
+        const currentEmoji = pulseEmoji(user.pulseBadge?.months);
 
         // O selo atual mostra há quanto tempo a pessoa pulsa (como o Zany faz com o impulso).
         const current = user.pulseBadge && start ? formatAge(start, now) : null;
@@ -125,7 +128,7 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
             "⏭️ Próxima insígnia de Pulser",
             atMax
                 ? currentEmoji + " │ **Nível máximo alcançado.**"
-                : (PULSE_EMOJIS[user.nextPulseBadge?.months] ?? "") + " │ **" +
+                : pulseEmoji(user.nextPulseBadge?.months) + " │ **" +
                     (hasNext ? "em " + formatCountdown(now, nextAt) : UNKNOWN) + "**",
             true
         );
@@ -298,7 +301,7 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
                 const label = `${months} ${months === 1 ? "mês" : "meses"}`;
 
                 return (
-                    `${done ? "✅" : "⏳"} ${PULSE_EMOJIS[months] ?? ""} **${label}** · ${dateField(at)}` +
+                    `${done ? "✅" : "⏳"} ${pulseEmoji(months)} **${label}** · ${dateField(at)}` +
                     (done ? "" : ` (em ${formatCountdown(now, at)})`)
                 );
             });

@@ -163,3 +163,22 @@ export function fieldsOf(embed) {
         (embed?.fields ?? []).map(field => [field.name, field.value])
     );
 }
+
+// O recibo de uma resposta (as linhas "nome ···· valor" do bloco de código, veja utils/receipt.mjs)
+// como { nome: valor }. Aceita o texto, o embed ou a resposta inteira do comando.
+export function receiptOf(source) {
+    const text = typeof source === "string"
+        ? source
+        : source?.description ?? source?.data?.embeds?.[0]?.description ?? "";
+
+    const rows = {};
+
+    for (const [, label, value] of text.matchAll(/^(.+?) ·{2,} (.+)$/gm)) {
+        rows[label] = value;
+    }
+
+    return rows;
+}
+
+// O dinheiro do jogo vem com espaço rígido ("R$ 1,00"); o recibo usa espaço comum.
+export const spaced = text => String(text).replace(/ /g, " ");

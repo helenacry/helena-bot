@@ -1,4 +1,4 @@
-import { getPlayer, set, get } from "./helpers.mjs";
+import { getPlayer, set, get, receiptOf, spaced } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -170,16 +170,18 @@ test("/statuscombate mostra a vida em barra, o histórico, o equipamento e a pro
 
     const response = await run("statuscombate", g);
 
-    assert.equal(embedOf(response).description, hpLine(60));
-    assert.match(embedOf(response).description, /██████░░░░ \*\*60\/100\*\*/);
+    const rows = receiptOf(response);
 
-    assert.equal(field(response, "🏆 Vitórias"), "3");
-    assert.equal(field(response, "💀 Derrotas"), "1");
-    assert.equal(field(response, "🗡️ Arma"), "🔪 Canivete");
-    assert.equal(field(response, "🔫 Munição"), "7");
-    assert.equal(field(response, "🛡️ Defesa"), "10 pontos");
-    assert.equal(field(response, "🔧 Durabilidade da arma"), durabilityLine(40));
-    assert.equal(field(response, "🛡️ Proteção"), "Sem proteção");
+    assert.ok(embedOf(response).description.startsWith("❤️ " + hpLine(60)));
+    assert.match(embedOf(response).description, /██████░░░░ \*\*60\/100\*\*/);
+    assert.ok(embedOf(response).description.includes("🔧 " + durabilityLine(40)));
+
+    assert.equal(rows["Vitórias"], "3");
+    assert.equal(rows["Derrotas"], "1");
+    assert.equal(rows["Arma"], "Canivete");
+    assert.equal(rows["Munição"], "7");
+    assert.equal(rows["Defesa"], "10 pontos");
+    assert.equal(rows["Proteção"], "Sem proteção");
 });
 
 test("/statuscombate avisa quando a vida está abaixo do mínimo do duelo", async () => {
@@ -205,14 +207,15 @@ test("/hospital mostra o custo em reais, ou diz que não há o que tratar", asyn
 
     const full = await run("hospital", g);
 
-    assert.equal(field(full, "💸 Custo para se curar"), "Nada");
+    assert.equal(receiptOf(full)["Custo para curar"], "nada");
     assert.match(embedOf(full).description, /vida cheia/);
 
     hp(g, A, 60);
 
     const hurt = await run("hospital", g);
 
-    assert.ok(field(hurt, "💸 Custo para se curar").startsWith(formatMoney(40 * HOSPITAL_RULES.costPerHp)), field(hurt, "💸 Custo para se curar"));
+    assert.equal(receiptOf(hurt)["Custo para curar"], spaced(formatMoney(40 * HOSPITAL_RULES.costPerHp)));
+    assert.equal(receiptOf(hurt)["Preço por ponto"], spaced(formatMoney(HOSPITAL_RULES.costPerHp)));
     assert.match(embedOf(hurt).description, /\/curar/);
 });
 
@@ -240,7 +243,8 @@ test("/armas mostra a arma, o dano, o tipo, a durabilidade e a munição", async
 
     const none = await run("armas", g);
 
-    assert.match(embedOf(none).description, /sem arma equipada/);
+    assert.match(embedOf(none).title, /Sem arma equipada/);
+    assert.match(embedOf(none).description, /desarmado/);
     assert.match(embedOf(none).description, /\/equipar/);
 
     tx(() => addItem(g, A, "pistol", 1));
@@ -250,19 +254,19 @@ test("/armas mostra a arma, o dano, o tipo, a durabilidade e a munição", async
     const gun = await run("armas", g);
 
     assert.match(embedOf(gun).title, /Pistola/);
-    assert.equal(field(gun, "⚔️ Dano"), "28");
-    assert.equal(field(gun, "🧰 Tipo"), "Arma de fogo");
-    assert.equal(field(gun, "🔫 Munição"), "9");
-    assert.equal(field(gun, "🔧 Durabilidade"), durabilityLine(80));
+    assert.equal(receiptOf(gun)["Dano"], "28");
+    assert.equal(receiptOf(gun)["Tipo"], "Arma de fogo");
+    assert.equal(receiptOf(gun)["Munição"], "9");
+    assert.ok(embedOf(gun).description.includes("🔧 " + durabilityLine(80)));
 
     tx(() => addItem(g, A, "wooden_sword", 1));
     equipWeapon(g, A, "wooden_sword");
 
     const sword = await run("armas", g);
 
-    assert.equal(field(sword, "⚔️ Dano"), String(DUEL_RULES.defaultWeaponDamage), "arma sem dano definido vale o padrão");
-    assert.equal(field(sword, "🧰 Tipo"), "Arma branca");
-    assert.equal(field(sword, "🔫 Munição"), "Não usa");
+    assert.equal(receiptOf(sword)["Dano"], String(DUEL_RULES.defaultWeaponDamage), "arma sem dano definido vale o padrão");
+    assert.equal(receiptOf(sword)["Tipo"], "Arma branca");
+    assert.equal(receiptOf(sword)["Munição"], "não usa");
 });
 
 // ==========================================
@@ -286,10 +290,10 @@ test("/historico conta do seu lado: quem você venceu, para quem perdeu, com men
     const winner = embedOf(await run("historico", g, A)).description;
     const loser = embedOf(await run("historico", g, B)).description;
 
-    assert.match(winner, /\*\*1\*\* vitórias • \*\*0\*\* derrotas/);
+    assert.match(winner, /\*\*1\*\* vitórias · 💀 \*\*0\*\* derrotas/);
     assert.match(winner, new RegExp(`🏆 Você venceu <@${B}> • seu golpe: 8 • há `));
 
-    assert.match(loser, /\*\*0\*\* vitórias • \*\*1\*\* derrotas/);
+    assert.match(loser, /\*\*0\*\* vitórias · 💀 \*\*1\*\* derrotas/);
     assert.match(loser, new RegExp(`💀 Você perdeu para <@${A}> • golpe dele: 8 • há `));
 
     assert.doesNotMatch(winner, new RegExp(`(?<!<@)\\b${A}\\b(?!>)`), "nunca o ID cru");
@@ -308,10 +312,10 @@ test("/curar cobra em reais, enche a vida e mostra o que mudou", async () => {
     const response = await run("curar", g);
 
     assert.match(embedOf(response).title, /Tratamento concluído/);
-    assert.equal(embedOf(response).description, hpLine(HOSPITAL_RULES.maxHp));
-    assert.equal(field(response, "💸 Custo"), formatMoney(60 * HOSPITAL_RULES.costPerHp));
-    assert.equal(field(response, "🛡️ Proteção contra duelos"), "10 minutos");
-    assert.equal(field(response, "👛 Carteira"), formatMoney(10_000 - 60 * HOSPITAL_RULES.costPerHp));
+    assert.ok(embedOf(response).description.startsWith("❤️ " + hpLine(HOSPITAL_RULES.maxHp)));
+    assert.equal(receiptOf(response)["Custo"], "-" + spaced(formatMoney(60 * HOSPITAL_RULES.costPerHp)));
+    assert.equal(receiptOf(response)["Proteção contra duelos"], "10 minutos");
+    assert.equal(receiptOf(response)["Carteira"], spaced(formatMoney(10_000 - 60 * HOSPITAL_RULES.costPerHp)));
     assert.equal(wallet(g, A), 10_000 - 60 * HOSPITAL_RULES.costPerHp);
 });
 
@@ -345,9 +349,9 @@ test("/municao mostra a quantidade, o valor, o estoque e a carteira; recusa quan
 
     assert.match(embedOf(response).title, /Munição comprada/);
     assert.match(embedOf(response).description, /\*\*5\*\* munições/);
-    assert.equal(field(response, "💸 Valor pago"), formatMoney(5 * ARMORY_RULES.ammoPrice));
-    assert.equal(field(response, "🎒 Munição agora"), "7");
-    assert.equal(field(response, "👛 Carteira"), formatMoney(10_000 - 5 * ARMORY_RULES.ammoPrice));
+    assert.equal(receiptOf(response)["Pagou"], "-" + spaced(formatMoney(5 * ARMORY_RULES.ammoPrice)));
+    assert.equal(receiptOf(response)["Munição agora"], "7");
+    assert.equal(receiptOf(response)["Carteira"], spaced(formatMoney(10_000 - 5 * ARMORY_RULES.ammoPrice)));
 
     const bad = await run("municao", g, A, { quantidade: ARMORY_RULES.maxAmmoPerPurchase + 1 });
 
@@ -364,8 +368,8 @@ test("/colete diz o que ele faz de verdade e cobra em reais", async () => {
 
     assert.match(embedOf(response).title, /Colete equipado/);
     assert.match(embedOf(response).description, new RegExp(`${ARMORY_RULES.vestDefense}\\*\\* pontos a menos de dano`));
-    assert.equal(field(response, "💸 Valor pago"), formatMoney(ARMORY_RULES.vestPrice));
-    assert.equal(field(response, "🛡️ Defesa"), `${ARMORY_RULES.vestDefense} pontos`);
+    assert.equal(receiptOf(response)["Pagou"], "-" + spaced(formatMoney(ARMORY_RULES.vestPrice)));
+    assert.equal(receiptOf(response)["Defesa"], `${ARMORY_RULES.vestDefense} pontos`);
     assert.equal(combat.status(g, A).vest, ARMORY_RULES.vestDefense);
 
     set("UPDATE players SET wallet = 10 WHERE guild_id = ?", g);
@@ -388,8 +392,8 @@ test("/reparar devolve a durabilidade da arma, e pede uma arma equipada", async 
 
     assert.match(embedOf(response).title, /Arma reparada/);
     assert.match(embedOf(response).description, /Facão/);
-    assert.equal(field(response, "🔧 Durabilidade"), durabilityLine(100));
-    assert.equal(field(response, "💸 Valor pago"), formatMoney(ARMORY_RULES.repairPrice));
+    assert.ok(embedOf(response).description.includes("🔧 " + durabilityLine(100)));
+    assert.equal(receiptOf(response)["Pagou"], "-" + spaced(formatMoney(ARMORY_RULES.repairPrice)));
 });
 
 test("/recarregar mostra o estoque da arma de fogo, e explica quando não dá", async () => {
@@ -405,11 +409,11 @@ test("/recarregar mostra o estoque da arma de fogo, e explica quando não dá", 
     const empty = await run("recarregar", g);
 
     assert.match(embedOf(empty).description, /Revólver/);
-    assert.match(field(empty, "🎒 Munição"), /0 \(compre mais com `\/municao`\)/);
+    assert.match(receiptOf(empty)["Munição"], /^0 \(compre com \/municao\)$/);
 
     gear(g, A, { ammo: 12 });
 
-    assert.equal(field(await run("recarregar", g), "🎒 Munição"), "12");
+    assert.equal(receiptOf(await run("recarregar", g))["Munição"], "12");
 });
 
 // ==========================================
@@ -420,9 +424,9 @@ test("/ping responde com o tempo no ar e a contagem de comandos", async () => {
     const response = await run("ping", guild());
 
     assert.match(embedOf(response).title, /Pong/);
-    assert.equal(embedOf(response).description, "Estou funcionando.");
-    assert.match(field(response, "⏱️ No ar há"), /\d+s/);
-    assert.match(field(response, "📖 Comandos"), /^\d+$/);
+    assert.match(embedOf(response).description, /^Estou aqui e funcionando\./);
+    assert.match(receiptOf(response)["No ar há"], /\d+s/);
+    assert.match(receiptOf(response)["Comandos"], /^\d+$/);
 });
 
 // ==========================================

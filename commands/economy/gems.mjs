@@ -8,10 +8,10 @@ import { getGemBonusStatus } from "../../services/economy/gem-bonus.mjs";
 import { formatDuration } from "../../utils/time.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 export default {
@@ -45,44 +45,31 @@ export default {
             const bonus = getGemBonusStatus(String(userId));
 
             return embedResponse(
-                createEmbed({
-                    title: "💎 Helena Gems",
+                ledgerEmbed({
+                    section: "Gemas",
+                    title: "💎 Gemas de " + username,
 
-                    description:
-                        "👤 **Jogador:** " +
-                        username +
-                        "\n\nConsulte suas gemas disponíveis.",
+                    say: "As gemas são da sua conta e valem em todos os servidores.",
 
-                    color: HELENA_COLORS.economy,
-
-                    fields: [
-                        {
-                            name: "💎 Gemas disponíveis",
-                            value:
-                                "**" +
-                                gems.toLocaleString("pt-BR") +
-                                " 💎**",
-                            inline: false
-                        },
-                        {
-                            name: "🌐 Saldo global",
-                            value:
-                                "Suas gemas acompanham sua conta em todos os servidores.",
-                            inline: false
-                        },
-                        {
-                            name: "🎁 Bônus de gemas",
-                            value: bonus.available
-                                ? "**Disponível!** Use `/coletargemas` para coletar."
-                                : "Próxima coleta em **" +
-                                  formatDuration(bonus.remaining) +
-                                  "**.",
-                            inline: false
-                        }
+                    rows: [
+                        ["Gemas", gems.toLocaleString("pt-BR")],
+                        [
+                            "Bônus",
+                            bonus.available
+                                ? "disponível"
+                                : "em " + formatDuration(bonus.remaining)
+                        ]
                     ],
 
-                    footer:
-                        "Helena • Suas gemas, em qualquer servidor."
+                    note: bonus.available
+                        ? "O bônus está liberado: use `/coletargemas`."
+                        : "",
+
+                    color: HELENA_COLORS.primary,
+                    thumbnail: interaction.user?.avatarUrl,
+                    mood: "festa",
+
+                    footer: "/coletargemas rende gemas de tempos em tempos"
                 })
             );
 

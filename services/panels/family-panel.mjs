@@ -48,15 +48,17 @@ const mention = id => `<@${id}>`;
 export function inviteView(call) {
     return {
         embed: createEmbed({
-            title: "📞 Gozofone",
+            section: "Família",
+            title: "📞 Gozofone tocando",
 
             description:
-                `${mention(call.callerId)} está ligando para ${mention(call.partnerId)}.\n\n` +
-                `Atenda em até **${FAMILY_RULES.callTtl} segundos**!`,
+                `${mention(call.callerId)} está ligando para ${mention(call.partnerId)}.\n` +
+                `> Atenda em até **${FAMILY_RULES.callTtl} segundos**!`,
 
-            color: HELENA_COLORS.primary,
+            color: HELENA_COLORS.love,
+            mood: "amor",
 
-            footer: "Helena • Só o cônjuge atende; quem ligou pode cancelar",
+            footer: "Só o cônjuge atende; quem ligou pode cancelar",
 
             timestamp: false
         }),
@@ -74,8 +76,8 @@ export function resultView(call, outcome) {
     const caller = mention(call.callerId);
     const partner = mention(call.partnerId);
 
-    const make = (title, description, color, components = []) => ({
-        embed: createEmbed({ title, description, color, footer: "Helena • Família", timestamp: false }),
+    const make = (title, description, color, components = [], mood = "amor") => ({
+        embed: createEmbed({ section: "Família", title, description, color, mood, footer: "/familia mostra a família", timestamp: false }),
         components
     });
 
@@ -84,47 +86,59 @@ export function resultView(call, outcome) {
             return make(
                 "🍼 Chegou um bebê!",
 
-                `${partner} atendeu e a ligação rendeu ${outcome.babies === 2 ? "**gêmeos**" : "**um bebê**"}!\n\n` +
-                `Em até **${Math.round(FAMILY_RULES.nameWindow / 60)} minutos**, ${caller} ou ${partner} ` +
+                `${partner} atendeu e a ligação rendeu ${outcome.babies === 2 ? "**gêmeos**" : "**um bebê**"}!\n` +
+                `> Em até **${Math.round(FAMILY_RULES.nameWindow / 60)} minutos**, ${caller} ou ${partner} ` +
                 `toca em **Registrar filho** para escolher ${outcome.babies === 2 ? "os nomes" : "o nome"}. ` +
                 "Sem o registro, o bebê não entra para a família.",
 
-                HELENA_COLORS.success,
+                HELENA_COLORS.love,
 
-                [row(button(`gf:nome:${outcome.birthId}`, "Registrar filho", "👶", "primary"))]
+                [row(button(`gf:nome:${outcome.birthId}`, "Registrar filho", "👶", "primary"))],
+
+                "festa"
             );
 
         case "money":
             return make(
                 "📞 Ligação atendida",
 
-                `${partner} atendeu a ligação de ${caller}.\n\n` +
+                `${partner} atendeu a ligação de ${caller}.\n` +
                 (outcome.amount > 0
-                    ? `💰 ${partner} recebeu **${formatMoney(outcome.amount)}**.`
+                    ? `> 💰 ${partner} recebeu **${formatMoney(outcome.amount)}**.`
                     : `A carteira de ${partner} está cheia, então nada foi pago desta vez.`),
 
-                HELENA_COLORS.success
+                HELENA_COLORS.love,
+
+                [],
+
+                outcome.amount > 0 ? "dinheiro" : "amor"
             );
 
         case "declined":
             return make(
                 "📞 Ligação recusada",
                 `${partner} recusou a ligação. A espera de ${caller} foi devolvida.`,
-                HELENA_COLORS.neutral
+                HELENA_COLORS.wait,
+                [],
+                "triste"
             );
 
         case "cancelled":
             return make(
                 "📞 Ligação cancelada",
                 `${caller} desligou antes de atenderem. A espera continua valendo.`,
-                HELENA_COLORS.neutral
+                HELENA_COLORS.wait,
+                [],
+                "dormindo"
             );
 
         default:
             return make(
                 "📞 Ninguém atendeu",
                 `${partner} não atendeu a tempo. A espera de ${caller} foi devolvida.`,
-                HELENA_COLORS.warning
+                HELENA_COLORS.warning,
+                [],
+                "alerta"
             );
     }
 }
@@ -241,18 +255,20 @@ export function handleFamilyModal(interaction) {
 
             data: {
                 embeds: [createEmbed({
-                    title: registered.length === 2 ? "👶 Gêmeos registrados!" : "👶 Filho registrado!",
+                    section: "Família",
+                    title: registered.length === 2 ? "👶 Gêmeos registrados" : "👶 Filho registrado",
 
                     description:
                         `${mention(interaction.user?.id)} registrou ` +
                         (registered.length === 2
                             ? `os gêmeos **${registered[0]}** e **${registered[1]}**.`
                             : `o bebê com o nome **${registered[0]}**.`) +
-                        "\n\nVeja a família com `/familia`.",
+                        "\nVeja a família com `/familia`.",
 
-                    color: HELENA_COLORS.success,
+                    color: HELENA_COLORS.love,
+                    mood: "festa",
 
-                    footer: "Helena • Família",
+                    footer: "A família cresceu",
 
                     timestamp: false
                 })]
@@ -274,10 +290,12 @@ export function buildFamily({ guildId, userId, now = nowSeconds() }) {
     if (!family) {
         return {
             embed: createEmbed({
+                section: "Família",
                 title: "👨‍👩‍👧 Família",
                 description: "Você não está casado(a). Peça alguém em casamento com `/casar` para formar uma família.",
-                color: HELENA_COLORS.neutral,
-                footer: "Helena • Família",
+                color: HELENA_COLORS.wait,
+                mood: "dormindo",
+                footer: "O Gozofone só existe para casais",
                 timestamp: false
             }),
 
@@ -322,10 +340,12 @@ export function buildFamily({ guildId, userId, now = nowSeconds() }) {
 
     return {
         embed: createEmbed({
+            section: "Família",
             title: "👨‍👩‍👧 Família",
-            color: HELENA_COLORS.economy,
+            color: HELENA_COLORS.love,
+            mood: "amor",
             fields,
-            footer: "Helena • Família",
+            footer: "/gozofone liga para o cônjuge",
             timestamp: false
         }),
 

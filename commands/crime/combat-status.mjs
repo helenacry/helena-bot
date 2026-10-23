@@ -1,9 +1,9 @@
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 import { status, now, DUEL_RULES } from "../../services/combat/combat.mjs";
@@ -53,38 +53,29 @@ export default {
                 );
             }
 
-            const embed = createEmbed({
+            const embed = ledgerEmbed({
+                section: "Combate",
                 title: "❤️ Estado de combate",
 
-                description: [hpLine(state.hp), ...notes].join("\n\n"),
+                say:
+                    "❤️ " + hpLine(state.hp) + "\n" +
+                    "🔧 " + durabilityLine(state.durability) +
+                    notes.map(note => "\n> " + note).join(""),
 
-                color: HELENA_COLORS.primary,
-
-                fields: [
-                    { name: "🏆 Vitórias", value: String(state.wins), inline: true },
-                    { name: "💀 Derrotas", value: String(state.losses), inline: true },
-                    {
-                        name: "🛡️ Proteção",
-                        value: protectionText(protection),
-                        inline: true
-                    },
-                    {
-                        name: "🗡️ Arma",
-                        value: weapon
-                            ? `${weapon.emoji} ${weapon.name}`
-                            : "Nenhuma",
-                        inline: true
-                    },
-                    { name: "🔫 Munição", value: String(state.ammo), inline: true },
-                    { name: "🛡️ Defesa", value: `${state.vest} pontos`, inline: true },
-                    {
-                        name: "🔧 Durabilidade da arma",
-                        value: durabilityLine(state.durability),
-                        inline: false
-                    }
+                rows: [
+                    ["Vitórias", String(state.wins)],
+                    ["Derrotas", String(state.losses)],
+                    null,
+                    ["Arma", weapon ? weapon.name : "nenhuma"],
+                    ["Munição", String(state.ammo)],
+                    ["Defesa", `${state.vest} pontos`],
+                    ["Proteção", protectionText(protection)]
                 ],
 
-                footer: "Helena • Combate"
+                color: state.hp < DUEL_RULES.minHp ? HELENA_COLORS.warning : HELENA_COLORS.primary,
+                mood: "bravo",
+
+                footer: "Os duelos começam com /atacar"
             });
 
             return embedResponse(embed);

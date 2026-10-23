@@ -98,7 +98,8 @@ const closeButton = ownerId => button(`ajuda:fechar:${ownerId}`, "Fechar", "✖�
 
 export function buildHelpHome({ ownerId, catalog }) {
     const embed = createEmbed({
-        title: "📖 Central de Ajuda da Helena",
+        section: "Ajuda",
+        title: "📖 Central de ajuda",
 
         description: [
             "Tudo o que a Helena faz, por categoria. Escolha uma categoria no menu abaixo " +
@@ -112,6 +113,7 @@ export function buildHelpHome({ ownerId, catalog }) {
         ].join("\n"),
 
         color: HELENA_COLORS.primary,
+        mood: "feliz",
 
         fields: [
             ...catalog.categories.map(category => ({
@@ -123,19 +125,21 @@ export function buildHelpHome({ ownerId, catalog }) {
             })),
 
             {
-                name: "📚 Wiki",
+                name: "📚 Wiki e site",
                 value: `Regras, tabelas e exemplos de cada sistema:\n${HELP_CONFIG.wikiUrl}`,
                 inline: false
             }
         ],
 
-        footer: `Helena • ${plural(catalog.total, "comando", "comandos")}`
+        footer: `${plural(catalog.total, "comando", "comandos")} no total`
     });
 
     // O V2: uma seção por categoria, com o botão Abrir ao lado (no lugar do menu).
     const layout = [
         container([
-            text("## 📖 Central de Ajuda da Helena"),
+            text("-# HELENA · AJUDA"),
+
+            text("## 📖 Central de ajuda"),
 
             text(
                 "Tudo o que a Helena faz, por categoria. Toque em **Abrir** numa categoria " +
@@ -169,7 +173,7 @@ export function buildHelpHome({ ownerId, catalog }) {
             row(searchButton(ownerId), closeButton(ownerId))
         ], { color: HELENA_COLORS.primary }),
 
-        subtext(`Helena • ${plural(catalog.total, "comando", "comandos")}`)
+        subtext(`${plural(catalog.total, "comando", "comandos")} no total`)
     ];
 
     return {
@@ -229,7 +233,8 @@ export function buildHelpCategory({ ownerId, catalog, categoryId, page = 1 }) {
     });
 
     const embed = createEmbed({
-        title: `${category.emoji} Helena • ${category.label}`,
+        section: "Ajuda",
+        title: `${category.emoji} ${category.label}`,
 
         description: [
             HELP_CONFIG.blurbs[category.id] ?? "",
@@ -238,10 +243,11 @@ export function buildHelpCategory({ ownerId, catalog, categoryId, page = 1 }) {
         ].join("\n"),
 
         color: HELENA_COLORS.primary,
+        mood: "feliz",
 
         fields,
 
-        footer: `Helena • Página ${current}/${pages} • ${plural(category.commands.length, "comando", "comandos")}`
+        footer: `Página ${current}/${pages} · ${plural(category.commands.length, "comando", "comandos")}`
     });
 
     const navigation = row(
@@ -255,6 +261,8 @@ export function buildHelpCategory({ ownerId, catalog, categoryId, page = 1 }) {
     // O V2: cada comando é uma seção com o botão Ver ao lado (no lugar do menu de comandos).
     const layout = [
         container([
+            text("-# HELENA · AJUDA"),
+
             text(`## ${category.emoji} ${category.label}`),
 
             text(`${HELP_CONFIG.blurbs[category.id] ?? ""}\nToque em **Ver** para as opções e como usar.`.trim()),
@@ -284,7 +292,7 @@ export function buildHelpCategory({ ownerId, catalog, categoryId, page = 1 }) {
             navigation
         ], { color: HELENA_COLORS.primary }),
 
-        subtext(`Helena • Página ${current}/${pages} • ${plural(category.commands.length, "comando", "comandos")}`)
+        subtext(`Página ${current}/${pages} · ${plural(category.commands.length, "comando", "comandos")}`)
     ];
 
     return {
@@ -372,11 +380,13 @@ export function buildHelpCommand({ ownerId, catalog, entry, from = null }) {
     }
 
     const embed = createEmbed({
+        section: "Ajuda",
         title: `${category?.emoji ?? "📖"} /${entry.name}`,
         description: entry.description,
         color: HELENA_COLORS.primary,
+        mood: "feliz",
         fields,
-        footer: "Helena • Central de Ajuda"
+        footer: "O menu de categorias volta ao início da ajuda"
     });
 
     const back = from?.categoryId && from.categoryId !== NO_CATEGORY
@@ -407,6 +417,7 @@ export function buildHelpSearch({ ownerId, catalog, query, results }) {
     if (results.length === 0) {
         return {
             embed: createEmbed({
+                section: "Ajuda",
                 title: "🔎 Nada encontrado",
 
                 description: [
@@ -417,8 +428,9 @@ export function buildHelpSearch({ ownerId, catalog, query, results }) {
                 ].join("\n"),
 
                 color: HELENA_COLORS.warning,
+                mood: "triste",
 
-                footer: "Helena • Central de Ajuda"
+                footer: "Também dá para escolher uma categoria no menu"
             }),
 
             components: [
@@ -438,6 +450,7 @@ export function buildHelpSearch({ ownerId, catalog, query, results }) {
 
     return {
         embed: createEmbed({
+            section: "Ajuda",
             title: "🔎 Resultado da busca",
 
             description: [
@@ -447,8 +460,9 @@ export function buildHelpSearch({ ownerId, catalog, query, results }) {
             ].join("\n"),
 
             color: HELENA_COLORS.primary,
+            mood: "feliz",
 
-            footer: `Helena • ${plural(results.length, "resultado", "resultados")}`
+            footer: plural(results.length, "resultado", "resultados")
         }),
 
         components: [
@@ -465,10 +479,12 @@ export function buildHelpSearch({ ownerId, catalog, query, results }) {
 export function buildHelpClosed() {
     return {
         embed: createEmbed({
+            section: "Ajuda",
             title: "📖 Ajuda fechada",
             description: "Use `/ajuda` para abrir de novo.",
-            color: HELENA_COLORS.neutral,
-            footer: "Helena • Central de Ajuda"
+            color: HELENA_COLORS.wait,
+            mood: "dormindo",
+            footer: "Qualquer dúvida, é só chamar"
         }),
 
         components: []

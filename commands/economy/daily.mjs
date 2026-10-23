@@ -1,26 +1,40 @@
-
 import { formatMoney } from "../../database/economy.mjs";
 
 import { claimDaily } from "../../services/economy/daily.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
+import { plural } from "../../utils/plural.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
+
+import { formatDuration } from "../../utils/time.mjs";
+
 // ==========================================
-// UTILITÁRIOS
+// A ESCADA DOS 7 DIAS
 // ==========================================
 
-function formatTime(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+// Os sete passos da sequência, como no painel do site: verde o que já foi, cinza o que falta e o
+// presente no fim (o bônus semanal). "streak" é a sequência de agora; o ciclo recomeça a cada 7 dias.
+function ladder(streak) {
+    const today = streak > 0 ? ((streak - 1) % 7) + 1 : 0;
 
-    return `${hours}h ${minutes}m ${secs}s`;
+    return Array.from({ length: 7 }, (_unused, index) => {
+        const day = index + 1;
+
+        if (day <= today) return "🟩";
+
+        return day === 7 ? "🎁" : "⬜";
+    }).join("");
 }
+
+const streakLine = (streak, best) =>
+    `🔥 **${plural(streak, "dia")}** seguidos · recorde de ${plural(best, "dia")}`;
 
 // ==========================================
 // RESPOSTAS
@@ -28,33 +42,19 @@ function formatTime(seconds) {
 
 function cooldownResponse(result) {
     return embedResponse(
-        createEmbed({
-            title: "⏳ Helena Daily",
+        ledgerEmbed({
+            section: "Daily",
+            title: "⏳ Você já resgatou hoje",
 
-            description:
-                "Você já resgatou sua recompensa diária.",
+            say:
+                "Volte em **" + formatDuration(result.remaining) + "** para o próximo prêmio.\n" +
+                streakLine(result.streak, result.bestStreak) + "\n" +
+                ladder(result.streak),
 
-            color: HELENA_COLORS.warning,
+            color: HELENA_COLORS.wait,
+            mood: "dormindo",
 
-            fields: [
-                {
-                    name: "🔥 Sequência atual",
-                    value: "**" + result.streak + " dias**",
-                    inline: true
-                },
-                {
-                    name: "🏆 Recorde",
-                    value: "**" + result.bestStreak + " dias**",
-                    inline: true
-                },
-                {
-                    name: "⏰ Próximo resgate",
-                    value: "**" + formatTime(result.remaining) + "**",
-                    inline: false
-                }
-            ],
-
-            footer: "Helena Daily • Volte amanhã!"
+            footer: "Voltando em até 48 horas, a sequência continua"
         })
     );
 }
@@ -62,74 +62,40 @@ function cooldownResponse(result) {
 function claimedResponse(result) {
     const { reward, streak, bestStreak, wallet } = result;
 
-    const rewardFields = [
-        {
-            name: "💰 Recompensa base",
-            value: "**" + formatMoney(reward.base) + "**",
-            inline: true
-        },
-        {
-            name: "🔥 Bônus de sequência",
-            value: "**" + formatMoney(reward.progressiveBonus) + "**",
-            inline: true
-        }
-    ];
+    const rows = [["Recompensa base", signed(reward.base, formatMoney(reward.base))]];
 
-    if (reward.weeklyBonus > 0) {
-        rewardFields.push({
-            name: "🎁 Bônus de 7 dias",
-            value: "**" + formatMoney(reward.weeklyBonus) + "**",
-            inline: false
-        });
+    if (reward.progressiveBonus > 0) {
+        rows.push(["Bônus de sequência", signed(reward.progressiveBonus, formatMoney(reward.progressiveBonus))]);
     }
 
-    rewardFields.push(
-        {
-            name: "💵 Total recebido",
-            value: "**" + formatMoney(reward.total) + "**",
-            inline: false
-        },
-        {
-            name: "🔥 Sequência atual",
-            value: "**" + streak + " dias**",
-            inline: true
-        },
-        {
-            name: "🏆 Seu recorde",
-            value: "**" + bestStreak + " dias**",
-            inline: true
-        },
-        {
-            name: "👛 Carteira atual",
-            value: "**" + formatMoney(wallet) + "**",
-            inline: true
-        },
-        {
-            name: "⏰ Próximo resgate",
-            value: "**24 horas**",
-            inline: true
-        }
+    if (reward.weeklyBonus > 0) {
+        rows.push(["Bônus de 7 dias", signed(reward.weeklyBonus, formatMoney(reward.weeklyBonus))]);
+    }
+
+    rows.push(
+        null,
+        ["Total", signed(reward.total, formatMoney(reward.total))],
+        ["Carteira", formatMoney(wallet)]
     );
 
     return embedResponse(
-        createEmbed({
-            title: "🎁 Helena Daily",
+        ledgerEmbed({
+            section: "Daily",
+            title: "🎁 Recompensa do dia",
 
-            description:
-                "**Recompensa resgatada!**\n\n" +
-                "Você completou o dia **" + streak +
-                "** da sua sequência." +
-                (
-                    reward.weeklyBonus > 0
-                        ? "\n\n🎉 Bônus semanal desbloqueado!"
-                        : ""
-                ),
+            say:
+                (reward.weeklyBonus > 0
+                    ? "Sete dias seguidos: o bônus semanal saiu junto! 🎉\n"
+                    : "Dia **" + (((streak - 1) % 7) + 1) + "** de 7 da sua sequência.\n") +
+                streakLine(streak, bestStreak) + "\n" +
+                ladder(streak),
+
+            rows,
 
             color: HELENA_COLORS.success,
+            mood: reward.weeklyBonus > 0 ? "festa" : "feliz",
 
-            fields: rewardFields,
-
-            footer: "Helena Daily • Sua dedicação merece recompensas."
+            footer: "Volte em 24 horas para manter a sequência"
         })
     );
 }

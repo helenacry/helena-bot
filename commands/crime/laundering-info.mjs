@@ -13,10 +13,10 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 import { formatDuration } from "../../utils/time.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 const BAR_SIZE = 10;
@@ -62,36 +62,26 @@ export default {
 
             if (!status.active) {
                 return embedResponse(
-                    createEmbed({
+                    ledgerEmbed({
+                        section: "Lavagem",
                         title: "🧼 Nenhuma lavagem em andamento",
 
-                        description:
-                            "Você não tem dinheiro sendo lavado agora.",
+                        say: "Você não tem dinheiro sendo lavado agora.",
 
-                        color: HELENA_COLORS.primary,
-
-                        fields: [
-                            {
-                                name: "🧺 Dinheiro sujo",
-                                value:
-                                    "**" +
-                                    formatMoney(status.dirtyMoney) +
-                                    "**",
-                                inline: true
-                            },
-                            {
-                                name: "⏰ Próxima lavagem",
-                                value: status.cooldownRemaining > 0
-                                    ? "Em " + formatDuration(
-                                        status.cooldownRemaining
-                                    )
-                                    : "🟢 Disponível",
-                                inline: true
-                            }
+                        rows: [
+                            ["Dinheiro sujo", formatMoney(status.dirtyMoney)],
+                            [
+                                "Próxima lavagem",
+                                status.cooldownRemaining > 0
+                                    ? "em " + formatDuration(status.cooldownRemaining)
+                                    : "pronta"
+                            ]
                         ],
 
-                        footer:
-                            "Helena • Use /lavagem para iniciar uma."
+                        color: HELENA_COLORS.wait,
+                        mood: "dormindo",
+
+                        footer: "/lavagem inicia uma"
                     })
                 );
             }
@@ -132,71 +122,42 @@ export default {
 
             const progress = 1 - workLeft / totalDuration;
 
-            const fields = [
-                {
-                    name: "🏭 Lavanderia",
-                    value: "**" + spec.name + "**",
-                    inline: true
-                },
-                {
-                    name: "💸 Valor sujo",
-                    value: "**" + formatMoney(active.amount) + "**",
-                    inline: true
-                },
-                {
-                    name: "📈 Retorno esperado",
-                    value:
-                        formatMoney(estimateMin) + " a " +
-                        formatMoney(estimateMax),
-                    inline: true
-                },
-                {
-                    name: "⏳ Termina em",
-                    value:
-                        "**" + formatDuration(active.remaining) + "**",
-                    inline: true
-                },
-                {
-                    name: "📊 Progresso",
-                    value: progressBar(progress),
-                    inline: false
-                }
+            const rows = [
+                ["Lavanderia", spec.name],
+                ["Valor sujo", formatMoney(active.amount)],
+                ["Retorno esperado", formatMoney(estimateMin) + " a " + formatMoney(estimateMax)],
+                null,
+                ["Termina em", formatDuration(active.remaining)]
             ];
 
             if (prison) {
-                fields.push({
-                    name: "⛓️ Lavagem pausada",
-                    value:
-                        "Você está preso por mais **" +
-                        formatDuration(jailLeft) +
-                        "**. A lavagem só continua depois da pena " +
-                        "e ainda faltam **" +
-                        formatDuration(workLeft) +
-                        "** de lavagem.",
-                    inline: false
-                });
+                rows.push(
+                    ["Preso por mais", formatDuration(jailLeft)],
+                    ["Falta de lavagem", formatDuration(workLeft)]
+                );
             }
 
             return embedResponse(
-                createEmbed({
+                ledgerEmbed({
+                    section: "Lavagem",
                     title: prison
                         ? "⏸️ Lavagem pausada"
                         : "🧼 Lavagem em andamento",
 
-                    description: prison
-                        ? "Seu dinheiro está parado até você sair da cadeia."
-                        : "Seu dinheiro está sendo lavado. Quando " +
-                          "terminar, o valor limpo cai na carteira " +
-                          "e eu aviso no canal.",
+                    say:
+                        (prison
+                            ? "Seu dinheiro está parado até você sair da cadeia. A lavagem só continua depois da pena."
+                            : "Seu dinheiro está sendo lavado. Quando terminar, o valor limpo cai na carteira e eu aviso no canal.") +
+                        "\n" + progressBar(progress),
+
+                    rows,
 
                     color: prison
                         ? HELENA_COLORS.warning
-                        : HELENA_COLORS.economy,
+                        : HELENA_COLORS.money,
+                    mood: prison ? "preso" : "dinheiro",
 
-                    fields,
-
-                    footer:
-                        "Helena • O valor final é sorteado a cada minuto de lavagem."
+                    footer: "O valor final é sorteado a cada minuto de lavagem"
                 })
             );
 

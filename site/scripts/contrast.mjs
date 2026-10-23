@@ -153,6 +153,7 @@ const PAIRS = [
   ["chat-ink-soft", "chat-bg", TEXT, "conversa: apoio"],
   ["chat-ink", "chat-embed", TEXT, "embed: texto"],
   ["chat-ink-soft", "chat-embed", TEXT, "embed: apoio"],
+  ["chat-ink", "chat-code", TEXT, "embed: recibo e código"],
   ["chat-ink-soft", "chat-bar", TEXT, "conversa: dica"],
   ["chat-btn-ink", "chat-btn", TEXT, "botão do app"],
   ["on-violet", "chat-ok", TEXT, "botão verde do app"],

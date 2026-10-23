@@ -4,10 +4,10 @@ import {
 } from "../../services/combat/equipment.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 export default {
@@ -43,32 +43,20 @@ export default {
             );
 
             return embedResponse(
-                createEmbed({
-                    title: "⚔️ Arma equipada!",
+                ledgerEmbed({
+                    section: "Arsenal",
+                    title: "⚔️ Arma equipada",
 
-                    description:
-                        "Seu equipamento foi atualizado com sucesso.",
+                    say:
+                        weapon.emoji + " **" + weapon.name + "** está na sua mão.\n" +
+                        (weapon.description || ""),
+
+                    note: "Ela já aparece no seu `/perfil`.",
 
                     color: HELENA_COLORS.success,
+                    mood: "bravo",
 
-                    fields: [
-                        {
-                            name: "🗡️ Arma atual",
-                            value: weapon.emoji + " **" + weapon.name + "**",
-                            inline: false
-                        },
-                        {
-                            name: "📖 Descrição",
-                            value: weapon.description,
-                            inline: false
-                        },
-                        {
-                            name: "👤 Perfil",
-                            value:
-                                "Sua arma equipada já aparece no comando `/perfil`.",
-                            inline: false
-                        }
-                    ]
+                    footer: "/armas mostra o dano e o desgaste"
                 })
             );
 

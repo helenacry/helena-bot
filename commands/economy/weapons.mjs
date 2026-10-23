@@ -1,9 +1,9 @@
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 import { status } from "../../services/combat/combat.mjs";
@@ -42,52 +42,41 @@ export default {
             const weapon = getEquippedWeapon(guildId, userId);
 
             if (!weapon) {
-                return embedResponse(createEmbed({
-                    title: "🗡️ Armamento",
+                return embedResponse(ledgerEmbed({
+                    section: "Arsenal",
+                    title: "🗡️ Sem arma equipada",
 
-                    description:
-                        "Você está **sem arma equipada**.\n\n" +
-                        "Compre uma na `/loja` (prateleira **Armas**) e equipe com `/equipar`.",
+                    say:
+                        "Você está desarmado. Compre uma na `/loja` (prateleira **Armas**) " +
+                        "e equipe com `/equipar`.",
 
-                    color: HELENA_COLORS.neutral,
+                    color: HELENA_COLORS.wait,
+                    mood: "triste",
 
-                    footer: "Helena • Arsenal"
+                    footer: "Sem arma, sem duelo"
                 }));
             }
 
             const state = status(guildId, userId);
 
-            const embed = createEmbed({
+            const embed = ledgerEmbed({
+                section: "Arsenal",
                 title: `${weapon.emoji} ${weapon.name}`,
 
-                description: weapon.description || "Arma equipada.",
+                say:
+                    (weapon.description || "Arma equipada.") + "\n" +
+                    "🔧 " + durabilityLine(state.durability),
 
-                color: HELENA_COLORS.primary,
-
-                fields: [
-                    {
-                        name: "⚔️ Dano",
-                        value: String(weaponDamage(weapon)),
-                        inline: true
-                    },
-                    {
-                        name: "🧰 Tipo",
-                        value: weaponTypeLabel(weapon),
-                        inline: true
-                    },
-                    {
-                        name: "🔫 Munição",
-                        value: isFirearm(weapon) ? String(state.ammo) : "Não usa",
-                        inline: true
-                    },
-                    {
-                        name: "🔧 Durabilidade",
-                        value: durabilityLine(state.durability),
-                        inline: false
-                    }
+                rows: [
+                    ["Dano", String(weaponDamage(weapon))],
+                    ["Tipo", weaponTypeLabel(weapon)],
+                    ["Munição", isFirearm(weapon) ? String(state.ammo) : "não usa"]
                 ],
 
-                footer: "Helena • Arsenal"
+                color: HELENA_COLORS.error,
+                mood: "bravo",
+
+                footer: "/reparar e /recarregar cuidam da arma"
             });
 
             return embedResponse(embed);

@@ -18,32 +18,29 @@ export default {
         try {
             const result = divorce(guildId, userId);
 
-            const fields = [
-                { name: "📄 Status", value: "Divórcio concluído.", inline: false }
-            ];
-
             // os filhos do casal saem da família junto com o casamento
-            if (result.children > 0) {
-                fields.push({
-                    name: "👶 Filhos",
-                    value: result.children === 1
+            const children = result.children > 0
+                ? "\n> 👶 " + (
+                    result.children === 1
                         ? "O filho do casal saiu da família junto com o casamento."
-                        : `Os ${result.children} filhos do casal saíram da família junto com o casamento.`,
-                    inline: false
-                });
-            }
+                        : `Os ${result.children} filhos do casal saíram da família junto com o casamento.`
+                )
+                : "";
 
             return embedResponse(
                 createEmbed({
+                    section: "Casamento",
                     title: "💔 Divórcio registrado",
 
                     description:
-                        "Seu casamento foi encerrado.\n\n" +
-                        "O estado civil de ambos os jogadores voltou para Solteiro(a).",
+                        "Seu casamento foi encerrado. " +
+                        "O estado civil de ambos voltou para Solteiro(a)." +
+                        children,
 
-                    color: HELENA_COLORS.neutral,
+                    color: HELENA_COLORS.wait,
+                    mood: "triste",
 
-                    fields
+                    footer: "Um novo capítulo começa"
                 })
             );
 

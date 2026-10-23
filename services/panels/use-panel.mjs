@@ -83,11 +83,12 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
     );
 
     const embed = createEmbed({
+        section: "Itens",
         title: "🍽️ Usar item",
 
         description:
-            (notice ? notice + "\n\n" : "") +
-            `⚡ **Energia:** ${energy.energy}/${energy.max}\n\n` +
+            (notice ? notice + "\n" : "") +
+            `⚡ ${energyBar(energy.energy, energy.max)}  **${energy.energy}/${energy.max}**\n\n` +
             (
                 lines.length
                     ? lines.join("\n")
@@ -96,10 +97,11 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
             ),
 
         color: HELENA_COLORS.success,
+        mood: "feliz",
 
         footer:
-            "Helena • Escolha no menu para usar 1 unidade. " +
-            "Comida com energia cheia não é gasta."
+            "Escolha no menu para usar 1 unidade · " +
+            "comida com energia cheia não é gasta"
     });
 
     const menu = usable.length > 0
@@ -145,6 +147,8 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
 
     const layout = [
         container([
+            text("-# HELENA · ITENS"),
+
             text("## 🍽️ Usar item"),
 
             ...(notice ? [text(notice)] : []),
@@ -173,7 +177,7 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
             ...controls
         ], { color: HELENA_COLORS.success }),
 
-        subtext("Helena • Cada toque usa 1 unidade. Comida com energia cheia não é gasta.")
+        subtext("Cada toque usa 1 unidade. Comida com energia cheia não é gasta.")
     ];
 
     return { embed, components, usable, layout };
@@ -188,10 +192,12 @@ const result = (title, description, color) => priv({
     type: "message",
     data: {
         embeds: [createEmbed({
+            section: "Itens",
             title,
             description,
             color,
-            footer: "Helena • Usar item"
+            mood: color === HELENA_COLORS.success ? "feliz" : "alerta",
+            footer: "/usaritem abre o painel de novo"
         })]
     }
 });

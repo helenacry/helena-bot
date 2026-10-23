@@ -17,11 +17,15 @@ import {
 } from "../../services/economy/market.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { plural } from "../../utils/plural.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 export default {
     name: "vender",
@@ -78,67 +82,31 @@ export default {
             );
 
             return embedResponse(
-                createEmbed({
-                    title: "💵 Venda concluída!",
+                ledgerEmbed({
+                    section: "Loja",
+                    title: "💵 Venda feita",
 
-                    description:
-                        "Seu item foi vendido com sucesso.\n\n" +
-                        result.item.emoji +
-                        " **" +
-                        result.item.name +
-                        "** foi negociado na Helena Loja.",
+                    say:
+                        result.item.emoji + " **" + result.item.name + "** foi vendido." +
+                        (result.hot
+                            ? "\n> 🔥 **Em alta:** +" + formatPercent(result.market.hotBonusBp) + " nesta venda"
+                            : ""),
 
-                    color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "📦 Quantidade vendida",
-                            value: String(result.quantity),
-                            inline: true
-                        },
-                        {
-                            name: "💰 Valor recebido",
-                            value: "**+" +
-                                formatMoney(result.total) +
-                                "**",
-                            inline: true
-                        },
-                        ...(result.market ? [{
-                            name: "📈 Mercado",
-                            value:
-                                formatMoney(result.unitPrice) +
-                                " cada • " +
-                                marketLine(result.market) +
-                                (result.hot
-                                    ? "\n🔥 **Em alta:** +" +
-                                        formatPercent(result.market.hotBonusBp) +
-                                        " nesta venda"
-                                    : ""),
-                            inline: false
-                        }] : []),
-                        {
-                            name: "👛 Carteira atual",
-                            value: "**" +
-                                formatMoney(result.wallet) +
-                                "**",
-                            inline: false
-                        },
-                        {
-                            name: "🎒 Unidades restantes",
-                            value:
-                                result.inventoryQuantity +
-                                " unidade(s)",
-                            inline: true
-                        },
-                        {
-                            name: "🆔 ID do item",
-                            value: "`" + result.item.id + "`",
-                            inline: true
-                        }
+                    rows: [
+                        ["Quantidade", String(result.quantity)],
+                        ...(result.quantity > 1 ? [["Preço unitário", formatMoney(result.unitPrice)]] : []),
+                        ["Recebeu", signed(result.total, formatMoney(result.total))],
+                        null,
+                        ["Carteira", formatMoney(result.wallet)],
+                        ["Ainda tem", plural(result.inventoryQuantity, "unidade")]
                     ],
 
-                    footer:
-                        "Helena • Obrigado por negociar conosco!"
+                    note: result.market ? marketLine(result.market) : "",
+
+                    color: HELENA_COLORS.economy,
+                    mood: "dinheiro",
+
+                    footer: "A /bolsa mostra quando os preços sobem"
                 })
             );
 

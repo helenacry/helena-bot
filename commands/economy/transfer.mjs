@@ -8,11 +8,13 @@ import {
 import { mention } from "../../services/platform/mentions.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 export default {
     name: "transferir",
@@ -83,41 +85,23 @@ export default {
 
             // Monta a resposta visual.
             return embedResponse(
-                createEmbed({
-                    title: "💸 Helena Pay",
+                ledgerEmbed({
+                    section: "Pagamentos",
+                    title: "💸 Transferência feita",
 
-                    description:
-                        "### Transferência realizada!\n\n" +
-                        "Seu pagamento foi processado com sucesso.",
+                    // Menção: vira chip no embed, em vez do ID puro (e não notifica).
+                    say: "Você pagou " + mention(targetId) + ".",
 
-                    color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "👤 Destinatário",
-                            // Menção: vira chip no embed, em vez do ID puro.
-                            value: mention(targetId),
-                            inline: false
-                        },
-                        {
-                            name: "💰 Valor transferido",
-                            value: `**${formatMoney(amount)}**`,
-                            inline: true
-                        },
-                        {
-                            name: "👛 Carteira restante",
-                            value: `**${formatMoney(player.wallet)}**`,
-                            inline: true
-                        },
-                        {
-                            name: "🔒 Status",
-                            value: "Pagamento concluído.",
-                            inline: false
-                        }
+                    rows: [
+                        ["Enviado", signed(-amount, formatMoney(amount))],
+                        null,
+                        ["Carteira", formatMoney(player.wallet)]
                     ],
 
-                    footer:
-                        "Helena Pay • Transferências entre jogadores"
+                    color: HELENA_COLORS.economy,
+                    mood: "dinheiro",
+
+                    footer: "Transferências não têm volta"
                 })
             );
 

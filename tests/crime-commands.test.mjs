@@ -1,5 +1,5 @@
 import {
-    db, set, get, seq, createPrefixRunner, fieldsOf
+    db, set, get, seq, createPrefixRunner, fieldsOf, receiptOf
 } from "./helpers.mjs";
 
 import test from "node:test";
@@ -152,10 +152,10 @@ test("roubo por nome completo, por menção e pelo alias hassaltar", async () =>
 
     assert.ok(success, "alguma tentativa com 85% de chance deveria ter dado certo");
 
-    const fields = fieldsOf(JSON.parse(success.r.text).embeds[0]);
+    const rows = receiptOf(JSON.parse(success.r.text).embeds[0]);
 
-    assert.ok(fields["💸 Total levado"]);
-    assert.ok(fields["🧺 Dinheiro sujo"]);
+    assert.ok(rows["Levou no total"]);
+    assert.ok(rows["Dinheiro sujo"]);
     assert.match(JSON.parse(success.r.text).embeds[0].description, /Maria Silva/);
 });
 

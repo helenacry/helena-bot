@@ -134,6 +134,11 @@ import {
     deliverCallback
 } from "./services/platform/v2-delivery.mjs";
 
+import {
+    createEmbed,
+    HELENA_COLORS
+} from "./utils/embed.mjs";
+
 // ==========================================
 // CONFIGURAÇÕES
 // ==========================================
@@ -275,15 +280,38 @@ function editarRespostaOriginal(interaction, data) {
     );
 }
 
+// Os avisos do próprio bot (manutenção, bloqueio, componente que não existe mais, falha) saem
+// como um embed pequeno, no desenho das outras respostas (docs/bot-design.md). O texto vem com
+// o emoji na frente ("🛠️ Helena está em manutenção."): o emoji escolhe o título, a cor e o humor.
+const AVISOS = {
+    "🛠️": { title: "Em manutenção", color: HELENA_COLORS.warning, mood: "dormindo" },
+    "🚫": { title: "Acesso bloqueado", color: HELENA_COLORS.error, mood: "triste" },
+    "⏳": { title: "Devagar", color: HELENA_COLORS.wait, mood: "dormindo" },
+    "❌": { title: "Algo deu errado", color: HELENA_COLORS.error, mood: "triste" }
+};
+
 function mensagemErro(
-    texto = "❌ Ocorreu um erro ao executar esta ação."
+    texto = "❌ Ocorreu um erro ao executar esta ação.",
+    { privado = true } = {}
 ) {
+    const match = /^(🛠️|🚫|⏳|❌)\s+([\s\S]*)$/u.exec(texto);
+
+    const emoji = match?.[1] ?? "❌";
+    const aviso = AVISOS[emoji];
+
     return {
         type: "message",
 
         data: {
-            body: texto,
-            ephemeral: true
+            embeds: [createEmbed({
+                section: "Aviso",
+                title: `${emoji} ${aviso.title}`,
+                description: match?.[2] ?? texto,
+                color: aviso.color,
+                mood: aviso.mood
+            })],
+
+            ...(privado ? { ephemeral: true } : {})
         }
     };
 }
@@ -1327,14 +1355,10 @@ function conectarGateway() {
                     erro
                 );
 
-                resultado = {
-                    type: "message",
-
-                    data: {
-                        body:
-                            "❌ Ocorreu um erro ao executar o comando."
-                    }
-                };
+                resultado = mensagemErro(
+                    "❌ Ocorreu um erro ao executar o comando.",
+                    { privado: false }
+                );
             }
 
             // ==================================

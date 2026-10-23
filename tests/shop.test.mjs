@@ -1,5 +1,5 @@
 import {
-    db, getPlayer, set, get, createPrefixRunner
+    db, getPlayer, set, get, createPrefixRunner, receiptOf
 } from "./helpers.mjs";
 
 import test from "node:test";
@@ -185,16 +185,16 @@ test("a vitrine mostra uma prateleira por categoria, com contagem e menor preço
 
     const categories = shopCategories().slice(1);
 
-    assert.equal(view.embed.title, "🛒 Helena Loja");
+    assert.equal(view.embed.title, "🛒 Loja da Helena");
     assert.match(view.embed.description, /1\.234,56/, "carteira");
-    assert.match(view.embed.description, /Gemas:\*\* 7/, "gemas");
+    assert.equal(receiptOf(view.embed)["Gemas"], "7", "gemas");
 
     const shelves = view.embed.fields.filter(f => f.inline);
 
     assert.equal(shelves.length, categories.length);
-    assert.ok(shelves.every(f => /\d+ (?:item|itens)\nA partir de \*\*R\$/.test(f.value)));
+    assert.ok(shelves.every(f => /\d+ (?:item|itens)\na partir de \*\*R\$/.test(f.value)));
     assert.match(shelves[0].name, /Consumíveis/);
-    assert.match(shelves[0].value, /3 itens\nA partir de \*\*R\$\s?3,00\*\*/);
+    assert.match(shelves[0].value, /3 itens\na partir de \*\*R\$\s?3,00\*\*/);
 
     assert.match(
         view.embed.footer.text,
@@ -221,8 +221,8 @@ test("o cartão do item diz o que dá para comprar, o que falta e o limite", () 
     const rich = view(100000, { apple: 4 });
 
     assert.match(rich.embed.fields[0].value, /Você pode comprar até \*\*95\*\*/, "limite 99 menos os 4 que já tem");
-    assert.match(rich.embed.fields[0].value, /Você tem \*\*4\*\*\/99/);
-    assert.match(rich.embed.fields[1].value, /Você tem \*\*0\*\*\/99/);
+    assert.match(rich.embed.fields[0].value, /você tem 4\/99/);
+    assert.match(rich.embed.fields[1].value, /você tem 0\/99/);
 
     assert.match(view(100000).embed.fields[0].value, /Você pode comprar até \*\*99\*\*/, "teto de 99 por compra");
 
@@ -245,9 +245,9 @@ test("o cartão do item diz o que dá para comprar, o que falta e o limite", () 
 test("o cartão de arma mostra o dano e a prateleira tem emoji", () => {
     const view = buildShopView({ ownerId: ME, category: "weapon", page: 1, wallet: 0 });
 
-    assert.match(view.embed.title, /Helena Loja • ⚔️ Armas/);
+    assert.equal(view.embed.title, "🛒 ⚔️ Armas");
     assert.match(view.embed.fields[0].value, /⚔️ Dano: \d+ • Arma/);
-    assert.match(view.embed.description, /Prateleira:\*\* ⚔️ Armas • 14 itens/);
+    assert.match(view.embed.description, /14 itens nesta prateleira/);
 });
 
 test("a prateleira tem Início e Fechar, e os botões cabem nos limites", () => {
@@ -273,11 +273,11 @@ test("a loja mostra a carteira e as gemas de quem abriu", () => {
 
     assert.equal(home.type, "update");
     assert.match(home.data.embeds[0].description, /2\.500,00/);
-    assert.match(home.data.embeds[0].description, /Gemas:\*\* 12/);
+    assert.equal(receiptOf(home.data.embeds[0])["Gemas"], "12");
 
     const shelf = handlePanelClick(click(`loja:cat:${ME}`, { values: ["consumable"] }));
 
-    assert.match(shelf.data.embeds[0].description, /Gemas:\*\* 12/);
+    assert.equal(receiptOf(shelf.data.embeds[0])["Gemas"], "12");
 });
 
 test("o cartão usa o que o jogador já tem no inventário", () => {
@@ -286,7 +286,7 @@ test("o cartão usa o que o jogador já tem no inventário", () => {
 
     const response = handlePanelClick(click(`loja:cat:${ME}`, { values: ["consumable"] }));
 
-    assert.match(response.data.embeds[0].fields[0].value, /Você tem \*\*5\*\*\/99/);
+    assert.match(response.data.embeds[0].fields[0].value, /você tem 5\/99/);
 });
 
 // ==========================================
@@ -299,7 +299,7 @@ test("Início volta para a vitrine e Fechar encerra o painel", () => {
     const home = handlePanelClick(click(`loja:home:${ME}`));
 
     assert.equal(home.type, "update");
-    assert.equal(home.data.embeds[0].title, "🛒 Helena Loja");
+    assert.equal(home.data.embeds[0].title, "🛒 Loja da Helena");
     assert.equal(home.data.embeds[0].fields.filter(f => f.inline).length, shopCategories().length - 1);
 
     const closed = handlePanelClick(click(`loja:fechar:${ME}`));
@@ -315,7 +315,7 @@ test("o menu troca de categoria e volta para a página 1", () => {
     const response = handlePanelClick(click(`loja:cat:${ME}`, { values: ["weapon"] }));
 
     assert.equal(response.type, "update");
-    assert.match(response.data.embeds[0].description, /Armas/);
+    assert.match(response.data.embeds[0].title, /Armas/);
 
     const select = response.data.components[0].components[0];
 
@@ -566,7 +566,7 @@ test("🟢 marca a arma equipada", () => {
 
     assert.match(v.embed.description, /🟢 .*Revólver/);
     assert.doesNotMatch(v.embed.description, /🟢 .*Maçã/);
-    assert.match(v.embed.description, /🟢 = arma equipada/);
+    assert.match(v.embed.description, /🟢 arma equipada/);
 });
 
 test("o menu de prateleiras mostra só as que têm itens, com contagem", () => {
@@ -790,7 +790,7 @@ test("hloja mostra o painel; hloja categoria já abre na categoria", async () =>
     // sem categoria: a vitrine inicial, sem itens
     const home = await run("hloja");
 
-    assert.match(home.title, /Helena Loja/);
+    assert.match(home.title, /Loja da Helena/);
     assert.ok(ids(home.components).includes(`loja:cat:${ME}`));
     assert.ok(ids(home.components).includes(`loja:pg:${ME}:todas:1`), "Ver tudo");
     assert.equal(allButtons(home.components).filter(b => b.customId.startsWith("loja:item:")).length, 0);
@@ -798,11 +798,11 @@ test("hloja mostra o painel; hloja categoria já abre na categoria", async () =>
     // com categoria: já abre nas prateleiras, com os 5 itens
     const weapons = await run("hloja categoria:weapon");
 
-    assert.match(JSON.parse(weapons.text).embeds[0].description, /Armas/);
+    assert.match(JSON.parse(weapons.text).embeds[0].title, /Armas/);
     assert.equal(allButtons(weapons.components).filter(b => b.customId.startsWith("loja:item:")).length, 5);
 
     // categoria inexistente: o próprio parser do prefixo recusa
-    assert.match((await run("hloja categoria:xyz")).body, /inválido/i);
+    assert.match((await run("hloja categoria:xyz")).text, /inválido/i);
 });
 
 test("hinventario e hinv mostram o painel; hdescartar pede confirmação", async () => {
@@ -811,7 +811,7 @@ test("hinventario e hinv mostram o painel; hdescartar pede confirmação", async
 
     const inv = await run("hinventario");
 
-    assert.match(inv.title, /Helena Inventário/);
+    assert.match(inv.title, /Inventário de Eu Mesmo/);
     assert.ok(ids(inv.components).includes(`inv:drop:${ME}`));
     assert.equal((await run("hinv")).title, inv.title);
 
@@ -832,7 +832,7 @@ test("alias store abre a mesma loja", async () => {
 
     reset(5000);
 
-    assert.equal((await run("hstore")).title, "🛒 Helena Loja");
+    assert.equal((await run("hstore")).title, "🛒 Loja da Helena");
 });
 
 test("aliases de descartar", () => {

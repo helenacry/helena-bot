@@ -43,18 +43,20 @@ export default {
             const protectedNow = remaining > 0;
 
             const embed = createEmbed({
+                section: "Combate",
                 title: "🛡️ Proteção contra duelos",
 
                 description: protectedNow
-                    ? `Você está protegido por **${formatDuration(remaining)}**.\n\n` +
+                    ? `Você está protegido por **${formatDuration(remaining)}**.\n` +
                       "Nesse tempo ninguém pode te desafiar, e você também não pode desafiar."
-                    : "Você está **sem proteção**.\n\n" +
+                    : "Você está **sem proteção**.\n" +
                       "Ela vem ao se curar no hospital: o `/curar` dá " +
                       `**${duration(HOSPITAL_RULES.protectionSeconds)}** de proteção.`,
 
-                color: protectedNow ? HELENA_COLORS.success : HELENA_COLORS.neutral,
+                color: protectedNow ? HELENA_COLORS.success : HELENA_COLORS.wait,
+                mood: protectedNow ? "feliz" : "dormindo",
 
-                footer: "Helena • Combate"
+                footer: "A proteção vem do hospital"
             });
 
             return embedResponse(embed);

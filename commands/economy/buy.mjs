@@ -16,11 +16,15 @@ import {
 } from "../../services/economy/market.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { plural } from "../../utils/plural.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 export default {
     name: "comprar",
@@ -80,62 +84,29 @@ export default {
             );
 
             return embedResponse(
-                createEmbed({
-                    title: "🛒 Compra realizada!",
+                ledgerEmbed({
+                    section: "Loja",
+                    title: "🛒 Compra feita",
 
-                    description:
-                        "Seu pedido foi concluído com sucesso.\n\n" +
-                        result.item.emoji +
-                        " **" +
-                        result.item.name +
-                        "** foi adicionado ao seu inventário.",
+                    say:
+                        result.item.emoji + " **" + result.item.name +
+                        "** já está no seu inventário.",
 
-                    color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "📦 Quantidade comprada",
-                            value: String(result.quantity),
-                            inline: true
-                        },
-                        {
-                            name: "💰 Valor pago",
-                            value: "**" +
-                                formatMoney(result.total) +
-                                "**",
-                            inline: true
-                        },
-                        ...(result.market ? [{
-                            name: "📈 Mercado",
-                            value:
-                                formatMoney(result.unitPrice) +
-                                " cada • " +
-                                marketLine(result.market),
-                            inline: false
-                        }] : []),
-                        {
-                            name: "👛 Carteira restante",
-                            value: "**" +
-                                formatMoney(result.wallet) +
-                                "**",
-                            inline: false
-                        },
-                        {
-                            name: "🎒 Total deste item",
-                            value:
-                                result.inventoryQuantity +
-                                " unidade(s)",
-                            inline: true
-                        },
-                        {
-                            name: "🆔 ID do item",
-                            value: "`" + result.item.id + "`",
-                            inline: true
-                        }
+                    rows: [
+                        ["Quantidade", String(result.quantity)],
+                        ...(result.quantity > 1 ? [["Preço unitário", formatMoney(result.unitPrice)]] : []),
+                        ["Pagou", signed(-result.total, formatMoney(result.total))],
+                        null,
+                        ["Carteira", formatMoney(result.wallet)],
+                        ["Você tem", plural(result.inventoryQuantity, "unidade")]
                     ],
 
-                    footer:
-                        "Helena • Obrigado pela sua compra!"
+                    note: result.market ? marketLine(result.market) : "",
+
+                    color: HELENA_COLORS.economy,
+                    mood: "dinheiro",
+
+                    footer: "Use /usaritem para usar o que comprou"
                 })
             );
 

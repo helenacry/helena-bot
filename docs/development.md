@@ -55,6 +55,7 @@ Para montar o ambiente de testes:
 | `HELENA_DATABASE_PATH` | Caminho do banco SQLite. Padrão: `./data/helena.db`. |
 | `HELENA_SUPPORT_GUILD_ID`, `HELENA_USERS_CHANNEL_ID`, `HELENA_CLUSTERS_CHANNEL_ID` | Contadores do servidor de suporte. Se algum estiver vazio, ficam desligados. |
 | `HELENA_CLUSTER_TOTAL`, `HELENA_STATS_INTERVAL` | Total de clusters e intervalo de atualização (ms) dos contadores. |
+| `HELENA_BADGE_GUILD_ID` | Servidor(es) onde estão os emojis `auto_*` das insígnias do `/userinfo`, separados por vírgula. Vazio: vale o `HELENA_SUPPORT_GUILD_ID`; sem ele, a Helena procura nos primeiros servidores em que está. Veja [Insígnias do /userinfo](game-systems.md#insígnias-do-userinfo). |
 | `HELENA_V2` | Layout V2 da VSync no lugar dos embeds: `off` (padrão), `owner` (só nas respostas do dono, para testar em produção) ou `on` (todos). Veja [Componentes V2](game-systems.md#componentes-v2). |
 | `HELENA_LIVE_INTERVAL_MS` | Intervalo das contagens ao vivo, como o tempo da prisão. Padrão 10000, mínimo 2000. |
 

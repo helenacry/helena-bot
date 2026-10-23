@@ -1,4 +1,4 @@
-import { db, getPlayer, set, get } from "./helpers.mjs";
+import { db, getPlayer, set, get, receiptOf } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -579,23 +579,31 @@ test("/bolsa mostra o índice, o item em alta e os preços, com os botões do do
 
     const embed = embedOf(response);
 
-    assert.equal(embed.title, "📊 Helena Bolsa");
+    // o emoji do título é o da faixa do índice (62 = Alto)
+    assert.equal(embed.title, "📈 Bolsa do servidor");
     assert.deepEqual(
         embed.fields.map(f => f.name),
-        ["📈 Índice do servidor", "🔥 Item em alta", "🛒 Preços de agora", "💡 Como funciona"]
+        ["🔥 Item em alta", "🛒 Preços de agora (▲ em alta)", "💡 Como funciona"]
     );
 
-    const [index, hot, prices] = embed.fields.map(f => f.value);
+    // o índice vai num recibo, na descrição
+    const index = receiptOf(embed);
 
-    assert.match(index, /\*\*62\*\* de 90/);
-    assert.match(index, /faixa \*\*Alto\*\*/);
-    assert.match(index, /Próxima atualização em/);
+    assert.match(index["Índice"], /62 de 90 \(Alto\)/);
+    assert.ok(index["Preços"]);
+    assert.match(index["Atualiza em"], /\d/);
+
+    const [hot, prices] = embed.fields.map(f => f.value);
 
     assert.match(hot, /Energético/);
     assert.match(hot, /\+12,5%/);
 
-    assert.equal(prices.split("\n").length, sellable.length, "uma linha por item vendável");
-    assert.equal((prices.match(/🔥/g) ?? []).length, 1, "o em alta aparece marcado");
+    // a tabela: o cabeçalho e uma linha por item vendável, dentro do bloco de código
+    const lines = prices.split("\n").slice(1, -1);
+
+    assert.match(lines[0], /^Item\s+Compra\s+Venda$/);
+    assert.equal(lines.length - 1, sellable.length, "uma linha por item vendável");
+    assert.equal((prices.match(/▲/g) ?? []).length, 1, "o em alta aparece marcado");
 
     assert.deepEqual(
         idsOf(response.data.components),
@@ -615,7 +623,8 @@ test("/bolsa também abre preso, e a bolsa desligada avisa", async () => {
     try {
         const response = await silently(() => resolverComando(comandos, "bolsa").execute(slash(g)));
 
-        assert.match(embedOf(response).description, /desligada/);
+        assert.equal(embedOf(response).title, "📊 Bolsa desligada");
+        assert.match(embedOf(response).description, /valor de tabela/);
         assert.deepEqual(idsOf(response.data.components), [`loja:home:${ME}`, `bolsa:fechar:${ME}`]);
     } finally {
         process.env.HELENA_MARKET = "on";
@@ -630,8 +639,8 @@ test("os botões da bolsa: só o dono atualiza ou fecha, e 'Abrir a loja' leva �
     const refreshed = handlePanelClick(click(g, `bolsa:atualizar:${ME}`));
 
     assert.equal(refreshed.type, "update");
-    assert.equal(refreshed.data.embeds[0].title, "📊 Helena Bolsa");
-    assert.ok(JSON.stringify(refreshed.data.embeds[0]).includes("**30** de 90"));
+    assert.equal(refreshed.data.embeds[0].title, "➖ Bolsa do servidor", "índice 30 é a faixa Média");
+    assert.match(receiptOf(refreshed.data.embeds[0])["Índice"], /30 de 90/);
 
     const foreign = handlePanelClick(click(g, `bolsa:atualizar:${ME}`, OTHER));
 
@@ -648,7 +657,7 @@ test("os botões da bolsa: só o dono atualiza ou fecha, e 'Abrir a loja' leva �
 
     const shop = handlePanelClick(click(g, `loja:home:${ME}`));
 
-    assert.match(shop.data.embeds[0].title, /Helena Loja/);
+    assert.match(shop.data.embeds[0].title, /Loja da Helena/);
     assert.match(shop.data.embeds[0].description, /Índice \*\*30\*\*/);
 
     assert.match(handlePanelClick(click(g, `bolsa:abrir:${ME}`)).data.embeds[0].title, /desconhecido/);

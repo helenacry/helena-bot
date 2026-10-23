@@ -3,6 +3,9 @@
 @layer components {
   .sim {
     --gap: 0.85rem;
+    /* O bloco de código do app usa a fonte de código do sistema, mais estreita que a do site
+       (o recibo de 38 colunas precisa caber no celular). */
+    --chat-mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
     block-size: min(36rem, 78svh);
@@ -113,23 +116,70 @@
     border-radius: 0.35rem 0.6rem 0.6rem 0.35rem;
     display: grid;
     gap: 0.5rem;
+    container-type: inline-size;
   }
 
   .sim-embed.accent-success { --accent: var(--embed-success); }
   .sim-embed.accent-error { --accent: var(--embed-error); }
-  .sim-embed.accent-warning { --accent: var(--embed-warning); }
+  .sim-embed.accent-wait { --accent: var(--embed-wait); }
   .sim-embed.accent-economy { --accent: var(--embed-economy); }
 
   .sim-embed p { margin: 0; }
+
+  /* O topo: o nome da seção com o ícone e o título, e a pelúcia do humor ao lado. */
+  .sim-embed-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.6rem; align-items: start; }
+  .sim-embed-top { display: grid; gap: 0.2rem; min-inline-size: 0; }
+
+  .sim-author {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--chat-ink-soft);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  .sim-author img, .sim-embed-foot img {
+    inline-size: 1rem;
+    block-size: 1rem;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .sim-thumb { inline-size: 3.5rem; block-size: 3.5rem; border-radius: 0.5rem; object-fit: cover; }
+
   .sim-embed-title { font-weight: 700; font-size: 0.98rem; }
   .sim-embed-desc { color: var(--chat-ink); }
   .sim-line { display: block; }
+  .sim-line.quote { padding-inline-start: 0.6rem; border-inline-start: 3px solid var(--chat-line); color: var(--chat-ink-soft); }
+  .sim-line.small { font-size: 0.74rem; color: var(--chat-ink-soft); }
+
   .sim-embed code {
     padding: 0.05rem 0.3rem;
     border-radius: 0.25rem;
     background: var(--chat-code);
     color: var(--chat-ink);
+    font-family: var(--chat-mono);
     font-size: 0.78rem;
+  }
+
+  /* O recibo: o bloco de código do chat, com o nome e o valor ligados por pontilhado. */
+  .sim-receipt {
+    margin: 0;
+    padding: 0.55rem 0.7rem;
+    background: var(--chat-code);
+    border-radius: 0.4rem;
+    color: var(--chat-ink);
+    font-family: var(--chat-mono);
+    /* Cabe a linha mais comprida (--cols colunas, ~0,62 em cada) na largura da caixa do embed;
+       o tamanho normal é o teto. Sem espaço nem para o piso, o recibo rola dentro dele. */
+    font-size: clamp(0.58rem, calc((100cqi - 1.4rem) / (var(--cols, 32) * 0.62)), 0.78rem);
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    white-space: pre;
+    overflow-x: auto;
   }
 
   .sim-fields { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem 0.8rem; }
@@ -139,7 +189,7 @@
   .sim-field dd { margin: 0; color: var(--chat-ink-soft); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .sim-field dd strong { color: var(--chat-ink); }
 
-  .sim-embed-foot { font-size: 0.72rem; color: var(--chat-ink-soft); }
+  .sim-embed-foot { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--chat-ink-soft); }
 
   .sim-comps { display: grid; gap: 0.35rem; }
   .sim-select {
@@ -229,6 +279,10 @@
   }
 
   @media (max-width: 30rem) {
+    .sim { --gap: 0.6rem; }
+    .sim-embed { padding: 0.6rem 0.65rem 0.65rem; }
+    .sim-receipt { padding: 0.5rem 0.6rem; }
+    .sim-thumb { inline-size: 3rem; block-size: 3rem; }
     .sim-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .sim-msg { grid-template-columns: 2rem minmax(0, 1fr); gap: 0.55rem; }
     .sim-avatar { inline-size: 2rem; block-size: 2rem; }

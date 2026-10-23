@@ -1,9 +1,9 @@
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 import { formatMoney } from "../../database/economy.mjs";
@@ -47,36 +47,29 @@ export default {
 
             const full = missing <= 0;
 
-            const embed = createEmbed({
+            const embed = ledgerEmbed({
+                section: "Hospital",
                 title: "🏥 Hospital",
 
-                description: [
-                    hpLine(state.hp),
-                    "",
-                    full
+                say:
+                    "❤️ " + hpLine(state.hp) + "\n" +
+                    (full
                         ? "Você está com a vida cheia. Nada a tratar."
-                        : "Use `/curar` para se tratar."
-                ].join("\n"),
+                        : "Use `/curar` para se tratar."),
 
-                color: full ? HELENA_COLORS.success : HELENA_COLORS.warning,
-
-                fields: [
-                    {
-                        name: "💸 Custo para se curar",
-                        value: full
-                            ? "Nada"
-                            : `${formatMoney(missing * HOSPITAL_RULES.costPerHp)} ` +
-                              `(${formatMoney(HOSPITAL_RULES.costPerHp)} por ponto de vida)`,
-                        inline: true
-                    },
-                    {
-                        name: "🛡️ Proteção contra duelos",
-                        value: protectionText(protection),
-                        inline: true
-                    }
+                rows: [
+                    [
+                        "Custo para curar",
+                        full ? "nada" : formatMoney(missing * HOSPITAL_RULES.costPerHp)
+                    ],
+                    ["Preço por ponto", formatMoney(HOSPITAL_RULES.costPerHp)],
+                    ["Proteção contra duelos", protectionText(protection)]
                 ],
 
-                footer: "Helena • Hospital"
+                color: full ? HELENA_COLORS.success : HELENA_COLORS.warning,
+                mood: full ? "feliz" : "triste",
+
+                footer: "O tratamento dá proteção contra duelos"
             });
 
             return embedResponse(embed);

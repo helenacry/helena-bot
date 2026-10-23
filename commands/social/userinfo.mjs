@@ -13,6 +13,10 @@ import {
 } from "../../services/social/userinfo-view.mjs";
 
 import {
+    loadBadgeEmojis
+} from "../../services/social/badge-emojis.mjs";
+
+import {
     completeUser
 } from "../../services/social/userinfo-account.mjs";
 
@@ -206,6 +210,10 @@ export default {
             // ==================================
             // CARTÃO
             // ==================================
+
+            // os ícones das insígnias vêm do servidor (cache de 1 minuto; nunca lança)
+            await loadBadgeEmojis();
+
             const embed = buildUserinfoEmbed({
                 user,
                 actorName:

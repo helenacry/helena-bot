@@ -45,38 +45,19 @@ export default {
 
             return embedResponse(
                 createEmbed({
+                    section: "Casamento",
                     title: "💍 Pedido de casamento",
 
+                    // Menção: vira chip no embed, sem notificar (quem avisa é o texto da mensagem).
                     description:
-                        "Um novo pedido de casamento foi enviado!\n\n" +
-                        "A pessoa convidada precisa aceitar para que o casamento seja registrado.",
+                        mention(request.senderId) + " 💌 " + mention(request.targetId) + "\n" +
+                        "O casamento só é registrado se a pessoa convidada aceitar.\n" +
+                        "> Responda com `/aceitarcasamento` ou `/recusarcasamento` em até **24 horas**.",
 
-                    color: HELENA_COLORS.primary,
+                    color: HELENA_COLORS.love,
+                    mood: "amor",
 
-                    fields: [
-                        {
-                            name: "❤️ Quem pediu",
-                            // Menção: vira chip no embed, sem notificar.
-                            value: mention(request.senderId),
-                            inline: false
-                        },
-                        {
-                            name: "💌 Destinatário",
-                            value: mention(request.targetId),
-                            inline: false
-                        },
-                        {
-                            name: "⏳ Prazo",
-                            value: "24 horas",
-                            inline: true
-                        },
-                        {
-                            name: "📨 Como responder",
-                            value:
-                                "Use `/aceitarcasamento` ou `/recusarcasamento`.",
-                            inline: false
-                        }
-                    ]
+                    footer: "O pedido vale por 24 horas"
                 }),
                 `<@${targetId}>`
             );

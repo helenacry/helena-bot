@@ -14,9 +14,13 @@ import {
 } from "../../utils/components-v2.mjs";
 
 import {
-    createEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { plural } from "../../utils/plural.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 // ==========================================
 // TELAS DAS MISSÕES
@@ -67,10 +71,10 @@ export function buildMissions({ guildId, userId, notice = null }) {
         : HELENA_COLORS.missions;
 
     const statusOf = mission => mission.claimed
-        ? "✅ Resgatada"
+        ? "✅ resgatada"
         : mission.progress >= mission.target
-            ? "🎉 Pronta para resgatar"
-            : "⏳ Em andamento";
+            ? "🎉 pronta para resgatar"
+            : "⏳ em andamento";
 
     // ==================================
     // CLÁSSICO
@@ -81,37 +85,32 @@ export function buildMissions({ guildId, userId, notice = null }) {
 
         value: [
             mission.description,
-            "",
-            "**" + progressBar(mission.progress, mission.target) + "**",
-            "📊 **Progresso:** " + mission.progress + "/" + mission.target,
-            "💰 **Recompensa:** " + rewardText(mission),
-            "**Status:** " + statusOf(mission),
-            "🆔 `" + mission.id + "`"
+            progressBar(mission.progress, mission.target) +
+                " **" + mission.progress + "/" + mission.target + "** · " + rewardText(mission),
+            "-# " + statusOf(mission) + " · id `" + mission.id + "`"
         ].join("\n"),
 
         inline: false
     }));
 
-    fields.push({
-        name: "🎁 Recompensas disponíveis",
-        value: "**" + ready.length + "**",
-        inline: true
-    });
+    const embed = ledgerEmbed({
+        section: "Missões",
+        title: "📜 Missões do dia",
 
-    const embed = createEmbed({
-        title: "📜 Helena Missões",
+        say:
+            (notice ? notice + "\n" : "") +
+            (ready.length > 0
+                ? "🎁 **" + plural(ready.length, "recompensa pronta", "recompensas prontas") + "** para resgatar."
+                : "Cumpra os objetivos e resgate as recompensas."),
 
-        description:
-            (notice ? notice + "\n\n" : "") +
-            "Complete seus objetivos diários e resgate recompensas.\n\n" +
-            "As missões reiniciam à **meia-noite UTC**.",
+        note: "As missões reiniciam à meia-noite UTC.",
 
         color,
+        mood: ready.length > 0 ? "festa" : "feliz",
 
         fields,
 
-        footer:
-            "Helena • Use /missoes resgatar para receber sua recompensa."
+        footer: "Resgate com /missoes resgatar"
     });
 
     // Um botão por missão pronta (o resgate da lista, sem digitar o ID).
@@ -144,7 +143,9 @@ export function buildMissions({ guildId, userId, notice = null }) {
 
     const layout = [
         container([
-            text("## 📜 Helena Missões"),
+            text("-# HELENA · MISSÕES"),
+
+            text("## 📜 Missões do dia"),
 
             ...(notice ? [text(notice)] : []),
 
@@ -175,7 +176,7 @@ export function buildMissions({ guildId, userId, notice = null }) {
             )
         ], { color }),
 
-        subtext("Helena • Também dá para resgatar com /missoes resgatar")
+        subtext("Também dá para resgatar com /missoes resgatar")
     ];
 
     return {
@@ -189,52 +190,26 @@ export function buildMissions({ guildId, userId, notice = null }) {
 export function buildClaimResult(result) {
     const { mission } = result;
 
-    return createEmbed({
-        title: "🎉 Missão concluída!",
+    return ledgerEmbed({
+        section: "Missões",
+        title: "🎉 Missão concluída",
 
-        description:
-            mission.emoji +
-            " **" +
-            mission.name +
-            "**\n\n" +
-            "Sua recompensa foi resgatada com sucesso!" +
-            (
-                result.leveledUp
-                    ? "\n\n🎊 **Você também subiu de nível!**"
-                    : "\n\nContinue completando suas missões!"
-            ),
+        say:
+            mission.emoji + " **" + mission.name + "** resgatada." +
+            (result.leveledUp ? "\n> 🎊 **Você também subiu de nível!**" : ""),
 
-        color: HELENA_COLORS.success,
-
-        fields: [
-            {
-                name: "💰 Recompensa",
-                value: "**+" + formatMoney(mission.reward) + "**",
-                inline: true
-            },
-            {
-                name: "✨ Experiência",
-                value: "**+" + mission.xp + " XP**",
-                inline: true
-            },
-            {
-                name: "👛 Carteira atual",
-                value: formatMoney(result.wallet),
-                inline: false
-            },
-            {
-                name: "⭐ Nível atual",
-                value: String(result.level),
-                inline: true
-            },
-            {
-                name: "📊 XP total",
-                value: String(result.xp),
-                inline: true
-            }
+        rows: [
+            ["Recompensa", signed(mission.reward, formatMoney(mission.reward))],
+            ["Experiência", signed(mission.xp, mission.xp + " XP")],
+            null,
+            ["Carteira", formatMoney(result.wallet)],
+            ["Nível", result.level + " · " + result.xp.toLocaleString("pt-BR") + " XP"]
         ],
 
-        footer: "Helena • Uma conquista de cada vez."
+        color: HELENA_COLORS.success,
+        mood: "festa",
+
+        footer: "Uma missão de cada vez"
     });
 }
 

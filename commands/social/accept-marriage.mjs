@@ -55,35 +55,19 @@ export default {
             });
 
             const embed = createEmbed({
-                title: "💍 Casamento realizado!",
+                section: "Casamento",
+                title: "💍 Casamento realizado",
 
                 description:
-                    "### Felicidades ao novo casal! ❤️\n\n" +
-                    "O pedido foi aceito e o casamento foi registrado.",
+                    "Felicidades ao novo casal! ❤️\n" +
+                    coupleText.replace(/\n❤️\n/, " ❤️ ") + "\n" +
+                    "> Casados desde **" + weddingDate + "**. O estado civil já aparece no `/perfil`.",
 
-                color: HELENA_COLORS.success,
-
-                fields: [
-                    {
-                        name: "💑 Casal",
-                        value: coupleText,
-                        inline: false
-                    },
-                    {
-                        name: "📅 Data do casamento",
-                        value: weddingDate,
-                        inline: false
-                    },
-                    {
-                        name: "👤 Perfil",
-                        value:
-                            "O estado civil já pode ser consultado com /perfil.",
-                        inline: false
-                    }
-                ],
+                color: HELENA_COLORS.love,
+                mood: "amor",
 
                 footer:
-                    "Helena • Uma nova história começa."
+                    "Uma nova história começa"
             });
 
             const mentions = mentionAll([

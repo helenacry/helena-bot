@@ -20,9 +20,12 @@ services/                Regras do jogo e do bot, uma pasta por assunto
                          dono e bloqueios, busca de usuário, anexos, contadores do suporte
   web/                   a API do painel do site
 database/                Conexão SQLite e migrações (rodam sozinhas ao iniciar)
-config/                  Valores ajustáveis (empregos, itens, crime, cooldowns...)
-utils/                   Embeds, V2, tempo, IDs e utilitários
+config/                  Valores ajustáveis (empregos, itens, crime, cooldowns...) e o tema das
+                         respostas do chat (theme.mjs: cores, ícone, humores da pelúcia)
+utils/                   Embeds, recibo e carimbo, plural, V2, tempo, IDs e utilitários
 scripts/                 Ferramentas de linha de comando (npm run db:export, discloud:zip)
+  dev/                   Para quem mexe no bot: a prévia das respostas (preview-replies.mjs) e o envio
+                         dos ícones das insígnias como emojis (upload-badge-emojis.mjs)
   site/                  Geradores do site: dados, cartão de exemplo e wiki (npm run site:data,
                          site:card, wiki:build). Ficam fora de site/ porque leem o código do bot
 site/                    O site (projeto Astro à parte): início, wiki, painel da conta, termos e privacidade

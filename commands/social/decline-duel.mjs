@@ -50,11 +50,15 @@ export default {
                     : "✅ Desafio recusado com sucesso.";
 
             const embed = createEmbed({
-                title: "⚔️ Desafio PvP",
+                section: "Duelo",
+                title: "⚔️ Desafio recusado",
 
                 description,
 
-                color: HELENA_COLORS.primary
+                color: recusado ? HELENA_COLORS.wait : HELENA_COLORS.warning,
+                mood: recusado ? "dormindo" : "alerta",
+
+                footer: "Quem desafia usa /atacar"
             });
 
             return {

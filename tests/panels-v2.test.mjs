@@ -1,6 +1,6 @@
 process.env.HELENA_OWNER_ID = "777000000000000001";
 
-import { set, getPlayer, createPrefixRunner } from "./helpers.mjs";
+import { set, getPlayer, createPrefixRunner, receiptOf } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -62,18 +62,20 @@ test("saldo no V2: avatar ao lado do título, contas em linhas, patrimônio gran
     const [head, ...rest] = view.layout[0].components;
 
     assert.equal(head.type, "section");
-    assert.equal(head.texts[0], "## 🏦 Helena Bank");
-    assert.match(head.texts[1], /\*\*Conta de Eu Mesmo\*\*\n⭐ Nível 4 · ✨ 320 XP/);
+    assert.equal(head.texts[0], "-# HELENA · BANCO");
+    assert.equal(head.texts[1], "## 🏦 Extrato de Eu Mesmo");
+    assert.equal(head.texts[2], "-# nível **4** · 320 XP");
     assert.equal(head.accessory.type, "thumbnail");
     assert.equal(head.accessory.url, ME.avatarUrl);
 
     const text = allText(view.layout);
 
-    assert.match(text, /\*\*👛 Carteira:\*\* R\$ 1\.234,50/);
-    assert.match(text, /\*\*🏛️ Banco:\*\* R\$ 5\.000,00/);
-    assert.match(text, /\*\*💎 Gemas:\*\* 7/);
+    // as contas vão num recibo; o patrimônio, em letra grande logo abaixo
+    assert.match(text, /Carteira ·+ R\$ 1\.234,50/);
+    assert.match(text, /Banco ·+ R\$ 5\.000,00/);
+    assert.match(text, /Gemas ·+ 7/);
     assert.match(text, /-# 💰 Patrimônio total\\n# R\$ 6\.234,50/);
-    assert.doesNotMatch(text, /━━/, "o enfeite do clássico não vai para o V2");
+    assert.doesNotMatch(text, /━━/, "o enfeite antigo não existe mais");
     assert.doesNotMatch(text, /Dinheiro sujo/);
 
     assert.deepEqual(customIds(view.layout), [`banco:dep:${OWNER}`, `banco:sac:${OWNER}`, `banco:trf:${OWNER}`]);
@@ -82,10 +84,14 @@ test("saldo no V2: avatar ao lado do título, contas em linhas, patrimônio gran
 test("saldo: dinheiro sujo só aparece para quem tem, e fica fora do patrimônio", () => {
     const view = buildBalance({ player: player({ dirty_money: 90_000 }), controls: [] });
 
-    assert.match(allText(view.layout), /\*\*🧺 Dinheiro sujo:\*\* R\$ 900,00/);
+    assert.match(allText(view.layout), /Dinheiro sujo ·+ R\$ 900,00/);
     assert.match(allText(view.layout), /# R\$ 6\.234,50/);
 
-    assert.match(JSON.stringify(view.embed.fields), /Dinheiro sujo/);
+    // no clássico também: a linha existe e o patrimônio não a soma
+    const rows = receiptOf(view.embed);
+
+    assert.match(rows["Dinheiro sujo"], /R\$ 900,00/);
+    assert.match(rows["Patrimônio"], /R\$ 6\.234,50/);
 });
 
 test("saldo sem avatar https não leva miniatura (o título fica solto)", () => {
@@ -95,15 +101,14 @@ test("saldo sem avatar https não leva miniatura (o título fica solto)", () => 
     assert.equal(view.layout[0].components[0].type, "text");
 });
 
-test("o clássico do saldo continua o mesmo embed de antes", () => {
+test("o clássico do saldo é o extrato: um recibo na descrição, sem campos soltos", () => {
     const view = buildBalance({ player: player(), username: "Eu Mesmo", controls: [] });
 
-    assert.equal(view.embed.title, "🏦 Helena Bank");
-    assert.match(view.embed.description, /\*\*Conta de Eu Mesmo\*\*/);
+    assert.equal(view.embed.title, "🏦 Extrato de Eu Mesmo");
+    assert.match(view.embed.description, /nível \*\*4\*\* · 320 XP/);
 
-    assert.deepEqual(view.embed.fields.map(field => field.name), [
-        "👛 Carteira", "🏛️ Banco", "💎 Gemas", "⭐ Nível", "✨ Experiência", "━━━━━━━━━━━━━━━━", "💰 Patrimônio total"
-    ]);
+    assert.deepEqual(Object.keys(receiptOf(view.embed)), ["Carteira", "Banco", "Gemas", "Patrimônio"]);
+    assert.deepEqual(view.embed.fields, []);
 });
 
 test("/saldo: classic com embed e botões; V2 com o layout; o layout nunca vai no clássico", async () => {
@@ -114,7 +119,7 @@ test("/saldo: classic com embed e botões; V2 com o layout; o layout nunca vai n
     const classic = (await run("hsaldo")).sent[0];
 
     assert.ok(!("layout" in classic));
-    assert.equal(classic.embeds[0].title, "🏦 Helena Bank");
+    assert.equal(classic.embeds[0].title, "🏦 Extrato de Eu Mesmo");
     assert.equal(classic.components[0].components.length, 3);
 
     await withV2(async () => {
@@ -152,7 +157,7 @@ test("ajuda no V2: uma seção por categoria com o botão Abrir, o mesmo clique 
     // Buscar e Fechar embaixo, e o rodapé fora do container
     assert.match(allText(view.layout), /ajuda:buscar:/);
     assert.match(allText(view.layout), /ajuda:fechar:/);
-    assert.match(view.layout[1].content, /^-# Helena • \d+ comandos$/);
+    assert.match(view.layout[1].content, /^-# \d+ comandos no total$/);
 
     // o clássico continua com o menu
     assert.equal(view.components[0].components[0].type, "select");
@@ -224,7 +229,7 @@ test("/ajuda no V2: sai o layout, sem embed, e o clique segue o layout; no clás
     const classic = (await run("hajuda")).sent[0];
 
     assert.ok(!("layout" in classic));
-    assert.equal(classic.embeds[0].title, "📖 Central de Ajuda da Helena");
+    assert.equal(classic.embeds[0].title, "📖 Central de ajuda");
 
     await withV2(async () => {
         const v2 = (await run("hajuda")).sent[0];

@@ -142,10 +142,12 @@ export default {
 
             return embedResponse(
                 createEmbed({
+                    section: "Itens",
                     title: "🍽️ Item usado",
                     description: describeUse(used),
                     color: HELENA_COLORS.success,
-                    footer: "Helena • Use /usaritem para o painel."
+                    mood: "feliz",
+                    footer: "/usaritem abre o painel completo"
                 })
             );
 

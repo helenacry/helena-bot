@@ -5,11 +5,13 @@ import { GEM_BONUS } from "../../config/gems.mjs";
 import { duration } from "../../utils/duration-text.mjs";
 import { formatDuration } from "../../utils/time.mjs";
 
+import { signed } from "../../utils/receipt.mjs";
+
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 // ==========================================
@@ -21,59 +23,45 @@ import {
 // coisa. Coletou em um, o outro já mostra a espera. As regras e os números
 // ficam em config/gems.mjs.
 
+const gems = value => value.toLocaleString("pt-BR");
+
 function cooldownResponse(result) {
     return embedResponse(
-        createEmbed({
-            title: "⏳ Helena Gems",
+        ledgerEmbed({
+            section: "Gemas",
+            title: "⏳ Bônus de gemas em recarga",
 
-            description:
-                "Você já coletou o bônus de gemas.",
+            say: "Você já coletou o bônus. Volte em **" + formatDuration(result.remaining) + "**.",
 
-            color: HELENA_COLORS.warning,
+            rows: [["Gemas", gems(result.gems)]],
 
-            fields: [
-                {
-                    name: "💎 Gemas disponíveis",
-                    value: "**" + result.gems.toLocaleString("pt-BR") + " 💎**",
-                    inline: true
-                },
-                {
-                    name: "⏰ Próxima coleta",
-                    value: "**" + formatDuration(result.remaining) + "**",
-                    inline: true
-                }
-            ],
+            color: HELENA_COLORS.wait,
+            mood: "dormindo",
 
-            footer: "Helena Gems • A espera vale para todos os servidores."
+            footer: "A espera vale para todos os servidores"
         })
     );
 }
 
 function claimedResponse(result) {
     return embedResponse(
-        createEmbed({
-            title: "💎 Helena Gems",
+        ledgerEmbed({
+            section: "Gemas",
+            title: "💎 Bônus de gemas coletado",
 
-            description:
-                "**Bônus coletado!**\n\n" +
-                "Você ganhou **+" + result.amount + " 💎**.",
+            say: "Gemas novas na conta. Elas valem em qualquer servidor.",
 
-            color: HELENA_COLORS.success,
-
-            fields: [
-                {
-                    name: "💎 Gemas disponíveis",
-                    value: "**" + result.gems.toLocaleString("pt-BR") + " 💎**",
-                    inline: true
-                },
-                {
-                    name: "⏰ Próxima coleta",
-                    value: "**" + duration(GEM_BONUS.cooldown) + "**",
-                    inline: true
-                }
+            rows: [
+                ["Bônus", signed(result.amount, result.amount + " gemas")],
+                ["Gemas", gems(result.gems)],
+                null,
+                ["Próxima coleta", "em " + duration(GEM_BONUS.cooldown)]
             ],
 
-            footer: "Helena Gems • Suas gemas, em qualquer servidor."
+            color: HELENA_COLORS.primary,
+            mood: "festa",
+
+            footer: "Também dá para coletar pelo painel do site"
         })
     );
 }

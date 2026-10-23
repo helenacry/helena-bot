@@ -1,5 +1,5 @@
 import { createEmbed,embedResponse,errorEmbed,HELENA_COLORS } from "../../utils/embed.mjs";
-const ok=(title,description)=>embedResponse(createEmbed({title,description,color:HELENA_COLORS.primary}));
+const ok=(title,description)=>embedResponse(createEmbed({section:"Admin",title,description,color:HELENA_COLORS.primary,mood:"feliz"}));
 const fail=e=>errorEmbed(e.message||String(e));
 import {adminChange} from "../../services/platform/admin.mjs";
 export default {name:"adminsaldo",description:"Adiciona centavos à carteira",options:[{name:"usuario",description:"Jogador",type:"user",required:true},{name:"quantidade",description:"Quantidade",type:"integer",required:true}],async execute(i){try{const g=i.guildId,u=i.user.id,o=i.data.options||{};adminChange(g,u,String(o.usuario),"saldo",Number(o.quantidade));return ok("🛡️ Administração","Operação realizada e registrada.");}catch(e){return fail(e);}}};

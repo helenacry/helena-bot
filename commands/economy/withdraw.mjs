@@ -6,10 +6,10 @@ import {
 } from "../../database/economy.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 export default {
@@ -55,48 +55,24 @@ export default {
             );
 
             return embedResponse(
-                createEmbed({
-                    title: "🏦 Helena Bank",
+                ledgerEmbed({
+                    section: "Banco",
+                    title: "💵 Saque feito",
 
-                    description:
-                        "### Saque realizado!\n\n" +
-                        "O dinheiro foi transferido do banco " +
-                        "para sua carteira com sucesso.",
+                    say: "O dinheiro saiu do banco e já está na sua carteira.",
 
-                    color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "💵 Valor sacado",
-                            value: `**${formatMoney(amount)}**`,
-                            inline: false
-                        },
-                        {
-                            name: "👛 Carteira atual",
-                            value: `**${formatMoney(player.wallet)}**`,
-                            inline: true
-                        },
-                        {
-                            name: "🏛️ Saldo bancário",
-                            value: `**${formatMoney(player.bank)}**`,
-                            inline: true
-                        },
-                        {
-                            name: "💰 Patrimônio total",
-                            value: `**${formatMoney(
-                                player.wallet + player.bank
-                            )}**`,
-                            inline: false
-                        },
-                        {
-                            name: "🔒 Status",
-                            value: "Saque concluído com sucesso.",
-                            inline: false
-                        }
+                    rows: [
+                        ["Sacado", formatMoney(amount)],
+                        null,
+                        ["Carteira", formatMoney(player.wallet)],
+                        ["Banco", formatMoney(player.bank)],
+                        ["Patrimônio", formatMoney(player.wallet + player.bank)]
                     ],
 
-                    footer:
-                        "Helena Bank • Seu dinheiro, seu futuro."
+                    color: HELENA_COLORS.economy,
+                    mood: "dinheiro",
+
+                    footer: "Dinheiro na carteira pode ser roubado"
                 })
             );
 

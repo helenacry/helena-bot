@@ -34,18 +34,21 @@ export default {
             }
 
             const description = [
-                `${mention(result.sender)}: ${result.senderHp} HP (causou ${result.senderDamage} de dano)`,
-                `${mention(result.target)}: ${result.targetHp} HP (causou ${result.targetDamage} de dano)`,
+                `${mention(result.sender)}\n❤️ ${result.senderHp} HP · 🗡️ causou ${result.senderDamage} de dano`,
+                `${mention(result.target)}\n❤️ ${result.targetHp} HP · 🗡️ causou ${result.targetDamage} de dano`,
                 "",
                 result.winner
-                    ? `🏆 Vencedor: ${mention(result.winner)} (+${DUEL_RULES.winXp} XP)`
-                    : "🤝 Empate!"
+                    ? `> 🏆 **Vencedor:** ${mention(result.winner)} (+${DUEL_RULES.winXp} XP)`
+                    : "> 🤝 **Empate!**"
             ].join("\n");
 
             const embed = createEmbed({
+                section: "Duelo",
                 title: "⚔️ Resultado do duelo",
                 description,
-                color: HELENA_COLORS.primary
+                color: HELENA_COLORS.error,
+                mood: result.winner ? "bravo" : "alerta",
+                footer: "Quem se machucou se cura no /hospital"
             });
 
             return {

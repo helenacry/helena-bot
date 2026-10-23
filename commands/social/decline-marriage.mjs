@@ -29,16 +29,18 @@ export default {
 
             return embedResponse(
                 createEmbed({
+                    section: "Casamento",
                     title: "💔 Pedido recusado",
 
                     description:
-                        "Você recusou o pedido de casamento.\n\n" +
-                        "Seu estado civil permanece inalterado.",
+                        "Você recusou o pedido de casamento. " +
+                        "Seu estado civil continua como estava.",
 
-                    color: HELENA_COLORS.neutral,
+                    color: HELENA_COLORS.wait,
+                    mood: "triste",
 
                     footer:
-                        "Helena • Relacionamentos"
+                        "Cada um segue o seu caminho"
                 })
             );
 

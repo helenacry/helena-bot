@@ -2,7 +2,7 @@ import "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 // A conversa de exemplo e o laboratório do crime do site (site/src/lib/sim.ts e crime-math.ts)
 // mostram o jogo de verdade: regras iguais às do bot, textos iguais aos dos comandos.
@@ -19,7 +19,8 @@ const seq = (...values) => {
     return () => (index < values.length ? values[index++] : 0.5);
 };
 
-const field = (reply, name) => reply.embed.fields.find(item => item.name.includes(name))?.value;
+// O recibo da resposta como { nome: valor } (as linhas finas, `null`, ficam de fora).
+const rows = reply => Object.fromEntries(reply.embed.rows.filter(Boolean));
 
 // ==========================================
 // MATEMÁTICA DO CRIME
@@ -126,8 +127,11 @@ test("daily: paga o prêmio do dia 1 e a conta bate (carteira de exemplo R$ 10 +
     const { state, reply } = sim.run(sim.initialState(), "daily", NOW);
 
     assert.equal(state.wallet, 10 + game.daily.ladder[0]);
-    assert.match(field(reply, "Total recebido"), /R\$ 500,00/);
-    assert.match(field(reply, "Carteira atual"), /R\$ 510,00/);
+    assert.equal(reply.embed.title, "🎁 Recompensa do dia");
+    assert.equal(rows(reply)["Total"], "+R$ 500,00");
+    assert.equal(rows(reply)["Carteira"], "R$ 510,00");
+    assert.equal(rows(reply)["Bônus de sequência"], undefined, "no primeiro dia não há bônus");
+    assert.match(reply.embed.say, /Dia \*\*1\*\* de 7 da sua sequência/);
     assert.equal(reply.embed.accent, "success");
     assert.equal(state.used.daily, true);
     assert.equal(sim.availability(state, "daily", NOW).ok, false, "em recarga");
@@ -139,16 +143,18 @@ test("trabalhar: paga o primeiro emprego, gasta a energia de verdade e dá o XP 
     assert.equal(state.wallet, 10 + data.jobs[0].salary);
     assert.equal(state.energy, game.energy.max - game.work.energy);
     assert.equal(state.xp, game.work.xp);
-    assert.match(field(reply, "Energia restante"), new RegExp(`${game.energy.max - game.work.energy}/${game.energy.max}`));
-    assert.match(field(reply, "Emprego"), new RegExp(data.jobs[0].name));
+    assert.match(rows(reply)["Energia"], new RegExp(`^-${game.work.energy} \\(${game.energy.max - game.work.energy}/${game.energy.max}\\)$`));
+    assert.match(reply.embed.say, new RegExp(`\\*\\*${data.jobs[0].name}\\*\\*`));
 });
 
 test("crime que dá errado: multa da carteira (nunca passa dela), 30 minutos de cadeia e bloqueio dos comandos", () => {
     // 0,9 falha; a história 0 não fere; a multa sorteada em 0,5 do intervalo
     const { state, reply } = sim.run(sim.initialState(), "crime", NOW, seq(0.9, 0, 0.5));
 
-    assert.equal(reply.embed.title, "🚨 Você foi pego!");
+    assert.equal(reply.embed.title, "🚨 Você foi pego");
     assert.equal(reply.embed.accent, "error");
+    assert.equal(rows(reply)["Multa"], "-R$ 10,00");
+    assert.equal(rows(reply)["Prisão"], "30m 0s");
     assert.ok(state.wallet >= 0, "a multa nunca deixa a carteira negativa");
     assert.equal(state.wallet, 0, "a carteira de R$ 10 paga o que tem");
     assert.equal(state.jailEndsAt, NOW + game.crime.jailSeconds * 1000);
@@ -171,8 +177,8 @@ test("crime que dá errado: multa da carteira (nunca passa dela), 30 minutos de 
     const prison = sim.run(state, "prisao", NOW + 1000).reply;
 
     assert.equal(prison.live, "jail");
-    assert.match(field(prison, "Tempo restante"), /29m 59s/);
-    assert.match(field(prison, "Capturas"), /1/);
+    assert.match(rows(prison)["Tempo restante"], /29m 59s/);
+    assert.equal(rows(prison)["Capturas"], "1");
 
     // passada a pena, está livre
     assert.equal(sim.isJailed(state, NOW + game.crime.jailSeconds * 1000 + 1), false);
@@ -183,8 +189,10 @@ test("crime que dá certo: dinheiro sujo na faixa da história, XP do bot e o to
     const first = sim.run(sim.initialState(), "crime", NOW, seq(0.1, 0.5, 0, 0.5, 0.5));
     const story = game.crime.successStories[0];
 
-    assert.equal(first.reply.embed.title, "🕵️ Crime bem-sucedido!");
-    assert.equal(first.reply.embed.description, story.text);
+    assert.equal(first.reply.embed.title, "🕵️ Crime bem-sucedido");
+    assert.equal(first.reply.embed.say, story.text);
+    assert.equal(first.reply.embed.accent, "economy", "dinheiro sujo é ouro");
+    assert.match(first.reply.embed.note, /^`NÃO VALE NADA` até passar pela `\/lavagem`\.$/);
     assert.ok(first.state.dirty >= story.min && first.state.dirty <= story.max);
     assert.ok(first.state.xp >= game.crime.xp.min && first.state.xp <= game.crime.xp.max);
     assert.equal(first.state.wins, 1);
@@ -207,6 +215,9 @@ test("a loja de exemplo usa os consumíveis do bot, com o que cabe na carteira",
     assert.match(reply.embed.fields[0].value, /Você pode comprar até \*\*3\*\*/);
     assert.match(reply.embed.fields[1].value, /Você pode comprar até \*\*1\*\*/);
     assert.match(reply.embed.fields[2].value, /Faltam \*\*R\$ 5,00\*\*/);
+
+    // a carteira vai no recibo, como na loja do bot
+    assert.deepEqual(rows(reply), { Carteira: "R$ 10,00", Gemas: "0" });
 });
 
 test("nenhum comando muda o estado recebido (a conversa pode voltar ao começo sem sobra)", () => {
@@ -222,15 +233,15 @@ test("nenhum comando muda o estado recebido (a conversa pode voltar ao começo s
 // OS TEXTOS SÃO OS DOS COMANDOS DE VERDADE
 // ==========================================
 
-test("os títulos e os nomes dos campos das respostas de exemplo existem nos comandos do bot", () => {
+test("os títulos, as linhas do recibo e os rodapés das respostas de exemplo existem nos comandos do bot", () => {
     const bot = file => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 
     const expected = {
-        "commands/economy/daily.mjs": ["🎁 Helena Daily", "**Recompensa resgatada!**", "💰 Recompensa base", "🔥 Bônus de sequência", "💵 Total recebido", "🔥 Sequência atual", "🏆 Seu recorde", "👛 Carteira atual", "⏰ Próximo resgate", "Helena Daily • Sua dedicação merece recompensas."],
-        "commands/economy/work.mjs": ["💼 Expediente concluído!", "👔 Emprego", "💰 Pagamento", "✨ Experiência", "⚡ Energia consumida", "🔋 Energia restante", "⭐ Nível", "📊 XP total", "⏰ Próximo expediente", "Helena • O esforço constrói sua fortuna."],
-        "commands/crime/crime.mjs": ["🕵️ Crime bem-sucedido!", "💎 Golpe de mestre!", "💸 Dinheiro sujo", "🧺 Total sujo", "⏰ Próximo crime", "Helena • Dinheiro sujo não compra nada. Use /lavagem.", "🚨 Você foi pego!", "💸 Multa", "⛓️ Prisão", "🩸 Ferimento", "Helena • Use /prisao para acompanhar sua pena."],
-        "commands/crime/prison.mjs": ["⏳ Tempo restante", "📜 Pena total", "⚖️ Motivo", "🕵️ Crimes", "✅ Sucessos", "🚨 Capturas", "💸 Total arrecadado (sujo)", "⛓️ Você está preso", "🔓 Você está livre", "Helena • Atualizado automaticamente.", "Helena • Ficha criminal"],
-        "services/crime/prison.mjs": ["⛓️ Você está preso", "Este comando fica bloqueado enquanto", "você cumpre pena. Consultas continuam", "📜 Motivo"]
+        "commands/economy/daily.mjs": ['section: "Daily"', "🎁 Recompensa do dia", "Recompensa base", '"Total"', '"Carteira"', "de 7 da sua sequência", "seguidos · recorde de", "Volte em 24 horas para manter a sequência"],
+        "commands/economy/work.mjs": ['section: "Trabalho"', "💼 Expediente concluído", "feito e pago.", '"Pagamento"', '"Experiência"', '"Energia"', '"Carteira"', '"Nível"', "Próximo expediente em 1 hora"],
+        "commands/crime/crime.mjs": ['section: "Crime"', "🕵️ Crime bem-sucedido", "💎 Golpe de mestre", '"Dinheiro sujo"', '"Total sujo"', "não vale nada", "/lavagem", "Próximo crime em ", "🚨 Você foi pego", '"Multa"', '"Prisão"', '"Ferimento"', "nada (carteira vazia)", "Preso, você não trabalha, não compra e não mexe em dinheiro.", "/prisao acompanha a sua pena"],
+        "commands/crime/prison.mjs": ['section: "Prisão"', '"Tempo restante"', '"Pena total"', '"Motivo"', '"Crimes"', '"Sucessos"', '"Capturas"', '"Total arrecadado (sujo)"', "⛓️ Você está preso", "🔓 Você está livre", "Trabalho, compras, depósitos e outras", "Nenhuma pena em curso.", "Atualizado automaticamente", "Ficha criminal"],
+        "services/crime/prison.mjs": ['section: "Prisão"', "⛓️ Você está preso", "Este comando fica bloqueado enquanto", "você cumpre pena. Consultas continuam", '"Tempo restante"', '"Motivo"', "Atualizado automaticamente. Use /prisao"]
     };
 
     let checked = 0;
@@ -249,20 +260,92 @@ test("os títulos e os nomes dos campos das respostas de exemplo existem nos com
     // a loja: título e rodapé vêm de services/panels/shop-view.mjs
     const shop = bot("services/panels/shop-view.mjs");
 
-    for (const text of ["Helena Loja", "Toque no número do item para comprar", "Você pode comprar até", "Faltam"]) {
+    for (const text of ['section: "Loja"', "nesta prateleira. ", "Toque no número do item para comprar", "os verdes cabem na sua carteira", "Você pode comprar até", "Faltam", "você tem ", '"Gemas"', "Página ${current}/${pages}"]) {
         assert.ok(shop.includes(text), `shop-view.mjs não tem mais "${text}"`);
     }
+});
 
-    // e as cores das barras dos embeds são as do bot
-    const colors = bot("utils/embed.mjs");
+// ==========================================
+// O DESENHO É O MESMO DO BOT
+// ==========================================
 
-    for (const hex of ["#22C55E", "#EF4444", "#F59E0B", "#A855F7", "#8755DA"]) {
-        assert.ok(colors.includes(hex), `utils/embed.mjs não tem mais ${hex}`);
+const { receipt: botReceipt } = await import("../utils/receipt.mjs");
+const { formatDuration } = await import("../utils/time.mjs");
+const { PALETTE, MOODS } = await import("../config/theme.mjs");
+const { HELENA_COLORS } = await import("../utils/embed.mjs");
+const { format } = await import("../site/src/lib/format.ts").then(module => ({ format: module }));
+
+const lines = text => text.replace(/^```\n|\n```$/g, "").split("\n");
+
+test("o recibo do site tem a mesma largura, o mesmo pontilhado e as mesmas linhas finas do bot", () => {
+    const cases = [
+        [["Pagamento", "+R$ 420,00"], ["Experiência", "+25 XP"], null, ["Carteira", "R$ 1.350,00"]],
+        [["Total arrecadado (sujo)", "R$ 12.345.678,90"], ["Crimes", "3"]],
+        [null, ["Gemas", "7"], null],
+        [["A", "1"]]
+    ];
+
+    // e todo recibo que o simulador monta de verdade
+    for (const command of sim.COMMANDS) {
+        const { reply } = sim.run(sim.initialState(), command, NOW, seq(0.9, 0, 0.5));
+
+        if (reply.embed) cases.push(reply.embed.rows);
     }
 
+    for (const rowsOfCase of cases) {
+        assert.deepEqual(sim.receipt(rowsOfCase), lines(botReceipt(rowsOfCase)), JSON.stringify(rowsOfCase));
+    }
+
+    assert.deepEqual(sim.receipt([]), []);
+    assert.deepEqual(sim.receipt([null]), []);
+});
+
+test("o tempo do site é escrito como o bot escreve (1h 2m 5s)", () => {
+    for (const seconds of [0, 1, 59, 60, 1781, 1800, 3599, 3600, 3725, 86400, 90061]) {
+        assert.equal(format.span(seconds), formatDuration(seconds), `${seconds} s`);
+    }
+});
+
+test("o sinal e o carimbo seguem as regras de utils/receipt.mjs", async () => {
+    const { signed, stamp } = await import("../utils/receipt.mjs");
+
+    for (const [amount, text] of [[500, "R$ 500,00"], [-15, "R$ 15,00"], [0, "R$ 0,00"], [-3, "-3 HP"], [25, "+25 XP"]]) {
+        assert.equal(sim.signed(amount, text), signed(amount, text), `${amount} ${text}`);
+    }
+
+    assert.equal(sim.stamp("não vale nada"), stamp("não vale nada"));
+});
+
+test("cada resposta usa um humor que existe e uma cor que vem da paleta do bot", () => {
     const tokens = readFileSync(new URL("../site/src/styles/tokens.css", import.meta.url), "utf8").toLowerCase();
 
-    for (const hex of ["#22c55e", "#ef4444", "#f59e0b", "#a855f7", "#8755da"]) {
-        assert.ok(tokens.includes(hex), `tokens.css não tem a cor ${hex} do embed`);
+    // as barras do embed no site são as mesmas do bot (config/theme.mjs -> HELENA_COLORS)
+    for (const [accent, color] of [
+        ["primary", HELENA_COLORS.primary],
+        ["economy", HELENA_COLORS.economy],
+        ["success", HELENA_COLORS.success],
+        ["error", HELENA_COLORS.error],
+        ["wait", HELENA_COLORS.wait]
+    ]) {
+        assert.ok(tokens.includes(`--embed-${accent}: ${color.toLowerCase()};`), `tokens.css não tem --embed-${accent}: ${color}`);
     }
+
+    assert.equal(HELENA_COLORS.economy, PALETTE.gold);
+
+    // todas as respostas: humor da lista, imagem publicada no site e cor conhecida
+    const accents = new Set(["primary", "economy", "success", "error", "wait"]);
+
+    for (const command of sim.COMMANDS) {
+        for (const rng of [seq(0.1, 0.5, 0, 0.5, 0.5), seq(0.9, 0, 0.5)]) {
+            const { reply } = sim.run(sim.initialState(), command, NOW, rng);
+
+            if (!reply.embed) continue;
+
+            assert.ok(MOODS.includes(reply.embed.mood), `${command}: humor ${reply.embed.mood}`);
+            assert.ok(accents.has(reply.embed.accent), `${command}: cor ${reply.embed.accent}`);
+            assert.ok(existsSync(new URL(`../site/public/bot/mood-${reply.embed.mood}.png`, import.meta.url)), `${command}: sem imagem do humor`);
+        }
+    }
+
+    assert.ok(existsSync(new URL("../site/public/bot/helena.png", import.meta.url)), "ícone do autor e do rodapé");
 });

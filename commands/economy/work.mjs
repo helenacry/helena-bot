@@ -28,28 +28,17 @@ import {
 } from "../../services/economy/energy.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
+import { signed } from "../../utils/receipt.mjs";
+
+import { formatDuration } from "../../utils/time.mjs";
+
 const CONFIG = WORK_CONFIG;
-
-function formatTime(seconds) {
-    const value = Math.max(0, Math.floor(seconds));
-
-    const hours = Math.floor(value / 3600);
-    const minutes = Math.floor((value % 3600) / 60);
-    const secs = value % 60;
-
-    return [
-        hours > 0 ? hours + "h" : null,
-        minutes + "m",
-        secs + "s"
-    ].filter(Boolean).join(" ");
-}
 
 export default {
     name: "trabalhar",
@@ -126,14 +115,19 @@ export default {
                 if (remaining > 0) {
                     db.exec("ROLLBACK");
 
-                    return warningEmbed(
-                        "Expediente indisponível",
-                        "Você já trabalhou recentemente!\n\n" +
-                        "👔 **Emprego:** " + job.name + "\n" +
-                        "💰 **Salário:** " + formatMoney(reward) + "\n\n" +
-                        "⏰ **Próximo trabalho em:** " +
-                        formatTime(remaining) + "\n\n" +
-                        "Aproveite para realizar outras atividades."
+                    return embedResponse(
+                        ledgerEmbed({
+                            section: "Trabalho",
+                            title: "⏳ Você já trabalhou",
+                            say: "O próximo expediente abre em **" + formatDuration(remaining) + "**.",
+                            rows: [
+                                ["Emprego", job.name],
+                                ["Salário", formatMoney(reward)]
+                            ],
+                            color: HELENA_COLORS.wait,
+                            mood: "dormindo",
+                            footer: "Enquanto isso: /daily, /missoes ou /crime"
+                        })
                     );
                 }
 
@@ -178,21 +172,20 @@ export default {
                 if (!energyResult.success) {
                     db.exec("ROLLBACK");
 
-                    return warningEmbed(
-                        "Energia insuficiente",
-                        "Você não possui energia suficiente para trabalhar.\n\n" +
-                        "⚡ **Custo:** " +
-                        ENERGY_CONFIG.workCost +
-                        " pontos\n" +
-                        "🔋 **Energia atual:** " +
-                        energyResult.energy +
-                        "/" +
-                        energyResult.max +
-                        "\n" +
-                        "❌ **Faltam:** " +
-                        energyResult.missing +
-                        " pontos\n\n" +
-                        "Use `/energia` para acompanhar sua regeneração."
+                    return embedResponse(
+                        ledgerEmbed({
+                            section: "Trabalho",
+                            title: "🪫 Sem energia para trabalhar",
+                            say: "Você precisa descansar um pouco antes do próximo expediente.",
+                            rows: [
+                                ["Custo", ENERGY_CONFIG.workCost + " de energia"],
+                                ["Você tem", energyResult.energy + "/" + energyResult.max],
+                                ["Faltam", String(energyResult.missing)]
+                            ],
+                            color: HELENA_COLORS.warning,
+                            mood: "dormindo",
+                            footer: "/energia mostra quando ela volta"
+                        })
                     );
                 }
 
@@ -273,77 +266,31 @@ export default {
                 // ==================================
 
                 return embedResponse(
-                    createEmbed({
-                        title: "💼 Expediente concluído!",
+                    ledgerEmbed({
+                        section: "Trabalho",
+                        title: "💼 Expediente concluído",
 
-                        description:
-                            "Você concluiu seu trabalho e recebeu sua recompensa." +
+                        say:
+                            "Dia de trabalho como **" + job.name + "** feito e pago." +
                             (
                                 leveledUp
-                                    ? "\n\n🎉 **Parabéns! Você alcançou o nível " +
-                                      updated.level + "!**"
-                                    : "\n\nContinue trabalhando para evoluir!"
+                                    ? "\n> 🎉 **Subiu para o nível " + updated.level + "!**"
+                                    : ""
                             ),
 
-                        color: HELENA_COLORS.success,
-
-                        fields: [
-                            {
-                                name: "👔 Emprego",
-                                value: "**" + job.name + "**",
-                                inline: false
-                            },
-                            {
-                                name: "💰 Pagamento",
-                                value: "**+" + formatMoney(reward) + "**",
-                                inline: true
-                            },
-                            {
-                                name: "✨ Experiência",
-                                value: "**+" + CONFIG.xp + " XP**",
-                                inline: true
-                            },
-                            {
-                                name: "⚡ Energia consumida",
-                                value:
-                                    "-" + ENERGY_CONFIG.workCost,
-                                inline: true
-                            },
-                            {
-                                name: "🔋 Energia restante",
-                                value:
-                                    energyResult.energy +
-                                    "/" +
-                                    energyResult.max,
-                                inline: true
-                            },
-                            {
-                                name: "👛 Carteira atual",
-                                value:
-                                    "**" +
-                                    formatMoney(updated.wallet) +
-                                    "**",
-                                inline: true
-                            },
-                            {
-                                name: "⭐ Nível",
-                                value: String(updated.level),
-                                inline: true
-                            },
-                            {
-                                name: "📊 XP total",
-                                value: String(updated.xp),
-                                inline: true
-                            },
-                            {
-                                name: "⏰ Próximo expediente",
-                                value: "Em 1 hora",
-                                inline: false
-                            }
+                        rows: [
+                            ["Pagamento", signed(reward, formatMoney(reward))],
+                            ["Experiência", signed(CONFIG.xp, CONFIG.xp + " XP")],
+                            ["Energia", signed(-ENERGY_CONFIG.workCost, ENERGY_CONFIG.workCost + " (" + energyResult.energy + "/" + energyResult.max + ")")],
+                            null,
+                            ["Carteira", formatMoney(updated.wallet)],
+                            ["Nível", updated.level + " · " + updated.xp.toLocaleString("pt-BR") + " XP"]
                         ],
 
-                        footer:
-                            "Helena • O esforço constrói sua fortuna."
+                        color: HELENA_COLORS.success,
+                        mood: leveledUp ? "festa" : "feliz",
+
+                        footer: "Próximo expediente em 1 hora"
                     })
                 );
 

@@ -64,6 +64,7 @@ npm run site:install && npm run site:dev    # http://127.0.0.1:4321/helena-bot/
 | [Desenvolvimento](docs/development.md) | instalação, ambientes, variáveis, como criar um comando, testes |
 | [Estrutura do projeto](docs/structure.md) | onde fica cada pasta |
 | [Sistemas do jogo](docs/game-systems.md) | crime, perfil, painéis, layout V2, intervalo entre comandos, bolsa |
+| [Desenho das respostas do bot](docs/bot-design.md) | recibo, cores, humores da pelúcia e texto das respostas no chat |
 | [Painel do site (API)](docs/panel-api.md) | login com a VSync, rotas, segurança |
 | [Site e wiki](docs/site.md) | o site em Astro, a wiki em Markdown, os portões de qualidade |
 | [Hospedagem no Discloud](docs/hosting-discloud.md) | onde o bot oficial roda |

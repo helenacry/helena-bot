@@ -81,13 +81,13 @@
     --chat-danger: oklch(50% 0.17 18);
     --chat-primary: oklch(52% 0.22 289);
 
-    /* As cores das barras dos embeds do bot (HELENA_COLORS em utils/embed.mjs):
-       aparecem nas simulações como no app, não são cores do site. */
-    --embed-success: #22c55e;
-    --embed-error: #ef4444;
-    --embed-warning: #f59e0b;
-    --embed-economy: #a855f7;
-    --embed-primary: #8755da;
+    /* As cores das barras dos embeds do bot (HELENA_COLORS em utils/embed.mjs, que vêm de
+       PALETTE em config/theme.mjs): o chat usa as cores do tema escuro do site. */
+    --embed-primary: #8555ff;
+    --embed-economy: #e7b643;
+    --embed-success: #3ad693;
+    --embed-error: #ff6367;
+    --embed-wait: #7684b1;
 
 
     /* ---- tipografia ---- */

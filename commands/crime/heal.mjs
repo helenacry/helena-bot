@@ -1,11 +1,13 @@
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
     warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
@@ -44,32 +46,23 @@ export default {
 
             const wallet = getPlayer(guildId, userId).wallet;
 
-            const embed = createEmbed({
+            const embed = ledgerEmbed({
+                section: "Hospital",
                 title: "🏥 Tratamento concluído",
 
-                description: hpLine(HOSPITAL_RULES.maxHp),
+                say: "❤️ " + hpLine(HOSPITAL_RULES.maxHp),
 
-                color: HELENA_COLORS.success,
-
-                fields: [
-                    {
-                        name: "💸 Custo",
-                        value: formatMoney(cost),
-                        inline: true
-                    },
-                    {
-                        name: "🛡️ Proteção contra duelos",
-                        value: duration(HOSPITAL_RULES.protectionSeconds),
-                        inline: true
-                    },
-                    {
-                        name: "👛 Carteira",
-                        value: formatMoney(wallet),
-                        inline: true
-                    }
+                rows: [
+                    ["Custo", signed(-cost, formatMoney(cost))],
+                    ["Proteção contra duelos", duration(HOSPITAL_RULES.protectionSeconds)],
+                    null,
+                    ["Carteira", formatMoney(wallet)]
                 ],
 
-                footer: "Helena • Hospital"
+                color: HELENA_COLORS.success,
+                mood: "feliz",
+
+                footer: "Curado e protegido por um tempo"
             });
 
             return embedResponse(embed);

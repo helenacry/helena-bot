@@ -20,10 +20,13 @@ import {
 
 import {
     createEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
-import { SITE_URL } from "../../config/site.mjs";
+import { moodImage } from "../../config/theme.mjs";
+
+import { plural } from "../../utils/plural.mjs";
 
 import {
     container,
@@ -151,15 +154,12 @@ export function shopContext(guildId, userId) {
     };
 }
 
-// A linha do mercado no topo da loja (nada com a bolsa desligada). O
-// detalhe do índice e do item em alta está no /bolsa.
-const marketLines = market => market ? [marketLine(market)] : [];
-
-const plural = (count, one, many) =>
-    `${count} ${count === 1 ? one : many}`;
-
-const walletLine = (wallet, gems) =>
-    `👛 **Carteira:** ${formatMoney(wallet)}  •  💎 **Gemas:** ${gems}`;
+// A carteira e as gemas de quem olha, como as duas contas do recibo. A linha do mercado
+// (nada com a bolsa desligada) vai como nota; o detalhe do índice e do item em alta está no /bolsa.
+const walletRows = (wallet, gems) => [
+    ["Carteira", formatMoney(wallet)],
+    ["Gemas", String(gems)]
+];
 
 // O que a carteira e o limite do item permitem: quantas unidades dá
 // para comprar agora e a frase que aparece no cartão.
@@ -229,7 +229,7 @@ const toolButtons = ownerId => [
 // seção com o botão "Entrar" à direita. Os mesmos botões e customIds do desenho clássico,
 // então os cliques são tratados pelo mesmo código (shop-panels.mjs).
 
-const SHOP_ART = `${SITE_URL}assets/img/apple-touch-icon.png`;
+const SHOP_ART = moodImage("dinheiro");
 
 // Sem menção: num texto do V2 ela notificaria a pessoa (só no embed é visual). O painel é de
 // quem o abriu, então o nome não faz falta.
@@ -240,7 +240,7 @@ function homeLayout({ ownerId, wallet, gems, market, categories }) {
     return [
         container([
             ...headerBlock(
-                ["## 🛒 Loja da Helena", "Escolha uma prateleira.", shopMeta(ownerId, wallet, gems)],
+                ["-# HELENA · LOJA", "## 🛒 Loja da Helena", "Escolha uma prateleira.", shopMeta(ownerId, wallet, gems)],
                 thumbnail(SHOP_ART)
             ),
 
@@ -311,6 +311,7 @@ function shelfLayout({
     return [
         container([
             ...headerBlock([
+                `-# HELENA · LOJA`,
                 `## ${emoji} ${label}`,
                 shopMeta(ownerId, wallet, gems),
                 `${plural(total, "item", "itens")} · página ${current}/${pages}`
@@ -341,43 +342,30 @@ export function buildShopHome({
 
     const total = categories[0].count;
 
-    const embed = createEmbed({
-        title: "🛒 Helena Loja",
+    const embed = ledgerEmbed({
+        section: "Loja",
+        title: "🛒 Loja da Helena",
 
-        description: [
-            walletLine(wallet, gems),
-            ...marketLines(market),
-            "",
-            "Bem-vindo! Escolha uma prateleira no menu abaixo " +
-            "ou toque em **Ver tudo**."
-        ].join("\n"),
+        say: "Escolha uma prateleira no menu ou toque em **Ver tudo**.",
+
+        rows: walletRows(wallet, gems),
+
+        note: market ? marketLine(market) : "",
 
         color: HELENA_COLORS.economy,
+        mood: "dinheiro",
 
-        fields: [
-            ...categories.slice(1).map(entry => ({
-                name: `${entry.emoji} ${entry.label}`,
+        fields: categories.slice(1).map(entry => ({
+            name: `${entry.emoji} ${entry.label}`,
 
-                value:
-                    `${plural(entry.count, "item", "itens")}\n` +
-                    `A partir de **${formatMoney(entry.minPrice)}**`,
+            value:
+                `${plural(entry.count, "item", "itens")}\n` +
+                `a partir de **${formatMoney(entry.minPrice)}**`,
 
-                inline: true
-            })),
+            inline: true
+        })),
 
-            {
-                name: "💡 Dicas",
-
-                value: [
-                    "Comida e bebida repõem energia: use `/usaritem`.",
-                    "Itens que você não precisa? Toque em **Vender**."
-                ].join("\n"),
-
-                inline: false
-            }
-        ],
-
-        footer: `Helena • Loja • ${plural(total, "item", "itens")} à venda`
+        footer: `${plural(total, "item", "itens")} à venda · comida e bebida repõem energia`
     });
 
     return {
@@ -408,10 +396,12 @@ export function buildShopHome({
 export function buildShopClosed() {
     return {
         embed: createEmbed({
+            section: "Loja",
             title: "🛒 Loja fechada",
             description: "Volte sempre! Use `/loja` para abrir de novo.",
-            color: HELENA_COLORS.neutral,
-            footer: "Helena • Loja"
+            color: HELENA_COLORS.wait,
+            mood: "dormindo",
+            footer: "Até a próxima compra"
         }),
 
         components: []
@@ -472,15 +462,14 @@ export function buildShopView({
                     ? ` 🔥 em alta (+${formatPercent(market.hotBonusBp)})`
                     : ""
             )
-            : "indisponível";
+            : "não vende";
 
         const stack = Number.isFinite(item.maxStack)
             ? `/${item.maxStack}`
             : "";
 
         const lines = [
-            `💰 **${formatMoney(item.buyPrice)}**  •  💵 Venda: ${sell}`,
-            status[index].text,
+            `**${formatMoney(item.buyPrice)}** · venda ${sell}`,
             item.description
         ];
 
@@ -491,7 +480,8 @@ export function buildShopView({
         }
 
         lines.push(
-            `🎒 Você tem **${have}**${stack}  •  🆔 \`${item.id}\``
+            status[index].text,
+            `-# você tem ${have}${stack} · id \`${item.id}\``
         );
 
         return {
@@ -509,26 +499,24 @@ export function buildShopView({
         });
     }
 
-    const embed = createEmbed({
-        title: `🛒 Helena Loja • ${emoji} ${label}`,
+    const embed = ledgerEmbed({
+        section: "Loja",
+        title: `🛒 ${emoji} ${label}`,
 
-        description: [
-            walletLine(wallet, gems),
-            ...marketLines(market),
-            `📂 **Prateleira:** ${emoji} ${label} • ` +
-            plural(items.length, "item", "itens"),
-            "",
-            "Toque no número do item para comprar. " +
-            "Os verdes cabem na sua carteira."
-        ].join("\n"),
+        say:
+            `${plural(items.length, "item", "itens")} nesta prateleira. ` +
+            "Toque no número do item para comprar: os verdes cabem na sua carteira.",
+
+        rows: walletRows(wallet, gems),
+
+        note: market ? marketLine(market) : "",
 
         color: HELENA_COLORS.economy,
+        mood: "dinheiro",
 
         fields,
 
-        footer:
-            `Helena • Página ${current}/${pages} • ` +
-            plural(items.length, "item", "itens")
+        footer: `Página ${current}/${pages} · ${plural(items.length, "item", "itens")}`
     });
 
     // ==================================

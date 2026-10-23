@@ -1,6 +1,6 @@
 process.env.HELENA_OWNER_ID = "777000000000000001";
 
-import { set, getPlayer, createPrefixRunner } from "./helpers.mjs";
+import { set, getPlayer, createPrefixRunner, spaced } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -29,18 +29,20 @@ test("vitrine no V2: título com a imagem da Helena, quem olha, carteira e gemas
 
     assert.deepEqual(layoutProblems(view.layout), []);
 
-    const [head, ...rest] = view.layout[0].components;
+    // a seção leva até 3 textos; a carteira e as gemas seguem logo abaixo, soltas
+    const [head, meta] = view.layout[0].components;
 
     assert.equal(head.type, "section");
-    assert.equal(head.texts[0], "## 🛒 Loja da Helena");
-    assert.equal(head.texts[1], "Escolha uma prateleira.");
-    assert.equal(head.texts[2], `👛 ${"R$ 10,00".replace(" ", " ")} · 💎 26`);
+    assert.equal(head.texts[0], "-# HELENA · LOJA");
+    assert.equal(head.texts[1], "## 🛒 Loja da Helena");
+    assert.equal(head.texts[2], "Escolha uma prateleira.");
+    assert.equal(spaced(meta.content), "👛 R$ 10,00 · 💎 26");
     assert.equal(head.accessory.type, "thumbnail");
-    assert.match(head.accessory.url, /^https:\/\/.*\/assets\/img\/apple-touch-icon\.png$/);
+    assert.match(head.accessory.url, /^https:\/\/.*\/bot\/mood-dinheiro\.png$/, "a pelúcia do site, não o ícone antigo");
 
     // uma seção por prateleira (sem a "Todas"), cada uma com o botão Entrar à direita
     const shelves = shopCategories().slice(1);
-    const sections = sectionsOf(view.layout).slice(1);
+    const sections = sectionsOf(view.layout).slice(1);   // a primeira é o cabeçalho
 
     assert.equal(sections.length, shelves.length);
 
@@ -64,7 +66,7 @@ test("vitrine no V2: título com a imagem da Helena, quem olha, carteira e gemas
 test("a vitrine continua com o embed e o menu de antes (o clássico não muda)", () => {
     const view = buildShopHome({ ownerId: OWNER, wallet: 1_000, gems: 0 });
 
-    assert.equal(view.embed.title, "🛒 Helena Loja");
+    assert.equal(view.embed.title, "🛒 Loja da Helena");
     assert.equal(view.components[0].components[0].type, "select");
     assert.ok(view.layout, "e traz o layout V2");
 });
@@ -141,7 +143,7 @@ test("pelo prefixo, com o V2 ligado, a loja sai como seções com botão; deslig
     const classic = (await run("hloja")).sent[0];
 
     assert.ok(!("layout" in classic), "o clássico nunca leva o layout");
-    assert.equal(classic.embeds[0].title, "🛒 Helena Loja");
+    assert.equal(classic.embeds[0].title, "🛒 Loja da Helena");
 
     const before = process.env.HELENA_V2;
 

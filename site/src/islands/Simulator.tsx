@@ -15,13 +15,16 @@ import {
   type Reply,
   type SimState
 } from "../lib/sim.ts";
-import { clock } from "../lib/format.ts";
+import { span } from "../lib/format.ts";
+import { receipt } from "../lib/sim.ts";
 
 import "./simulator.css";
 
 export interface SimulatorProps {
   card: { src: string; width: number; height: number };
   avatar: { src: string; width: number; height: number };
+  /** A pasta das imagens do bot (a pelúcia de cada humor e o ícone), com a barra no fim. */
+  bot: string;
 }
 
 interface Message {
@@ -51,36 +54,75 @@ function rich(text: string): ComponentChildren[] {
   });
 }
 
+/** Uma linha por linha: "> " é citação e "-# " é letra pequena, como no chat. */
 function Lines({ text }: { text: string }) {
   return (
     <>
-      {text.split("\n").map((line, index) => (
-        <span class="sim-line" key={index}>{line === "" ? <br /> : rich(line)}</span>
-      ))}
+      {text.split("\n").map((line, index) => {
+        if (line === "") return <span class="sim-line" key={index}><br /></span>;
+        if (line.startsWith("> ")) return <span class="sim-line quote" key={index}>{rich(line.slice(2))}</span>;
+        if (line.startsWith("-# ")) return <span class="sim-line small" key={index}>{rich(line.slice(3))}</span>;
+        return <span class="sim-line" key={index}>{rich(line)}</span>;
+      })}
     </>
   );
 }
 
-function EmbedView({ embed, remaining }: { embed: Embed; remaining: number | null }) {
+/** O recibo é um bloco de código; para quem ouve a tela, uma frase por conta, sem o pontilhado. */
+function Receipt({ rows, remaining }: { rows: Embed["rows"]; remaining: number | null }) {
+  const shown = rows.map(row => (row !== null && remaining !== null && row[0] === "Tempo restante" ? ([row[0], span(remaining)] as const) : row));
+  const lines = receipt(shown);
+
+  if (!lines.length) return null;
+
+  const spoken = shown.filter(row => row !== null).map(row => `${row[0]}: ${row[1]}`).join("; ");
+
+  // A fonte acompanha a largura da caixa e o tamanho da linha mais comprida (veja .sim-receipt).
+  const columns = Math.max(...lines.map(line => [...line].length));
+
+  return (
+    <pre class="sim-receipt" role="img" aria-label={spoken} style={`--cols: ${columns}`}>
+      {lines.join("\n")}
+    </pre>
+  );
+}
+
+function EmbedView({ embed, remaining, bot }: { embed: Embed; remaining: number | null; bot: string }) {
   return (
     <div class={`sim-embed accent-${embed.accent}`}>
-      <p class="sim-embed-title">{embed.title}</p>
-      <p class="sim-embed-desc"><Lines text={embed.description} /></p>
-      <dl class="sim-fields">
-        {embed.fields.map(field => {
-          const live = remaining !== null && field.name.startsWith("⏳ Tempo restante");
+      <div class="sim-embed-head">
+        <div class="sim-embed-top">
+          <p class="sim-author">
+            <img src={`${bot}helena.png`} width={128} height={128} alt="" />
+            <span>HELENA · {embed.section.toUpperCase()}</span>
+          </p>
+          <p class="sim-embed-title">{embed.title}</p>
+        </div>
 
-          return (
+        <img class="sim-thumb" src={`${bot}mood-${embed.mood}.png`} width={256} height={256} alt="" />
+      </div>
+
+      <p class="sim-embed-desc"><Lines text={embed.say} /></p>
+
+      <Receipt rows={embed.rows} remaining={remaining} />
+
+      {embed.note && <p class="sim-embed-desc"><Lines text={`-# ${embed.note}`} /></p>}
+
+      {embed.fields.length > 0 && (
+        <dl class="sim-fields">
+          {embed.fields.map(field => (
             <div class={field.inline ? "sim-field" : "sim-field wide"} key={field.name}>
               <dt>{field.name}</dt>
-              <dd aria-live={live ? "off" : undefined}>
-                <Lines text={live ? `**${clock(remaining)}**` : field.value} />
-              </dd>
+              <dd><Lines text={field.value} /></dd>
             </div>
-          );
-        })}
-      </dl>
-      <p class="sim-embed-foot">{embed.footer}</p>
+          ))}
+        </dl>
+      )}
+
+      <p class="sim-embed-foot">
+        <img src={`${bot}helena.png`} width={128} height={128} alt="" />
+        <span>{embed.footer}</span>
+      </p>
     </div>
   );
 }
@@ -121,7 +163,7 @@ function Controls({ reply }: { reply: Extract<Reply, { kind: "embed" }> }) {
   return null;
 }
 
-export default function Simulator({ card, avatar }: SimulatorProps) {
+export default function Simulator({ card, avatar, bot }: SimulatorProps) {
   const [sim, setSim] = useState<SimState>(initialState);
   const [messages, setMessages] = useState<Message[]>([{ id: 1, command: "perfil", reply: { kind: "card" } }]);
   const [now, setNow] = useState(0);
@@ -232,7 +274,7 @@ export default function Simulator({ card, avatar }: SimulatorProps) {
 
                 {message.reply?.kind === "embed" && (
                   <>
-                    <EmbedView embed={message.reply.embed} remaining={message.reply.live === "jail" ? remaining : null} />
+                    <EmbedView embed={message.reply.embed} remaining={message.reply.live === "jail" ? remaining : null} bot={bot} />
                     <Controls reply={message.reply} />
                   </>
                 )}

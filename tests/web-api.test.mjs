@@ -1372,8 +1372,8 @@ test("daily: coletou no site, o comando já mostra a recarga e não paga de novo
 
         const bot = await run("hdaily");
 
-        assert.equal(bot.title, "⏳ Helena Daily", "o comando vê a coleta feita no site");
-        assert.match(bot.text, /Próximo resgate/);
+        assert.equal(bot.title, "⏳ Você já resgatou hoje", "o comando vê a coleta feita no site");
+        assert.match(bot.text, /Volte em/);
 
         assert.equal(walletOf(), 50_000, "pagou uma vez só");
         assert.equal(dailyPayments(), 1);
@@ -1386,7 +1386,7 @@ test("daily: coletou pelo comando, o site já mostra a recarga e não paga de no
 
         const bot = await run("hdaily");
 
-        assert.equal(bot.title, "🎁 Helena Daily", "o comando pagou");
+        assert.equal(bot.title, "🎁 Recompensa do dia", "o comando pagou");
         assert.equal(walletOf(), 50_000);
 
         syncClock(ctx);
@@ -1430,15 +1430,15 @@ test("gemas: coletou no site, o comando já mostra a recarga e o /gemas mostra a
 
         const bot = await run("hcoletargemas");
 
-        assert.equal(bot.title, "⏳ Helena Gems", "o comando vê a coleta feita no site");
-        assert.match(bot.text, /Próxima coleta/);
+        assert.equal(bot.title, "⏳ Bônus de gemas em recarga", "o comando vê a coleta feita no site");
+        assert.match(bot.text, /Volte em/);
         assert.equal(gemsOf(), earned, "o comando não pagou de novo");
 
-        // o /gemas conta a mesma história
+        // o /gemas conta a mesma história: o bônus aparece em espera, não liberado
         const view = await run("hgemas");
 
-        assert.match(view.text, /Próxima coleta em/);
-        assert.doesNotMatch(view.text, /Disponível!/);
+        assert.match(view.text, /Bônus ·+ em /);
+        assert.doesNotMatch(view.text, /disponível/);
     });
 });
 
@@ -1449,17 +1449,17 @@ test("gemas: coletou pelo comando, o site já mostra a recarga e não paga de no
         // antes de coletar, o /gemas avisa que o bônus está disponível e diz como coletar
         const before = await run("hgemas");
 
-        assert.match(before.text, /Disponível!/);
+        assert.match(before.text, /Bônus ·+ disponível/);
         assert.match(before.text, /\/coletargemas/);
 
         const bot = await run("hcoletargemas");
 
-        assert.equal(bot.title, "💎 Helena Gems", "o comando pagou");
+        assert.equal(bot.title, "💎 Bônus de gemas coletado", "o comando pagou");
 
         const earned = gemsOf();
 
         assert.ok(earned >= GEM_BONUS.min && earned <= GEM_BONUS.max, `ganhou ${earned}`);
-        assert.match(bot.text, new RegExp(`\\+${earned} 💎`));
+        assert.match(bot.text, new RegExp(`Bônus ·+ \\+${earned} gemas`));
 
         syncClock(ctx);
 
@@ -1484,7 +1484,7 @@ test("gemas: coletou pelo comando, o site já mostra a recarga e não paga de no
         // o apelido também funciona e vê a mesma espera
         const alias = await run("hbonusgemas");
 
-        assert.equal(alias.title, "⏳ Helena Gems");
+        assert.equal(alias.title, "⏳ Bônus de gemas em recarga");
     });
 });
 
@@ -1493,11 +1493,11 @@ test("gemas: a espera é da conta, então vale para todos os servidores", async 
         const inOne = await createPrefixRunner({ guildId: G1, author: PERSON });
         const inTwo = await createPrefixRunner({ guildId: G2, author: PERSON });
 
-        assert.equal((await inOne("hcoletargemas")).title, "💎 Helena Gems");
+        assert.equal((await inOne("hcoletargemas")).title, "💎 Bônus de gemas coletado");
 
         const earned = gemsOf();
 
-        assert.equal((await inTwo("hcoletargemas")).title, "⏳ Helena Gems", "outro servidor, mesma conta, mesma espera");
+        assert.equal((await inTwo("hcoletargemas")).title, "⏳ Bônus de gemas em recarga", "outro servidor, mesma conta, mesma espera");
         assert.equal(gemsOf(), earned);
     });
 });

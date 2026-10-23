@@ -3,6 +3,8 @@ import { db } from "../../database/connection.mjs";
 
 import { resolveUser } from "../platform/user-lookup.mjs";
 
+import { loadBadgeEmojis } from "../social/badge-emojis.mjs";
+
 import { completeUser } from "../social/userinfo-account.mjs";
 
 import { SEARCH_VALUE } from "../social/userinfo-components.mjs";
@@ -89,6 +91,9 @@ export async function handleUserinfoComponent(interaction, comandos) {
         if (found.status !== "found") {
             return warn("Pessoa não encontrada", "Não achei essa pessoa neste servidor agora.");
         }
+
+        // os ícones das insígnias vêm do servidor (cache de 1 minuto; nunca lança)
+        await loadBadgeEmojis();
 
         const embed = buildUserinfoDetail(choice, await completeUser({ ...found.user, ...found.user.raw }));
 

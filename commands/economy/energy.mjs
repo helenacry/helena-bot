@@ -1,39 +1,18 @@
-
 import {
     getEnergy,
     ENERGY_CONFIG
 } from "../../services/economy/energy.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
-function formatTime(seconds) {
-    const value = Math.max(0, Math.floor(seconds));
+import { progressBar } from "../../utils/bar.mjs";
 
-    const minutes = Math.floor(value / 60);
-    const secs = value % 60;
-
-    return minutes + "m " + secs + "s";
-}
-
-function progressBar(current, max) {
-    const size = 10;
-
-    const ratio = max > 0
-        ? Math.max(0, Math.min(1, current / max))
-        : 0;
-
-    const filled = Math.round(ratio * size);
-
-    return (
-        "█".repeat(filled) +
-        "░".repeat(size - filled)
-    );
-}
+import { formatDuration } from "../../utils/time.mjs";
 
 export default {
     name: "energia",
@@ -59,52 +38,30 @@ export default {
                 status.max
             );
 
+            // Quantos expedientes dá para fazer com o que tem.
+            const shifts = Math.floor(status.energy / ENERGY_CONFIG.workCost);
+
             return embedResponse(
-                createEmbed({
-                    title: "⚡ Helena Energy",
+                ledgerEmbed({
+                    section: "Energia",
+                    title: full ? "⚡ Energia cheia" : "⚡ Sua energia",
 
-                    description:
-                        "**" + bar + "**\n\n" +
-                        "🔋 **" +
-                        status.energy +
-                        "/" +
-                        status.max +
-                        " de energia**",
+                    say: `${bar}  **${status.energy}/${status.max}**`,
 
-                    color: full
-                        ? HELENA_COLORS.success
-                        : HELENA_COLORS.progression,
-
-                    fields: [
-                        {
-                            name: "🔄 Regeneração",
-                            value:
-                                "+1 ponto a cada " +
-                                formatTime(ENERGY_CONFIG.regenSeconds),
-                            inline: true
-                        },
-                        {
-                            name: "💼 Custo para trabalhar",
-                            value:
-                                ENERGY_CONFIG.workCost +
-                                " pontos",
-                            inline: true
-                        },
-                        {
-                            name: full
-                                ? "✅ Energia completa"
-                                : "⏳ Próxima regeneração",
-
-                            value: full
-                                ? "Sua energia está completamente carregada!"
-                                : formatTime(status.nextRegen),
-
-                            inline: false
-                        }
+                    rows: [
+                        ["Trabalhar custa", ENERGY_CONFIG.workCost + " de energia"],
+                        ["Dá para trabalhar", shifts + (shifts === 1 ? " vez" : " vezes")],
+                        null,
+                        ["Regeneração", "+1 a cada " + formatDuration(ENERGY_CONFIG.regenSeconds)],
+                        ["Próximo ponto", full ? "—" : formatDuration(status.nextRegen)]
                     ],
 
-                    footer:
-                        "Helena • Sua energia se recupera com o tempo."
+                    color: full ? HELENA_COLORS.success : HELENA_COLORS.wait,
+                    mood: full ? "feliz" : "dormindo",
+
+                    footer: full
+                        ? "Hora de usar: /trabalhar ou /crime"
+                        : "A energia volta sozinha com o tempo"
                 })
             );
 

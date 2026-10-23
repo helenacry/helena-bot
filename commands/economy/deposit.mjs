@@ -6,10 +6,10 @@ import {
 } from "../../database/economy.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 export default {
@@ -55,49 +55,26 @@ export default {
             );
 
             return embedResponse(
-                createEmbed({
-                    title: "🏦 Helena Bank",
+                ledgerEmbed({
+                    section: "Banco",
+                    title: "🏦 Depósito feito",
 
-                    description:
-                        "### Depósito realizado!\n\n" +
-                        "Seu dinheiro foi guardado no banco com sucesso.",
+                    say: "Dinheiro na carteira não fica a salvo de ladrão. No banco fica.",
 
-                    color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "💵 Valor depositado",
-                            value: `**${formatMoney(amount)}**`,
-                            inline: false
-                        },
-                        {
-                            name: "👛 Carteira",
-                            value: `**${formatMoney(player.wallet)}**`,
-                            inline: true
-                        },
-                        {
-                            name: "🏛️ Banco",
-                            value: `**${formatMoney(player.bank)}**`,
-                            inline: true
-                        },
-                        {
-                            name: "💰 Patrimônio total",
-                            value: `**${formatMoney(
-                                player.wallet + player.bank
-                            )}**`,
-                            inline: false
-                        },
-                        {
-                            name: "📜 Missões diárias",
-                            value:
-                                "Seu progresso de depósito foi atualizado!\n" +
-                                "Use `/missoes` para consultar suas recompensas.",
-                            inline: false
-                        }
+                    rows: [
+                        ["Depositado", formatMoney(amount)],
+                        null,
+                        ["Carteira", formatMoney(player.wallet)],
+                        ["Banco", formatMoney(player.bank)],
+                        ["Patrimônio", formatMoney(player.wallet + player.bank)]
                     ],
 
-                    footer:
-                        "Helena Bank • Seu dinheiro, seu futuro."
+                    note: "A missão de depósito foi atualizada: `/missoes`.",
+
+                    color: HELENA_COLORS.economy,
+                    mood: "dinheiro",
+
+                    footer: "O banco não pode ser roubado"
                 })
             );
 

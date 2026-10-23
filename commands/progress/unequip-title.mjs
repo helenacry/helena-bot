@@ -54,16 +54,17 @@ export default {
             if (!currentTitle) {
                 return embedResponse(
                     createEmbed({
-                        title: "🏷️ Helena Títulos",
+                        section: "Títulos",
+                        title: "🏷️ Nenhum título equipado",
 
                         description:
-                            "Você não possui nenhum título equipado.\n\n" +
-                            "Use `/titulos` para consultar seus títulos disponíveis.",
+                            "Use `/titulos` para consultar os que você já pode usar.",
 
                         color: HELENA_COLORS.warning,
+                        mood: "alerta",
 
                         footer:
-                            "Helena • Títulos"
+                            "/equipartitulo escolhe um"
                     })
                 );
             }
@@ -89,31 +90,18 @@ export default {
 
             return embedResponse(
                 createEmbed({
-                    title: "🏷️ Título Desequipado",
+                    section: "Títulos",
+                    title: "🏷️ Título removido",
 
                     description:
-                        "Seu título foi removido com sucesso.\n\n" +
-                        "**Título anterior:** " +
-                        currentTitle.formatted,
+                        "Você tirou **" + currentTitle.formatted + "**.\n" +
+                        "A conquista continua sua e dá para equipar de novo.",
 
-                    color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "✨ Título atual",
-                            value: "Nenhum",
-                            inline: true
-                        },
-                        {
-                            name: "🏆 Conquista",
-                            value:
-                                "Preservada. Você poderá equipar esse título novamente.",
-                            inline: false
-                        }
-                    ],
+                    color: HELENA_COLORS.wait,
+                    mood: "dormindo",
 
                     footer:
-                        "Helena • Use /equipartitulo para escolher outro título."
+                        "/equipartitulo escolhe outro"
                 })
             );
 

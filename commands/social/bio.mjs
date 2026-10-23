@@ -68,15 +68,19 @@ export default {
 
                 const panel = embedResponse(
                     createEmbed({
+                        section: "Perfil",
                         title: "✏️ Sua bio",
 
-                        description: current ||
-                            "Você ainda não definiu uma bio.",
+                        description: current
+                            ? "> " + current.replace(/\n/g, "\n> ")
+                            : "Você ainda não definiu uma bio.",
 
                         color: HELENA_COLORS.primary,
+                        thumbnail: interaction.user?.avatarUrl,
+                        mood: "feliz",
 
                         footer:
-                            "Helena • Use o botão para editar ou /bio <texto>."
+                            "Use o botão para editar ou /bio <texto>"
                     })
                 );
 
@@ -118,19 +122,7 @@ export default {
                 userId
             );
 
-            const fields = [
-                {
-                    name: "👤 Sua nova bio",
-                    value: bio,
-                    inline: false
-                },
-                {
-                    name: "📌 Onde aparece?",
-                    value:
-                        "Sua descrição será exibida no comando `/perfil`.",
-                    inline: false
-                }
-            ];
+            const fields = [];
 
             // O cartão do /perfil desenha letras, números e os emojis comuns (em cores). Símbolos
             // especiais, outros alfabetos, emojis personalizados da VSync e menções ficam de fora do
@@ -152,14 +144,19 @@ export default {
 
             return embedResponse(
                 createEmbed({
+                    section: "Perfil",
                     title: "✏️ Bio atualizada",
 
                     description:
-                        "Sua descrição pessoal foi salva com sucesso!",
+                        "> " + bio.replace(/\n/g, "\n> ") + "\n" +
+                        "Ela aparece no cartão do seu `/perfil`.",
 
                     color: HELENA_COLORS.success,
+                    mood: "feliz",
 
-                    fields
+                    fields,
+
+                    footer: "O cartão do /perfil mostra a bio"
                 })
             );
 

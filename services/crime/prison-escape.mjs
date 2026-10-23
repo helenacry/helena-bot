@@ -18,10 +18,10 @@ import { GameBlocked } from "../../utils/game-error.mjs";
 import { formatDuration } from "../../utils/time.mjs";
 
 import {
-    createEmbed,
     errorEmbed,
     warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 // ==========================================
@@ -168,46 +168,32 @@ function exitButtons(userId, style, disabled = false) {
 function screen(session) {
     const prison = getPrison(session.guildId, session.userId);
 
-    const base = {
-        fields: [
-            {
-                name: "🧭 Etapa",
-                value: session.stage + "/" + ESCAPE_CONFIG.stages,
-                inline: true
-            },
-            {
-                name: "⏳ Pena restante",
-                value: prison
-                    ? formatDuration(prison.remaining)
-                    : "—",
-                inline: true
-            },
-            {
-                name: "✂️ Corte por fugas",
-                value: cutLine(prison),
-                inline: true
-            }
-        ]
-    };
+    const rows = [
+        ["Etapa", session.stage + "/" + ESCAPE_CONFIG.stages],
+        ["Pena restante", prison ? formatDuration(prison.remaining) : "—"],
+        ["Corte por fugas", cutLine(prison)]
+    ];
 
     if (session.phase === "open") {
         const icon = EXIT_ICONS[session.correct - 1];
 
         return {
-            embeds: [createEmbed({
-                title: "🟢 O corredor abriu!",
+            embeds: [ledgerEmbed({
+                section: "Fuga",
+                title: "🟢 O corredor abriu",
 
-                description:
+                say:
                     "Aperte a saída **" + session.correct + "** " +
                     icon + " em até **" +
                     Math.round(ESCAPE_CONFIG.openMs / 1000) +
                     " segundos**!",
 
+                rows,
+
                 color: HELENA_COLORS.success,
+                mood: "mascara",
 
-                ...base,
-
-                footer: "Helena • Fuga da prisão"
+                footer: "Fuga da prisão"
             })],
 
             components: exitButtons(session.userId, "success")
@@ -216,18 +202,20 @@ function screen(session) {
 
     if (session.phase === "feint") {
         return {
-            embeds: [createEmbed({
+            embeds: [ledgerEmbed({
+                section: "Fuga",
                 title: "🟠 O guarda virou as costas...",
 
-                description:
+                say:
                     "Parece a hora, mas pode ser um truque. " +
                     "**Não clique!**",
 
+                rows,
+
                 color: HELENA_COLORS.warning,
+                mood: "alerta",
 
-                ...base,
-
-                footer: "Helena • Fuga da prisão"
+                footer: "Fuga da prisão"
             })],
 
             components: exitButtons(session.userId, "danger")
@@ -235,18 +223,20 @@ function screen(session) {
     }
 
     return {
-        embeds: [createEmbed({
+        embeds: [ledgerEmbed({
+            section: "Fuga",
             title: "🔴 O guarda está de olho",
 
-            description:
+            say:
                 "Fique quieto e espere o corredor abrir. " +
                 "**Clicar agora é ser pego!**",
 
+            rows,
+
             color: HELENA_COLORS.error,
+            mood: "preso",
 
-            ...base,
-
-            footer: "Helena • Fuga da prisão"
+            footer: "Fuga da prisão"
         })],
 
         components: exitButtons(session.userId, "secondary")
@@ -258,37 +248,27 @@ function finalScreen(outcome, reason, result) {
 
     if (outcome === "win") {
         return {
-            embeds: [createEmbed({
+            embeds: [ledgerEmbed({
+                section: "Fuga",
                 title: result.released
-                    ? "🔓 Você escapou da prisão!"
-                    : "✅ Fuga bem-sucedida!",
+                    ? "🔓 Você escapou da prisão"
+                    : "✅ Fuga bem-sucedida",
 
-                description: result.released
+                say: result.released
                     ? "Você passou pelos três guardas e saiu andando. " +
                       "Está livre!"
                     : "Você passou pelos três guardas e cortou parte " +
                       "da pena.",
 
-                color: HELENA_COLORS.success,
-
-                fields: [
-                    {
-                        name: "✂️ Pena cortada",
-                        value: result.applied === 0
-                            ? "Nada (limite atingido)"
-                            : "**-" + cut + "**",
-                        inline: true
-                    },
-                    {
-                        name: "⏳ Pena restante",
-                        value: result.released
-                            ? "Livre"
-                            : formatDuration(result.remaining),
-                        inline: true
-                    }
+                rows: [
+                    ["Pena cortada", result.applied === 0 ? "nada (limite atingido)" : "-" + cut],
+                    ["Pena restante", result.released ? "livre" : formatDuration(result.remaining)]
                 ],
 
-                footer: "Helena • Fuga da prisão"
+                color: HELENA_COLORS.success,
+                mood: result.released ? "festa" : "feliz",
+
+                footer: "Fuga da prisão"
             })],
 
             components: []
@@ -296,33 +276,23 @@ function finalScreen(outcome, reason, result) {
     }
 
     return {
-        embeds: [createEmbed({
-            title: "🚨 O guarda te pegou!",
+        embeds: [ledgerEmbed({
+            section: "Fuga",
+            title: "🚨 O guarda te pegou",
 
-            description: reason,
+            say: reason,
 
-            color: HELENA_COLORS.error,
-
-            fields: [
-                {
-                    name: "➕ Pena acrescentada",
-                    value: result.applied === 0
-                        ? "Nada (limite atingido)"
-                        : "**+" + cut + "**",
-                    inline: true
-                },
-                {
-                    name: "⏳ Pena restante",
-                    value: result.released
-                        ? "Livre"
-                        : formatDuration(result.remaining),
-                    inline: true
-                }
+            rows: [
+                ["Pena acrescentada", result.applied === 0 ? "nada (limite atingido)" : "+" + cut],
+                ["Pena restante", result.released ? "livre" : formatDuration(result.remaining)]
             ],
 
+            color: HELENA_COLORS.error,
+            mood: "preso",
+
             footer:
-                "Helena • Próxima tentativa em até " +
-                formatDuration(ESCAPE_CONFIG.cooldown) + "."
+                "Próxima tentativa em até " +
+                formatDuration(ESCAPE_CONFIG.cooldown)
         })],
 
         components: []

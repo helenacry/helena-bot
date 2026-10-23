@@ -21,13 +21,15 @@ import { GameBlocked } from "../../utils/game-error.mjs";
 import { formatDuration } from "../../utils/time.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
     warningEmbed,
     successEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { receipt, signed } from "../../utils/receipt.mjs";
 
 // Tipos aceitos no comando e a lavanderia correspondente.
 const KIND_BY_OPTION = {
@@ -44,94 +46,75 @@ const percent = rate => Math.round(rate * 100) + "%";
 function statusResponse(status, userId) {
     const { kinds } = LAUNDERING_CONFIG;
 
-    const fields = [
-        {
-            name: "🧺 Dinheiro sujo",
-            value: "**" + formatMoney(status.dirtyMoney) + "**",
-            inline: true
-        },
-        {
-            name: "⏰ Recarga",
-            value: status.cooldownRemaining > 0
+    const rows = [
+        ["Dinheiro sujo", formatMoney(status.dirtyMoney)],
+        [
+            "Recarga",
+            status.cooldownRemaining > 0
                 ? formatDuration(status.cooldownRemaining)
-                : "🟢 Disponível",
-            inline: true
-        }
+                : "pronta"
+        ]
     ];
 
     if (status.active) {
-        fields.push({
-            name: "🔄 Lavagem em andamento",
-            value:
-                kinds[status.active.kind].name + " • " +
-                formatMoney(status.active.amount) +
-                "\nTermina em **" +
-                formatDuration(status.active.remaining) + "**",
-            inline: false
-        });
+        rows.push(
+            null,
+            ["Lavando", kinds[status.active.kind].name + " · " + formatMoney(status.active.amount)],
+            ["Termina em", formatDuration(status.active.remaining)]
+        );
     }
 
-    fields.push(
+    const fields = [
         {
             name: "🏭 Pública",
-            value:
-                "Devolve " + percent(kinds.public.rate.min) +
-                " a " + percent(kinds.public.rate.max) + "\n" +
-                formatMoney(kinds.public.perMinute) + "/min • " +
-                "recarga de " + formatDuration(kinds.public.cooldown) +
-                "\nUma por vez no servidor" +
-                (
-                    status.publicBusyRemaining > 0
-                        ? " (ocupada por " +
-                          formatDuration(status.publicBusyRemaining) + ")"
-                        : ""
-                ),
+            value: receipt([
+                ["Devolve", percent(kinds.public.rate.min) + " a " + percent(kinds.public.rate.max)],
+                ["Velocidade", formatMoney(kinds.public.perMinute) + "/min"],
+                ["Recarga", formatDuration(kinds.public.cooldown)],
+                ["Vaga", status.publicBusyRemaining > 0 ? "ocupada " + formatDuration(status.publicBusyRemaining) : "livre"]
+            ]) + "\n-# Uma por vez no servidor.",
             inline: false
         },
         {
             name: "🔐 Privada",
-            value:
-                "Devolve " + percent(kinds.private.rate.min) +
-                " a " + percent(kinds.private.rate.max) + "\n" +
-                formatMoney(kinds.private.perMinute) + "/min • " +
-                "recarga de " + formatDuration(kinds.private.cooldown) +
-                "\n" +
-                (
-                    status.privateUnlocked
-                        ? "✅ Liberada neste servidor"
-                        : "🔒 Exige " +
-                          LAUNDERING_CONFIG.privateUnlockGems +
-                          " gemas, uma única vez: `/lavagem valor:desbloquear`"
-                ),
-            inline: false
-        },
-        {
-            name: "📋 Como usar",
-            value:
-                "`/lavagem valor:<reais> tipo:<publica|privada>`\n" +
-                "Cada lavagem aceita de " +
-                formatMoney(LAUNDERING_CONFIG.minAmount) + " a " +
-                formatMoney(LAUNDERING_CONFIG.maxAmount) +
-                " e custa " + LAUNDERING_CONFIG.energyCost +
-                " de energia.",
+            value: receipt([
+                ["Devolve", percent(kinds.private.rate.min) + " a " + percent(kinds.private.rate.max)],
+                ["Velocidade", formatMoney(kinds.private.perMinute) + "/min"],
+                ["Recarga", formatDuration(kinds.private.cooldown)]
+            ]) + "\n" + (
+                status.privateUnlocked
+                    ? "-# Liberada neste servidor."
+                    : "-# 🔒 Exige " + LAUNDERING_CONFIG.privateUnlockGems +
+                      " gemas, uma única vez: `/lavagem valor:desbloquear`"
+            ),
             inline: false
         }
-    );
+    ];
 
     const response = embedResponse(
-        createEmbed({
+        ledgerEmbed({
+            section: "Lavagem",
             title: "🧼 Lavagem de dinheiro",
 
-            description:
+            say:
                 "Dinheiro sujo não serve para compras, depósitos " +
                 "ou transferências. Lave-o para recebê-lo limpo " +
                 "na carteira.",
 
-            color: HELENA_COLORS.economy,
+            rows,
+
+            note:
+                "Use `/lavagem valor:<reais> tipo:<publica|privada>`: de " +
+                formatMoney(LAUNDERING_CONFIG.minAmount) + " a " +
+                formatMoney(LAUNDERING_CONFIG.maxAmount) +
+                " por lavagem, " + LAUNDERING_CONFIG.energyCost + " de energia.",
+
+            color: HELENA_COLORS.money,
+            mood: "dinheiro",
 
             fields,
 
-            footer: "Helena • Lavagens em andamento pausam se você for preso."
+            footer: "Se você for preso, a lavagem pausa"
         })
     );
 
@@ -272,56 +255,29 @@ export default {
             const spec = LAUNDERING_CONFIG.kinds[kind];
 
             return embedResponse(
-                createEmbed({
+                ledgerEmbed({
+                    section: "Lavagem",
                     title: "🧼 Lavagem iniciada",
 
-                    description:
+                    say:
                         "Seu dinheiro está sendo lavado. Quando " +
                         "terminar, o valor limpo cai direto na " +
                         "carteira e eu aviso neste canal.",
 
-                    color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "🏭 Lavanderia",
-                            value: "**" + spec.name + "**",
-                            inline: true
-                        },
-                        {
-                            name: "💸 Valor sujo",
-                            value: "**" + formatMoney(result.amount) + "**",
-                            inline: true
-                        },
-                        {
-                            name: "⏳ Duração",
-                            value: "**" + formatDuration(result.duration) + "**",
-                            inline: true
-                        },
-                        {
-                            name: "📈 Retorno esperado",
-                            value:
-                                percent(spec.rate.min) + " a " +
-                                percent(spec.rate.max),
-                            inline: true
-                        },
-                        {
-                            name: "⚡ Energia",
-                            value:
-                                "-" + LAUNDERING_CONFIG.energyCost +
-                                " (restam " + result.energy + "/" +
-                                result.energyMax + ")",
-                            inline: true
-                        },
-                        {
-                            name: "⏰ Recarga",
-                            value: formatDuration(result.cooldown),
-                            inline: true
-                        }
+                    rows: [
+                        ["Lavanderia", spec.name],
+                        ["Valor sujo", formatMoney(result.amount)],
+                        ["Duração", formatDuration(result.duration)],
+                        ["Retorno", percent(spec.rate.min) + " a " + percent(spec.rate.max)],
+                        null,
+                        ["Energia", signed(-LAUNDERING_CONFIG.energyCost, LAUNDERING_CONFIG.energyCost + " (" + result.energy + "/" + result.energyMax + ")")],
+                        ["Recarga", formatDuration(result.cooldown)]
                     ],
 
-                    footer:
-                        "Helena • Se você for preso, a lavagem pausa."
+                    color: HELENA_COLORS.money,
+                    mood: "dinheiro",
+
+                    footer: "Se você for preso, a lavagem pausa"
                 })
             );
 

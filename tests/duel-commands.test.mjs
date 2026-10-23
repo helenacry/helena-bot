@@ -128,7 +128,7 @@ test("/aceitarduelo avisa quem desafiou e mostra o XP que o código dá", async 
 
     const text = descriptionOf(response);
 
-    assert.match(text, new RegExp(`Vencedor: <@${A}> \\(\\+${DUEL_RULES.winXp} XP\\)`));
+    assert.match(text, new RegExp(`Vencedor:\\*\\* <@${A}> \\(\\+${DUEL_RULES.winXp} XP\\)`));
     assert.doesNotMatch(text, /\+35 XP/, "o texto antigo prometia 35");
 
     const xp = get("SELECT xp x FROM players WHERE guild_id = ? AND user_id = ?", g, A).x;

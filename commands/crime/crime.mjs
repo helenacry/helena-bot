@@ -10,12 +10,14 @@ import { GameBlocked } from "../../utils/game-error.mjs";
 import { formatDuration } from "../../utils/time.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
     warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { signed, stamp } from "../../utils/receipt.mjs";
 
 // ==========================================
 // RESULTADOS
@@ -23,108 +25,70 @@ import {
 
 function successResponse(result) {
     return embedResponse(
-        createEmbed({
+        ledgerEmbed({
+            section: "Crime",
             title: result.jackpot
-                ? "💎 Golpe de mestre!"
-                : "🕵️ Crime bem-sucedido!",
+                ? "💎 Golpe de mestre"
+                : "🕵️ Crime bem-sucedido",
 
-            description:
+            say:
                 result.story +
                 (
                     result.leveledUp
-                        ? "\n\n🎉 **Você alcançou o nível " +
-                          result.level + "!**"
+                        ? "\n> 🎉 **Subiu para o nível " + result.level + "!**"
                         : ""
                 ),
 
-            color: HELENA_COLORS.success,
-
-            fields: [
-                {
-                    name: "💸 Dinheiro sujo",
-                    value: "**+" + formatMoney(result.amount) + "**",
-                    inline: true
-                },
-                {
-                    name: "✨ Experiência",
-                    value: "**+" + result.xp + " XP**",
-                    inline: true
-                },
-                {
-                    name: "🧺 Total sujo",
-                    value: "**" + formatMoney(result.dirtyTotal) + "**",
-                    inline: true
-                },
-                {
-                    name: "⚡ Energia",
-                    value:
-                        "-" + CRIME_CONFIG.energyCost +
-                        " (restam " + result.energy + "/" +
-                        result.energyMax + ")",
-                    inline: true
-                },
-                {
-                    name: "⏰ Próximo crime",
-                    value: "Em " + formatDuration(CRIME_CONFIG.cooldown),
-                    inline: true
-                }
+            rows: [
+                ["Dinheiro sujo", signed(result.amount, formatMoney(result.amount))],
+                ["Experiência", signed(result.xp, result.xp + " XP")],
+                ["Energia", signed(-CRIME_CONFIG.energyCost, CRIME_CONFIG.energyCost + " (" + result.energy + "/" + result.energyMax + ")")],
+                null,
+                ["Total sujo", formatMoney(result.dirtyTotal)]
             ],
 
-            footer:
-                "Helena • Dinheiro sujo não compra nada. Use /lavagem."
+            note: stamp("não vale nada") + " até passar pela `/lavagem`.",
+
+            color: HELENA_COLORS.money,
+            mood: result.jackpot ? "festa" : "mascara",
+
+            footer: "Próximo crime em " + formatDuration(CRIME_CONFIG.cooldown)
         })
     );
 }
 
 function failureResponse(result) {
-    const fields = [
-        {
-            name: "💸 Multa",
-            value: result.fine > 0
-                ? "**-" + formatMoney(result.fine) + "**"
-                : "Nada: sua carteira estava vazia",
-            inline: true
-        },
-        {
-            name: "⛓️ Prisão",
-            value: "**" + formatDuration(result.jailSeconds) + "**",
-            inline: true
-        }
+    const rows = [
+        [
+            "Multa",
+            result.fine > 0
+                ? signed(-result.fine, formatMoney(result.fine))
+                : "nada (carteira vazia)"
+        ],
+        ["Prisão", formatDuration(result.jailSeconds)]
     ];
 
     if (result.hpLost > 0) {
-        fields.push({
-            name: "🩸 Ferimento",
-            value:
-                "**-" + result.hpLost + " HP** (restam " +
-                result.hp + ")",
-            inline: true
-        });
+        rows.push(["Ferimento", signed(-result.hpLost, result.hpLost + " HP (restam " + result.hp + ")")]);
     }
 
-    fields.push({
-        name: "⚡ Energia",
-        value:
-            "-" + CRIME_CONFIG.energyCost +
-            " (restam " + result.energy + "/" +
-            result.energyMax + ")",
-        inline: true
-    });
+    rows.push(["Energia", signed(-CRIME_CONFIG.energyCost, CRIME_CONFIG.energyCost + " (" + result.energy + "/" + result.energyMax + ")")]);
 
     return embedResponse(
-        createEmbed({
-            title: "🚨 Você foi pego!",
+        ledgerEmbed({
+            section: "Crime",
+            title: "🚨 Você foi pego",
 
-            description:
-                result.story + "\n\n" +
-                "Enquanto estiver preso, você não pode trabalhar, " +
-                "comprar nem movimentar dinheiro.",
+            say:
+                result.story + "\n" +
+                "> Preso, você não trabalha, não compra e não mexe em dinheiro.",
+
+            rows,
 
             color: HELENA_COLORS.error,
+            mood: "preso",
 
-            fields,
-
-            footer: "Helena • Use /prisao para acompanhar sua pena."
+            footer: "/prisao acompanha a sua pena"
         })
     );
 }

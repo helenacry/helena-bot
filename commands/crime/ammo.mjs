@@ -1,11 +1,13 @@
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
     warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
@@ -50,32 +52,23 @@ export default {
 
             const cost = buyAmmo(guildId, userId, quantity);
 
-            const embed = createEmbed({
+            const embed = ledgerEmbed({
+                section: "Arsenal",
                 title: "🔫 Munição comprada",
 
-                description: `Você comprou **${quantity}** munições.`,
+                say: `Você comprou **${quantity}** ${quantity === 1 ? "munição" : "munições"}.`,
 
-                color: HELENA_COLORS.success,
-
-                fields: [
-                    {
-                        name: "💸 Valor pago",
-                        value: formatMoney(cost),
-                        inline: true
-                    },
-                    {
-                        name: "🎒 Munição agora",
-                        value: String(status(guildId, userId).ammo),
-                        inline: true
-                    },
-                    {
-                        name: "👛 Carteira",
-                        value: formatMoney(getPlayer(guildId, userId).wallet),
-                        inline: true
-                    }
+                rows: [
+                    ["Pagou", signed(-cost, formatMoney(cost))],
+                    ["Munição agora", String(status(guildId, userId).ammo)],
+                    null,
+                    ["Carteira", formatMoney(getPlayer(guildId, userId).wallet)]
                 ],
 
-                footer: "Helena • Arsenal"
+                color: HELENA_COLORS.economy,
+                mood: "bravo",
+
+                footer: "Armas de fogo gastam 1 por duelo e por roubo"
             });
 
             return embedResponse(embed);

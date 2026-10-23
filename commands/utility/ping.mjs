@@ -1,8 +1,8 @@
 
 import {
-    createEmbed,
     embedResponse,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 import { guildIds } from "../../services/platform/guild-registry.mjs";
@@ -23,42 +23,30 @@ export default {
     description: "Verifica se o bot está funcionando",
 
     async execute() {
-        const fields = [
-            {
-                name: "⏱️ No ar há",
-                value: formatDuration(process.uptime()),
-                inline: true
-            }
-        ];
+        const rows = [["No ar há", formatDuration(process.uptime())]];
 
         if (guildIds.size > 0) {
-            fields.push({
-                name: "🌐 Servidores",
-                value: String(guildIds.size),
-                inline: true
-            });
+            rows.push(["Servidores", String(guildIds.size)]);
         }
 
         const catalog = getCatalog();
 
         if (catalog) {
-            fields.push({
-                name: "📖 Comandos",
-                value: String(catalog.total),
-                inline: true
-            });
+            rows.push(["Comandos", String(catalog.total)]);
         }
 
-        return embedResponse(createEmbed({
+        return embedResponse(ledgerEmbed({
+            section: "Status",
             title: "🏓 Pong!",
 
-            description: "Estou funcionando.",
+            say: "Estou aqui e funcionando.",
+
+            rows,
 
             color: HELENA_COLORS.success,
+            mood: "feliz",
 
-            fields,
-
-            footer: "Helena • Use /ajuda para ver o que eu faço"
+            footer: "/ajuda mostra o que eu faço"
         }));
     }
 };

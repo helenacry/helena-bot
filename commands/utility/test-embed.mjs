@@ -1,9 +1,11 @@
 
 import {
-    createEmbed,
     embedResponse,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { stamp } from "../../utils/receipt.mjs";
 
 export default {
     name: "testembed",
@@ -16,31 +18,22 @@ export default {
             "Jogador";
 
         return embedResponse(
-            createEmbed({
-                title: "💜 Helena",
-                description:
-                    `Olá, **${username}**!\n\n` +
-                    "O novo sistema visual da Helena está funcionando.",
+            ledgerEmbed({
+                section: "Teste",
+                title: "💜 Visual da Helena",
+
+                say: `Olá, **${username}**! ${stamp("tudo certo")}`,
+
+                rows: [
+                    ["Economia", "ativa"],
+                    ["Inventário", "ativo"],
+                    ["Progressão", "ativa"]
+                ],
 
                 color: HELENA_COLORS.primary,
+                mood: "feliz",
 
-                fields: [
-                    {
-                        name: "💰 Economia",
-                        value: "Sistema financeiro ativo.",
-                        inline: true
-                    },
-                    {
-                        name: "🎒 Inventário",
-                        value: "Itens e loja disponíveis.",
-                        inline: true
-                    },
-                    {
-                        name: "⭐ Progressão",
-                        value: "Níveis, XP e missões.",
-                        inline: false
-                    }
-                ]
+                footer: "Um comando só para conferir o desenho das respostas"
             })
         );
     }

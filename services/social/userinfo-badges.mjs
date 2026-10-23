@@ -1,83 +1,102 @@
 import { PULSE_EMOJIS } from "./userinfo-format.mjs";
 
+import { emojiNamed } from "./badge-emojis.mjs";
+
 // ==========================================
 // CATÁLOGO DE INSÍGNIAS DO VSYNC
 // ==========================================
 
+// Cada insígnia tem o nome, o "icon" (o nome do emoji no pacote de ícones oficiais, lido do
+// servidor por badge-emojis.mjs) e o "emoji" fixo de antes, que vale quando o pacote não está lá.
+// Sem nenhum dos dois, a insígnia aparece pelo nome.
+
 // Tempo de tela (compartilhar a tela): quem passa de cada marca, em horas, ganha a insígnia, e cada
-// uma substitui a anterior. A VSync não tem emoji cadastrado para elas, então aparecem pelo nome.
+// uma substitui a anterior. O sufixo do ícone é o da marca: auto_stream_5h, auto_stream_5khplus.
 const STREAM_TIERS = Object.freeze([
-    [1, "Newcomer"], [5, "Fledgling"], [20, "Breakout"], [75, "Standout"], [150, "Trendsetter"],
-    [300, "Headliner"], [500, "Star"], [1000, "Sensation"], [2000, "Visionary"], [5000, "Phenomenon"]
+    [1, "Newcomer", "1h"], [5, "Fledgling", "5h"], [20, "Breakout", "20h"], [75, "Standout", "75h"],
+    [150, "Trendsetter", "150h"], [300, "Headliner", "300h"], [500, "Star", "500h"],
+    [1000, "Sensation", "1kh"], [2000, "Visionary", "2kh"], [5000, "Phenomenon", "5khplus"]
 ]);
 
 const BADGES = Object.freeze({
     BADGE_SHOW_ADMIN: {
+        icon: "auto_admin",
         emoji: "<:badge_admin:235402174009856000>",
         name: "Administrador do VSync"
     },
 
     BADGE_SHOW_VERIFIED: {
+        icon: "auto_verified",
         emoji: "<:badge_verified:235401782727430144>",
         name: "Verificado"
     },
 
     BADGE_SHOW_PRISMA: {
+        icon: "auto_prisma_plus",
         emoji: "<:badge_prisma_plus:235421406961487872>",
         name: "Prisma+"
     },
 
-    // O plano básico (sem o "+"): ainda não há emoji dele cadastrado, então aparece pelo nome.
+    // O plano básico (sem o "+"): sem o pacote, não há emoji fixo dele e aparece pelo nome.
     BADGE_SHOW_PRISMA_BASIC: {
+        icon: "auto_prisma",
         emoji: "",
         name: "Prisma"
     },
 
     BADGE_SHOW_EARLY_SUPPORTER: {
+        icon: "auto_early_supporter",
         emoji: "<:badge_early_supporter:235402151960399872>",
         name: "Apoiador inicial"
     },
 
     BADGE_SHOW_PARTNER: {
+        icon: "auto_partner",
         emoji: "<:badge_partner:235402087548473344>",
         name: "Dono de servidor parceiro"
     },
 
     BADGE_SHOW_STAFF: {
+        icon: "auto_staff",
         emoji: "<:badge_staff:235401830169202688>",
         name: "Staff do VSync"
     },
 
     BADGE_SHOW_VERIFIED_BOT_DEVELOPER: {
+        icon: "auto_verified_bot_developer",
         emoji: "<:badge_developer:235402131815157760>",
         name: "Desenvolvedor de bot verificado pioneiro"
     },
 
     GIFTING_PATRON: {
+        icon: "auto_gifting_patron",
         emoji: "",
         name: "Patrono dos presentes"
     },
 
     GIFTING_CHAMPION: {
+        icon: "auto_gifting_champion",
         emoji: "",
         name: "Campeão dos presentes"
     },
 
     GIFTING_LUMINARY: {
+        icon: "auto_gifting_luminary",
         emoji: "",
         name: "Luminar dos presentes"
     },
 
     BADGE_SHOW_GIFTING_HERO: {
+        icon: "auto_gifting_hero",
         emoji: "<:badge_gifting_hero:235401550505594880>",
         name: "Herói dos presentes"
     },
 
     // Tempo de tela
     ...Object.fromEntries(
-        STREAM_TIERS.map(([hours, name]) => [
+        STREAM_TIERS.map(([hours, name, suffix]) => [
             `STREAM_${hours}H`,
-            { emoji: "", name: `Tempo de tela: ${name}` }
+            { icon: `auto_stream_${suffix}`, emoji: "", name: `Tempo de tela: ${name}` }
         ])
     ),
 
@@ -86,6 +105,7 @@ const BADGES = Object.freeze({
         [1, 2, 3, 6, 9, 12, 15, 18, 24].map(month => [
             "BADGE_SHOW_PULSE_" + month,
             {
+                icon: "auto_pulse_" + month,
                 emoji: PULSE_EMOJIS[month] ?? "",
 
                 name:
@@ -96,6 +116,9 @@ const BADGES = Object.freeze({
         ])
     )
 });
+
+// Os nomes de emoji que o catálogo usa (a lista que o servidor precisa ter, e que o teste confere).
+export const BADGE_ICON_NAMES = Object.freeze(Object.values(BADGES).map(badge => badge.icon));
 
 // ==========================================
 // ALIASES
@@ -153,7 +176,7 @@ export function getUserBadges(user) {
 
         badges.push({
             id: key,
-            emoji: badge.emoji,
+            emoji: emojiNamed(badge.icon, badge.emoji),
             name: badge.name
         });
     };

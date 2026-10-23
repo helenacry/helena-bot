@@ -1,11 +1,13 @@
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
     warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
@@ -46,34 +48,25 @@ export default {
 
             const weapon = getEquippedWeapon(guildId, userId);
 
-            const embed = createEmbed({
+            const embed = ledgerEmbed({
+                section: "Arsenal",
                 title: "🔧 Arma reparada",
 
-                description: weapon
-                    ? `${weapon.emoji} **${weapon.name}** voltou ao novo.`
-                    : "Sua arma voltou ao novo.",
+                say:
+                    (weapon
+                        ? `${weapon.emoji} **${weapon.name}** voltou ao novo.`
+                        : "Sua arma voltou ao novo.") +
+                    "\n🔧 " + durabilityLine(status(guildId, userId).durability),
 
-                color: HELENA_COLORS.success,
-
-                fields: [
-                    {
-                        name: "🔧 Durabilidade",
-                        value: durabilityLine(status(guildId, userId).durability),
-                        inline: false
-                    },
-                    {
-                        name: "💸 Valor pago",
-                        value: formatMoney(cost),
-                        inline: true
-                    },
-                    {
-                        name: "👛 Carteira",
-                        value: formatMoney(getPlayer(guildId, userId).wallet),
-                        inline: true
-                    }
+                rows: [
+                    ["Pagou", signed(-cost, formatMoney(cost))],
+                    ["Carteira", formatMoney(getPlayer(guildId, userId).wallet)]
                 ],
 
-                footer: "Helena • Arsenal"
+                color: HELENA_COLORS.success,
+                mood: "feliz",
+
+                footer: "Cada duelo e roubo gasta 1 ponto"
             });
 
             return embedResponse(embed);

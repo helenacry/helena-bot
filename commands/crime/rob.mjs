@@ -17,12 +17,14 @@ import { GameBlocked } from "../../utils/game-error.mjs";
 import { formatDuration } from "../../utils/time.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
     warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { signed } from "../../utils/receipt.mjs";
 
 // ==========================================
 // RESULTADOS
@@ -32,97 +34,55 @@ import {
 // citado pelo nome sem receber um aviso.
 
 function successResponse(result, targetName) {
-    const fields = [
-        {
-            name: "💸 Total levado",
-            value: "**" + formatMoney(result.amount) + "**",
-            inline: true
-        },
-        {
-            name: "👛 Limpo na carteira",
-            value: "**+" + formatMoney(result.clean) + "**",
-            inline: true
-        },
-        {
-            name: "🧺 Dinheiro sujo",
-            value: "**+" + formatMoney(result.dirty) + "**",
-            inline: true
-        },
-        {
-            name: "🔫 Arma",
-            value:
-                result.weapon.emoji + " " + result.weapon.name +
-                " (" + result.chance + "% de chance)" +
-                (result.spentAmmo ? "\n1 bala gasta" : ""),
-            inline: true
-        },
-        {
-            name: "⚡ Energia",
-            value:
-                "-" + ROBBERY_CONFIG.energyCost +
-                " (restam " + result.energy + "/" +
-                result.energyMax + ")",
-            inline: true
-        }
+    const rows = [
+        ["Levou no total", formatMoney(result.amount)],
+        ["Limpo na carteira", signed(result.clean, formatMoney(result.clean))],
+        ["Dinheiro sujo", signed(result.dirty, formatMoney(result.dirty))],
+        null,
+        ["Arma", result.weapon.name + " (" + result.chance + "%)"],
+        ["Energia", signed(-ROBBERY_CONFIG.energyCost, ROBBERY_CONFIG.energyCost + " (" + result.energy + "/" + result.energyMax + ")")]
     ];
 
+    if (result.spentAmmo) {
+        rows.push(["Munição", "-1 bala"]);
+    }
+
     if (result.injury) {
-        fields.push({
-            name: "🩸 Ferimento na fuga",
-            value:
-                "Ferimento **" + result.injury + "**: " +
-                "**-" + result.hpLost + " HP** (restam " +
-                result.hp + ")",
-            inline: false
-        });
+        rows.push(["Ferimento", signed(-result.hpLost, result.hpLost + " HP (restam " + result.hp + ")")]);
     }
 
     return embedResponse(
-        createEmbed({
-            title: "💰 Roubo bem-sucedido!",
+        ledgerEmbed({
+            section: "Crime",
+            title: "💰 Roubo bem-sucedido",
 
-            description:
+            say:
                 "Você assaltou **" + targetName +
                 "** e fugiu com a grana. Metade veio limpa e " +
-                "metade é dinheiro sujo.",
+                "metade é dinheiro sujo." +
+                (result.injury ? "\n> 🩸 Você saiu ferido da fuga (" + result.injury + ")." : ""),
 
-            color: HELENA_COLORS.success,
+            rows,
 
-            fields,
+            color: HELENA_COLORS.money,
+            mood: "mascara",
 
-            footer: "Helena • Lave o dinheiro sujo com /lavagem."
+            footer: "Lave o dinheiro sujo com /lavagem"
         })
     );
 }
 
 function failureResponse(result, targetName) {
-    const fields = [
-        {
-            name: "🎯 Chance da arma",
-            value: result.chance + "%",
-            inline: true
-        },
-        {
-            name: "⚡ Energia",
-            value:
-                "-" + ROBBERY_CONFIG.energyCost +
-                " (restam " + result.energy + "/" +
-                result.energyMax + ")",
-            inline: true
-        }
+    const rows = [
+        ["Chance da arma", result.chance + "%"],
+        ["Energia", signed(-ROBBERY_CONFIG.energyCost, ROBBERY_CONFIG.energyCost + " (" + result.energy + "/" + result.energyMax + ")")]
     ];
 
     if (result.retaliated) {
-        fields.push({
-            name: "💥 Revide",
-            value:
-                "**-" + result.hpLost + " HP** (restam " +
-                result.hp + ")",
-            inline: false
-        });
+        rows.push(["Revide", signed(-result.hpLost, result.hpLost + " HP (restam " + result.hp + ")")]);
     }
 
-    const description = result.poor
+    const say = result.poor
         ? "**" + targetName + "** tem pouco dinheiro na carteira " +
           "(" + formatMoney(ROBBERY_CONFIG.minTargetWallet) +
           " ou menos). Não valia o risco, e a tentativa ainda " +
@@ -131,23 +91,23 @@ function failureResponse(result, targetName) {
           "**." +
           (
               result.retaliated
-                  ? "\n\n**" + targetName + "** estava armado e revidou!"
+                  ? "\n> 💥 **" + targetName + "** estava armado e revidou!"
                   : ""
           );
 
     return embedResponse(
-        createEmbed({
+        ledgerEmbed({
+            section: "Crime",
             title: "🚨 O roubo deu errado",
 
-            description,
+            say,
+
+            rows,
 
             color: HELENA_COLORS.error,
+            mood: "triste",
 
-            fields,
-
-            footer:
-                "Helena • Próximo roubo em " +
-                formatDuration(ROBBERY_CONFIG.cooldown) + "."
+            footer: "Próximo roubo em " + formatDuration(ROBBERY_CONFIG.cooldown)
         })
     );
 }

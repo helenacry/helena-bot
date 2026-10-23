@@ -26,6 +26,8 @@ import { callWait } from "../social/family.mjs";
 
 import { createEmbed, HELENA_COLORS } from "../../utils/embed.mjs";
 
+import { receipt } from "../../utils/receipt.mjs";
+
 import {
     container,
     divider,
@@ -48,17 +50,16 @@ import { button, row } from "../panels/panel-kit.mjs";
 //
 //   cd:atualizar:<dono>      atualiza esta tela
 
-const READY = "Pronto para uso";
-
 const clock = new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo",
     timeStyle: "short"
 });
 
-const line = (label, remaining, ready = READY) =>
-    remaining > 0
-        ? `⏳ **${label}:** \`em ${formatCooldown(remaining)}\``
-        : `✅ **${label}:** ${ready}`;
+// Uma conta do recibo: o nome e "pronto" ou o tempo que falta.
+const line = (label, remaining) => [
+    label,
+    remaining > 0 ? `em ${formatCooldown(remaining)}` : "pronto"
+];
 
 // Os tempos de cada atividade do jogador neste servidor. Só leitura (menos o registro
 // do jogador, que o jogo cria na primeira vez de qualquer jeito).
@@ -100,7 +101,7 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
     const illegal = data.illegal.map(item => line(item.label, item.remaining));
 
     if (data.prison) {
-        illegal.push(`⛓️ **Cadeia:** \`falta ${formatCooldown(data.prison.remaining)}\``);
+        illegal.push(["Cadeia", `falta ${formatCooldown(data.prison.remaining)}`]);
     }
 
     const waiting = [...data.legal, ...data.illegal].filter(item => item.remaining > 0).length + (data.prison ? 1 : 0);
@@ -114,20 +115,22 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
 
     const note = "Toque em Atualizar para ver os tempos de agora.";
 
-    const color = waiting === 0 ? HELENA_COLORS.success : HELENA_COLORS.primary;
+    const color = waiting === 0 ? HELENA_COLORS.success : HELENA_COLORS.wait;
 
     const refresh = button(`cd:atualizar:${userId}`, "Atualizar", "🔄", "secondary");
 
-    // o clássico: embed com os dois grupos e o botão embaixo
+    // o clássico: embed com os dois grupos (cada um um recibo) e o botão embaixo
     const embed = createEmbed({
+        section: "Recargas",
         title: "⏱️ Tempos de recarga",
         description: meta,
         color,
         thumbnail: user.avatarUrl,
+        mood: waiting === 0 ? "feliz" : "dormindo",
         timestamp: false,
         fields: [
-            { name: "⚖️ Legal", value: legal.join("\n"), inline: false },
-            { name: "🦹 Ilegal", value: illegal.join("\n"), inline: false }
+            { name: "⚖️ Legal", value: receipt(legal), inline: false },
+            { name: "🦹 Ilegal", value: receipt(illegal), inline: false }
         ],
         footer: note
     });
@@ -135,11 +138,11 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
     // o V2: o mesmo conteúdo em blocos, com o avatar ao lado do título
     const layout = [
         container([
-            ...headerBlock(["## ⏱️ Tempos de recarga", metaV2], thumbnail(user.avatarUrl)),
+            ...headerBlock(["-# HELENA · RECARGAS", "## ⏱️ Tempos de recarga", metaV2], thumbnail(user.avatarUrl)),
             divider(),
-            text(`### ⚖️ Legal\n${legal.join("\n")}`),
+            text(`### ⚖️ Legal\n${receipt(legal)}`),
             divider(),
-            text(`### 🦹 Ilegal\n${illegal.join("\n")}`),
+            text(`### 🦹 Ilegal\n${receipt(illegal)}`),
             divider(),
             subtext(note),
             row(refresh)

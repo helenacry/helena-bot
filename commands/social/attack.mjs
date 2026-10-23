@@ -54,6 +54,7 @@ export default {
             );
 
             const embed = createEmbed({
+                section: "Duelo",
                 title: "⚔️ Desafio enviado",
 
                 description:
@@ -61,7 +62,10 @@ export default {
                     "`/aceitarduelo` ou `/recusarduelo`.\n" +
                     "Nenhum dinheiro será perdido.",
 
-                color: HELENA_COLORS.primary
+                color: HELENA_COLORS.error,
+                mood: "bravo",
+
+                footer: "Duelo gasta munição e desgasta a arma"
             });
 
             return {

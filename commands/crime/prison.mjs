@@ -15,10 +15,10 @@ import { ensureCrimePlayer } from "../../services/crime/crime-player.mjs";
 import { formatDuration } from "../../utils/time.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 // Monta o embed com a situação atual. É chamada na resposta
@@ -34,79 +34,51 @@ function buildPrisao(guildId, userId, { stale = false } = {}) {
         ) + "%"
         : "—";
 
-    const fields = [];
+    const rows = [];
 
     if (prison) {
-        fields.push(
-            {
-                name: "⏳ Tempo restante",
-                value:
-                    "**" +
-                    formatDuration(prison.remaining) +
-                    "**",
-                inline: true
-            },
-            {
-                name: "📜 Pena total",
-                value: formatDuration(prison.sentence),
-                inline: true
-            },
-            {
-                name: "⚖️ Motivo",
-                value: prison.reason || "Não informado",
-                inline: true
-            }
+        rows.push(
+            ["Tempo restante", formatDuration(prison.remaining)],
+            ["Pena total", formatDuration(prison.sentence)],
+            ["Motivo", prison.reason || "não informado"],
+            null
         );
     }
 
-    fields.push(
-        {
-            name: "🕵️ Crimes",
-            value: String(record.crimes),
-            inline: true
-        },
-        {
-            name: "✅ Sucessos",
-            value:
-                record.successes + " (" + rate + ")",
-            inline: true
-        },
-        {
-            name: "🚨 Capturas",
-            value: String(record.failures),
-            inline: true
-        },
-        {
-            name: "💸 Total arrecadado (sujo)",
-            value: formatMoney(record.dirty_earned),
-            inline: false
-        }
+    // A ficha criminal.
+    rows.push(
+        ["Crimes", String(record.crimes)],
+        ["Sucessos", record.successes + " (" + rate + ")"],
+        ["Capturas", String(record.failures)],
+        ["Total arrecadado (sujo)", formatMoney(record.dirty_earned)]
     );
 
-    let footer = "Helena • Ficha criminal";
+    let footer = "Ficha criminal";
 
     if (prison) {
         footer = stale
-            ? "Helena • Atualização automática encerrada. Use /prisao."
-            : "Helena • Atualizado automaticamente.";
+            ? "Atualização automática encerrada. Use /prisao"
+            : "Atualizado automaticamente";
     }
 
-    const embed = createEmbed({
+    const embed = ledgerEmbed({
+        section: "Prisão",
         title: prison
             ? "⛓️ Você está preso"
             : "🔓 Você está livre",
 
-        description: prison
+        say: prison
             ? "Trabalho, compras, depósitos e outras " +
               "movimentações ficam bloqueados até o fim da pena."
             : "Nenhuma pena em curso. Consultas e " +
               "movimentações estão liberadas.",
 
-        color: prison
-            ? HELENA_COLORS.warning
-            : HELENA_COLORS.success,
+        rows,
 
-        fields,
+        color: prison
+            ? HELENA_COLORS.error
+            : HELENA_COLORS.success,
+        mood: prison ? "preso" : "feliz",
 
         footer
     });

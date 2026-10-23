@@ -167,7 +167,7 @@ test("o comando /missoes resgatar paga e mostra o aviso de sempre; incompleta e 
 
     const paid = await run(`hmissoes resgatar:${mission.id}`);
 
-    assert.equal(paid.title, "🎉 Missão concluída!");
+    assert.equal(paid.title, "🎉 Missão concluída");
     assert.match(paid.text, new RegExp(mission.name));
 
     assert.match((await run(`hmissoes resgatar:${mission.id}`)).title, /Recompensa já resgatada/);
@@ -205,7 +205,7 @@ test("missões no V2: uma seção por missão, com Resgatar nas prontas e o esta
     assert.match(allText(view.layout), /1\*\* recompensa pronta/);
 
     // o clássico: o mesmo embed e um botão por missão pronta
-    assert.equal(view.embed.title, "📜 Helena Missões");
+    assert.equal(view.embed.title, "📜 Missões do dia");
     assert.equal(view.components[0].components.length, 1);
     assert.match(view.embed.fields.at(-1).value, /1/);
 });
@@ -250,7 +250,7 @@ test("/missoes: no V2 sai o layout; o clássico não leva o layout e traz os bot
     const classic = (await run("hmissoes")).sent[0];
 
     assert.ok(!("layout" in classic));
-    assert.equal(classic.embeds[0].title, "📜 Helena Missões");
+    assert.equal(classic.embeds[0].title, "📜 Missões do dia");
     assert.match(classic.components[0].components[0].customId, /^miss:resgatar:/);
 
     await withV2(async () => {
@@ -327,7 +327,7 @@ test("os botões do ranking trocam a classificação na mesma mensagem, só para
 
     assert.equal(answer.type, "update");
     assert.match(answer.data.embeds[0].description, /Nível/);
-    assert.match(allText(answer.data.layout), /⭐ \*\*Nível\*\*/);
+    assert.match(allText(answer.data.layout), /## 🏆 Ranking · Nível/);
     assert.match(allText(answer.data.layout), /🥇 \*\*Eu Mesmo\*\* · Você — Nível 9/);
 
     assert.match(JSON.stringify(click(`rank:tipo:${OWNER}:level`, { id: OTHER })), /outra pessoa/);
@@ -342,12 +342,13 @@ test("/ranking: o clássico mantém o embed e ganha os botões; o V2 leva o layo
     const classic = (await run("hranking")).sent[0];
 
     assert.ok(!("layout" in classic));
-    assert.equal(classic.embeds[0].title, "🏆 Helena Ranking");
+    assert.equal(classic.embeds[0].title, "🏆 Ranking · Patrimônio");
     assert.equal(classic.components[0].components.length, 3);
 
     const gems = (await run("hranking tipo:gems")).sent[0];
 
-    assert.match(gems.embeds[0].description, /Gemas/);
+    assert.equal(gems.embeds[0].title, "🏆 Ranking · Gemas");
+    assert.match(gems.embeds[0].description, /💎/);
 
     await withV2(async () => {
         const v2 = (await run("hranking")).sent[0];
@@ -389,15 +390,17 @@ test("bolsa no V2: índice, item em alta e preços em blocos, com os botões; o 
 
         const text = allText(view.layout);
 
-        assert.match(text, /### 📈 Índice do servidor/);
+        // o emoji do título é o da faixa do índice
+        assert.match(text, /## (?:📉|➖|📈) Bolsa do servidor/u);
+        assert.match(text, /Índice ·+ \d+ de 90/);
         assert.match(text, /### 🔥 Item em alta/);
         assert.match(text, /### 🛒 Preços de agora/);
         assert.match(text, /💡 Índice baixo deixa a loja mais barata/);
-        assert.match(text, /compra R\$ [\d.,]+ • venda R\$/);
+        assert.match(text, /Item\s+Compra\s+Venda/, "os preços vão numa tabela");
 
         assert.deepEqual(customIds(view.layout), [`loja:home:${OWNER}`, `bolsa:atualizar:${OWNER}`, `bolsa:fechar:${OWNER}`]);
 
-        assert.equal(view.embed.title, "📊 Helena Bolsa");
+        assert.match(view.embed.title, /^[📉➖📈] Bolsa do servidor$/u);
         assert.equal(view.components[0].components.length, 3);
     });
 });
@@ -406,7 +409,8 @@ test("bolsa desligada: só o aviso, como antes (sem layout próprio, o embed con
     const view = buildMarketView({ ownerId: OWNER, market: null });
 
     assert.ok(!("layout" in view));
-    assert.match(view.embed.description, /desligada/);
+    assert.equal(view.embed.title, "📊 Bolsa desligada");
+    assert.match(view.embed.description, /valor de tabela/);
 
     const v2 = toV2Data({ embeds: [view.embed], components: view.components });
 
@@ -421,7 +425,7 @@ test("os botões da bolsa atualizam com o layout novo", () => {
 
         assert.equal(answer.type, "update");
         assert.ok(Array.isArray(answer.data.layout));
-        assert.match(allText(answer.data.layout), /Índice do servidor/);
+        assert.match(allText(answer.data.layout), /Bolsa do servidor/);
     });
 });
 
@@ -440,8 +444,8 @@ test("inventário no V2: quem é, o resumo, um bloco por prateleira e os control
 
     const text = allText(view.layout);
 
-    assert.match(text, /\*\*Eu Mesmo\*\* · 📂 Todas/);
-    assert.match(text, /📦 \*\*3\*\* itens diferentes · 🔢 \*\*6\*\* no total/);
+    assert.match(text, /## 🎒 Inventário de Eu Mesmo/);
+    assert.match(text, /📂 \*\*Todas\*\* · \*\*3 itens diferentes\*\* · \*\*6\*\* no total/);
     assert.match(text, /### 📂 Armas\\n🔫 \*\*Pistola\*\* ×1/);
     assert.match(text, /### 📂 Consumíveis\\n/);
     assert.match(text, /🍎 \*\*Maçã\*\* ×3/);
@@ -459,7 +463,7 @@ test("inventário no V2: quem é, o resumo, um bloco por prateleira e os control
     assert.deepEqual(layoutProblems(shelf.layout), []);
 
     // o clássico continua o mesmo embed
-    assert.equal(view.embed.title, "🎒 Helena Inventário");
+    assert.equal(view.embed.title, "🎒 Inventário de Eu Mesmo");
 });
 
 test("inventário vazio mostra o convite à loja nos dois formatos", () => {

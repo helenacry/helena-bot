@@ -11,7 +11,8 @@ import { tx } from "../combat/combat.mjs";
 import {
     createEmbed,
     embedResponse,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 import { formatDuration } from "../../utils/time.mjs";
@@ -249,40 +250,32 @@ export const prisonLiveKey = (guildId, userId) =>
     `prison:${guildId}:${userId}`;
 
 export function blockEmbed(prison, { stale = false } = {}) {
-    return createEmbed({
+    return ledgerEmbed({
+        section: "Prisão",
         title: "⛓️ Você está preso",
 
-        description:
+        say:
             "Este comando fica bloqueado enquanto " +
             "você cumpre pena. Consultas continuam " +
             "liberadas.",
 
-        color: HELENA_COLORS.warning,
-
-        fields: [
-            {
-                name: "⏳ Tempo restante",
-                value:
-                    "**" +
-                    formatDuration(prison.remaining) +
-                    "**",
-                inline: true
-            },
-            {
-                name: "📜 Motivo",
-                value: prison.reason || "Não informado",
-                inline: true
-            }
+        rows: [
+            ["Tempo restante", formatDuration(prison.remaining)],
+            ["Motivo", prison.reason || "não informado"]
         ],
 
+        color: HELENA_COLORS.error,
+        mood: "preso",
+
         footer: stale
-            ? "Helena • Atualização automática encerrada. Use /prisao."
-            : "Helena • Atualizado automaticamente. Use /prisao."
+            ? "Atualização automática encerrada. Use /prisao"
+            : "Atualizado automaticamente. Use /prisao"
     });
 }
 
 export function releasedBlockEmbed() {
     return createEmbed({
+        section: "Prisão",
         title: "🔓 Você está livre",
 
         description:
@@ -290,8 +283,9 @@ export function releasedBlockEmbed() {
             "normalmente.",
 
         color: HELENA_COLORS.success,
+        mood: "feliz",
 
-        footer: "Helena • Pena cumprida."
+        footer: "Pena cumprida"
     });
 }
 

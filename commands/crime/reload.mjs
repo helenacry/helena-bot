@@ -1,10 +1,10 @@
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
     warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 import { reload } from "../../services/combat/armory.mjs";
@@ -39,25 +39,21 @@ export default {
 
             const weapon = getEquippedWeapon(guildId, userId);
 
-            const embed = createEmbed({
+            const embed = ledgerEmbed({
+                section: "Arsenal",
                 title: "🔫 Munição",
 
-                description:
-                    `${weapon.emoji} **${weapon.name}** está pronta.\n\n` +
+                say:
+                    `${weapon.emoji} **${weapon.name}** está pronta.\n` +
                     "Cada duelo e cada roubo bem-sucedido gasta **1** munição. " +
                     "Para ter mais, use `/municao`.",
 
+                rows: [["Munição", ammo > 0 ? String(ammo) : "0 (compre com /municao)"]],
+
                 color: ammo > 0 ? HELENA_COLORS.success : HELENA_COLORS.warning,
+                mood: ammo > 0 ? "bravo" : "alerta",
 
-                fields: [
-                    {
-                        name: "🎒 Munição",
-                        value: ammo > 0 ? String(ammo) : "0 (compre mais com `/municao`)",
-                        inline: true
-                    }
-                ],
-
-                footer: "Helena • Arsenal"
+                footer: "O estoque gasta direto, sem carregar"
             });
 
             return embedResponse(embed);

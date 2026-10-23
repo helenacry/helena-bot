@@ -12,6 +12,8 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
+import { plural } from "../../utils/plural.mjs";
+
 export default {
     name: "procurados",
     aliases: ["wanted"],
@@ -44,6 +46,7 @@ export default {
             if (wanted.total === 0) {
                 return embedResponse(
                     createEmbed({
+                        section: "Crime",
                         title: "🚨 Procurados",
 
                         description:
@@ -52,8 +55,9 @@ export default {
                             "lavagem iniciada.",
 
                         color: HELENA_COLORS.success,
+                        mood: "feliz",
 
-                        footer: "Helena • Servidor tranquilo."
+                        footer: "Servidor tranquilo"
                     })
                 );
             }
@@ -61,33 +65,33 @@ export default {
             const lines = wanted.entries.map(entry =>
                 "**" + entry.position + ".** " +
                 safeText(entry.name) + " — " +
-                entry.record +
-                (entry.record === 1 ? " registro" : " registros") +
+                plural(entry.record, "registro") +
                 (entry.jailed ? " ⛓️ preso" : "")
             );
 
             return embedResponse(
                 createEmbed({
+                    section: "Crime",
                     title: "🚨 Procurados",
 
                     description:
                         lines.join("\n") + "\n\n" +
-                        wanted.total + " " +
-                        (wanted.total === 1 ? "pessoa" : "pessoas") +
+                        "-# " + plural(wanted.total, "pessoa", "pessoas") +
                         " com ficha criminal.",
 
-                    color: HELENA_COLORS.warning,
+                    color: HELENA_COLORS.error,
+                    mood: "mascara",
 
                     footer:
-                        "Helena • Página " + wanted.page + " de " +
+                        "Página " + wanted.page + " de " +
                         wanted.pages +
                         (
                             wanted.pages > 1
-                                ? " • /procurados pagina:" +
+                                ? " · /procurados pagina:" +
                                   Math.min(wanted.page + 1, wanted.pages)
                                 : ""
                         ) +
-                        " • " + WANTED_PAGE_SIZE + " por página"
+                        " · " + WANTED_PAGE_SIZE + " por página"
                 })
             );
 

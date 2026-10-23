@@ -1,5 +1,5 @@
 import {
-    db, getPlayer, set, get, fieldsOf, createPrefixRunner
+    db, getPlayer, set, get, receiptOf, createPrefixRunner
 } from "./helpers.mjs";
 
 import test from "node:test";
@@ -56,15 +56,15 @@ test("o primeiro resgate paga R$ 500, abre a sequência e registra tudo", async 
 
     const r = await run("hdaily");
 
-    assert.equal(r.title, "🎁 Helena Daily");
+    assert.equal(r.title, "🎁 Recompensa do dia");
 
-    const f = fieldsOf(embed(r));
+    const f = receiptOf(embed(r));
 
-    assert.match(f["💰 Recompensa base"], /R\$\s?500,00/);
-    assert.match(f["💵 Total recebido"], /R\$\s?500,00/);
-    assert.match(f["🔥 Sequência atual"], /1 dias/);
-    assert.match(f["🏆 Seu recorde"], /1 dias/);
-    assert.match(f["👛 Carteira atual"], /R\$\s?500,00/);
+    assert.match(f["Recompensa base"], /\+R\$\s?500,00/);
+    assert.match(f["Total"], /\+R\$\s?500,00/);
+    assert.match(f["Carteira"], /R\$\s?500,00/);
+    assert.match(embed(r).description, /\*\*1 dia\*\* seguidos · recorde de 1 dia/);
+    assert.match(embed(r).description, /Dia \*\*1\*\* de 7/);
 
     assert.equal(wallet(), 50_000);
 
@@ -96,9 +96,9 @@ test("resgatar de novo antes de 24 horas só mostra o tempo que falta", async ()
 
     const again = await run("hdaily");
 
-    assert.equal(again.title, "⏳ Helena Daily");
-    assert.match(fieldsOf(embed(again))["⏰ Próximo resgate"], /\*\*2[34]h /);
-    assert.match(fieldsOf(embed(again))["🔥 Sequência atual"], /1 dias/);
+    assert.equal(again.title, "⏳ Você já resgatou hoje");
+    assert.match(embed(again).description, /Volte em \*\*2[34]h /);
+    assert.match(embed(again).description, /\*\*1 dia\*\* seguidos/);
 
     assert.equal(wallet(), 50_000, "não pagou outra vez");
     assert.equal(streakRow().total_claims, 1);
@@ -113,11 +113,12 @@ test("no dia seguinte a sequência continua e o bônus de R$ 50 aparece", async 
     reset();
     resgatadoHa(25, 1);
 
-    const f = fieldsOf(embed(await run("hdaily")));
+    const e = embed(await run("hdaily"));
+    const f = receiptOf(e);
 
-    assert.match(f["🔥 Sequência atual"], /2 dias/);
-    assert.match(f["🔥 Bônus de sequência"], /R\$\s?50,00/);
-    assert.match(f["💵 Total recebido"], /R\$\s?550,00/);
+    assert.match(e.description, /\*\*2 dias\*\* seguidos/);
+    assert.match(f["Bônus de sequência"], /\+R\$\s?50,00/);
+    assert.match(f["Total"], /\+R\$\s?550,00/);
     assert.equal(wallet(), 55_000);
 });
 
@@ -125,18 +126,17 @@ test("passando de 48 horas a sequência volta para 1, mas o recorde fica", async
     reset();
     resgatadoHa(49, 5, 9);
 
-    const f = fieldsOf(embed(await run("hdaily")));
+    const e = embed(await run("hdaily"));
 
-    assert.match(f["🔥 Sequência atual"], /1 dias/);
-    assert.match(f["🏆 Seu recorde"], /9 dias/);
-    assert.match(f["💵 Total recebido"], /R\$\s?500,00/);
+    assert.match(e.description, /\*\*1 dia\*\* seguidos · recorde de 9 dias/);
+    assert.match(receiptOf(e)["Total"], /\+R\$\s?500,00/);
 });
 
 test("exatamente 48 horas depois ainda mantém a sequência", async () => {
     reset();
     resgatadoHa(48, 3);
 
-    assert.match(fieldsOf(embed(await run("hdaily")))["🔥 Sequência atual"], /4 dias/);
+    assert.match(embed(await run("hdaily")).description, /\*\*4 dias\*\* seguidos/);
 });
 
 test("o sétimo dia paga o bônus semanal: R$ 1.300 no total", async () => {
@@ -144,13 +144,13 @@ test("o sétimo dia paga o bônus semanal: R$ 1.300 no total", async () => {
     resgatadoHa(25, 6);
 
     const r = await run("hdaily");
-    const f = fieldsOf(embed(r));
+    const f = receiptOf(embed(r));
 
-    assert.match(f["🔥 Sequência atual"], /7 dias/);
-    assert.match(f["🔥 Bônus de sequência"], /R\$\s?300,00/);
-    assert.match(f["🎁 Bônus de 7 dias"], /R\$\s?500,00/);
-    assert.match(f["💵 Total recebido"], /R\$\s?1\.300,00/);
-    assert.match(embed(r).description, /Bônus semanal desbloqueado/);
+    assert.match(embed(r).description, /\*\*7 dias\*\* seguidos/);
+    assert.match(f["Bônus de sequência"], /\+R\$\s?300,00/);
+    assert.match(f["Bônus de 7 dias"], /\+R\$\s?500,00/);
+    assert.match(f["Total"], /\+R\$\s?1\.300,00/);
+    assert.match(embed(r).description, /bônus semanal saiu junto/);
     assert.equal(wallet(), 130_000);
 });
 
@@ -158,12 +158,13 @@ test("o oitavo dia recomeça o bônus de sequência do zero", async () => {
     reset();
     resgatadoHa(25, 7);
 
-    const f = fieldsOf(embed(await run("hdaily")));
+    const e = embed(await run("hdaily"));
+    const f = receiptOf(e);
 
-    assert.match(f["🔥 Sequência atual"], /8 dias/);
-    assert.match(f["🔥 Bônus de sequência"], /R\$\s?0,00/);
-    assert.match(f["💵 Total recebido"], /R\$\s?500,00/);
-    assert.equal(f["🎁 Bônus de 7 dias"], undefined);
+    assert.match(e.description, /\*\*8 dias\*\* seguidos/);
+    assert.equal(f["Bônus de sequência"], undefined, "sem bônus, a linha nem aparece");
+    assert.match(f["Total"], /\+R\$\s?500,00/);
+    assert.equal(f["Bônus de 7 dias"], undefined);
 });
 
 // ==========================================
@@ -196,7 +197,7 @@ test("preso não resgata o daily", async () => {
 test("o alias hdiario resgata do mesmo jeito", async () => {
     reset();
 
-    assert.equal((await run("hdiario")).title, "🎁 Helena Daily");
+    assert.equal((await run("hdiario")).title, "🎁 Recompensa do dia");
     assert.equal(wallet(), 50_000);
 });
 
@@ -207,7 +208,7 @@ test("cada servidor tem a própria recarga e a própria sequência", async () =>
 
     const other = await createPrefixRunner({ guildId: "g-daily-2", author: ME });
 
-    assert.equal((await other("hdaily")).title, "🎁 Helena Daily", "em outro servidor ainda está liberado");
+    assert.equal((await other("hdaily")).title, "🎁 Recompensa do dia", "em outro servidor ainda está liberado");
 
     assert.equal(
         get("SELECT wallet w FROM players WHERE guild_id='g-daily-2' AND user_id=?", ME.id).w,

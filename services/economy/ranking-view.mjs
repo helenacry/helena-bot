@@ -21,6 +21,8 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
+import { plural } from "../../utils/plural.mjs";
+
 // ==========================================
 // TELA DO /RANKING
 // ==========================================
@@ -209,10 +211,8 @@ export function buildRanking({ guildId, userId, type = "money" }) {
             ? "Sua posição: #" + ownPosition
             : "Você ainda não está classificado",
 
-        ranking.length + " jogadores classificados",
-
-        "Use /ranking tipo para alterar"
-    ].join(" • ");
+        "os botões trocam a classificação"
+    ].join(" · ");
 
     // ==============================
     // CLÁSSICO
@@ -229,41 +229,35 @@ export function buildRanking({ guildId, userId, type = "money" }) {
 
         const marker = String(entry.user_id) === String(userId) ? " · Você" : "";
 
-        return [
-            medal(index + 1) + " " + name + marker,
-
-            formatValue(entry, type)
-        ].join("\n");
+        return medal(index + 1) + " " + name + marker + " — " + formatValue(entry, type);
     });
 
     const fields = outside
         ? [{
             name: "📍 Sua posição",
 
-            value: [
-                medal(ownPosition) + " **" + ownPosition + "º lugar**",
-
-                formatValue(ownRow, type)
-            ].join("\n"),
+            value: medal(ownPosition) + " **" + ownPosition + "º lugar** — " + formatValue(ownRow, type),
 
             inline: false
         }]
         : [];
 
     const embed = createEmbed({
-        title: "🏆 Helena Ranking",
+        section: "Ranking",
+        title: "🏆 Ranking · " + config.name,
 
         description: [
-            config.emoji + " **Classificação:** " + config.name,
+            config.emoji + " **" + plural(ranking.length, "jogador classificado", "jogadores classificados") + "**",
 
             "",
 
             lines.length
-                ? lines.join("\n\n")
+                ? lines.join("\n")
                 : "Nenhum jogador classificado."
         ].join("\n"),
 
         color: HELENA_COLORS.primary,
+        mood: "festa",
 
         fields,
 
@@ -305,9 +299,11 @@ export function buildRanking({ guildId, userId, type = "money" }) {
 
     const layout = [
         container([
-            text("## 🏆 Helena Ranking"),
+            text("-# HELENA · RANKING"),
 
-            text(`${config.emoji} **${config.name}** · ${ranking.length} ${ranking.length === 1 ? "jogador" : "jogadores"}`),
+            text(`## 🏆 Ranking · ${config.name}`),
+
+            text(`${config.emoji} ${plural(ranking.length, "jogador classificado", "jogadores classificados")}`),
 
             divider(),
 

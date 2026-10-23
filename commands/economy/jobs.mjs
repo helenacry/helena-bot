@@ -12,12 +12,15 @@ import {
 } from "../../config/jobs.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    warningEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
+
+import { plural } from "../../utils/plural.mjs";
+
+import { table } from "../../utils/receipt.mjs";
 
 export default {
     name: "empregos",
@@ -57,86 +60,41 @@ export default {
             if (!selected) {
                 const currentJob = getJob(player.job_id);
 
-                const lines = JOBS.map((job, index) => {
-                    const unlocked = player.level >= job.level;
+                // ● o seu cargo, ○ liberado para você, × ainda bloqueado.
+                const mark = job =>
+                    job.id === player.job_id ? "●" : player.level >= job.level ? "○" : "×";
 
-                    const status =
-                        job.id === player.job_id
-                            ? "👔"
-                            : unlocked
-                                ? "🔓"
-                                : "🔒";
+                const block = jobs => table(
+                    jobs.map(job => [mark(job), "nv " + job.level, job.name, formatMoney(job.salary)]),
+                    { align: ["l", "r", "l", "r"] }
+                );
 
-                    return (
-                        status + " **" + (index + 1) + ". " +
-                        job.name + "**\n" +
-                        "Nível " + job.level +
-                        " • " + formatMoney(job.salary)
-                    );
-                });
-
-                const currentName =
-                    currentJob?.name || "Não identificado";
-
-                const currentSalary =
-                    currentJob
-                        ? formatMoney(currentJob.salary)
-                        : "Indisponível";
-
-                // Divide a lista para respeitar o limite
-                // de caracteres de cada campo do embed.
-                const fields = [];
-
-                for (let i = 0; i < lines.length; i += 5) {
-                    fields.push({
-                        name:
-                            "💼 Profissões " +
-                            (i + 1) +
-                            "–" +
-                            Math.min(i + 5, lines.length),
-
-                        value: lines.slice(i, i + 5).join("\n\n"),
-                        inline: false
-                    });
-                }
+                // Três degraus, cada um num campo (cabe no limite de cada campo do embed).
+                const steps = [
+                    ["🌱 Começo", JOBS.filter(job => job.level <= 11)],
+                    ["💼 Carreira", JOBS.filter(job => job.level > 11 && job.level <= 34)],
+                    ["👑 Topo", JOBS.filter(job => job.level > 34)]
+                ];
 
                 return embedResponse(
-                    createEmbed({
-                        title: "💼 Helena Carreiras",
+                    ledgerEmbed({
+                        section: "Carreira",
+                        title: "💼 Empregos",
 
-                        description:
-                            "Escolha sua profissão e evolua na carreira.\n\n" +
-                            "👔 Atual • 🔓 Disponível • 🔒 Bloqueado",
+                        say:
+                            "Você é **" + (currentJob?.name || "sem cargo") + "**, nível **" + player.level + "**" +
+                            (currentJob ? ", e cada expediente rende **" + formatMoney(currentJob.salary) + "**." : ".") +
+                            "",
+
+                        note: "`●` seu cargo · `○` liberado · `×` bloqueado",
+
+                        fields: steps.map(([name, jobs]) => ({ name, value: block(jobs), inline: false })),
 
                         color: HELENA_COLORS.primary,
+                        thumbnail: interaction.user?.avatarUrl,
+                        mood: "feliz",
 
-                        fields: [
-                            {
-                                name: "⭐ Seu nível",
-                                value: String(player.level),
-                                inline: true
-                            },
-                            {
-                                name: "👔 Emprego atual",
-                                value: currentName,
-                                inline: true
-                            },
-                            {
-                                name: "💰 Salário atual",
-                                value: currentSalary,
-                                inline: true
-                            },
-                            ...fields,
-                            {
-                                name: "📌 Como mudar de emprego?",
-                                value:
-                                    "Use `/empregos` e selecione a opção `cargo`.",
-                                inline: false
-                            }
-                        ],
-
-                        footer:
-                            "Helena • Construa sua carreira."
+                        footer: "Para trocar: /empregos cargo:nome"
                     })
                 );
             }
@@ -156,21 +114,33 @@ export default {
             }
 
             if (player.level < job.level) {
-                return warningEmbed(
-                    "Emprego bloqueado",
-                    "**Cargo:** " + job.name + "\n" +
-                    "**Nível necessário:** " + job.level + "\n" +
-                    "**Seu nível:** " + player.level + "\n\n" +
-                    "Faltam **" +
-                    (job.level - player.level) +
-                    " níveis** para desbloquear esta profissão."
+                return embedResponse(
+                    ledgerEmbed({
+                        section: "Carreira",
+                        title: "🔒 Emprego bloqueado",
+                        say: "**" + job.name + "** ainda está fora do seu alcance.",
+                        rows: [
+                            ["Nível exigido", String(job.level)],
+                            ["Seu nível", String(player.level)],
+                            ["Faltam", plural(job.level - player.level, "nível", "níveis")]
+                        ],
+                        color: HELENA_COLORS.warning,
+                        mood: "alerta",
+                        footer: "Trabalhar rende experiência"
+                    })
                 );
             }
 
             if (player.job_id === job.id) {
-                return warningEmbed(
-                    "Emprego atual",
-                    "Você já trabalha como **" + job.name + "**."
+                return embedResponse(
+                    ledgerEmbed({
+                        section: "Carreira",
+                        title: "💼 Você já tem esse emprego",
+                        say: "Você já trabalha como **" + job.name + "**.",
+                        color: HELENA_COLORS.warning,
+                        mood: "alerta",
+                        footer: "/empregos mostra os outros cargos"
+                    })
                 );
             }
 
@@ -194,35 +164,22 @@ export default {
             }
 
             return embedResponse(
-                createEmbed({
-                    title: "🎉 Novo emprego registrado!",
+                ledgerEmbed({
+                    section: "Carreira",
+                    title: "🎉 Novo emprego",
 
-                    description:
-                        "Parabéns! Você assumiu uma nova profissão.\n\n" +
-                        "Seu novo salário será aplicado no próximo `/trabalhar`.",
+                    say: "Você agora é **" + job.name + "**. O salário novo vale a partir do próximo `/trabalhar`.",
 
-                    color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "👔 Novo cargo",
-                            value: "**" + job.name + "**",
-                            inline: false
-                        },
-                        {
-                            name: "⭐ Nível necessário",
-                            value: String(job.level),
-                            inline: true
-                        },
-                        {
-                            name: "💰 Salário",
-                            value: "**" + formatMoney(job.salary) + "**",
-                            inline: true
-                        }
+                    rows: [
+                        ["Cargo", job.name],
+                        ["Salário", formatMoney(job.salary)],
+                        ["Nível exigido", String(job.level)]
                     ],
 
-                    footer:
-                        "Helena • Um novo capítulo na sua carreira."
+                    color: HELENA_COLORS.success,
+                    mood: "festa",
+
+                    footer: "Um novo capítulo na sua carreira"
                 })
             );
 

@@ -86,18 +86,19 @@ export default {
             ) {
                 return embedResponse(
                     createEmbed({
-                        title: "🏷️ Helena Títulos",
+                        section: "Títulos",
+                        title: "🏷️ Esse título já está equipado",
 
                         description:
-                            "Você já está utilizando o título:\n\n" +
-                            "**" +
+                            "Você já está usando **" +
                             currentTitle.formatted +
-                            "**",
+                            "**.",
 
                         color: HELENA_COLORS.warning,
+                        mood: "alerta",
 
                         footer:
-                            "Helena • Títulos"
+                            "/titulos mostra os outros"
                     })
                 );
             }
@@ -137,35 +138,21 @@ export default {
 
             return embedResponse(
                 createEmbed({
-                    title: "✨ Título Equipado",
+                    section: "Títulos",
+                    title: "✨ Título equipado",
 
                     description:
-                        "Seu novo título foi equipado com sucesso!\n\n" +
-                        "**" +
+                        "Agora você é **" +
                         result.title +
-                        "**",
+                        "**.\n" +
+                        "🏆 " + result.achievement.name +
+                        " · `" + result.achievement.id + "`",
 
                     color: HELENA_COLORS.success,
-
-                    fields: [
-                        {
-                            name: "🏆 Conquista",
-                            value:
-                                result.achievement.name,
-                            inline: true
-                        },
-                        {
-                            name: "🏷️ Identificador",
-                            value:
-                                "`" +
-                                result.achievement.id +
-                                "`",
-                            inline: true
-                        }
-                    ],
+                    mood: "festa",
 
                     footer:
-                        "Helena • Use /perfil para visualizar seu título."
+                        "Ele aparece no seu /perfil"
                 })
             );
 

@@ -1,5 +1,6 @@
 // Fluxos de uso: a conversa de exemplo, o laboratório do crime, a busca de comandos e da
 // wiki (Pagefind), o tema, o menu do celular e o painel da conta com a API simulada.
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 /** Ilhas com client:visible só ganham vida quando chegam à tela: espera a hidratação terminar. */
@@ -15,12 +16,12 @@ test.describe("página inicial", () => {
     await expect(log.getByRole("img", { name: /Cartão de perfil da Helena/ })).toBeVisible();
 
     await page.getByRole("button", { name: "/daily", exact: true }).click();
-    await expect(log).toContainText("Recompensa resgatada!");
+    await expect(log).toContainText("Recompensa do dia");
     await expect(log).toContainText("R$ 510,00");
     await expect(page.locator(".sim-chips").getByRole("button", { name: /\/daily/ })).toBeDisabled();
 
     await page.getByRole("button", { name: "/crime", exact: true }).click();
-    await expect(log).toContainText("Você foi pego!");
+    await expect(log).toContainText("Você foi pego");
     await expect(log).toContainText("30m 0s");
 
     // preso: o comando /prisao aparece e o trabalho fica bloqueado
@@ -31,6 +32,41 @@ test.describe("página inicial", () => {
     await page.getByRole("button", { name: "Recomeçar o exemplo" }).click();
     await expect(page.getByRole("button", { name: "/prisao", exact: true })).toHaveCount(0);
   });
+
+  for (const theme of ["light", "dark"] as const) {
+    test(`as respostas da conversa cabem no celular e passam no axe · ${theme}`, async ({ page }) => {
+      // sorteio fixo em 0,9: o crime dá errado e abre a cadeia (o /prisao e o bloqueio aparecem)
+      await page.addInitScript(value => {
+        Math.random = () => 0.9;
+        try { localStorage.setItem("helena-theme", value); } catch { /* sem armazenamento */ }
+      }, theme);
+
+      await page.setViewportSize({ width: 360, height: 740 });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("./", { waitUntil: "networkidle" });
+
+      await expect(page.locator(hydrated(".sim"))).toBeAttached();
+
+      for (const command of ["/daily", "/trabalhar", "/loja", "/crime", "/prisao"]) {
+        await page.getByRole("button", { name: command, exact: true }).click();
+        await expect(page.locator(".sim-embed")).not.toHaveCount(0);
+      }
+
+      // um bloco de resposta por comando, cada um com o nome da seção no topo e o rodapé
+      await expect(page.locator(".sim-embed")).toHaveCount(5);
+      await expect(page.locator(".sim-author").first()).toContainText("HELENA · DAILY");
+
+      // nenhum recibo rola por dentro e a página não ganha rolagem lateral
+      const clipped = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>(".sim-receipt")].filter(el => el.scrollWidth > el.clientWidth + 1).length);
+      expect(clipped, "recibos cortados").toBe(0);
+
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow).toBeLessThanOrEqual(0);
+
+      const results = await new AxeBuilder({ page }).include(".sim").withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+      expect(results.violations.map(item => `${item.id}: ${item.nodes[0]?.target.join(" ")}`)).toEqual([]);
+    });
+  }
 
   test("laboratório do crime sorteia e soma na ficha", async ({ page }) => {
     await page.goto("./", { waitUntil: "networkidle" });

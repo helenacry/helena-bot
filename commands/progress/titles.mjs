@@ -20,6 +20,8 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
+import { stamp } from "../../utils/receipt.mjs";
+
 // ==========================================
 // COMANDO /TITULOS
 // ==========================================
@@ -65,17 +67,18 @@ export default {
             if (titles.length === 0) {
                 return embedResponse(
                     createEmbed({
-                        title: "🏷️ Helena Títulos",
+                        section: "Títulos",
+                        title: "🏷️ Nenhum título ainda",
 
                         description:
-                            "Você ainda não desbloqueou nenhum título.\n\n" +
-                            "Complete conquistas para receber novos títulos.\n" +
+                            "Complete conquistas para receber títulos novos.\n" +
                             "Use `/conquistas` para consultar seu progresso.",
 
-                        color: HELENA_COLORS.primary,
+                        color: HELENA_COLORS.wait,
+                        mood: "dormindo",
 
                         footer:
-                            "Helena • Títulos"
+                            "Cada conquista libera um título"
                     })
                 );
             }
@@ -93,7 +96,7 @@ export default {
                     equipped?.achievementId === title.id;
 
                 const status = isEquipped
-                    ? " · **EQUIPADO**"
+                    ? " " + stamp("equipado")
                     : "";
 
                 return (
@@ -101,8 +104,7 @@ export default {
                     " " +
                     rarity.emoji +
                     status +
-                    "\n" +
-                    "`" +
+                    "  `" +
                     title.id +
                     "`"
                 );
@@ -114,36 +116,21 @@ export default {
 
             return embedResponse(
                 createEmbed({
-                    title: "🏷️ Helena Títulos",
+                    section: "Títulos",
+                    title: "🏷️ Seus títulos",
 
                     description:
-                        "**Seus títulos desbloqueados:**\n\n" +
-                        lines.join("\n\n"),
+                        "✨ Título atual: " +
+                        (equipped?.formatted || "nenhum") +
+                        "\n\n" +
+                        lines.join("\n") +
+                        "\n\n-# " + titles.length + " desbloqueado" + (titles.length === 1 ? "" : "s"),
 
                     color: HELENA_COLORS.primary,
-
-                    fields: [
-                        {
-                            name: "✨ Título atual",
-
-                            value:
-                                equipped?.formatted ||
-                                "Nenhum título equipado.",
-
-                            inline: false
-                        },
-                        {
-                            name: "📚 Total desbloqueado",
-
-                            value:
-                                String(titles.length),
-
-                            inline: true
-                        }
-                    ],
+                    mood: "festa",
 
                     footer:
-                        "Use /equipartitulo para escolher um título."
+                        "/equipartitulo escolhe o título que aparece no perfil"
                 })
             );
 

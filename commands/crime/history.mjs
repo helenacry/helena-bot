@@ -52,10 +52,11 @@ export default {
             });
 
             const embed = createEmbed({
+                section: "Combate",
                 title: "📜 Histórico de duelos",
 
                 description: [
-                    `**${state.wins}** vitórias • **${state.losses}** derrotas`,
+                    `🏆 **${state.wins}** vitórias · 💀 **${state.losses}** derrotas`,
                     "",
                     lines.length > 0
                         ? lines.join("\n")
@@ -63,8 +64,9 @@ export default {
                 ].join("\n"),
 
                 color: HELENA_COLORS.primary,
+                mood: "bravo",
 
-                footer: "Helena • Combate • os 5 últimos duelos (empates não entram)"
+                footer: "Os 5 últimos duelos (empates não entram)"
             });
 
             return embedResponse(embed);

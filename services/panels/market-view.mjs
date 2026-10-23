@@ -9,8 +9,6 @@ import {
     sellPriceOf,
     hotItem,
     isHot,
-    marketLine,
-    trendText,
     formatPercent
 } from "../economy/market.mjs";
 
@@ -18,6 +16,8 @@ import {
     createEmbed,
     HELENA_COLORS
 } from "../../utils/embed.mjs";
+
+import { receipt, table } from "../../utils/receipt.mjs";
 
 import { formatDuration } from "../../utils/time.mjs";
 
@@ -49,33 +49,42 @@ const buttons = ownerId => row(
     button(`bolsa:fechar:${ownerId}`, "Fechar", "✖️", "danger")
 );
 
-// Um item por linha: preço de compra e de venda de agora.
-function priceLines(market) {
-    return sellableItems().map(item => {
-        const buy = buyPriceOf(item, market);
-        const sell = sellPriceOf(item, market);
+// Uma tabela com um item por linha: preço de compra e de venda de agora. O ▲ marca o item em alta
+// (no bloco de código não cabe emoji).
+function priceTable(market) {
+    const items = sellableItems();
 
-        return (
-            `${item.emoji} **${item.name}**: compra ${formatMoney(buy)} • ` +
-            `venda ${formatMoney(sell)}${isHot(item, market) ? " 🔥" : ""}`
-        );
-    });
+    if (!items.length) {
+        return "Nada para vender.";
+    }
+
+    return table([
+        ["Item", "Compra", "Venda"],
+        ...items.map(item => [
+            item.name + (isHot(item, market) ? " ▲" : ""),
+            formatMoney(buyPriceOf(item, market)),
+            formatMoney(sellPriceOf(item, market))
+        ])
+    ], { align: ["l", "r", "r"] });
 }
+
+const TREND_WORD = { up: "subiu", down: "caiu", flat: "igual" };
 
 export function buildMarketView({ ownerId, market }) {
     // Bolsa desligada: os preços da loja ficam na tabela.
     if (!market) {
         return {
             embed: createEmbed({
-                title: "📊 Helena Bolsa",
+                section: "Bolsa",
+                title: "📊 Bolsa desligada",
 
                 description:
-                    "A bolsa está desligada. Os preços da loja ficam " +
-                    "sempre no valor de tabela.",
+                    "Os preços da loja ficam sempre no valor de tabela.",
 
-                color: HELENA_COLORS.neutral,
+                color: HELENA_COLORS.wait,
+                mood: "dormindo",
 
-                footer: "Helena • Bolsa"
+                footer: "A loja continua aberta"
             }),
 
             components: [row(
@@ -87,17 +96,11 @@ export function buildMarketView({ ownerId, market }) {
 
     const hot = hotItem(market);
 
-    const trend = trendText(market);
-
-    const indexLines = [
-        `${market.band.emoji} **${market.index}** de ${MARKET_CONFIG.indexMax} • ` +
-        `faixa **${market.band.label}**`,
-
-        `Preços em **${formatPercent(market.priceBp)}** da tabela`,
-
-        ...(trend ? [trend] : []),
-
-        `⏳ Próxima atualização em **${formatDuration(market.remaining)}**`
+    const indexRows = [
+        ["Índice", `${market.index} de ${MARKET_CONFIG.indexMax} (${market.band.label})`],
+        ["Preços", `${formatPercent(market.priceBp)} da tabela`],
+        ...(market.trend ? [["Tendência", `${TREND_WORD[market.trend]} (era ${market.previousIndex})`]] : []),
+        ["Atualiza em", formatDuration(market.remaining)]
     ];
 
     const hotLines = hot
@@ -110,75 +113,70 @@ export function buildMarketView({ ownerId, market }) {
         ]
         : ["Nenhum item em alta agora."];
 
+    const rules =
+        "Índice baixo deixa a loja mais barata, índice alto paga melhor na venda. " +
+        `O preço vai de ${formatPercent(MARKET_CONFIG.minPriceBp)} a ` +
+        `${formatPercent(MARKET_CONFIG.maxPriceBp)} da tabela, e o item em alta soma o bônus só na venda. ` +
+        "Cada servidor tem o seu mercado.";
+
     const embed = createEmbed({
-        title: "📊 Helena Bolsa",
+        section: "Bolsa",
+        title: `${market.band.emoji} Bolsa do servidor`,
 
         description:
-            "O mercado do seu servidor. O índice muda a cada " +
-            `${minutes} minutos e mexe nos preços da loja.\n\n` +
-            marketLine(market),
+            "O índice muda a cada " + `${minutes} minutos e mexe nos preços da loja.\n` +
+            receipt(indexRows),
 
         color: HELENA_COLORS.economy,
+        mood: "dinheiro",
 
         fields: [
-            {
-                name: "📈 Índice do servidor",
-                value: indexLines.join("\n"),
-                inline: false
-            },
             {
                 name: "🔥 Item em alta",
                 value: hotLines.join("\n"),
                 inline: false
             },
             {
-                name: "🛒 Preços de agora",
-                value: priceLines(market).join("\n") || "Nada para vender.",
+                name: "🛒 Preços de agora (▲ em alta)",
+                value: priceTable(market),
                 inline: false
             },
             {
                 name: "💡 Como funciona",
-                value: [
-                    "Índice baixo deixa a loja mais barata, índice alto paga melhor na venda.",
-                    `O preço vai de ${formatPercent(MARKET_CONFIG.minPriceBp)} a ` +
-                    `${formatPercent(MARKET_CONFIG.maxPriceBp)} da tabela, e o item em alta soma o bônus só na venda.`,
-                    "Cada servidor tem o seu mercado. O preço que vale é o da hora em que você confirma."
-                ].join("\n"),
+                value: rules,
                 inline: false
             }
         ],
 
-        footer: `Helena • Bolsa • atualiza a cada ${minutes} minutos`
+        footer: `Atualiza a cada ${minutes} minutos`
     });
 
     // O V2: o índice em destaque, o item em alta e a tabela de preços, com a explicação em letra
     // pequena no fim.
     const layout = [
         container([
-            text("## 📊 Helena Bolsa"),
+            text("-# HELENA · BOLSA"),
 
-            text(`O mercado do seu servidor. O índice muda a cada ${minutes} minutos e mexe nos preços da loja.`),
+            text(`## ${market.band.emoji} Bolsa do servidor`),
+
+            text(`O índice muda a cada ${minutes} minutos e mexe nos preços da loja.`),
 
             divider(),
 
-            text(`### 📈 Índice do servidor\n${indexLines.join("\n")}`),
+            text(receipt(indexRows)),
 
             text(`### 🔥 Item em alta\n${hotLines.join("\n")}`),
 
             divider(),
 
-            text(`### 🛒 Preços de agora\n${priceLines(market).join("\n") || "Nada para vender."}`),
+            text(`### 🛒 Preços de agora (▲ em alta)\n${priceTable(market)}`),
 
             divider(),
 
-            subtext("💡 Índice baixo deixa a loja mais barata, índice alto paga melhor na venda. " +
-                `O preço vai de ${formatPercent(MARKET_CONFIG.minPriceBp)} a ${formatPercent(MARKET_CONFIG.maxPriceBp)} da tabela, ` +
-                "e o item em alta soma o bônus só na venda. Cada servidor tem o seu mercado."),
+            subtext(`💡 ${rules}`),
 
             buttons(ownerId)
-        ], { color: HELENA_COLORS.economy }),
-
-        subtext(`Helena • Bolsa • atualiza a cada ${minutes} minutos`)
+        ], { color: HELENA_COLORS.economy })
     ];
 
     return {
@@ -195,10 +193,12 @@ export function buildMarketView({ ownerId, market }) {
 export function buildMarketClosed() {
     return {
         embed: createEmbed({
+            section: "Bolsa",
             title: "📊 Bolsa fechada",
             description: "Use `/bolsa` para abrir de novo.",
-            color: HELENA_COLORS.neutral,
-            footer: "Helena • Bolsa"
+            color: HELENA_COLORS.wait,
+            mood: "dormindo",
+            footer: "Até a próxima oscilação"
         }),
 
         components: []

@@ -4,10 +4,10 @@ import {
 } from "../../services/combat/equipment.mjs";
 
 import {
-    createEmbed,
     embedResponse,
     errorEmbed,
-    HELENA_COLORS
+    HELENA_COLORS,
+    ledgerEmbed
 } from "../../utils/embed.mjs";
 
 export default {
@@ -31,30 +31,20 @@ export default {
             );
 
             return embedResponse(
-                createEmbed({
+                ledgerEmbed({
+                    section: "Arsenal",
                     title: "🛡️ Arma desequipada",
 
-                    description:
-                        "Você removeu sua arma do espaço de equipamento.",
+                    say:
+                        (weapon
+                            ? weapon.emoji + " **" + weapon.name + "** saiu da sua mão."
+                            : "Você removeu sua arma.") +
+                        "\nEla continua no inventário e dá para equipar de novo.",
 
-                    color: HELENA_COLORS.primary,
+                    color: HELENA_COLORS.wait,
+                    mood: "dormindo",
 
-                    fields: [
-                        {
-                            name: "Arma anterior",
-                            value: weapon
-                                ? weapon.emoji + " **" + weapon.name + "**"
-                                : "Arma removida",
-                            inline: false
-                        },
-                        {
-                            name: "📦 Inventário",
-                            value:
-                                "A arma continua no seu inventário. " +
-                                "Você poderá equipá-la novamente.",
-                            inline: false
-                        }
-                    ]
+                    footer: "/equipar traz uma arma de volta"
                 })
             );
 

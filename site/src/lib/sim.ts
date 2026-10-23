@@ -3,13 +3,18 @@
 //
 // Os textos e as cores das respostas são os dos comandos de verdade
 // (commands/economy/daily.mjs, work.mjs, crime/crime.mjs, prison.mjs) e todo
-// número vem de src/data/game.json, que sai do código do bot.
+// número vem de src/data/game.json, que sai do código do bot. O recibo é montado
+// pela mesma regra de utils/receipt.mjs (tests/site-sim.test.mjs compara os dois).
 
 import { game, data } from "./game.ts";
-import { money, clock, duration } from "./format.ts";
+import { money, duration, span } from "./format.ts";
 import { rewardScale, wholeReais } from "./crime-math.ts";
 
-export type Accent = "success" | "error" | "warning" | "economy";
+/** A cor da barra do embed (HELENA_COLORS): marca, dinheiro, sucesso, risco, espera. */
+export type Accent = "primary" | "economy" | "success" | "error" | "wait";
+
+/** O humor da pelúcia na miniatura (config/theme.mjs, MOODS). */
+export type Mood = "feliz" | "dinheiro" | "dormindo" | "preso" | "mascara" | "festa";
 
 export interface Field {
   name: string;
@@ -17,12 +22,24 @@ export interface Field {
   inline?: boolean;
 }
 
+/** Uma linha do recibo: [nome, valor]. `null` é a linha fina entre os grupos. */
+export type Row = readonly [label: string, value: string] | null;
+
 export interface Embed {
   accent: Accent;
+  /** A seção do topo: "Daily" vira "HELENA · DAILY". */
+  section: string;
   title: string;
-  description: string;
+  /** A frase da Helena. `**negrito**`, `` `código` ``, "> " de citação e "-# " de letra pequena. */
+  say: string;
+  /** O recibo (nome e valor ligados por pontilhado), em bloco de código. */
+  rows: readonly Row[];
+  /** A letra pequena de baixo. */
+  note?: string;
+  /** Só a loja usa campos. */
   fields: Field[];
   footer: string;
+  mood: Mood;
 }
 
 export type Reply =
@@ -95,7 +112,54 @@ export function availability(state: SimState, command: Command, now: number): { 
   return { ok: true, why: "" };
 }
 
+// ---------------------------------------------------------------- o recibo
+
+// A mesma regra de utils/receipt.mjs: largura de 28 a 38 colunas, pontilhado entre o nome e o valor,
+// linha fina nos `null`, sem linha fina no começo nem no fim.
+const MIN_WIDTH = 28;
+const MAX_WIDTH = 38;
+const size = (text: string): number => [...text].length;
+
+export function receipt(rows: readonly Row[], width = MIN_WIDTH): string[] {
+  const lines = rows.map(row => (row === null ? null : ([row[0].trim(), row[1].trim()] as const)));
+  const real = lines.filter((line): line is readonly [string, string] => line !== null);
+
+  if (!real.length) return [];
+
+  const natural = Math.max(...real.map(([label, value]) => size(label) + size(value) + 4));
+  const total = Math.min(Math.max(width, natural), Math.max(MAX_WIDTH, natural));
+
+  const body = lines.map(line => {
+    if (line === null) return "─".repeat(total);
+
+    const [label, value] = line;
+    const dots = Math.max(2, total - size(label) - size(value) - 2);
+
+    return `${label} ${"·".repeat(dots)} ${value}`;
+  });
+
+  while (body[0]?.startsWith("─")) body.shift();
+  while (body.at(-1)?.startsWith("─")) body.pop();
+
+  return body;
+}
+
+/** +R$ 420,00 / -R$ 15,00 / R$ 0,00: o sinal pelo valor, o texto já formatado por quem chama. */
+export const signed = (amount: number, text: string): string => {
+  const shown = text.replace(/^[-+−]/, "");
+
+  if (amount > 0) return `+${shown}`;
+  if (amount < 0) return `-${shown}`;
+
+  return shown;
+};
+
+/** O carimbo do site num texto: uma etiqueta em maiúsculas, em código. */
+export const stamp = (label: string): string => `\`${label.trim().toUpperCase()}\``;
+
 // ---------------------------------------------------------------- respostas
+
+const energyRow = (cost: number, now: number): Row => ["Energia", signed(-cost, `${cost} (${now}/${game.energy.max})`)];
 
 function jailBlock(state: SimState, now: number): Reply {
   return {
@@ -103,14 +167,17 @@ function jailBlock(state: SimState, now: number): Reply {
     live: "jail",
     escape: true,
     embed: {
-      accent: "warning",
+      accent: "error",
+      section: "Prisão",
       title: "⛓️ Você está preso",
-      description: "Este comando fica bloqueado enquanto você cumpre pena. Consultas continuam liberadas.",
-      fields: [
-        { name: "⏳ Tempo restante", value: `**${clock(remainingSeconds(state, now))}**`, inline: true },
-        { name: "📜 Motivo", value: "Crime frustrado", inline: true }
+      say: "Este comando fica bloqueado enquanto você cumpre pena. Consultas continuam liberadas.",
+      rows: [
+        ["Tempo restante", span(remainingSeconds(state, now))],
+        ["Motivo", "Crime frustrado"]
       ],
-      footer: "Helena • Atualizado automaticamente."
+      fields: [],
+      mood: "preso",
+      footer: "Atualizado automaticamente. Use /prisao"
     }
   };
 }
@@ -125,18 +192,21 @@ function daily(state: SimState): { state: SimState; reply: Reply } {
       kind: "embed",
       embed: {
         accent: "success",
-        title: "🎁 Helena Daily",
-        description: "**Recompensa resgatada!**\n\nVocê completou o dia **1** da sua sequência.",
-        fields: [
-          { name: "💰 Recompensa base", value: `**${money(game.daily.reward)}**`, inline: true },
-          { name: "🔥 Bônus de sequência", value: `**${money(0)}**`, inline: true },
-          { name: "💵 Total recebido", value: `**${money(total)}**` },
-          { name: "🔥 Sequência atual", value: "**1 dia**", inline: true },
-          { name: "🏆 Seu recorde", value: "**1 dia**", inline: true },
-          { name: "👛 Carteira atual", value: `**${money(next.wallet)}**`, inline: true },
-          { name: "⏰ Próximo resgate", value: "**24 horas**", inline: true }
+        section: "Daily",
+        title: "🎁 Recompensa do dia",
+        say:
+          "Dia **1** de 7 da sua sequência.\n" +
+          "🔥 **1 dia** seguidos · recorde de 1 dia\n" +
+          "🟩⬜⬜⬜⬜⬜🎁",
+        rows: [
+          ["Recompensa base", signed(game.daily.reward, money(game.daily.reward))],
+          null,
+          ["Total", signed(total, money(total))],
+          ["Carteira", money(next.wallet)]
         ],
-        footer: "Helena Daily • Sua dedicação merece recompensas."
+        fields: [],
+        mood: "feliz",
+        footer: "Volte em 24 horas para manter a sequência"
       }
     }
   };
@@ -155,20 +225,20 @@ function work(state: SimState): { state: SimState; reply: Reply } {
       kind: "embed",
       embed: {
         accent: "success",
-        title: "💼 Expediente concluído!",
-        description: "Você concluiu seu trabalho e recebeu sua recompensa.\n\nContinue trabalhando para evoluir!",
-        fields: [
-          { name: "👔 Emprego", value: `**${job?.name ?? "Entregador"}**` },
-          { name: "💰 Pagamento", value: `**+${money(pay)}**`, inline: true },
-          { name: "✨ Experiência", value: `**+${game.work.xp} XP**`, inline: true },
-          { name: "⚡ Energia consumida", value: `-${game.work.energy}`, inline: true },
-          { name: "🔋 Energia restante", value: `${energy}/${game.energy.max}`, inline: true },
-          { name: "👛 Carteira atual", value: `**${money(next.wallet)}**`, inline: true },
-          { name: "⭐ Nível", value: "1", inline: true },
-          { name: "📊 XP total", value: String(xp), inline: true },
-          { name: "⏰ Próximo expediente", value: "Em 1 hora" }
+        section: "Trabalho",
+        title: "💼 Expediente concluído",
+        say: `Dia de trabalho como **${job?.name ?? "Entregador"}** feito e pago.`,
+        rows: [
+          ["Pagamento", signed(pay, money(pay))],
+          ["Experiência", signed(game.work.xp, `${game.work.xp} XP`)],
+          energyRow(game.work.energy, energy),
+          null,
+          ["Carteira", money(next.wallet)],
+          ["Nível", `1 · ${xp.toLocaleString("pt-BR")} XP`]
         ],
-        footer: "Helena • O esforço constrói sua fortuna."
+        fields: [],
+        mood: "feliz",
+        footer: "Próximo expediente em 1 hora"
       }
     }
   };
@@ -185,8 +255,8 @@ function shop(state: SimState): { state: SimState; reply: Reply } {
     return {
       name: `${numbers[index]} ${food.emoji} ${food.name}`,
       value:
-        `💰 **${money(food.buy)}**  •  💵 Venda: ${money(food.sell)}\n${status}\n${food.description}\n` +
-        `🎒 Você tem **0**/${food.maxStack}  •  🆔 \`${food.id}\``
+        `**${money(food.buy)}** · venda ${money(food.sell)}\n${food.description}\n${status}\n` +
+        `-# você tem 0/${food.maxStack} · id \`${food.id}\``
     };
   });
 
@@ -197,13 +267,16 @@ function shop(state: SimState): { state: SimState; reply: Reply } {
       shop: true,
       embed: {
         accent: "economy",
-        title: "🛒 Helena Loja • 🍽️ Consumíveis",
-        description:
-          `👛 **Carteira:** ${money(state.wallet)}  •  💎 **Gemas:** 0\n` +
-          `📂 **Prateleira:** 🍽️ Consumíveis • ${foods.length} itens\n\n` +
-          "Toque no número do item para comprar. Os verdes cabem na sua carteira.",
+        section: "Loja",
+        title: "🛒 🍽️ Consumíveis",
+        say: `${foods.length} itens nesta prateleira. Toque no número do item para comprar: os verdes cabem na sua carteira.`,
+        rows: [
+          ["Carteira", money(state.wallet)],
+          ["Gemas", "0"]
+        ],
         fields,
-        footer: `Helena • Página 1/1 • ${foods.length} itens`
+        mood: "dinheiro",
+        footer: `Página 1/1 · ${foods.length} itens`
       }
     }
   };
@@ -236,17 +309,21 @@ function crime(state: SimState, now: number, rng: Rng): { state: SimState; reply
       reply: {
         kind: "embed",
         embed: {
-          accent: "success",
-          title: jackpot ? "💎 Golpe de mestre!" : "🕵️ Crime bem-sucedido!",
-          description: story.text,
-          fields: [
-            { name: "💸 Dinheiro sujo", value: `**+${money(amount)}**`, inline: true },
-            { name: "✨ Experiência", value: `**+${xp} XP**`, inline: true },
-            { name: "🧺 Total sujo", value: `**${money(next.dirty)}**`, inline: true },
-            { name: "⚡ Energia", value: `-${c.energy} (restam ${energy}/${game.energy.max})`, inline: true },
-            { name: "⏰ Próximo crime", value: `Em ${duration(c.cooldownSeconds) === "1 h" ? "1 hora" : duration(c.cooldownSeconds)}`, inline: true }
+          accent: "economy",
+          section: "Crime",
+          title: jackpot ? "💎 Golpe de mestre" : "🕵️ Crime bem-sucedido",
+          say: story.text,
+          rows: [
+            ["Dinheiro sujo", signed(amount, money(amount))],
+            ["Experiência", signed(xp, `${xp} XP`)],
+            energyRow(c.energy, energy),
+            null,
+            ["Total sujo", money(next.dirty)]
           ],
-          footer: "Helena • Dinheiro sujo não compra nada. Use /lavagem."
+          note: `${stamp("não vale nada")} até passar pela \`/lavagem\`.`,
+          fields: [],
+          mood: jackpot ? "festa" : "mascara",
+          footer: `Próximo crime em ${span(c.cooldownSeconds)}`
         }
       }
     };
@@ -267,18 +344,14 @@ function crime(state: SimState, now: number, rng: Rng): { state: SimState; reply
     busts: state.busts + 1
   };
 
-  const fields: Field[] = [
-    {
-      name: "💸 Multa",
-      value: fine > 0 ? `**-${money(fine)}**` : "Nada: sua carteira estava vazia",
-      inline: true
-    },
-    { name: "⛓️ Prisão", value: `**${clock(c.jailSeconds)}**`, inline: true }
+  const rows: Row[] = [
+    ["Multa", fine > 0 ? signed(-fine, money(fine)) : "nada (carteira vazia)"],
+    ["Prisão", span(c.jailSeconds)]
   ];
 
-  if (hpLost > 0) fields.push({ name: "🩸 Ferimento", value: `**-${hpLost} HP** (restam ${hp})`, inline: true });
+  if (hpLost > 0) rows.push(["Ferimento", signed(-hpLost, `${hpLost} HP (restam ${hp})`)]);
 
-  fields.push({ name: "⚡ Energia", value: `-${c.energy} (restam ${energy}/${game.energy.max})`, inline: true });
+  rows.push(energyRow(c.energy, energy));
 
   return {
     state: next,
@@ -286,10 +359,13 @@ function crime(state: SimState, now: number, rng: Rng): { state: SimState; reply
       kind: "embed",
       embed: {
         accent: "error",
-        title: "🚨 Você foi pego!",
-        description: `${story.text}\n\nEnquanto estiver preso, você não pode trabalhar, comprar nem movimentar dinheiro.`,
-        fields,
-        footer: "Helena • Use /prisao para acompanhar sua pena."
+        section: "Crime",
+        title: "🚨 Você foi pego",
+        say: `${story.text}\n> Preso, você não trabalha, não compra e não mexe em dinheiro.`,
+        rows,
+        fields: [],
+        mood: "preso",
+        footer: "/prisao acompanha a sua pena"
       }
     }
   };
@@ -299,21 +375,22 @@ function prison(state: SimState, now: number): Reply {
   const jailed = isJailed(state, now);
   const rate = state.crimes > 0 ? `${Math.round((state.wins / state.crimes) * 100)}%` : "—";
 
-  const fields: Field[] = [];
+  const rows: Row[] = [];
 
   if (jailed) {
-    fields.push(
-      { name: "⏳ Tempo restante", value: `**${clock(remainingSeconds(state, now))}**`, inline: true },
-      { name: "📜 Pena total", value: clock(game.crime.jailSeconds), inline: true },
-      { name: "⚖️ Motivo", value: "Crime frustrado", inline: true }
+    rows.push(
+      ["Tempo restante", span(remainingSeconds(state, now))],
+      ["Pena total", span(game.crime.jailSeconds)],
+      ["Motivo", "Crime frustrado"],
+      null
     );
   }
 
-  fields.push(
-    { name: "🕵️ Crimes", value: String(state.crimes), inline: true },
-    { name: "✅ Sucessos", value: `${state.wins} (${rate})`, inline: true },
-    { name: "🚨 Capturas", value: String(state.busts), inline: true },
-    { name: "💸 Total arrecadado (sujo)", value: money(state.dirtyEarned) }
+  rows.push(
+    ["Crimes", String(state.crimes)],
+    ["Sucessos", `${state.wins} (${rate})`],
+    ["Capturas", String(state.busts)],
+    ["Total arrecadado (sujo)", money(state.dirtyEarned)]
   );
 
   return {
@@ -321,13 +398,16 @@ function prison(state: SimState, now: number): Reply {
     live: jailed ? "jail" : undefined,
     escape: jailed,
     embed: {
-      accent: jailed ? "warning" : "success",
+      accent: jailed ? "error" : "success",
+      section: "Prisão",
       title: jailed ? "⛓️ Você está preso" : "🔓 Você está livre",
-      description: jailed
+      say: jailed
         ? "Trabalho, compras, depósitos e outras movimentações ficam bloqueados até o fim da pena."
         : "Nenhuma pena em curso. Consultas e movimentações estão liberadas.",
-      fields,
-      footer: jailed ? "Helena • Atualizado automaticamente." : "Helena • Ficha criminal"
+      rows,
+      fields: [],
+      mood: jailed ? "preso" : "feliz",
+      footer: jailed ? "Atualizado automaticamente" : "Ficha criminal"
     }
   };
 }

@@ -28,6 +28,21 @@ export function duration(seconds: number): string {
   return `${seconds} s`;
 }
 
+/** 3725 -> "1h 2m 5s", 1781 -> "29m 41s": o tempo como o bot escreve (formatDuration em utils/time.mjs). */
+export function span(seconds: number): string {
+  const total = Math.max(0, Math.ceil(Number(seconds) || 0));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const parts: string[] = [];
+
+  if (h > 0) parts.push(`${h}h`);
+  if (h > 0 || m > 0) parts.push(`${m}m`);
+  parts.push(`${s}s`);
+
+  return parts.join(" ");
+}
+
 /** 1781 -> "29m 41s" (o relógio da prisão) */
 export function clock(seconds: number): string {
   const safe = Math.max(0, Math.ceil(seconds));
