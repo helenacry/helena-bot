@@ -4,6 +4,7 @@
 //
 //   node --env-file=.env scripts/dev/upload-badge-emojis.mjs <pasta com os PNGs> <ID do servidor>
 //   node --env-file=.env scripts/dev/upload-badge-emojis.mjs <pasta> <servidor> --yes
+//   ... --faltantes   só os ícones das insígnias sem emoji fixo no catálogo
 //
 // Sem --yes ele só confere e mostra o plano (não envia nada). O nome do arquivo, sem .png, é o nome
 // do emoji (auto_admin.png -> auto_admin). Só os nomes que o catálogo usa são enviados, e os que o
@@ -13,7 +14,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, join, resolve } from "node:path";
 
-import { BADGE_ICON_NAMES } from "../../services/social/userinfo-badges.mjs";
+import { BADGE_ICON_NAMES, BADGE_ICONS_WITHOUT_EMOJI } from "../../services/social/userinfo-badges.mjs";
 
 const API = "https://api.vsync.lat";
 
@@ -24,6 +25,10 @@ const NAME = /^[A-Za-z0-9_]{2,32}$/;
 
 const args = process.argv.slice(2);
 const confirmed = args.includes("--yes");
+
+// --faltantes: só os ícones das insígnias que não têm emoji fixo no catálogo (o resto já tem).
+const onlyMissing = args.includes("--faltantes");
+
 const [folder, guildId] = args.filter(arg => !arg.startsWith("--"));
 
 function stop(message) {
@@ -49,7 +54,7 @@ const sleep = ms => new Promise(done => setTimeout(done, ms));
 // O QUE HÁ NA PASTA
 // ==========================================
 
-const wanted = new Set(BADGE_ICON_NAMES);
+const wanted = new Set(onlyMissing ? BADGE_ICONS_WITHOUT_EMOJI : BADGE_ICON_NAMES);
 
 const files = readdirSync(resolve(folder))
     .filter(file => extname(file).toLowerCase() === ".png")
@@ -61,7 +66,7 @@ const ignored = [];
 for (const item of files) {
     const size = statSync(item.path).size;
 
-    if (!wanted.has(item.name)) ignored.push(`${item.file} (o catálogo não usa este nome)`);
+    if (!wanted.has(item.name)) ignored.push(`${item.file} (${BADGE_ICON_NAMES.includes(item.name) ? "já tem emoji fixo no catálogo" : "o catálogo não usa este nome"})`);
     else if (!NAME.test(item.name)) ignored.push(`${item.file} (nome inválido para emoji)`);
     else if (size > MAX_BYTES) ignored.push(`${item.file} (passa de 256 KB)`);
     else usable.push({ ...item, size });

@@ -11,7 +11,7 @@ const {
     loadBadgeEmojis, badgeEmojis, emojiNamed, pulseEmoji, resetBadgeEmojis
 } = await import("../services/social/badge-emojis.mjs");
 
-const { getUserBadges, BADGE_ICON_NAMES } = await import("../services/social/userinfo-badges.mjs");
+const { getUserBadges, BADGE_ICON_NAMES, BADGE_ICONS_WITHOUT_EMOJI } = await import("../services/social/userinfo-badges.mjs");
 const { buildUserinfoEmbed } = await import("../services/social/userinfo-view.mjs");
 const { PULSE_EMOJIS } = await import("../services/social/userinfo-format.mjs");
 
@@ -77,6 +77,13 @@ test.after(() => {
 test("o catálogo pede exatamente os 31 nomes do pacote de ícones, sem repetir", () => {
     assert.equal(new Set(BADGE_ICON_NAMES).size, BADGE_ICON_NAMES.length, "nome repetido");
     assert.deepEqual([...BADGE_ICON_NAMES].sort(), [...PACK].sort());
+});
+
+test("os ícones sem emoji fixo são os do tempo de tela, o Prisma básico e os três presentes (scripts/dev/upload-badge-emojis.mjs --faltantes)", () => {
+    assert.deepEqual([...BADGE_ICONS_WITHOUT_EMOJI].sort(), [
+        "auto_gifting_champion", "auto_gifting_luminary", "auto_gifting_patron", "auto_prisma",
+        ...["1h", "5h", "20h", "75h", "150h", "300h", "500h", "1kh", "2kh", "5khplus"].map(tier => `auto_stream_${tier}`)
+    ].sort());
 });
 
 test("sem o pacote no servidor, nada muda: emoji fixo onde existe, nome onde não existe", () => {

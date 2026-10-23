@@ -120,6 +120,11 @@ const BADGES = Object.freeze({
 // Os nomes de emoji que o catálogo usa (a lista que o servidor precisa ter, e que o teste confere).
 export const BADGE_ICON_NAMES = Object.freeze(Object.values(BADGES).map(badge => badge.icon));
 
+// Os que ainda não têm emoji fixo no catálogo: sem o pacote no servidor, esses aparecem pelo nome.
+export const BADGE_ICONS_WITHOUT_EMOJI = Object.freeze(
+    Object.values(BADGES).filter(badge => !badge.emoji).map(badge => badge.icon)
+);
+
 // ==========================================
 // ALIASES
 // ==========================================
