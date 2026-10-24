@@ -23,10 +23,6 @@ import {
 import { renderProfileCard } from "../../services/social/profile-card.mjs";
 
 import {
-    uploadVSyncAttachment
-} from "../../services/platform/vsync-attachments.mjs";
-
-import {
     errorEmbed,
     warningEmbed
 } from "../../utils/embed.mjs";
@@ -270,30 +266,11 @@ export default {
                 );
             }
 
-            // O cartão vai direto da memória para a VSync:
-            // nada é gravado em disco.
+            // O cartão vai direto da memória para o Discord, no mesmo envio
+            // da mensagem (multipart): nada é gravado em disco.
             const safeId = String(target.id).replace(
                 /[^a-zA-Z0-9_-]/g,
                 "_"
-            );
-
-            const attachment = await uploadVSyncAttachment({
-                guildId,
-                channelId,
-                bytes: png,
-                filename: `helena-perfil-${safeId}.png`,
-                contentType: "image/png"
-            });
-
-            if (!attachment?.reference) {
-                throw new Error(
-                    "O upload não retornou a referência do anexo."
-                );
-            }
-
-            console.log(
-                "[PERFIL] Cartão enviado:",
-                attachment.reference
             );
 
             return {
@@ -306,9 +283,11 @@ export default {
                         ? `<@${userId}>`
                         : `Perfil de <@${target.id}>`,
 
-                    attachments: [
-                        attachment.reference
-                    ]
+                    files: [{
+                        name: `helena-perfil-${safeId}.png`,
+                        bytes: png,
+                        contentType: "image/png"
+                    }]
                 }
             };
 

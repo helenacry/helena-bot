@@ -50,7 +50,7 @@ export default {
             const options = interaction.data.options ?? {};
 
             // Mantém compatibilidade com ID direto
-            // ou objeto de usuário retornado pela VSync.
+            // ou objeto de usuário retornado pelo Discord.
             const target = options.usuario;
 
             const targetId =

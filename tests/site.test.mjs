@@ -116,8 +116,9 @@ test("o endereço do site vem de config/site.mjs e o Astro o usa (site e base do
 test("os links do convite e do servidor oficial estão preenchidos, e os criadores são os combinados", () => {
     const config = read("src/config.ts");
 
-    assert.match(config, /inviteUrl:\s*"https:\/\/vsync\.lat\/oauth2\/authorize\?client_id=\d+&scope=bot/);
-    assert.match(config, /supportUrl: "https:\/\/vsync\.lat\/[a-z0-9]+"/);
+    // o convite é montado com o ID do aplicativo (vazio até o aplicativo existir: sem ID, sem botão)
+    assert.match(config, /inviteUrl: DISCORD_CLIENT_ID\s*\? `https:\/\/discord\.com\/oauth2\/authorize\?client_id=\$\{DISCORD_CLIENT_ID\}&scope=bot%20applications\.commands&permissions=\d+`\s*: ""/);
+    assert.match(config, /supportUrl: "(?:https:\/\/discord\.gg\/[A-Za-z0-9-]+)?"/);
     assert.match(config, /contactUrl: "https:\/\/github\.com\/[A-Za-z0-9-]+"/, "contato público é o perfil do GitHub");
 
     const handles = [...config.matchAll(/\{ handle: "([A-Za-z0-9-]+)", url: "(https:\/\/github\.com\/[A-Za-z0-9-]+)" \}/g)];
@@ -332,7 +333,7 @@ test("o contato dos textos são os perfis dos criadores e o servidor oficial, vi
         assert.match(source, /href=\{SITE\.supportUrl\}/, `${name}: link do servidor oficial`);
 
         // nenhum endereço de contato escrito à mão
-        assert.doesNotMatch(stripFrontmatter(source), /https:\/\/github\.com\/|https:\/\/vsync\.lat\//, `${name}: endereço escrito à mão`);
+        assert.doesNotMatch(stripFrontmatter(source), /https:\/\/github\.com\/|https:\/\/discord\.gg\//, `${name}: endereço escrito à mão`);
         assert.doesNotMatch(source, /mailto:|[\w.+-]+@[\w-]+\.[a-z]{2,}/i, `${name}: o contato público não tem e-mail`);
     }
 
@@ -422,11 +423,11 @@ test("privacidade: crianças e adolescentes (LGPD art. 14, ECA Digital), bases l
     const text = plainText("privacy");
 
     assert.match(text, /a helena nao e para criancas/);
-    assert.match(text, /menos de 12 anos/);
+    assert.match(text, /menos de 13 anos/);
     assert.match(text, /melhor interesse do adolescente \(lgpd, art\. 14\)/);
     assert.match(text, /nao mostramos anuncios, nao criamos perfis para publicidade e nao vendemos nada, nem caixas de recompensa/);
     assert.match(text, /lei n.{1,3} 15\.211\/2025/);
-    assert.match(text, /quem faz isso e a vsync/, "a conferência de idade é da VSync");
+    assert.match(text, /quem faz isso e o discord/, "a conferência de idade é do Discord");
 
     assert.match(text, /decisoes automatizadas/);
     assert.match(text, /intervalo entre comandos, limite de tentativas no painel e a verificacao anti-robo/);
@@ -443,7 +444,7 @@ test("privacidade: crianças e adolescentes (LGPD art. 14, ECA Digital), bases l
 test("termos: idade, caixas de recompensa, consumidor, foro e consentimento nas mudanças", () => {
     const text = plainText("terms");
 
-    assert.match(text, /a helena nao e para menores de 12 anos/);
+    assert.match(text, /a helena nao e para menores de 13 anos/);
     assert.match(text, /nao vende nada, nao aceita pagamento, nao mostra anuncios e nao tem caixas de recompensa pagas/);
     assert.match(text, /codigo de defesa do consumidor/);
     assert.match(text, /regras gerais de foro do codigo de processo civil/);
@@ -487,7 +488,9 @@ test("a promessa 'sem caixas de recompensa' é verdade: a caixa misteriosa da lo
 test("a política diz que não há cookies nem rastreadores, e o site não tem", () => {
     // domínios que as páginas e os scripts podem citar; os de terceiros aparecem na política (seção 6)
     const allowed = new Set([
-        "vsync.lat",                       // convite, login e servidor oficial
+        "discord.com",                     // convite e login
+        "discord.gg",                      // servidor oficial
+        "cdn.discordapp.com",              // foto e ícone de servidor que o Discord entrega ao painel
         "github.com",                      // contato e créditos
         "challenges.cloudflare.com",       // verificação anti-robô do painel
         "helena.discloud.dev",             // API do painel (bot e banco no Discloud)
@@ -509,7 +512,7 @@ test("a política diz que não há cookies nem rastreadores, e o site não tem",
 
     const policy = plainText("privacy");
 
-    for (const owner of ["vsync", "cloudflare", "github", "discloud"]) {
+    for (const owner of ["discord", "cloudflare", "github", "discloud"]) {
         assert.ok(policy.includes(owner), `a política cita ${owner}`);
     }
 

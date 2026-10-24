@@ -1,8 +1,8 @@
 // Gera as imagens de perfil da Helena (1024 x 1024) a partir do desenho em vetor da pelúcia:
-//   ../docs/assets/brand/bot-avatar.png    o avatar do bot na VSync (fundo violeta, a pelúcia com sombra dura)
+//   ../docs/assets/brand/bot-avatar.png    o avatar do bot no Discord (fundo violeta, a pelúcia com sombra dura)
 //   ../docs/assets/brand/github-org.png    o avatar da organização helenacry no GitHub (papel lilás + selo violeta)
-//   ../docs/assets/brand/server-icon.png   o ícone do servidor oficial na VSync (carimbo redondo, tinta escura)
-//   ../docs/assets/brand/app-banner.png    o banner do app na VSync (1500 x 500, tudo no miolo por causa dos recortes)
+//   ../docs/assets/brand/server-icon.png   o ícone do servidor oficial no Discord (carimbo redondo, tinta escura)
+//   ../docs/assets/brand/app-banner.png    o banner do app no Discord (1500 x 500, tudo no miolo por causa dos recortes)
 //   ../assets/helena_pfp.png               a foto da Helena no site e no cartão de exemplo (o avatar do bot, 512 px)
 // Rode só quando o desenho mudar:  npm --prefix site run profiles
 //
@@ -88,7 +88,7 @@ for (const [name, markup] of [["bot-avatar", bot], ["github-org", org], ["server
   await sharp(Buffer.from(markup), { density: 72 }).resize(1024, 1024).png({ compressionLevel: 9 }).toFile(file);
 }
 
-// 4. Banner do app na VSync (1500 x 500). O avatar cobre o canto inferior esquerdo no perfil e o recorte
+// 4. Banner do app no Discord (1500 x 500). O avatar cobre o canto inferior esquerdo no perfil e o recorte
 // muda de lugar para lugar (de 3:1 a 7:1), então tudo fica no miolo: a pelúcia no centro e os quatro
 // verbos do jogo dos lados, dentro de uma faixa de 1000 x 200 px no meio do quadro.
 const verbs = (x, anchor, lines) => lines.map((line, i) => `

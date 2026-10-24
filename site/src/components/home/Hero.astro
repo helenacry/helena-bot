@@ -26,7 +26,7 @@ const facts = [
 <section class="hero" aria-labelledby="hero-title">
   <div class="wrap grid">
     <div class="copy">
-      <p class="stamp label">Bot de economia e RPG para a VSync</p>
+      <p class="stamp label">Bot de economia e RPG para o Discord</p>
 
       <h1 id="hero-title">
         <span class="verb earn">Trabalhe,</span>
@@ -40,9 +40,11 @@ const facts = [
       </p>
 
       <div class="actions">
-        <a class="btn btn-primary" href={SITE.inviteUrl} rel="noopener">
-          Adicionar à VSync <Icon name="arrow" size={18} />
-        </a>
+        {SITE.inviteUrl && (
+          <a class="btn btn-primary" href={SITE.inviteUrl} rel="noopener">
+            Adicionar ao Discord <Icon name="arrow" size={18} />
+          </a>
+        )}
         <a class="btn btn-quiet" href={url("/wiki/")}>
           <Icon name="book" size={18} /> Ler a wiki
         </a>

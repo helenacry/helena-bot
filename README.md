@@ -1,11 +1,10 @@
 <div align="center">
 
-<img src="docs/assets/banner.png" alt="Helena: bot de economia e RPG para a VSync. Trabalhe, lave dinheiro, case ou vá preso." width="100%">
+<img src="docs/assets/banner.png" alt="Helena: bot de economia e RPG para o Discord. Trabalhe, lave dinheiro, case ou vá preso." width="100%">
 
 <br>
 
-[![Adicionar à VSync](https://img.shields.io/badge/Adicionar_à_VSync-5a2be2?style=for-the-badge)](https://vsync.lat/oauth2/authorize?client_id=235205613573263360&scope=bot&permissions=VIEW_CHANNEL,SEND_MESSAGES)
-[![Servidor oficial](https://img.shields.io/badge/Servidor_oficial-1a1326?style=for-the-badge)](https://vsync.lat/tfe6pdxk)
+[![Adicionar ao Discord](https://img.shields.io/badge/Adicionar_ao_Discord-5865f2?style=for-the-badge)](https://helenacry.github.io/helena-bot/)
 [![Site](https://img.shields.io/badge/Site-d6455b?style=for-the-badge)](https://helenacry.github.io/helena-bot/)
 [![Wiki](https://img.shields.io/badge/Wiki-2e7d5b?style=for-the-badge)](https://helenacry.github.io/helena-bot/wiki/)
 [![Favoritar no GitHub](https://img.shields.io/github/stars/helenacry/helena-bot?style=for-the-badge&logo=github&label=Favoritar&color=f5c542&labelColor=1a1326)](https://github.com/helenacry/helena-bot)
@@ -14,7 +13,7 @@
 
 ## O que é
 
-A **Helena** é um bot de economia e RPG para a [VSync](https://vsync.lat). Cada servidor tem a sua própria economia: você trabalha, guarda dinheiro, compra na loja, casa, duela e, se tiver coragem, comete crimes, lava o dinheiro sujo e tenta fugir da cadeia. Tudo vira um **cartão de perfil** com a sua cara.
+A **Helena** é um bot de economia e RPG para o [Discord](https://discord.com). Cada servidor tem a sua própria economia: você trabalha, guarda dinheiro, compra na loja, casa, duela e, se tiver coragem, comete crimes, lava o dinheiro sujo e tenta fugir da cadeia. Tudo vira um **cartão de perfil** com a sua cara.
 
 | Recurso | O que tem |
 |---|---|
@@ -32,7 +31,7 @@ A **Helena** é um bot de economia e RPG para a [VSync](https://vsync.lat). Cada
 
 ## Comece em 1 minuto
 
-1. **Adicione a Helena** ao seu servidor da VSync com o botão **Adicionar à VSync**, lá em cima.
+1. **Adicione a Helena** ao seu servidor do Discord com o botão **Adicionar ao Discord**, lá em cima.
 2. **Peça ajuda:** digite `/ajuda` para ver as categorias e o que cada comando faz.
 3. **Resgate o primeiro prêmio:** o seu primeiro `/daily` já abre a conta. Não precisa de cadastro.
 
@@ -42,7 +41,7 @@ Os comandos funcionam de duas formas: com a barra (`/saldo`) ou com o prefixo `h
 
 ## Para quem desenvolve
 
-Precisa de **Node.js 24** (o banco usa o `node:sqlite`, que já vem nele) e de um aplicativo de bot criado no portal do desenvolvedor da VSync.
+Precisa de **Node.js 24** (o banco usa o `node:sqlite`, que já vem nele) e de um aplicativo de bot criado no portal do desenvolvedor do Discord.
 
 ```bash
 npm install
@@ -62,10 +61,11 @@ npm run site:install && npm run site:dev    # http://127.0.0.1:4321/helena-bot/
 | Documento | O que tem |
 |---|---|
 | [Desenvolvimento](docs/development.md) | instalação, ambientes, variáveis, como criar um comando, testes |
+| [Configurar no Discord](docs/discord-setup.md) | criar o aplicativo e o token, as intenções, o convite e a lista da virada |
 | [Estrutura do projeto](docs/structure.md) | onde fica cada pasta |
 | [Sistemas do jogo](docs/game-systems.md) | crime, perfil, painéis, layout V2, intervalo entre comandos, bolsa |
 | [Desenho das respostas do bot](docs/bot-design.md) | recibo, cores, humores da pelúcia e texto das respostas no chat |
-| [Painel do site (API)](docs/panel-api.md) | login com a VSync, rotas, segurança |
+| [Painel do site (API)](docs/panel-api.md) | login com o Discord, rotas, segurança |
 | [Site e wiki](docs/site.md) | o site em Astro, a wiki em Markdown, os portões de qualidade |
 | [Hospedagem no Discloud](docs/hosting-discloud.md) | onde o bot oficial roda |
 | [Hospedagem no Railway](docs/hosting-railway.md) | alternativa de hospedagem |
@@ -83,5 +83,5 @@ Leia os [Termos de uso](https://helenacry.github.io/helena-bot/terms/) e a [Pol�
 - **Pagefind** (busca da wiki) e **Astro** (o site): código aberto, usados como dependências do projeto.
 
 <div align="center">
-<sub>Feito por <a href="https://github.com/matheustonon1">@matheustonon1</a> e <a href="https://github.com/agorismo">@agorismo</a>, da organização <a href="https://github.com/helenacry">helenacry</a>. A Helena não é um produto da VSync.</sub>
+<sub>Feito por <a href="https://github.com/matheustonon1">@matheustonon1</a> e <a href="https://github.com/agorismo">@agorismo</a>, da organização <a href="https://github.com/helenacry">helenacry</a>. A Helena não é um produto do Discord.</sub>
 </div>

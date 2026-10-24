@@ -1,9 +1,9 @@
 
 // ==========================================
-// IDS DA VSYNC
+// IDS DA DISCORD
 // ==========================================
 
-// A documentação da VSync usa UUIDs como ID de
+// A documentação do Discord usa UUIDs como ID de
 // conta, servidor e aplicativo. Contas mais
 // antigas também aparecem com IDs numéricos
 // longos. Os dois formatos precisam ser aceitos.

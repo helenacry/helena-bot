@@ -111,7 +111,7 @@ function displayName(userId, currentUserId) {
     }
 
     // Ainda sem nome salvo (a pessoa nunca usou um comando da
-    // Helena): vale a menção, que a VSync mostra como o nome real.
+    // Helena): vale a menção, que o Discord mostra como o nome real.
     return getPlayerName(userId) || null;
 }
 

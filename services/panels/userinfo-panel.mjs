@@ -3,9 +3,7 @@ import { db } from "../../database/connection.mjs";
 
 import { resolveUser } from "../platform/user-lookup.mjs";
 
-import { loadBadgeEmojis } from "../social/badge-emojis.mjs";
-
-import { completeUser } from "../social/userinfo-account.mjs";
+import { withBanner } from "../social/userinfo-account.mjs";
 
 import { SEARCH_VALUE } from "../social/userinfo-components.mjs";
 
@@ -29,7 +27,7 @@ import {
 // ==========================================
 
 // Quem já joga neste servidor (jogadores com nome salvo), os mais recentes primeiro. É o que o
-// segundo menu lista: a VSync não tem um seletor de pessoas, e a lista de membros inteira não
+// segundo menu lista: um menu de texto não tem seletor de pessoas, e a lista de membros inteira não
 // cabe nas 25 opções de um menu.
 export function knownMembers(guildId, { limit = 24 } = {}) {
     return db.prepare(`
@@ -92,10 +90,10 @@ export async function handleUserinfoComponent(interaction, comandos) {
             return warn("Pessoa não encontrada", "Não achei essa pessoa neste servidor agora.");
         }
 
-        // os ícones das insígnias vêm do servidor (cache de 1 minuto; nunca lança)
-        await loadBadgeEmojis();
+        // o banner só existe no perfil completo da conta: busca só quando a pessoa o pede
+        const person = choice === "banner" ? await withBanner(found.user) : found.user;
 
-        const embed = buildUserinfoDetail(choice, await completeUser({ ...found.user, ...found.user.raw }));
+        const embed = buildUserinfoDetail(choice, person);
 
         return embed
             ? privateEmbed(embed)

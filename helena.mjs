@@ -1,5 +1,20 @@
 
-import WebSocket from "ws";
+import {
+    createGateway
+} from "./services/discord/gateway.mjs";
+
+import {
+    discordApi
+} from "./services/discord/api.mjs";
+
+import {
+    createTransport
+} from "./services/discord/transport.mjs";
+
+import {
+    normalizeInteraction,
+    normalizeMessage
+} from "./services/discord/normalize.mjs";
 
 import {
     runMigrations
@@ -100,8 +115,7 @@ import {
 
 import {
     startLiveUpdate,
-    stopAllLiveUpdates,
-    LiveEditError
+    stopAllLiveUpdates
 } from "./services/platform/live-embed.mjs";
 
 import {
@@ -143,23 +157,19 @@ import {
 // CONFIGURAÇÕES
 // ==========================================
 
-const API = "https://api.vsync.lat";
-
-const GATEWAY =
-    API.replace(/^http/, "ws") + "/gateway";
-
-const TOKEN = process.env.VSYNC_BOT_TOKEN;
+const TOKEN = process.env.DISCORD_BOT_TOKEN;
 
 if (!TOKEN) {
     throw new Error(
-        "VSYNC_BOT_TOKEN não configurado."
+        "DISCORD_BOT_TOKEN não configurado."
     );
 }
 
-const headers = {
-    Authorization: `Bot ${TOKEN}`,
-    "Content-Type": "application/json"
-};
+const api = discordApi();
+
+// Responde, edita e envia traduzindo o formato da Helena para o do Discord
+// (services/discord/). Criado depois da autenticação, quando o ID do aplicativo é conhecido.
+let transport = null;
 
 // ==========================================
 // RESPONDER INTERAÇÃO SLASH
@@ -186,18 +196,7 @@ async function responderInteracao(
         payload,
         userId: interaction.user?.id,
         skip: manterClassico,
-        post: body => fetch(
-            `${API}/interactions/${interaction.id}/${interaction.token}/callback`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify(body)
-            }
-        )
+        post: transport.callbackFor(interaction)
     });
 
     if (!callback.ok) {
@@ -228,56 +227,20 @@ async function responderInteracao(
 // EDITAR MENSAGENS (ATUALIZAÇÃO AO VIVO)
 // ==========================================
 
-// Faz um PATCH e, se a API recusar, lança LiveEditError com o
+// Se o Discord recusar a edição, o transporte lança LiveEditError com o
 // status e o tempo de espera pedido (429), para o mecanismo de
 // atualização decidir se tenta de novo ou desiste.
-async function enviarEdicao(url, requestHeaders, data) {
-    const response = await fetch(url, {
-        method: "PATCH",
-        headers: requestHeaders,
-        body: JSON.stringify(data)
-    });
-
-    if (response.ok) {
-        return;
-    }
-
-    let retryAfterMs = 0;
-
-    if (response.status === 429) {
-        const detail = await response.json().catch(() => ({}));
-
-        retryAfterMs =
-            Number(detail?.retryAfterMs) ||
-            (Number(response.headers.get("Retry-After")) || 0) * 1000;
-    }
-
-    throw new LiveEditError(
-        `[EDIÇÃO] HTTP ${response.status}`,
-        { status: response.status, retryAfterMs }
-    );
-}
 
 // Mensagem de canal enviada pelo prefixo h.
 function editarMensagemCanal(message, messageId, data) {
-    return enviarEdicao(
-        `${API}/guilds/${encodeURIComponent(message.guildId)}` +
-        `/channels/${encodeURIComponent(message.channelId)}` +
-        `/messages/${encodeURIComponent(messageId)}`,
-        headers,
-        data
-    );
+    return transport.editMessage(message, messageId, data);
 }
 
 // Resposta original de um comando de barra. A rota usa o
-// token da interação, sem o cabeçalho de autorização do bot.
+// token da interação, sem o cabeçalho de autorização do bot
+// (e vale por 15 minutos).
 function editarRespostaOriginal(interaction, data) {
-    return enviarEdicao(
-        `${API}/webhooks/${encodeURIComponent(appId)}` +
-        `/${encodeURIComponent(interaction.token)}/messages/@original`,
-        { "Content-Type": "application/json" },
-        data
-    );
+    return transport.editOriginal(interaction, data);
 }
 
 // Os avisos do próprio bot (manutenção, bloqueio, componente que não existe mais, falha) saem
@@ -336,25 +299,7 @@ async function enviarMensagemCanal(
         );
     }
 
-    const response = await fetch(
-        `${API}/guilds/${encodeURIComponent(guildId)}` +
-        `/channels/${encodeURIComponent(channelId)}/messages`,
-        {
-            method: "POST",
-            headers,
-            body: JSON.stringify(data)
-        }
-    );
-
-    if (!response.ok) {
-        const detail = await response.text();
-
-        throw new Error(
-            `[MENSAGEM CANAL] HTTP ${response.status}: ${detail}`
-        );
-    }
-
-    return response.json();
+    return transport.send(interaction, data);
 }
 
 // ==========================================
@@ -429,9 +374,9 @@ async function executarPerfil(
             {
                 body: data.body ?? "",
 
-                ...(data.attachments
+                ...(data.files
                     ? {
-                        attachments: data.attachments
+                        files: data.files
                     }
                     : {}),
 
@@ -459,22 +404,22 @@ async function executarPerfil(
 // AUTENTICAÇÃO
 // ==========================================
 
-const resposta = await fetch(
-    `${API}/bot/me`,
-    {
-        headers
-    }
-);
+// O Discord diz quem é o aplicativo deste token. Se o token estiver errado, o erro
+// aparece já aqui, com o motivo, em vez de o bot subir mudo.
+let application;
 
-if (!resposta.ok) {
+try {
+    application = await api.application();
+
+} catch (erro) {
     throw new Error(
-        `Erro de autenticação: ${resposta.status} - ${await resposta.text()}`
+        `Erro de autenticação: ${erro.message}`
     );
 }
 
-const me = await resposta.json();
+const appId = application.id;
 
-const appId = me.application.id;
+transport = createTransport(api, appId);
 
 // ==========================================
 // MIGRAÇÕES
@@ -636,13 +581,7 @@ async function executarModal(interaction) {
 // ESTADO DO GATEWAY
 // ==========================================
 
-let ws = null;
-
-let heartbeat = null;
-
-let reconnectTimer = null;
-
-let reconnectAttempts = 0;
+let gateway = null;
 
 let shuttingDown = false;
 
@@ -655,75 +594,26 @@ let shuttingDown = false;
 let guildCountComplete = false;
 
 // ==========================================
-// IDENTIFICAR ID DO SERVIDOR
-// ==========================================
-
-function obterGuildId(guild) {
-    if (
-        typeof guild === "string" ||
-        typeof guild === "number"
-    ) {
-        return String(guild);
-    }
-
-    if (
-        guild &&
-        typeof guild === "object"
-    ) {
-        const id =
-            guild.id ??
-            guild.guildId ??
-            guild.guild_id;
-
-        if (
-            id !== undefined &&
-            id !== null
-        ) {
-            return String(id);
-        }
-    }
-
-    return null;
-}
-
-// ==========================================
 // SNAPSHOT DE SERVIDORES
 // ==========================================
 
-function processarReadyGuilds(msg) {
-    const data = msg.d ?? msg;
-
-    const guilds =
-        data.guilds ??
-        msg.guilds;
-
-    if (!Array.isArray(guilds)) {
-        return;
-    }
-
-    const ids = guilds
-        .map(obterGuildId)
-        .filter(Boolean);
+// No READY o Discord manda a lista dos servidores do bot (cada um como { id, unavailable }) e
+// completa cada um com um GUILD_CREATE logo depois. Os IDs já vêm todos no READY.
+function processarReadyGuilds(data) {
+    const guilds = Array.isArray(data?.guilds) ? data.guilds : [];
 
     guildIds.clear();
 
-    for (const id of ids) {
-        guildIds.add(id);
+    for (const guild of guilds) {
+        if (guild?.id !== undefined && guild?.id !== null) {
+            guildIds.add(String(guild.id));
+        }
     }
 
-    guildCountComplete =
-        data.guildsComplete === true ||
-        data.guilds_complete === true ||
-        data.guildSnapshotComplete === true ||
-        msg.guildsComplete === true;
+    guildCountComplete = true;
 
     console.log(
-        `[GUILDS] ${guildIds.size} servidores recebidos no READY.` +
-        (
-            guildCountComplete
-                ? " Snapshot completo."
-                : " Completude não confirmada."
-        )
+        `[GUILDS] ${guildIds.size} servidores recebidos no READY.`
     );
 }
 
@@ -731,47 +621,31 @@ function processarReadyGuilds(msg) {
 // EVENTOS DE SERVIDORES
 // ==========================================
 
-function processarEventoGuild(msg) {
-    if (msg.op !== "dispatch") {
-        return false;
-    }
-
-    const eventName = String(
-        msg.t || ""
-    ).toUpperCase();
-
-    if (
-        eventName !== "GUILD_CREATE" &&
-        eventName !== "GUILD_DELETE"
-    ) {
-        return false;
-    }
-
-    const guildId =
-        obterGuildId(msg.d) ||
-        obterGuildId(msg.d?.guild);
+function processarEventoGuild(nome, dados) {
+    const guildId = dados?.id !== undefined && dados?.id !== null
+        ? String(dados.id)
+        : null;
 
     if (!guildId) {
         console.warn(
-            `[GUILDS] ${eventName} sem ID reconhecido.`
+            `[GUILDS] ${nome} sem ID reconhecido.`
         );
 
-        return true;
+        return;
     }
 
-    if (eventName === "GUILD_CREATE") {
+    if (nome === "GUILD_CREATE") {
         guildIds.add(guildId);
     }
 
-    if (eventName === "GUILD_DELETE") {
+    // unavailable: true é uma queda do Discord naquele servidor, e o bot continua nele.
+    if (nome === "GUILD_DELETE" && !dados.unavailable) {
         guildIds.delete(guildId);
     }
 
     console.log(
-        `[GUILDS] ${eventName}: ${guildIds.size} servidores conhecidos.`
+        `[GUILDS] ${nome}: ${guildIds.size} servidores conhecidos.`
     );
-
-    return true;
 }
 
 // ==========================================
@@ -787,61 +661,7 @@ function obterMensagensStatus() {
 }
 
 // ==========================================
-// LIMPEZA DOS TIMERS
-// ==========================================
-
-function limparHeartbeat() {
-    if (heartbeat !== null) {
-        clearInterval(heartbeat);
-
-        heartbeat = null;
-    }
-}
-
-function limparReconexao() {
-    if (reconnectTimer !== null) {
-        clearTimeout(reconnectTimer);
-
-        reconnectTimer = null;
-    }
-}
-
-// ==========================================
-// ENVIO AO GATEWAY
-// ==========================================
-
-function enviarGateway(socket, payload) {
-    return new Promise((resolve, reject) => {
-        if (
-            !socket ||
-            socket.readyState !== WebSocket.OPEN
-        ) {
-            reject(
-                new Error(
-                    "Gateway não está conectado."
-                )
-            );
-
-            return;
-        }
-
-        socket.send(
-            JSON.stringify(payload),
-
-            error => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-
-                resolve();
-            }
-        );
-    });
-}
-
-// ==========================================
-// SISTEMA DE PRESENÇA — VSYNC
+// SISTEMA DE PRESENÇA
 // ==========================================
 
 async function atualizarPresenca(message) {
@@ -855,74 +675,351 @@ async function atualizarPresenca(message) {
         );
     }
 
-    const socket = ws;
-
-    if (
-        !socket ||
-        socket.readyState !== WebSocket.OPEN
-    ) {
+    if (!gateway?.connected) {
         throw new Error(
             "Gateway não está conectado."
         );
     }
 
-    await enviarGateway(
-        socket,
-        {
-            op: "update_presence",
-
-            activity: {
-                name: message
-            }
-        }
-    );
+    await gateway.setPresence(message);
 }
 
 // ==========================================
-// RECONEXÃO AUTOMÁTICA
+// COMANDOS COM PREFIXO H
 // ==========================================
 
-function agendarReconexao() {
+// Exemplos:
+// hajuda
+// hperfil
+// hdaily
+// hajuda economia
+
+async function tratarMensagem(dados) {
+    const message = normalizeMessage(dados);
+
+    // O Discord entrega ao bot todas as mensagens que ele pode ver, inclusive as dele,
+    // as de outros bots e as de webhooks: nenhuma delas é comando. Conversa privada
+    // também não (o jogo é de cada servidor).
     if (
-        shuttingDown ||
-        reconnectTimer !== null
+        !message ||
+        !message.guildId ||
+        message.author?.bot ||
+        message.webhookId
     ) {
         return;
     }
 
-    const baseDelay = Math.min(
-        30_000,
+    try {
+        await processarPrefixo({
+            message,
 
-        1_000 * (
-            2 ** Math.min(reconnectAttempts, 5)
+            comandos,
+
+            send: enviarMensagemCanal,
+
+            edit: editarMensagemCanal
+        });
+
+    } catch (erro) {
+        console.error(
+            "[ERRO PREFIXO]",
+            erro
+        );
+    }
+}
+
+// ==========================================
+// INTERAÇÕES (COMANDOS DE BARRA, BOTÕES, MENUS E FORMULÁRIOS)
+// ==========================================
+
+async function tratarInteracao(interaction) {
+    // ping e autocompletar não são tratados
+    if (!interaction) {
+        return;
+    }
+
+    // ==================================
+    // IDENTIFICAR USUÁRIO
+    // ==================================
+
+    const actorId = userId(interaction);
+
+    if (interaction.user?.id) {
+        savePlayerName(
+            interaction.user
+        );
+    }
+
+    // ==================================
+    // PROTEÇÃO DO DESENVOLVEDOR
+    // ==================================
+
+    if (
+        !isOwner(actorId) &&
+        (
+            maintenance() ||
+            blocked(actorId)
         )
-    );
+    ) {
+        const reason = maintenance()
+            ? "🛠️ Helena está em manutenção."
+            : "🚫 Seu acesso à Helena foi bloqueado.";
 
-    const jitterFactor =
-        0.8 + Math.random() * 0.4;
+        await responderInteracao(
+            interaction,
+            mensagemErro(reason)
+        );
 
-    const delay = Math.min(
-        30_000,
+        return;
+    }
 
-        Math.round(
-            baseDelay * jitterFactor
-        )
-    );
-
-    reconnectAttempts++;
+    // ==================================
+    // LOG DA INTERAÇÃO
+    // ==================================
 
     console.log(
-        `[GATEWAY] Reconectando em ${(delay / 1000).toFixed(1)}s...`
+        `[INTERAÇÃO] ${interaction.type}` +
+        ` ${interaction.type === "command"
+            ? "/" + interaction.data?.name
+            : interaction.data?.customId ?? ""}` +
+        ` usuário=${actorId} servidor=${interaction.guildId ?? "-"}`
     );
 
-    reconnectTimer = setTimeout(
-        () => {
-            reconnectTimer = null;
+    // ==================================
+    // COMPONENTES INTERATIVOS
+    // ==================================
 
-            conectarGateway();
-        },
-        delay
+    if (
+        interaction.type === "component"
+    ) {
+        let resultado;
+
+        try {
+            resultado =
+                await executarComponente(
+                    interaction
+                );
+
+        } catch (erro) {
+            console.error(
+                "[ERRO COMPONENTE]",
+                erro
+            );
+
+            resultado = mensagemErro(
+                "❌ Não foi possível processar esta interação."
+            );
+        }
+
+        await responderInteracao(
+            interaction,
+            resultado
+        );
+
+        return;
+    }
+
+    // ==================================
+    // FORMULÁRIOS (MODAIS)
+    // ==================================
+
+    if (
+        interaction.type === "modal_submit"
+    ) {
+        let resultado;
+
+        try {
+            resultado =
+                await executarModal(
+                    interaction
+                );
+
+        } catch (erro) {
+            console.error(
+                "[ERRO MODAL]",
+                erro
+            );
+
+            resultado = mensagemErro(
+                "❌ Não foi possível processar este formulário."
+            );
+        }
+
+        await responderInteracao(
+            interaction,
+            resultado
+        );
+
+        return;
+    }
+
+    // ==================================
+    // FILTRAR COMANDOS
+    // ==================================
+
+    if (
+        interaction.type !== "command"
+    ) {
+        return;
+    }
+
+    // ==================================
+    // LOCALIZAR COMANDO
+    // ==================================
+
+    const commandName =
+        interaction.data?.name;
+
+    // Aceita o nome oficial ou um alias (/ajuda, /help...).
+    const comando =
+        resolverComando(comandos, commandName);
+
+    if (!comando) {
+        console.warn(
+            `Comando desconhecido: ${commandName}`
+        );
+
+        await responderInteracao(
+            interaction,
+
+            mensagemErro(
+                "❌ Este comando não está disponível."
+            )
+        );
+
+        return;
+    }
+
+    // ==================================
+    // INTERVALO ENTRE COMANDOS
+    // ==================================
+
+    // Mesmo intervalo do prefixo h (um só por pessoa). Vem antes
+    // da prisão e do /perfil, que gera imagem e é o mais pesado.
+    // A interação precisa de resposta: avisa só para a pessoa.
+    const espera = commandGate.check(actorId);
+
+    if (!espera.allowed) {
+        await responderInteracao(
+            interaction,
+            mensagemErro(
+                antiSpamText(espera.remainingMs)
+            )
+        );
+
+        return;
+    }
+
+    // ==================================
+    // PRISÃO
+    // ==================================
+
+    // Preso não trabalha, não compra nem movimenta
+    // dinheiro. Vale também para os aliases.
+    const bloqueioPrisao = prisonBlock(
+        comando.name,
+        interaction.guildId,
+        actorId
     );
+
+    if (bloqueioPrisao) {
+        await responderInteracao(
+            interaction,
+            bloqueioPrisao
+        );
+
+        return;
+    }
+
+    // ==================================
+    // TRATAMENTO ESPECIAL DO /PERFIL
+    // ==================================
+
+    // Compara pelo nome oficial: /profile também gera o cartão.
+    if (comando.name === "perfil") {
+        await executarPerfil(
+            interaction,
+            comando
+        );
+
+        return;
+    }
+
+    // ==================================
+    // EXECUTAR DEMAIS COMANDOS
+    // ==================================
+
+    let resultado;
+
+    try {
+        resultado =
+            await comando.execute(
+                interaction
+            );
+
+    } catch (erro) {
+        console.error(
+            `Erro no comando /${comando.name}:`,
+            erro
+        );
+
+        resultado = mensagemErro(
+            "❌ Ocorreu um erro ao executar o comando.",
+            { privado: false }
+        );
+    }
+
+    // ==================================
+    // VALIDAR RESPOSTA
+    // ==================================
+
+    if (!resultado) {
+        console.error(
+            `[COMANDO SEM RESPOSTA] /${comando.name}`
+        );
+
+        resultado = mensagemErro(
+            "❌ O comando não retornou uma resposta válida."
+        );
+    }
+
+    // ==================================
+    // RESPONDER À INTERAÇÃO
+    // ==================================
+
+    console.log(
+        `[RESPOSTA] /${comando.name} -> ${resultado.type}` +
+        (resultado.data?.ephemeral ? " (privada)" : "")
+    );
+
+    await responderInteracao(
+        interaction,
+        resultado
+    );
+}
+
+// ==========================================
+// EVENTOS DO GATEWAY
+// ==========================================
+
+async function tratarEvento(nome, dados) {
+    if (nome === "GUILD_CREATE" || nome === "GUILD_DELETE") {
+        processarEventoGuild(nome, dados);
+
+        return;
+    }
+
+    if (nome === "MESSAGE_CREATE") {
+        await tratarMensagem(dados);
+
+        return;
+    }
+
+    if (nome === "INTERACTION_CREATE") {
+        await tratarInteracao(
+            normalizeInteraction(dados)
+        );
+    }
 }
 
 // ==========================================
@@ -930,524 +1027,64 @@ function agendarReconexao() {
 // ==========================================
 
 function conectarGateway() {
-    if (shuttingDown) {
-        return;
-    }
+    gateway = createGateway({
+        token: TOKEN,
 
-    limparReconexao();
-    limparHeartbeat();
-
-    stopStatusRotation();
-
-    // Impede que intervalos antigos continuem
-    // funcionando após uma reconexão.
-    stopSupportStats();
-
-    guildIds.clear();
-    guildCountComplete = false;
-
-    console.log(
-        "[GATEWAY] Iniciando conexão..."
-    );
-
-    const socket = new WebSocket(GATEWAY);
-
-    ws = socket;
-
-    // ======================================
-    // RECEBER EVENTOS DO GATEWAY
-    // ======================================
-
-    socket.on("message", async raw => {
-        if (
-            shuttingDown ||
-            socket !== ws
-        ) {
-            return;
-        }
-
-        try {
-            const msg = JSON.parse(
-                raw.toString()
+        onReady: dados => {
+            console.log(
+                `Online como ${
+                    dados.user?.global_name ||
+                    dados.user?.username ||
+                    "Helena"
+                }`
             );
-
-            // ==================================
-            // HELLO
-            // ==================================
-
-            if (msg.op === "hello") {
-                await enviarGateway(
-                    socket,
-                    {
-                        op: "identify",
-                        token: TOKEN
-                    }
-                );
-
-                limparHeartbeat();
-
-                const heartbeatMs = Number(
-                    msg.heartbeatMs
-                );
-
-                if (
-                    !Number.isFinite(heartbeatMs) ||
-                    heartbeatMs <= 0
-                ) {
-                    throw new Error(
-                        "Intervalo de heartbeat inválido."
-                    );
-                }
-
-                heartbeat = setInterval(
-                    () => {
-                        if (
-                            socket !== ws ||
-                            socket.readyState !== WebSocket.OPEN
-                        ) {
-                            return;
-                        }
-
-                        void enviarGateway(
-                            socket,
-                            {
-                                op: "ping"
-                            }
-                        ).catch(error => {
-                            console.error(
-                                "[HEARTBEAT]",
-                                error
-                            );
-                        });
-
-                    },
-                    heartbeatMs
-                );
-
-                return;
-            }
-
-            // ==================================
-            // READY
-            // ==================================
-
-            if (msg.op === "ready") {
-                reconnectAttempts = 0;
-
-                limparReconexao();
-
-                const readyData = msg.d ?? msg;
-
-                console.log(
-                    `Online como ${
-                        readyData.user?.displayName ||
-                        readyData.user?.username ||
-                        "Helena"
-                    }`
-                );
-
-                console.log(
-                    `Comandos carregados: ${comandos.size}`
-                );
-
-                processarReadyGuilds(msg);
-
-                // Rotação de presença.
-                startStatusRotation(
-                    atualizarPresenca,
-                    obterMensagensStatus
-                );
-
-                // Contadores do servidor de suporte.
-                startSupportStats();
-
-                console.log(
-                    "[STATUS] Rotação com dados reais iniciada."
-                );
-
-                console.log(
-                    "[PREFIXO] Aguardando comandos iniciados com h."
-                );
-
-                return;
-            }
-
-            // ==================================
-            // EVENTOS DE SERVIDORES
-            // ==================================
-
-            if (processarEventoGuild(msg)) {
-                return;
-            }
-
-            // ==================================
-            // COMANDOS COM PREFIXO H
-            // ==================================
-
-            // Exemplos:
-            // hajuda
-            // hperfil
-            // hdaily
-            // hajuda economia
-
-            if (
-                msg.op === "dispatch" &&
-                msg.t === "MESSAGE_CREATE" &&
-                msg.d
-            ) {
-                try {
-                    await processarPrefixo({
-                        message: msg.d,
-
-                        comandos,
-
-                        send: enviarMensagemCanal,
-
-                        edit: editarMensagemCanal
-                    });
-
-                } catch (erro) {
-                    console.error(
-                        "[ERRO PREFIXO]",
-                        erro
-                    );
-                }
-
-                return;
-            }
-
-            // ==================================
-            // FILTRAR INTERAÇÕES SLASH
-            // ==================================
-
-            if (
-                msg.op !== "dispatch" ||
-                msg.t !== "INTERACTION_CREATE" ||
-                !msg.d
-            ) {
-                return;
-            }
-
-            const interaction = msg.d;
-
-            // ==================================
-            // IDENTIFICAR USUÁRIO
-            // ==================================
-
-            const actorId = userId(interaction);
-
-            if (interaction.user?.id) {
-                savePlayerName(
-                    interaction.user
-                );
-            }
-
-            // ==================================
-            // PROTEÇÃO DO DESENVOLVEDOR
-            // ==================================
-
-            if (
-                !isOwner(actorId) &&
-                (
-                    maintenance() ||
-                    blocked(actorId)
-                )
-            ) {
-                const reason = maintenance()
-                    ? "🛠️ Helena está em manutenção."
-                    : "🚫 Seu acesso à Helena foi bloqueado.";
-
-                await responderInteracao(
-                    interaction,
-                    mensagemErro(reason)
-                );
-
-                return;
-            }
-
-            // ==================================
-            // LOG DA INTERAÇÃO
-            // ==================================
 
             console.log(
-                `[INTERAÇÃO] ${interaction.type}` +
-                ` ${interaction.type === "command"
-                    ? "/" + interaction.data?.name
-                    : interaction.data?.customId ?? ""}` +
-                ` usuário=${actorId} servidor=${interaction.guildId ?? "-"}`
+                `Comandos carregados: ${comandos.size}`
             );
 
-            // ==================================
-            // COMPONENTES INTERATIVOS
-            // ==================================
+            processarReadyGuilds(dados);
 
-            if (
-                interaction.type === "component"
-            ) {
-                let resultado;
-
-                try {
-                    resultado =
-                        await executarComponente(
-                            interaction
-                        );
-
-                } catch (erro) {
-                    console.error(
-                        "[ERRO COMPONENTE]",
-                        erro
-                    );
-
-                    resultado = mensagemErro(
-                        "❌ Não foi possível processar esta interação."
-                    );
-                }
-
-                await responderInteracao(
-                    interaction,
-                    resultado
-                );
-
-                return;
-            }
-
-            // ==================================
-            // FORMULÁRIOS (MODAIS)
-            // ==================================
-
-            if (
-                interaction.type === "modal_submit"
-            ) {
-                let resultado;
-
-                try {
-                    resultado =
-                        await executarModal(
-                            interaction
-                        );
-
-                } catch (erro) {
-                    console.error(
-                        "[ERRO MODAL]",
-                        erro
-                    );
-
-                    resultado = mensagemErro(
-                        "❌ Não foi possível processar este formulário."
-                    );
-                }
-
-                await responderInteracao(
-                    interaction,
-                    resultado
-                );
-
-                return;
-            }
-
-            // ==================================
-            // FILTRAR COMANDOS
-            // ==================================
-
-            if (
-                interaction.type !== "command"
-            ) {
-                return;
-            }
-
-            // ==================================
-            // LOCALIZAR COMANDO
-            // ==================================
-
-            const commandName =
-                interaction.data?.name;
-
-            // Aceita o nome oficial ou um alias (/ajuda, /help...).
-            const comando =
-                resolverComando(comandos, commandName);
-
-            if (!comando) {
-                console.warn(
-                    `Comando desconhecido: ${commandName}`
-                );
-
-                await responderInteracao(
-                    interaction,
-
-                    mensagemErro(
-                        "❌ Este comando não está disponível."
-                    )
-                );
-
-                return;
-            }
-
-            // ==================================
-            // INTERVALO ENTRE COMANDOS
-            // ==================================
-
-            // Mesmo intervalo do prefixo h (um só por pessoa). Vem antes
-            // da prisão e do /perfil, que gera imagem e é o mais pesado.
-            // A interação precisa de resposta: avisa só para a pessoa.
-            const espera = commandGate.check(actorId);
-
-            if (!espera.allowed) {
-                await responderInteracao(
-                    interaction,
-                    mensagemErro(
-                        antiSpamText(espera.remainingMs)
-                    )
-                );
-
-                return;
-            }
-
-            // ==================================
-            // PRISÃO
-            // ==================================
-
-            // Preso não trabalha, não compra nem movimenta
-            // dinheiro. Vale também para os aliases.
-            const bloqueioPrisao = prisonBlock(
-                comando.name,
-                interaction.guildId,
-                actorId
+            // Rotação de presença.
+            startStatusRotation(
+                atualizarPresenca,
+                obterMensagensStatus
             );
 
-            if (bloqueioPrisao) {
-                await responderInteracao(
-                    interaction,
-                    bloqueioPrisao
-                );
-
-                return;
-            }
-
-            // ==================================
-            // TRATAMENTO ESPECIAL DO /PERFIL
-            // ==================================
-
-            // Compara pelo nome oficial: /profile também gera o cartão.
-            if (comando.name === "perfil") {
-                await executarPerfil(
-                    interaction,
-                    comando
-                );
-
-                return;
-            }
-
-            // ==================================
-            // EXECUTAR DEMAIS COMANDOS
-            // ==================================
-
-            let resultado;
-
-            try {
-                resultado =
-                    await comando.execute(
-                        interaction
-                    );
-
-            } catch (erro) {
-                console.error(
-                    `Erro no comando /${comando.name}:`,
-                    erro
-                );
-
-                resultado = mensagemErro(
-                    "❌ Ocorreu um erro ao executar o comando.",
-                    { privado: false }
-                );
-            }
-
-            // ==================================
-            // VALIDAR RESPOSTA
-            // ==================================
-
-            if (!resultado) {
-                console.error(
-                    `[COMANDO SEM RESPOSTA] /${comando.name}`
-                );
-
-                resultado = mensagemErro(
-                    "❌ O comando não retornou uma resposta válida."
-                );
-            }
-
-            // ==================================
-            // RESPONDER À INTERAÇÃO
-            // ==================================
+            // Contadores do servidor de suporte.
+            startSupportStats();
 
             console.log(
-                `[RESPOSTA] /${comando.name} -> ${resultado.type}` +
-                (resultado.data?.ephemeral ? " (privada)" : "")
+                "[STATUS] Rotação com dados reais iniciada."
             );
 
-            await responderInteracao(
-                interaction,
-                resultado
+            console.log(
+                "[PREFIXO] Aguardando comandos iniciados com h."
             );
+        },
 
-        } catch (erro) {
-            console.error(
-                "[ERRO NO GATEWAY]",
-                erro
-            );
-        }
-    });
+        onDispatch: tratarEvento,
 
-    // ======================================
-    // DESCONEXÃO
-    // ======================================
-
-    socket.on(
-        "close",
-        (code, reason) => {
-            if (socket !== ws) {
-                return;
-            }
-
-            limparHeartbeat();
-
+        // Enquanto o gateway estiver desconectado, a rotação e os
+        // contadores ficam parados (e recomeçam no próximo READY).
+        onClose: () => {
             stopStatusRotation();
-
-            // Interrompe os contadores enquanto
-            // o Gateway estiver desconectado.
             stopSupportStats();
-
-            ws = null;
 
             guildIds.clear();
             guildCountComplete = false;
+        },
 
-            console.warn(
-                "[GATEWAY] Desconectado.",
-                {
-                    code,
-
-                    reason:
-                        reason.toString() ||
-                        "Sem motivo informado"
-                }
+        // Token errado ou intenção não liberada: reconectar não adianta. O bot continua de pé
+        // (a API do site segue no ar) e o motivo já está no log.
+        onFatal: ({ message }) => {
+            console.error(
+                `[GATEWAY] O bot fica desconectado até isto ser corrigido e o app reiniciado: ${message}`
             );
-
-            if (!shuttingDown) {
-                agendarReconexao();
-            }
         }
-    );
-
-    // ======================================
-    // ERROS DO WEBSOCKET
-    // ======================================
-
-    socket.on("error", error => {
-        console.error(
-            "[WEBSOCKET]",
-            error
-        );
     });
+
+    gateway.connect();
 }
 
 // ==========================================
@@ -1464,9 +1101,6 @@ function encerrar(signal) {
     console.log(
         `[SISTEMA] Recebido ${signal}. Encerrando Helena...`
     );
-
-    limparHeartbeat();
-    limparReconexao();
 
     stopStatusRotation();
 
@@ -1485,21 +1119,9 @@ function encerrar(signal) {
     // Encerra as tentativas de fuga em andamento.
     clearEscapeSessions();
 
-    const socket = ws;
+    gateway?.close();
 
-    ws = null;
-
-    if (socket) {
-        try {
-            socket.terminate();
-
-        } catch (erro) {
-            console.error(
-                "[GATEWAY] Erro ao encerrar conexão:",
-                erro
-            );
-        }
-    }
+    gateway = null;
 
     process.exitCode = 0;
 }

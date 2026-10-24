@@ -17,7 +17,7 @@ process.env.HELENA_DATABASE_PATH = join(
     "test.db"
 );
 
-process.env.VSYNC_BOT_TOKEN = "token-de-teste";
+process.env.DISCORD_BOT_TOKEN = "token-de-teste";
 
 // A bolsa sorteia preços ao acaso. Nos testes ela começa desligada, para a
 // loja valer o preço de tabela; tests/market.test.mjs liga e controla o sorteio.
@@ -150,9 +150,12 @@ export async function createPrefixRunner({
             sent,
             body: first.body ?? "",
             title: first.embeds?.[0]?.title ?? null,
-            text: JSON.stringify(first),
+            // os arquivos (o cartão de perfil) entram no texto só pelo nome e tamanho
+            text: JSON.stringify(first, (key, value) =>
+                value?.type === "Buffer" ? `<${value.data.length} bytes>` : value
+            ),
             components: first.components ?? [],
-            attachments: first.attachments ?? []
+            attachments: first.files ?? []
         };
     };
 }
@@ -182,3 +185,85 @@ export function receiptOf(source) {
 
 // O dinheiro do jogo vem com espaço rígido ("R$ 1,00"); o recibo usa espaço comum.
 export const spaced = text => String(text).replace(/ /g, " ");
+
+
+// ==========================================
+// DISCORD DE MENTIRA
+// ==========================================
+
+// Um membro como a API do Discord devolve ({ user, nick, roles, joined_at }).
+export const discordMember = (id, username, displayName, nickname = null, bot = false, extra = {}) => ({
+    user: {
+        id,
+        username,
+        global_name: displayName,
+        avatar: null,
+        bot,
+        public_flags: 0,
+        ...(extra.user ?? {})
+    },
+    nick: nickname,
+    roles: [],
+    joined_at: "2025-01-20T12:00:00.000000+00:00",
+    ...(extra.member ?? {})
+});
+
+const discordReply = (status, body) => ({
+    status,
+    ok: status < 300,
+    text: async () => (body === undefined ? "" : JSON.stringify(body)),
+    headers: { get: () => null }
+});
+
+// O fetch que responde pelas rotas de membro do Discord:
+//   GET /guilds/:g/members/:id           um membro (404 se não está)
+//   GET /guilds/:g/members/search?query= quem tem o @usuário ou o apelido começando pelo texto
+//   GET /users/:id                       o perfil da conta (banner e cor)
+// "state" deixa o teste contar as chamadas e derrubar a API: { down, searches, lookups, accounts }.
+export function discordGuildFetch(members, state = {}, accounts = {}) {
+    state.searches ??= 0;
+    state.lookups ??= 0;
+    state.accountCalls ??= 0;
+
+    return async url => {
+        const target = new URL(String(url));
+        const path = target.pathname.replace(/^\/api\/v\d+/, "");
+
+        if (state.down) return discordReply(500, { message: "Internal Server Error" });
+
+        let match;
+
+        if ((match = path.match(/^\/guilds\/[^/]+\/members\/search$/))) {
+            state.searches++;
+
+            const query = (target.searchParams.get("query") ?? "").toLowerCase();
+            const limit = Number(target.searchParams.get("limit") ?? 10);
+
+            return discordReply(200, members
+                .filter(item =>
+                    item.user.username.toLowerCase().startsWith(query) ||
+                    String(item.nick ?? "").toLowerCase().startsWith(query) ||
+                    String(item.user.global_name ?? "").toLowerCase().startsWith(query)
+                )
+                .slice(0, limit));
+        }
+
+        if ((match = path.match(/^\/guilds\/[^/]+\/members\/([^/]+)$/))) {
+            state.lookups++;
+
+            const found = members.find(item => item.user.id === decodeURIComponent(match[1]));
+
+            return found ? discordReply(200, found) : discordReply(404, { message: "Unknown Member", code: 10007 });
+        }
+
+        if ((match = path.match(/^\/users\/([^/]+)$/))) {
+            state.accountCalls++;
+
+            const id = decodeURIComponent(match[1]);
+
+            return accounts[id] ? discordReply(200, accounts[id]) : discordReply(404, { message: "Unknown User", code: 10013 });
+        }
+
+        return discordReply(404, { message: "Unknown Route" });
+    };
+}

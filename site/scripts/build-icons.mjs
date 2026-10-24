@@ -38,7 +38,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" v
   <text x="64" y="428" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="92" letter-spacing="-3" fill="#1a1326">ou vá preso.</text>
   <rect x="64" y="446" width="760" height="12" fill="#d6455b"/>
   <text x="64" y="544" font-family="Arial, sans-serif" font-weight="700" font-size="40" fill="#1a1326">Helena</text>
-  <text x="232" y="544" font-family="Arial, sans-serif" font-size="30" fill="#5b4f73">para a VSync</text>
+  <text x="232" y="544" font-family="Arial, sans-serif" font-size="30" fill="#5b4f73">para o Discord</text>
 </svg>`;
 
 await sharp(Buffer.from(svg), { density: 96 }).png({ compressionLevel: 9 }).toFile(file("og-default.png"));
@@ -54,7 +54,7 @@ const banner = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420
   ${bannerPlush}
   <text x="560" y="206" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="150" letter-spacing="-6" fill="#1a1326">Helena</text>
   <rect x="566" y="226" width="430" height="14" fill="#d6455b"/>
-  <text x="566" y="296" font-family="Arial, sans-serif" font-weight="700" font-size="40" fill="#1a1326">Bot de economia e RPG para a VSync</text>
+  <text x="566" y="296" font-family="Arial, sans-serif" font-weight="700" font-size="40" fill="#1a1326">Bot de economia e RPG para o Discord</text>
   <text x="566" y="344" font-family="Courier New, monospace" font-weight="700" font-size="30" letter-spacing="1" fill="#5a2be2">Trabalhe, lave dinheiro, case ou vá preso.</text>
 </svg>`;
 

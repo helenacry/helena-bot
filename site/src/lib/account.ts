@@ -1,4 +1,4 @@
-// Painel da conta, parte sem tela: login com a VSync (OAuth2 + PKCE), formatos e
+// Painel da conta, parte sem tela: login com o Discord (OAuth2 + PKCE), formatos e
 // as regras de ordem e de texto. A API fica em services/web/web-api.mjs (veja o
 // README, "Painel do site (API)"). Tudo aqui é puro e testado em site/tests/account.test.ts.
 
@@ -52,7 +52,7 @@ export function base64url(bytes: Uint8Array): string {
 
 const randomBytes = (size: number): Uint8Array => crypto.getRandomValues(new Uint8Array(size));
 
-/** O verifier fica só no navegador; a VSync recebe o desafio (S256). */
+/** O verifier fica só no navegador; o Discord recebe o desafio (S256). */
 export async function pkce(): Promise<{ verifier: string; challenge: string }> {
   const verifier = base64url(randomBytes(32)); // 43 caracteres
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
@@ -62,7 +62,7 @@ export async function pkce(): Promise<{ verifier: string; challenge: string }> {
 
 export const randomState = (): string => base64url(randomBytes(16));
 
-/** Endereço de retorno = a própria página, terminando em "/". Tem de ser igual ao cadastrado na VSync. */
+/** Endereço de retorno = a própria página, terminando em "/". Tem de ser igual ao cadastrado no Discord. */
 export function redirectUri(location: { origin: string; pathname: string }): string {
   let path = location.pathname.replace(/index\.html$/, "");
 
@@ -82,10 +82,10 @@ export function buildAuthorizeUrl(options: { clientId: string; redirectUri: stri
     code_challenge_method: "S256"
   });
 
-  return `https://vsync.lat/oauth2/authorize?${query.toString()}`;
+  return `https://discord.com/oauth2/authorize?${query.toString()}`;
 }
 
-/** O que a VSync devolveu na volta do login. */
+/** O que o Discord devolveu na volta do login. */
 export function parseCallback(search: string): { code: string; state: string; error: string } {
   const query = new URLSearchParams(search);
 
@@ -225,7 +225,7 @@ export function errorText(code: string | undefined, extra: { remaining?: number;
     unauthorized: "Sua sessão acabou. Entre de novo.",
     login_failed: `Não deu para entrar. Tente de novo.${detail}`,
     invalid_redirect: "Este endereço não está autorizado a fazer login. Avise a equipe da Helena.",
-    vsync_unavailable: "A VSync não respondeu agora. Tente de novo em instantes."
+    discord_unavailable: "O Discord não respondeu agora. Tente de novo em instantes."
   };
 
   return (code && texts[code]) || "Algo deu errado. Tente de novo.";

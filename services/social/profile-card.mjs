@@ -85,7 +85,7 @@ const EMOJI = new RegExp(
     "gu"
 );
 
-// Os "tokens" da VSync dentro de um texto: emoji personalizado (<:nome:id>, <a:nome:id>) e menção
+// Os "tokens" do Discord dentro de um texto: emoji personalizado (<:nome:id>, <a:nome:id>) e menção
 // de pessoa, cargo ou canal (<@id>, <@&id>, <#id>). No cartão viravam um texto cru e comprido; aqui
 // somem (e a menção some também: o cartão não mostra o ID de ninguém).
 const TOKEN = /<a?:[\p{L}\p{N}_~]{1,32}:[\p{L}\p{N}-]{1,64}>|<[@#][&!]?[\p{L}\p{N}-]{1,64}>/gu;
@@ -118,7 +118,7 @@ function tidy(text) {
         .trim();
 }
 
-// O texto pronto para o cartão, sem emoji nenhum: tira os tokens da VSync (emoji personalizado e
+// O texto pronto para o cartão, sem emoji nenhum: tira os tokens do Discord (emoji personalizado e
 // menção) e os emojis, e deixa o resto passar por tidy().
 export function plain(value) {
     return tidy(

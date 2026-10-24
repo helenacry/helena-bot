@@ -1,4 +1,4 @@
-import { db, getPlayer, createPrefixRunner } from "./helpers.mjs";
+import { db, getPlayer, createPrefixRunner, discordMember, discordGuildFetch } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -9,57 +9,17 @@ const { clearUserLookupCache } = await import("../services/platform/user-lookup.
 const G = "900000000000000001";
 const ME = { id: "111111111111111111", username: "eu", displayName: "Eu Mesmo" };
 
-const member = (id, username, displayName, nickname = null, bot = false) => ({
-    id, username, displayName, nickname, bot,
-    avatarUrl: "https://cdn.exemplo.test/" + id + ".png"
-});
-
 const MEMBERS = [
-    member(ME.id, "eu", "Eu Mesmo"),
-    member("200000000000000001", "mariasilva", "Maria Silva"),
-    member("200000000000000002", "mariasouza", "Maria Souza"),
-    member("200000000000000003", "jose", "José Ávila", "Zezinho"),
-    member("200000000000000004", "ana", "Ana"),
-    member("200000000000000005", "helena", "Helena", null, true)
+    discordMember(ME.id, "eu", "Eu Mesmo"),
+    discordMember("200000000000000001", "mariasilva", "Maria Silva"),
+    discordMember("200000000000000002", "mariasouza", "Maria Souza"),
+    discordMember("200000000000000003", "jose", "José Ávila", "Zezinho"),
+    discordMember("200000000000000004", "ana", "Ana"),
+    discordMember("200000000000000005", "helena", "Helena", null, true)
 ];
 
-const calls = [];
-
-// API simulada: membros, upload de anexos e avatar indisponível.
-globalThis.fetch = async (url, init = {}) => {
-    const u = String(url);
-
-    calls.push((init.method ?? "GET") + " " + u.replace("https://api.vsync.lat", ""));
-
-    const reply = (status, body) => ({
-        ok: status < 300, status, json: async () => body,
-        text: async () => JSON.stringify(body), arrayBuffer: async () => new ArrayBuffer(0),
-        headers: { get: () => null }
-    });
-
-    if (u.startsWith("https://cdn.exemplo.test/")) return reply(404, {});
-    if (u.startsWith("https://upload.exemplo.test/")) return reply(200, {});
-
-    let m;
-
-    if ((m = u.match(/\/guilds\/[^/]+\/members\/([^/]+)$/))) {
-        const found = MEMBERS.find(x => x.id === decodeURIComponent(m[1]));
-
-        return found ? reply(200, { member: found }) : reply(404, {});
-    }
-
-    if (/\/guilds\/[^/]+$/.test(u)) return reply(200, { members: MEMBERS });
-
-    if (u.endsWith("/attachments/limits")) return reply(200, { maxBytes: 50_000_000, available: 5 });
-
-    if (u.endsWith("/attachments/init")) {
-        return reply(200, { id: "a" + calls.length, uploadUrl: "https://upload.exemplo.test/x", uploadHeaders: {} });
-    }
-
-    if (/\/attachments\/[^/]+\/complete$/.test(u)) return reply(200, {});
-
-    return reply(404, {});
-};
+// O Discord de mentira (membros e pesquisa); o avatar nunca baixa e o cartão sai sem foto.
+globalThis.fetch = discordGuildFetch(MEMBERS);
 
 const run = await createPrefixRunner({ guildId: G, author: ME });
 
@@ -113,7 +73,7 @@ test("perfil de outra pessoa pelo @usuário: menciona a pessoa e não cria regis
 
     assert.equal(r.body, "Perfil de <@200000000000000001>", "a mensagem menciona o dono do perfil");
     assert.equal(r.attachments.length, 1);
-    assert.match(r.attachments[0], /^att:/);
+    assert.match(r.attachments[0].name, /^helena-perfil-200000000000000001[.]png$/);
     assert.equal(players("200000000000000001"), before);
     assert.equal(before, 0, "olhar o perfil não cria registro de jogador");
 });
@@ -138,22 +98,33 @@ test("sem argumento (ou o próprio @usuário) mostra o seu perfil", async () => 
     assert.equal((await run("hperfil @eu")).body, `<@${ME.id}>`);
 });
 
-test("o cartão vai da memória para a API: a pasta generated/profiles nem é criada", async () => {
-    calls.length = 0;
+test("o cartão vai da memória para o Discord: a pasta generated/profiles nem é criada", async () => {
+    const card = await run("hperfil ana");
 
-    await run("hperfil ana");
     await run("hperfil");
 
     assert.equal(existsSync(profilesDir), false, "nada é gravado em disco");
-    assert.ok(calls.some(c => c.startsWith("POST /attachments/init")));
-    assert.ok(calls.some(c => /^POST \/attachments\/.*\/complete/.test(c)));
+
+    // o arquivo vai junto da mensagem: um PNG de verdade, em memória
+    const [file] = card.attachments;
+
+    assert.equal(file.contentType, "image/png");
+    assert.ok(Buffer.isBuffer(file.bytes));
+    assert.deepEqual([...file.bytes.subarray(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], "assinatura de PNG");
+});
+
+test("o texto da resposta não carrega os bytes do cartão", async () => {
+    const card = await run("hperfil ana");
+
+    assert.match(card.text, /<\d+ bytes>/);
+    assert.ok(card.text.length < 2000);
 });
 
 // ==========================================
 // BIO COM EMOJI NO PERFIL
 // ==========================================
 
-test("quem tem bio com emoji, símbolo ou emoji personalizado da VSync ainda recebe o cartão", async () => {
+test("quem tem bio com emoji, símbolo ou emoji personalizado ainda recebe o cartão", async () => {
     getPlayer(G, ME.id);
 
     for (const bio of [

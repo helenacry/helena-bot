@@ -1,23 +1,14 @@
 
 import { getUserBadges } from "./userinfo-badges.mjs";
 
-import { pulseEmoji } from "./badge-emojis.mjs";
-
-import { avatarPreviewUrl } from "../web/avatar-preview.mjs";
-
 import { PALETTE } from "../../config/theme.mjs";
 
 import {
-    PULSE_LEVELS,
-    PULSE_MONTH,
     UNKNOWN,
     dateField,
     dateWithAge,
-    formatAge,
     formatCountdown,
     plain,
-    prismaPlanName,
-    pulseStartOf,
     safe
 } from "./userinfo-format.mjs";
 
@@ -26,18 +17,17 @@ import {
 // ==========================================
 
 // O cartão do /userinfo (um embed, no estilo do Zany) e os detalhes do menu "Mais
-// informações". A doc da VSync: author, footer e o nome dos campos são texto simples;
-// description e o valor dos campos aceitam markdown, bloco de código e menção (que no embed
-// é só visual, não notifica); o timestamp (em ms) aparece ao lado do rodapé.
+// informações". No embed, author, footer e o nome dos campos são texto simples; description e o
+// valor dos campos aceitam markdown, bloco de código e menção (que no embed é só visual, não
+// notifica); o timestamp aparece ao lado do rodapé.
 
 export const USERINFO_COLOR = PALETTE.violet;
 
+// O limite do valor de um campo de embed.
 const MAX_FIELD = 1024;
 
-const MAX_PULSE_LEVEL = PULSE_LEVELS.at(-1);
-
-// Os cargos cabem numa descrição de embed (4096): cada menção de cargo tem ~45 caracteres.
-const MAX_ROLES = 80;
+// Quantos cargos aparecem na tela de cargos (o embed aguenta 4096 caracteres).
+const MAX_ROLES = 40;
 
 function add(fields, name, value, inline = false) {
     fields.push({
@@ -51,7 +41,8 @@ function add(fields, name, value, inline = false) {
 // crases seria lida como linguagem, por isso o texto vem na linha de baixo.
 const block = text => "```\n" + text + "\n```";
 
-const hasValue = value => value !== undefined && value !== null && value !== "";
+// A mesma imagem, em tamanho grande (o Discord redimensiona pelo ?size=).
+export const largeImage = url => String(url ?? "").replace(/size=\d+/, "size=1024");
 
 // ==========================================
 // CARTÃO
@@ -64,74 +55,28 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
 
     const username = plain(user.username || "desconhecido", 120);
 
-    const badges = getUserBadges(user);
-
-    const icons = badges
+    const icons = getUserBadges(user)
         .map(badge => badge.emoji)
-        .filter(Boolean)
         .join(" ");
-
-    // As insígnias sem emoji cadastrado (o plano Prisma básico, o tempo de tela, alguns presentes)
-    // entram pelo nome, cada uma numa linha embaixo dos ícones (o campo é estreito: lado a lado o
-    // nome quebraria no meio e deixaria um "·" solto), para nenhuma ficar escondida.
-    const named = badges
-        .filter(badge => !badge.emoji)
-        .map(badge => safe(badge.name))
-        .join("\n");
-
-    const badgeText = [
-        [user.bot ? "🤖 Bot" : null, icons || null].filter(Boolean).join(" · "),
-        named
-    ].filter(Boolean).join("\n");
 
     const fields = [];
 
     add(fields, "🏷️ Tag", block(username), true);
     add(fields, "🪪 ID", block(String(user.id)), true);
-    add(fields, "🏅 Insígnias", badgeText || "Nenhuma", true);
+
+    add(
+        fields,
+        "🏅 Insígnias",
+        [user.bot ? "🤖 Bot" : null, icons || null].filter(Boolean).join(" · ") || "Nenhuma",
+        true
+    );
 
     add(fields, "📅 Conta criada em", dateWithAge(user.createdAt, now));
     add(fields, "📥 Entrou no servidor em", dateWithAge(user.joinedAt, now));
 
-    // O Prisma e o Pulse só entram no cartão para quem tem: sem eles, os campos ficam de
-    // fora em vez de mostrar "não é assinante" e "não informado".
-    if (user.prismaActive) {
-        add(fields, `💎 Assinante ${prismaPlanName(user)} desde`, dateWithAge(user.prismaSince, now));
-    }
-
-    if (user.pulsing) {
-        const start = pulseStartOf(user);
-
-        add(fields, "✨ Pulser desde", dateWithAge(start, now));
-
-        const currentEmoji = pulseEmoji(user.pulseBadge?.months);
-
-        // O selo atual mostra há quanto tempo a pessoa pulsa (como o Zany faz com o impulso).
-        const current = user.pulseBadge && start ? formatAge(start, now) : null;
-
-        add(
-            fields,
-            "🏅 Insígnia de Pulser atual",
-            currentEmoji + " │ **" + (current ?? UNKNOWN) + "**",
-            true
-        );
-
-        const nextAt = Number(user.nextPulseBadge?.at);
-
-        const hasNext = Boolean(user.nextPulseBadge) && Number.isFinite(nextAt) && nextAt > 0;
-
-        // Sem próximo selo, a pessoa já está no último nível.
-        const atMax = !user.nextPulseBadge && Number(user.pulseBadge?.months) >= MAX_PULSE_LEVEL;
-
-        add(
-            fields,
-            "⏭️ Próxima insígnia de Pulser",
-            atMax
-                ? currentEmoji + " │ **Nível máximo alcançado.**"
-                : pulseEmoji(user.nextPulseBadge?.months) + " │ **" +
-                    (hasNext ? "em " + formatCountdown(now, nextAt) : UNKNOWN) + "**",
-            true
-        );
+    // Só entra para quem impulsiona: sem impulso, o campo fica de fora em vez de "não informado".
+    if (user.boostingSince) {
+        add(fields, "🚀 Impulsiona este servidor desde", dateWithAge(user.boostingSince, now));
     }
 
     // De castigo (timeout) só aparece enquanto vale.
@@ -179,49 +124,27 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
 // DETALHES ("Mais informações")
 // ==========================================
 
-const STATUS_LABELS = Object.freeze({
-    online: "🟢 Online",
-    idle: "🌙 Ausente",
-    dnd: "⛔ Não perturbe",
-    offline: "⚫ Offline"
-});
-
-// Presença ao vivo: só existe nos objetos de membro (a API a omite no perfil da conta).
-const hasPresence = user =>
-    hasValue(user.status) || Boolean(user.customStatus) || Boolean(user.activity) || Boolean(user.listening);
-
-// As opções do menu para esta pessoa (só o que dá para mostrar com os dados da API).
+// As opções do menu para esta pessoa (só o que dá para mostrar com os dados do Discord). O
+// banner só existe no perfil completo da conta, então a opção aparece sempre e a tela avisa se a
+// pessoa não tem um.
 export function detailOptions(user) {
     return [
         ...(user.avatarUrl
-            ? [{ label: "Avatar", value: "avatar", description: "A foto de perfil, inteira e sem cortar", emoji: "🖼️" }]
+            ? [{ label: "Avatar", value: "avatar", description: "A foto de perfil, em tamanho grande", emoji: "🖼️" }]
             : []),
 
-        ...(user.bannerUrl
-            ? [{ label: "Banner", value: "banner", description: "A imagem de capa do perfil", emoji: "🌌" }]
-            : []),
-
+        { label: "Banner", value: "banner", description: "A imagem de capa do perfil", emoji: "🌌" },
         { label: "Insígnias", value: "badges", description: "O nome de cada insígnia visível", emoji: "🏅" },
-        { label: "Datas e idades", value: "dates", description: "Conta, servidor, Prisma e Pulse", emoji: "📅" },
-
-        ...(user.pulsing
-            ? [{ label: "Evolução do Pulse", value: "pulse", description: "Cada nível e quando chega", emoji: "✨" }]
-            : []),
+        { label: "Datas e idades", value: "dates", description: "Conta, servidor, impulso e castigo", emoji: "📅" },
 
         ...(Array.isArray(user.roleIds) && user.roleIds.length
             ? [{ label: "Cargos", value: "roles", description: "Os cargos neste servidor", emoji: "🎭" }]
-            : []),
-
-        ...(hasPresence(user)
-            ? [{ label: "Status e atividade", value: "status", description: "Online, status personalizado e o que faz agora", emoji: "💬" }]
             : [])
     ];
 }
 
 // O embed de um detalhe, ou null se a opção não existe (ou não vale para esta pessoa).
-// "avatar": a imagem grande do embed vai numa tela larga servida pelo próprio bot
-// (services/web/avatar-preview.mjs), porque a VSync corta a imagem num quadro de 300 px de altura
-// e um avatar quadrado ficaria achatado. O link "Abrir em tamanho original" é o avatar cru.
+// "user" precisa trazer bannerUrl para a tela do banner (userinfo-account.mjs busca o perfil).
 export function buildUserinfoDetail(kind, user, now = Date.now()) {
     const name = plain(user.nickname || user.displayName || user.username || "Usuário", 80);
 
@@ -230,16 +153,21 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
         case "banner": {
             const url = kind === "avatar" ? user.avatarUrl : user.bannerUrl;
 
-            if (!url) return null;
-
-            // sem avatar da CDN da VSync (ou sem a API pública), vale a imagem crua
-            const shown = (kind === "avatar" ? avatarPreviewUrl(url) : null) ?? url;
+            if (!url) {
+                return kind === "banner"
+                    ? {
+                        title: "🌌 Banner de " + name,
+                        description: "Essa pessoa não tem um banner no perfil.",
+                        color: USERINFO_COLOR
+                    }
+                    : null;
+            }
 
             return {
                 title: (kind === "avatar" ? "🖼️ Avatar de " : "🌌 Banner de ") + name,
-                description: "[Abrir em tamanho original](" + url + ")",
+                description: "[Abrir em tamanho original](" + largeImage(url) + ")",
                 color: USERINFO_COLOR,
-                image: { url: shown }
+                image: { url: largeImage(url) }
             };
         }
 
@@ -250,7 +178,7 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
                 title: "🏅 Insígnias de " + name,
 
                 description: badges.length
-                    ? badges.map(badge => [badge.emoji, safe(badge.name)].filter(Boolean).join(" ")).join("\n")
+                    ? badges.map(badge => `${badge.emoji} ${safe(badge.name)}`).join("\n")
                     : "Nenhuma insígnia visível.",
 
                 color: USERINFO_COLOR
@@ -263,61 +191,22 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
             add(fields, "📅 Conta criada em", dateWithAge(user.createdAt, now));
             add(fields, "📥 Entrou no servidor em", dateWithAge(user.joinedAt, now));
 
-            if (user.prismaActive) {
-                add(fields, `💎 Assinante ${prismaPlanName(user)} desde`, dateWithAge(user.prismaSince, now));
+            if (user.boostingSince) {
+                add(fields, "🚀 Impulsiona este servidor desde", dateWithAge(user.boostingSince, now));
             }
 
-            if (user.pulsing) {
-                add(fields, "✨ Pulser desde", dateWithAge(pulseStartOf(user), now));
+            if (Number(user.timeoutUntil) > now) {
+                add(
+                    fields,
+                    "⏳ De castigo até",
+                    `${dateField(user.timeoutUntil)} (em **${formatCountdown(now, user.timeoutUntil)}**)`
+                );
             }
 
             return {
                 title: "📅 Datas de " + name,
                 color: USERINFO_COLOR,
                 fields
-            };
-        }
-
-        case "pulse": {
-            if (!user.pulsing) return null;
-
-            const start = pulseStartOf(user);
-
-            if (!start) {
-                return {
-                    title: "✨ Evolução do Pulse de " + name,
-                    description: "A API não informou desde quando essa pessoa pulsa.",
-                    color: USERINFO_COLOR
-                };
-            }
-
-            const reached = Number(user.pulseBadge?.months);
-
-            const lines = PULSE_LEVELS.map(months => {
-                const at = start + months * PULSE_MONTH;
-
-                const done = at <= now;
-
-                const label = `${months} ${months === 1 ? "mês" : "meses"}`;
-
-                return (
-                    `${done ? "✅" : "⏳"} ${pulseEmoji(months)} **${label}** · ${dateField(at)}` +
-                    (done ? "" : ` (em ${formatCountdown(now, at)})`)
-                );
-            });
-
-            return {
-                title: "✨ Evolução do Pulse de " + name,
-
-                description:
-                    `Pulsa desde **${dateField(start)}**` +
-                    (Number.isFinite(reached) ? ` · selo atual: **${reached} ${reached === 1 ? "mês" : "meses"}**` : "") +
-                    "\n\n" +
-                    lines.join("\n"),
-
-                color: USERINFO_COLOR,
-
-                footer: { text: "Cada mês do Pulse vale 30 dias" }
             };
         }
 
@@ -331,55 +220,6 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
                 title: `🎭 Cargos de ${name} (${ids.length})`,
                 description: ids.slice(0, MAX_ROLES).map(id => `<@&${id}>`).join(" ") +
                     (ids.length > MAX_ROLES ? `\n\n…e mais ${ids.length - MAX_ROLES}.` : ""),
-                color: USERINFO_COLOR
-            };
-        }
-
-        case "status": {
-            if (!hasPresence(user)) return null;
-
-            const lines = [];
-
-            if (hasValue(user.status)) {
-                lines.push(`**Status:** ${STATUS_LABELS[user.status] ?? safe(user.status)}`);
-            }
-
-            if (user.customStatus?.text || user.customStatus?.emoji) {
-                const until = user.customStatus.expiresAt
-                    ? ` · até ${dateField(user.customStatus.expiresAt)}`
-                    : "";
-
-                lines.push(
-                    `**Status personalizado:** ${[user.customStatus.emoji, safe(user.customStatus.text)].filter(Boolean).join(" ")}${until}`
-                );
-            }
-
-            if (user.activity?.name) {
-                const since = user.activity.startedAt
-                    ? ` · desde ${dateField(user.activity.startedAt)} (há **${formatAge(user.activity.startedAt, now) ?? "pouco"}**)`
-                    : "";
-
-                lines.push(`**Atividade:** ${safe(user.activity.name)}${since}`);
-            }
-
-            // o formato da música não está na doc: mostra o que vier de título e artista
-            if (user.listening && typeof user.listening === "object") {
-                const song = safe(user.listening.title ?? user.listening.name ?? user.listening.track ?? "");
-
-                const artist = safe(
-                    Array.isArray(user.listening.artists)
-                        ? user.listening.artists.join(", ")
-                        : (user.listening.artist ?? "")
-                );
-
-                const text = [song, artist].filter(Boolean).join(" — ");
-
-                if (text) lines.push(`**Ouvindo:** 🎵 ${text}`);
-            }
-
-            return {
-                title: "💬 Status de " + name,
-                description: lines.length ? lines.join("\n") : "Sem status nem atividade agora.",
                 color: USERINFO_COLOR
             };
         }

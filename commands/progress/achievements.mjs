@@ -254,7 +254,7 @@ export default {
                 )
                 : 0;
 
-            // Outra pessoa: o nome salvo, ou a menção (a VSync mostra o
+            // Outra pessoa: o nome salvo, ou a menção (o Discord mostra o
             // nome real; no lugar do antigo "Jogador #123456").
             const savedName = ownProfile
                 ? null

@@ -1,5 +1,5 @@
 // Prévia visual das respostas do bot: roda os comandos de verdade (pelo prefixo h) num banco
-// temporário, com jogadores de exemplo, e desenha cada resposta num HTML parecido com o chat da VSync
+// temporário, com jogadores de exemplo, e desenha cada resposta num HTML parecido com o chat do Discord
 // (clássico e, com --v2, também o layout V2). Serve para rever o visual a cada mudança.
 //
 //   node scripts/dev/preview-replies.mjs                  gera a página e diz onde ela ficou
@@ -45,8 +45,8 @@ useLocalImages(IMAGE_BASE, pathToFileURL(IMAGES).href);
 // ------------------------------------------------------------ jogadores de exemplo
 const G = "g-preview";
 
-const ME = { id: "111111111111111111", username: "educado", displayName: "Educado", avatarUrl: "https://cdn.vsync.lat/att/2026/avatar-exemplo.webp" };
-const ANA = { id: "222222222222222222", username: "ana", displayName: "Ana", avatarUrl: "https://cdn.vsync.lat/att/2026/avatar-exemplo2.webp" };
+const ME = { id: "111111111111111111", username: "educado", displayName: "Educado", avatarUrl: "https://cdn.discordapp.com/avatars/avatar-exemplo.webp" };
+const ANA = { id: "222222222222222222", username: "ana", displayName: "Ana", avatarUrl: "https://cdn.discordapp.com/avatars/avatar-exemplo2.webp" };
 
 const nowSec = () => Math.floor(Date.now() / 1000);
 

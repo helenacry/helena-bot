@@ -4,14 +4,30 @@
 // O endereço do próprio site (e o caminho-base do GitHub Pages) vem de
 // config/site.mjs, na raiz do repositório: o bot lê o mesmo arquivo.
 
+// O ID do aplicativo da Helena no Discord (Portal do Desenvolvedor, "Informações gerais",
+// "ID do aplicativo"). É público. Preencha ao criar o aplicativo: sem ele, não há convite
+// nem login no painel.
+//
+// Para testar o login antes de ter o aplicativo, o build aceita o ID pela variável de ambiente
+// PUBLIC_DISCORD_CLIENT_ID (o npm run site:test usa isso).
+const DISCORD_CLIENT_ID: string = String(import.meta.env?.PUBLIC_DISCORD_CLIENT_ID ?? "");
+
 export const SITE = {
   name: "Helena",
   description:
-    "Bot de economia e RPG para a VSync: trabalho, banco, loja, duelos, casamento e crime com lavagem de dinheiro. Cada servidor tem a sua economia e cada jogador, o seu cartão de perfil.",
+    "Bot de economia e RPG para o Discord: trabalho, banco, loja, duelos, casamento e crime com lavagem de dinheiro. Cada servidor tem a sua economia e cada jogador, o seu cartão de perfil.",
 
-  inviteUrl:
-    "https://vsync.lat/oauth2/authorize?client_id=235205613573263360&scope=bot&permissions=VIEW_CHANNEL,SEND_MESSAGES",
-  supportUrl: "https://vsync.lat/tfe6pdxk",
+  // O convite do bot é montado a partir do ID do aplicativo (clientId, mais abaixo): escopo
+  // "bot" + "applications.commands" e as permissões que a Helena usa (ver canais, enviar
+  // mensagens, incorporar links, anexar arquivos, ler o histórico e usar emojis de fora).
+  // Enquanto o ID estiver vazio, o botão fica de fora (e o "npm run site:verify" avisa).
+  inviteUrl: DISCORD_CLIENT_ID
+    ? `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot%20applications.commands&permissions=379904`
+    : "",
+
+  // Convite permanente do servidor de suporte da Helena no Discord (discord.gg/...).
+  // Vazio, os links "Servidor oficial" somem.
+  supportUrl: "",
 
   // Repositório do código (opcional). Vazio, o item some do rodapé.
   codeUrl: "",
@@ -30,13 +46,13 @@ export const SITE = {
   orgUrl: "https://github.com/helenacry",
   orgName: "helenacry",
 
-  // ---- Painel da conta (login com a VSync + coleta do daily e das gemas) ----
+  // ---- Painel da conta (login com o Discord + coleta do daily e das gemas) ----
   // Endereço público da API da Helena (a porta HELENA_WEB_PORT do bot, publicada
   // com HTTPS), sem barra no fim. Vazio = painel escondido.
   apiUrl: "https://helena.discloud.dev",
 
-  // ID do aplicativo na VSync (o mesmo do link de convite). É público.
-  clientId: "235205613573263360",
+  // ID do aplicativo no Discord (o mesmo do link de convite). É público.
+  clientId: DISCORD_CLIENT_ID,
 
   // Chave PÚBLICA ("site key") do Cloudflare Turnstile. Vazia = sem desafio
   // na tela (a API só exige o desafio se tiver a chave secreta).

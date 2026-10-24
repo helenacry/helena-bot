@@ -1,5 +1,5 @@
 import {
-    db, getPlayer, set, get, createPrefixRunner
+    db, getPlayer, set, get, createPrefixRunner, discordMember, discordGuildFetch
 } from "./helpers.mjs";
 
 import test from "node:test";
@@ -30,35 +30,13 @@ const comandos = await silently(() => carregarComandos());
 // API SIMULADA (busca de destinatário)
 // ==========================================
 
-const member = (id, username, displayName, bot = false) => ({
-    id, username, displayName, nickname: null, bot, avatarUrl: null
-});
-
 const MEMBERS = [
-    member(ME, "eu", "Eu Mesmo"),
-    member(MARIA, "maria", "Maria Silva"),
-    member("200000000000000009", "helena", "Helena", true)
+    discordMember(ME, "eu", "Eu Mesmo"),
+    discordMember(MARIA, "maria", "Maria Silva"),
+    discordMember("200000000000000009", "helena", "Helena", null, true)
 ];
 
-globalThis.fetch = async url => {
-    const u = String(url);
-
-    const reply = (status, body) => ({
-        ok: status < 300, status, json: async () => body, text: async () => ""
-    });
-
-    let m;
-
-    if ((m = u.match(/\/guilds\/[^/]+\/members\/([^/]+)$/))) {
-        const found = MEMBERS.find(x => x.id === decodeURIComponent(m[1]));
-
-        return found ? reply(200, { member: found }) : reply(404, {});
-    }
-
-    if (/\/guilds\/[^/]+$/.test(u)) return reply(200, { members: MEMBERS });
-
-    return reply(404, {});
-};
+globalThis.fetch = discordGuildFetch(MEMBERS);
 
 // ==========================================
 // FERRAMENTAS
@@ -114,7 +92,7 @@ const textOf = response => JSON.stringify(response.data);
 // CONSTRUTORES E LEITURA
 // ==========================================
 
-test("textField e openModal validam os limites da VSync", () => {
+test("textField e openModal validam os limites do Discord", () => {
     assert.throws(() => textField({ id: "a", label: "x".repeat(46) }), /Rótulo/);
     assert.throws(() => textField({ id: "a", label: "ok", style: "gigante" }), /Estilo/);
     assert.throws(() => textField({ id: "a", label: "ok", placeholder: "x".repeat(101) }), /placeholder/);
@@ -551,7 +529,7 @@ test("bio: o aviso diz o que o cartão não desenha (símbolos, outros alfabetos
     assert.match(withSymbol, /No cartão do perfil/);
     assert.match(withSymbol, /Ela aparece assim: \*\*Gosto de café ☕\*\*/);
 
-    // símbolo decorativo, emoji personalizado da VSync e menção
+    // símbolo decorativo, emoji personalizado do Discord e menção
     const decorative = JSON.stringify(await send(submit("bio:editar", { texto: "꒰ sou calma 😀 ꒱ <:festa:3f2a-9c1e> <@1234>" })));
 
     assert.match(decorative, /Ela aparece assim: \*\*sou calma 😀\*\*/);

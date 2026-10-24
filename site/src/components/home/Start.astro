@@ -19,8 +19,8 @@ const grace = game.daily.graceSeconds / 3600;
       <li>
         <span class="n" aria-hidden="true">1</span>
         <h3>Adicione a Helena</h3>
-        <p>Escolha o servidor da VSync onde ela vai morar e confirme as permissões.</p>
-        <a class="btn btn-primary" href={SITE.inviteUrl} rel="noopener">Adicionar <Icon name="arrow" size={18} /></a>
+        <p>Escolha o servidor do Discord onde ela vai morar e confirme as permissões.</p>
+        {SITE.inviteUrl && <a class="btn btn-primary" href={SITE.inviteUrl} rel="noopener">Adicionar <Icon name="arrow" size={18} /></a>}
       </li>
       <li>
         <span class="n" aria-hidden="true">2</span>
@@ -60,8 +60,8 @@ const grace = game.daily.graceSeconds / 3600;
         <p>Adicione a Helena, use o primeiro comando e a conta nasce sozinha.</p>
       </div>
       <div class="final-actions">
-        <a class="btn btn-paper" href={SITE.inviteUrl} rel="noopener">Adicionar à VSync <Icon name="arrow" size={18} /></a>
-        <a class="btn btn-ghost" href={SITE.supportUrl} rel="noopener">Servidor oficial</a>
+        {SITE.inviteUrl && <a class="btn btn-paper" href={SITE.inviteUrl} rel="noopener">Adicionar ao Discord <Icon name="arrow" size={18} /></a>}
+        {SITE.supportUrl && <a class="btn btn-ghost" href={SITE.supportUrl} rel="noopener">Servidor oficial</a>}
       </div>
     </div>
   </div>

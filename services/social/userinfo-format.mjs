@@ -3,30 +3,12 @@
 // FORMATOS DO /USERINFO
 // ==========================================
 
-// Datas, idades e níveis do Pulse, usados pelo cartão do /userinfo e pelos detalhes do menu
-// "Mais informações". Tudo puro: recebe o usuário como a API da VSync devolve.
+// Datas e idades usadas pelo cartão do /userinfo e pelos detalhes do menu "Mais informações".
+// Tudo puro: recebe o usuário já no formato da Helena (services/discord/normalize.mjs).
 
-export const UNKNOWN = "Não informado pela API";
+export const UNKNOWN = "Não informado";
 
-// Cada mês do Pulse vale 30 dias.
-export const PULSE_MONTH = 30 * 24 * 60 * 60 * 1000;
-
-// Os níveis do Pulse, em meses, e o emoji de cada selo.
-export const PULSE_LEVELS = Object.freeze([1, 2, 3, 6, 9, 12, 15, 18, 24]);
-
-export const PULSE_EMOJIS = Object.freeze({
-    1: "<:pulse_1:235402034624745472>",
-    2: "<:pulse_2:235402010050318336>",
-    3: "<:pulse_3:235401992409075712>",
-    6: "<:pulse_6:235401974772027392>",
-    9: "<:pulse_9:235401952500273152>",
-    12: "<:pulse_12:235401933147754496>",
-    15: "<:pulse_15:235401908225200128>",
-    18: "<:pulse_18:235401879607463936>",
-    24: "<:pulse_24:235401848926130176>"
-});
-
-// Texto sem formatação para o autor, o rodapé e os títulos do embed (a VSync não processa
+// Texto sem formatação para o autor, o rodapé e os títulos do embed (o Discord não processa
 // markdown neles: uma barra invertida apareceria de verdade). Só tira as quebras de linha.
 export function plain(value, max = 200) {
     return String(value ?? "")
@@ -63,7 +45,7 @@ export function dateFrom(value) {
             return null;
         }
 
-        // A VSync retorna timestamps em milissegundos.
+        // Os instantes do bot são milissegundos.
         const date = new Date(number);
 
         return Number.isNaN(date.getTime())
@@ -170,8 +152,7 @@ export function dateWithAge(value, now = Date.now()) {
 }
 
 // Quanto falta de um instante até outro, em anos, meses, dias e horas de calendário, sem as
-// unidades zeradas: "6 meses 9 dias 23 horas". O meio-termo entre o agora e o próximo selo do
-// Pulse. "agora" se já passou; "menos de 1 hora" se falta quase nada.
+// unidades zeradas: "6 meses 9 dias 23 horas". "agora" se já passou; "menos de 1 hora" se falta quase nada.
 function addMonthsInstant(ms, months) {
     const date = new Date(ms);
 
@@ -229,36 +210,4 @@ export function formatCountdown(from, to) {
     if (hours) parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
 
     return parts.length ? parts.join(" ") : "menos de 1 hora";
-}
-
-// O plano de Prisma da conta ("prisma" ou "prisma_plus"). Sem a informação, vale Prisma+.
-export function prismaPlanName(user) {
-    return user?.prismaPlan === "prisma" ? "Prisma" : "Prisma+";
-}
-
-// Desde quando a pessoa pulsa. O pulsingSince que vem junto do membro é o do
-// SERVIDOR: fica nulo quando o Pulse é de outro servidor, mesmo com pulsing=true, e
-// o perfil da conta (GET /users/:id) não traz o campo. Já o próximo selo é da CONTA
-// e chega em pulsingSince + meses x 30 dias (conferido com a API de verdade: bate no
-// milissegundo), então a data sai dele. Vale a mais antiga das duas (a conta pulsa
-// desde o Pulse mais antigo); sem próximo selo (nível máximo), vale a do servidor.
-// Devolve milissegundos ou null.
-export function pulseStartOf(user) {
-    const at = Number(user.nextPulseBadge?.at);
-    const months = Number(user.nextPulseBadge?.months);
-    const server = Number(user.pulsingSince);
-
-    const derived =
-        Number.isFinite(at) && at > 0 &&
-        Number.isFinite(months) && months > 0
-            ? at - months * PULSE_MONTH
-            : null;
-
-    const own = Number.isFinite(server) && server > 0 ? server : null;
-
-    if (derived !== null && own !== null) {
-        return Math.min(derived, own);
-    }
-
-    return derived ?? own;
 }

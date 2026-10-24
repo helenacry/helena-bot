@@ -34,7 +34,7 @@ test("PKCE: verifier de 43 caracteres e desafio S256 certo, diferente a cada log
     assert.match(first.verifier, /^[A-Za-z0-9\-._~]{43,128}$/);
 });
 
-test("o endereço de autorização leva exatamente o que a VSync documenta", () => {
+test("o endereço de autorização leva exatamente o que o Discord documenta", () => {
     const url = new URL(lib.buildAuthorizeUrl({
         clientId: "app-id",
         redirectUri: "https://site.exemplo.test/account/",
@@ -42,7 +42,7 @@ test("o endereço de autorização leva exatamente o que a VSync documenta", () 
         challenge: "desafio456"
     }));
 
-    assert.equal(url.origin + url.pathname, "https://vsync.lat/oauth2/authorize");
+    assert.equal(url.origin + url.pathname, "https://discord.com/oauth2/authorize");
 
     assert.deepEqual(Object.fromEntries(url.searchParams), {
         client_id: "app-id",
@@ -64,7 +64,7 @@ test("o endereço de retorno é a própria página, sempre com a barra final", (
     assert.equal(uri("/account/"), "https://helenacry.github.io/account/");
 });
 
-test("lê o que a VSync devolve na volta do login", () => {
+test("lê o que o Discord devolve na volta do login", () => {
     assert.deepEqual({ ...lib.parseCallback("?code=abc&state=xyz") }, { code: "abc", state: "xyz", error: "" });
     assert.deepEqual({ ...lib.parseCallback("?error=access_denied&state=xyz") }, { code: "", state: "xyz", error: "access_denied" });
     assert.deepEqual({ ...lib.parseCallback("") }, { code: "", state: "", error: "" });
@@ -181,7 +181,7 @@ test("as recusas trazem o tempo que falta quando há", () => {
 test("'Não deu para entrar' leva o código curto do motivo, e só se for texto simples", () => {
     assert.equal(lib.errorText("login_failed"), "Não deu para entrar. Tente de novo.");
     assert.equal(lib.errorText("login_failed", { detail: "conta:401" }), "Não deu para entrar. Tente de novo. (código: conta:401)");
-    assert.equal(lib.errorText("login_failed", { detail: "vsync:server_error" }), "Não deu para entrar. Tente de novo. (código: vsync:server_error)");
+    assert.equal(lib.errorText("login_failed", { detail: "discord:server_error" }), "Não deu para entrar. Tente de novo. (código: discord:server_error)");
 
     for (const detail of ["<b>oi</b>", "a b", "", "x".repeat(61)]) {
         assert.equal(lib.errorText("login_failed", { detail }), "Não deu para entrar. Tente de novo.", JSON.stringify(detail));
@@ -223,10 +223,12 @@ test("a tela nunca monta HTML com texto da API (nada de innerHTML nem dangerousl
 test("nenhum segredo vai para o site: só a chave pública do Turnstile e o ID do aplicativo", () => {
     const config = readFileSync(new URL("../site/src/config.ts", import.meta.url), "utf8");
 
-    assert.match(config, /clientId: "\d+"/);
+    // o ID do aplicativo é um número (ou fica vazio até o aplicativo existir): nunca um segredo
+    assert.match(config, /const DISCORD_CLIENT_ID: string = String\(import\.meta\.env\?\.PUBLIC_DISCORD_CLIENT_ID \?\? ""\)/);
+    assert.match(config, /clientId: DISCORD_CLIENT_ID/);
     assert.match(config, /turnstileSiteKey: "0x[A-Za-z0-9_-]+"/, "chave pública do Turnstile (começa com 0x)");
 
-    assert.doesNotMatch(config, /VSYNC_BOT_TOKEN|TURNSTILE_SECRET|OAUTH_CLIENT_SECRET|client_secret|sk_live|Bearer /i);
+    assert.doesNotMatch(config, /DISCORD_BOT_TOKEN|TURNSTILE_SECRET|OAUTH_CLIENT_SECRET|client_secret|sk_live|Bearer /i);
 });
 
 // ==========================================
@@ -249,7 +251,7 @@ test("o que o painel gera é aceito pela API: login com PKCE conferido de verdad
 
     const authorize = new URL(lib.buildAuthorizeUrl({ clientId: "app-id", redirectUri: redirect, state: "s", challenge }));
 
-    // VSync simulada: só troca o código se o verifier combinar com o desafio S256
+    // Discord simulado: só troca o código se o verifier combinar com o desafio S256
     const upstream = async (url, init = {}) => {
         const u = String(url);
         const params = new URLSearchParams(String(init.body ?? ""));
@@ -267,8 +269,8 @@ test("o que o painel gera é aceito pela API: login com PKCE conferido de verdad
             return good ? reply(200, { access_token: "vsat_e2e", token_type: "Bearer" }) : reply(401, { error: "invalid_grant" });
         }
 
-        if (u.endsWith("/oauth2/userinfo")) return reply(200, { id: "555", username: "e2e", displayName: "E2E" });
-        if (u.endsWith("/oauth2/guilds")) return reply(200, [{ id: "g-e2e", name: "Servidor E2E" }]);
+        if (u.endsWith("/users/@me")) return reply(200, { id: "555", username: "e2e", global_name: "E2E", avatar: null });
+        if (u.endsWith("/users/@me/guilds")) return reply(200, [{ id: "g-e2e", name: "Servidor E2E", icon: null }]);
 
         return reply(200, {});
     };

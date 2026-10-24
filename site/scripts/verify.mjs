@@ -66,7 +66,7 @@ const exists = target => {
 
 // ------------------------------------------------------------ 2 a 4. cada página
 const ALLOWED_HOSTS = new Set([
-  "vsync.lat", "github.com", "challenges.cloudflare.com", "helena.discloud.dev", site.hostname, "schema.org", "www.w3.org"
+  "discord.com", "github.com", "challenges.cloudflare.com", "helena.discloud.dev", site.hostname, "schema.org", "www.w3.org"
 ]);
 
 let linksChecked = 0;
@@ -226,6 +226,17 @@ if (failures.length) {
   console.error(`\n${failures.length} problema(s):`);
   for (const message of failures) console.error(` - ${message}`);
   process.exit(1);
+}
+
+// O que ainda falta preencher antes de publicar (não reprova: só avisa).
+const { SITE: config } = await import("../src/config.ts");
+
+if (!config.clientId) {
+  console.warn("AVISO: o ID do aplicativo do Discord ainda está vazio em site/src/config.ts: sem ele o site não tem botão de convite nem login no painel.");
+}
+
+if (!config.supportUrl) {
+  console.warn("AVISO: o convite do servidor de suporte (supportUrl, em site/src/config.ts) está vazio: os links \"Servidor oficial\" ficam de fora.");
 }
 
 console.log("Tudo certo.");

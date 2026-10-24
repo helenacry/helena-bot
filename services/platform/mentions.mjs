@@ -3,7 +3,7 @@
 // MENÇÕES
 // ==========================================
 
-// Como a VSync trata a menção <@id>:
+// Como o Discord trata a menção <@id>:
 //   - no texto da mensagem (body): vira chip e NOTIFICA a pessoa;
 //   - na descrição e no valor dos campos de um embed: vira chip, mas
 //     não notifica ninguém;

@@ -1,5 +1,5 @@
 // Desenha uma mensagem do bot (embed, botões e o layout V2) como HTML parecido com o chat da
-// VSync, para conferir o visual das respostas sem abrir o app. É só uma aproximação: a fonte
+// Discord, para conferir o visual das respostas sem abrir o app. É só uma aproximação: a fonte
 // e as medidas são as de um chat escuro qualquer, o que vale é a estrutura e o texto.
 // Usado por scripts/dev/preview-replies.mjs.
 
@@ -8,7 +8,7 @@ const escape = text => String(text ?? "")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-// ------------------------------------------------------------ markdown da VSync
+// ------------------------------------------------------------ markdown do Discord
 // Negrito, itálico, sublinhado, tachado, spoiler, código, bloco de código, títulos (# a ###),
 // texto pequeno (-#), citação, listas, links, menções e emojis personalizados.
 function inline(source, keep) {

@@ -1,13 +1,13 @@
 
 // ==========================================
-// MODAIS (FORMULÁRIOS) DA VSYNC
+// MODAIS (FORMULÁRIOS) DA DISCORD
 // ==========================================
 
 // Um modal abre como resposta a um comando de barra ou ao clique de
 // um botão. Comandos pelo prefixo h não têm interação, então não
 // conseguem abrir modal: a porta de entrada é um botão na mensagem.
 //
-// Limites da VSync:
+// Limites do Discord:
 //   modal: título de 1 a 45 caracteres e de 1 a 5 campos
 //   campo: customId de 1 a 100 (único), rótulo de 1 a 45,
 //          placeholder até 100, estilo "short" (até 400 caracteres)

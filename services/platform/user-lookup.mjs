@@ -3,24 +3,29 @@ import { db } from "../../database/connection.mjs";
 
 import { parseUserReference } from "../../utils/ids.mjs";
 
+import { discordApi } from "../discord/api.mjs";
+
+import { normalizeMember, normalizeUser } from "../discord/normalize.mjs";
+
 // ==========================================
 // BUSCA DE USUÁRIOS DO SERVIDOR
 // ==========================================
 
-// Encontra uma pessoa do servidor por menção (<@id>), ID ou
-// nome, sem exigir menção. A API da VSync não tem rota de
-// busca por nome, então a lista de membros do servidor é
-// baixada (GET /guilds/:g) e a busca é feita aqui, com cache
-// curto para não repetir a chamada a cada comando. Se a API
-// falhar, a busca usa os nomes que a Helena já conhece.
+// Encontra uma pessoa do servidor por menção (<@id>), ID ou nome, sem exigir menção.
+// O Discord não entrega a lista de membros de um servidor (isso exige a intenção privilegiada
+// GUILD_MEMBERS), então o nome é procurado na rota de pesquisa de membros, que acha quem tem
+// o @usuário ou o apelido começando pelo texto. O resultado passa pelo mesmo ranking de antes
+// e fica numa memória curta para não repetir a chamada a cada comando. Se a API falhar, a
+// busca usa os nomes que a Helena já conhece.
 
-const API = "https://api.vsync.lat";
-
-// Por quanto tempo a lista de membros de um servidor é reutilizada.
+// Por quanto tempo o resultado de uma pesquisa é reutilizado.
 const CACHE_MS = 60_000;
 
 // Quantos nomes aparecem quando há mais de uma pessoa parecida.
 const MAX_CANDIDATES = 5;
+
+// Quantos membros a pesquisa pede ao Discord (o máximo da rota é 1000).
+const SEARCH_LIMIT = 25;
 
 // Mínimo de letras para buscar "contém" (evita casar "a" com todos).
 const MIN_PARTIAL = 2;
@@ -35,46 +40,17 @@ export function clearUserLookupCache() {
 // API
 // ==========================================
 
-function botHeaders() {
-    const token = process.env.VSYNC_BOT_TOKEN;
+// Um membro do Discord ({ user, nick, roles, ... }) no formato da Helena. "raw" guarda o
+// membro como a API devolveu, para comandos como /userinfo mostrarem mais que o nome sem
+// chamar a API de novo.
+function toUser(member) {
+    const user = normalizeUser(member?.user, member);
 
-    if (!token) {
-        throw new Error("VSYNC_BOT_TOKEN não configurado.");
-    }
-
-    return { Authorization: `Bot ${token}` };
-}
-
-// null quando a API responde 404; erro nos demais casos.
-async function apiGet(path) {
-    const response = await fetch(`${API}${path}`, {
-        headers: botHeaders()
-    });
-
-    if (response.status === 404) {
+    if (!user) {
         return null;
     }
 
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status} em ${path}`);
-    }
-
-    return response.json();
-}
-
-// "raw" guarda o membro como a API devolveu (insígnias, Pulse,
-// Prisma+, datas...), para comandos como /userinfo mostrarem mais
-// que o nome sem chamar a API de novo.
-function toUser(member) {
-    return {
-        id: String(member.id),
-        username: String(member.username ?? ""),
-        displayName: String(member.displayName ?? ""),
-        nickname: String(member.nickname ?? ""),
-        avatarUrl: member.avatarUrl ?? null,
-        bot: Boolean(member.bot),
-        raw: member
-    };
+    return { ...user, ...normalizeMember(member), raw: member };
 }
 
 // Nome mostrado para a pessoa: apelido no servidor, senão o
@@ -88,43 +64,52 @@ export function shownName(user) {
     );
 }
 
+// null quando o Discord diz que a pessoa não está no servidor (404).
 async function fetchMember(guildId, userId) {
-    const data = await apiGet(
-        `/guilds/${encodeURIComponent(guildId)}` +
-        `/members/${encodeURIComponent(userId)}`
-    );
+    try {
+        return toUser(await discordApi().member(guildId, userId));
 
-    return data?.member ? toUser(data.member) : null;
+    } catch (error) {
+        if (error?.status === 404) {
+            return null;
+        }
+
+        throw error;
+    }
 }
 
-// O perfil público da conta (GET /users/:id): traz o plano e o início do Prisma num formato próprio
-// (prisma.since), e a bio e as conexões. null se a API não conhece a conta.
+// O perfil público da conta (GET /users/:id). null se o Discord não conhece a conta.
 export async function fetchAccount(userId) {
-    const data = await apiGet(`/users/${encodeURIComponent(userId)}`);
+    try {
+        return await discordApi().user(userId);
 
-    return data?.account ?? data?.user ?? data ?? null;
+    } catch (error) {
+        if (error?.status === 404) {
+            return null;
+        }
+
+        throw error;
+    }
 }
 
-async function loadMembers(guildId) {
-    const cached = cache.get(guildId);
+async function loadMembers(guildId, query) {
+    const key = `${guildId}|${String(query).toLowerCase()}`;
+
+    const cached = cache.get(key);
 
     if (cached && Date.now() - cached.at < CACHE_MS) {
         return cached.users;
     }
 
-    const data = await apiGet(
-        `/guilds/${encodeURIComponent(guildId)}`
-    );
-
-    const list = data?.members ?? data?.guild?.members;
+    const list = await discordApi().searchMembers(guildId, String(query).replace(/^@+/, "").slice(0, 100), SEARCH_LIMIT);
 
     if (!Array.isArray(list)) {
         throw new Error("A API não devolveu a lista de membros.");
     }
 
-    const users = list.map(toUser);
+    const users = list.map(toUser).filter(Boolean);
 
-    cache.set(guildId, { at: Date.now(), users });
+    cache.set(key, { at: Date.now(), users });
 
     return users;
 }
@@ -137,9 +122,14 @@ function knownUsers(guildId) {
         FROM players p
         JOIN player_names n ON n.user_id = p.user_id
         WHERE p.guild_id = ?
-    `).all(guildId).map(row => toUser({
-        id: row.id,
-        displayName: row.name
+    `).all(guildId).map(row => ({
+        id: String(row.id),
+        username: "",
+        displayName: String(row.name ?? ""),
+        nickname: "",
+        avatarUrl: null,
+        bot: false,
+        raw: null
     }));
 }
 
@@ -335,7 +325,7 @@ export async function resolveUser(
     let users;
 
     try {
-        users = await loadMembers(guildId);
+        users = await loadMembers(guildId, query);
 
     } catch (error) {
         console.warn(

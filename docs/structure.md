@@ -6,7 +6,7 @@ Onde fica cada coisa. O teste `tests/structure.test.mjs` confere as pastas de `s
 
 ```
 helena.mjs               Conexão com o gateway e despacho de comandos
-command-registry.mjs     Carrega os comandos e registra na VSync
+command-registry.mjs     Carrega os comandos e registra no Discord
 commands/                Um arquivo por comando, agrupados por categoria
   admin/ crime/ dev/ economy/ progress/ social/ utility/
 services/                Regras do jogo e do bot, uma pasta por assunto
@@ -14,6 +14,8 @@ services/                Regras do jogo e do bot, uma pasta por assunto
   progress/              experiência e conquistas
   crime/                 crime, roubo, prisão, fuga, procurados, lavagem
   combat/                duelos, arsenal, equipamento e hospital
+  discord/               a conexão com o Discord: gateway, API REST, tradução do formato da
+                         Helena para o do Discord e de volta, e o transporte (responder, editar, enviar)
   social/                casamento, família (Gozofone e filhos), cartão de perfil (e as fontes dele), /userinfo
   panels/                painéis com botões e modais (loja, inventário, ajuda, bolsa, uso)
   platform/              o que serve a todos: intervalo entre comandos, prefixo h, V2,
@@ -24,8 +26,7 @@ config/                  Valores ajustáveis (empregos, itens, crime, cooldowns.
                          respostas do chat (theme.mjs: cores, ícone, humores da pelúcia)
 utils/                   Embeds, recibo e carimbo, plural, V2, tempo, IDs e utilitários
 scripts/                 Ferramentas de linha de comando (npm run db:export, discloud:zip)
-  dev/                   Para quem mexe no bot: a prévia das respostas (preview-replies.mjs) e o envio
-                         dos ícones das insígnias como emojis (upload-badge-emojis.mjs)
+  dev/                   Para quem mexe no bot: a prévia das respostas (preview-replies.mjs)
   site/                  Geradores do site: dados, cartão de exemplo e wiki (npm run site:data,
                          site:card, wiki:build). Ficam fora de site/ porque leem o código do bot
 site/                    O site (projeto Astro à parte): início, wiki, painel da conta, termos e privacidade
@@ -34,5 +35,5 @@ docs/                    Documentação (desenvolvimento, sistemas, hospedagem, 
 wiki/                    Texto da wiki em Markdown (vira site/src/content/wiki.json com npm run wiki:build)
 Dockerfile               Imagem para a nuvem (veja docs/hosting-railway.md)
 tests/                   Testes automáticos (npm test)
-assets/                  Imagens e as fontes Poppins: insígnias, selos Pulse, base do cartão
+assets/                  Imagens e as fontes Poppins: a base do cartão de perfil
 ```

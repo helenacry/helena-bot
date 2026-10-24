@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 // Os comandos de combate (/statuscombate, /hospital, /curar, /municao, /colete,
 // /reparar, /recarregar, /protecaopvp, /historico, /armas) e o /ping: o que cada
 // tela mostra e, principalmente, que as respostas de erro saem inteiras. (Antes,
-// o erro vinha com um embed dentro de outro, e a VSync não conseguia mostrar.)
+// o erro vinha com um embed dentro de outro, e o Discord não conseguia mostrar.)
 
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
 const combat = await import("../services/combat/combat.mjs");
@@ -145,7 +145,7 @@ test("o erro dos comandos de admin também sai inteiro", async () => {
     assert.match(embedOf(response).description, /autorizado/);
 });
 
-test("as descrições dos comandos cabem na VSync (1 a 100) e não falam em 'moedas'", () => {
+test("as descrições dos comandos cabem no Discord (1 a 100) e não falam em 'moedas'", () => {
     for (const command of comandos.values()) {
         assert.ok(command.description.length >= 1 && command.description.length <= 100, `/${command.name}: ${command.description.length} caracteres`);
         assert.doesNotMatch(command.description, /moedas?\b/i, `/${command.name}`);

@@ -12,23 +12,23 @@ import { claimDaily, getDailyStatus, calculateReward, DAILY_CONFIG } from "../ec
 import { claimGemBonus, getGemBonusStatus } from "../economy/gem-bonus.mjs";
 import { getPrison } from "../crime/prison.mjs";
 import { knowsGuild } from "../platform/guild-registry.mjs";
-import { createAvatarPreview, PREVIEW_PATH } from "./avatar-preview.mjs";
+import { avatarUrl as discordAvatar } from "../discord/normalize.mjs";
 
 // ==========================================
 // API DO SITE
 // ==========================================
 
-// Painel do jogador: a pessoa entra com a conta da VSync, vê os servidores
+// Painel do jogador: a pessoa entra com a conta do Discord, vê os servidores
 // em que ela e a Helena estão e resgata o daily e o bônus de gemas pelo site.
 //
 // Fluxo de login (OAuth2 com PKCE, feito pelo site):
-//   1. o site manda a pessoa para a VSync, com um "code_challenge";
-//   2. a VSync devolve um "code" ao site;
+//   1. o site manda a pessoa para o Discord, com um "code_challenge";
+//   2. o Discord devolve um "code" ao site;
 //   3. o site entrega o "code" e o "code_verifier" a esta API (o navegador
-//      não pode falar direto com o endpoint de troca: a VSync não libera
+//      não pode falar direto com o endpoint de troca: o Discord não libera
 //      CORS para outros sites);
 //   4. a API troca o código, lê quem é a pessoa e seus servidores, devolve o
-//      token da VSync (não precisamos mais dele) e cria uma sessão própria.
+//      token do Discord (não precisamos mais dele) e cria uma sessão própria.
 //
 // Só ligada quando HELENA_WEB_PORT está definida. Sem cookies: a sessão
 // é um token no cabeçalho Authorization, e só o hash dele fica no banco.
@@ -187,10 +187,6 @@ export function createWebApi(config, deps = {}) {
     const random = deps.random ?? Math.random;
     const sleep = deps.sleep ?? (ms => new Promise(resolve => setTimeout(resolve, ms)));
 
-    // A imagem do avatar para os embeds (GET /img/avatar.webp?u=...): não é da API do site,
-    // então fica fora das regras de origem e de JSON.
-    const avatarPreview = createAvatarPreview({ fetch: fetchImpl });
-
     const limiter = new RateLimiter();
     const origins = new Set(config.origins);
     const redirects = new Set(config.redirects);
@@ -272,11 +268,10 @@ export function createWebApi(config, deps = {}) {
         });
     }
 
-    // O nome do erro que a VSync devolve ({ "error": "invalid_grant" } nas rotas do
-    // token, ou { "error": "texto...", "code": "invalid_token" } nas demais), só
-    // para o log. Nunca lança e só deixa passar letras e "_", então nada de
+    // O nome do erro que o Discord devolve ({ "error": "invalid_grant" } nas rotas do
+    // token, ou { "message": "...", "code": 0 } nas demais), só para o log. Nunca lança e só deixa passar letras e "_", então nada de
     // dentro da resposta vai parar no log.
-    async function vsyncError(response) {
+    async function oauthError(response) {
         try {
             const body = await response.json();
 
@@ -286,7 +281,7 @@ export function createWebApi(config, deps = {}) {
         }
     }
 
-    // O que a VSync disse sobre o acesso que emitiu, SEM o token, para o log de quando
+    // O que o Discord disse sobre o acesso que emitiu, SEM o token, para o log de quando
     // a conta é recusada (validade e escopo mostram se o acesso já nasce vencido).
     function describeGrant(tokens) {
         const plain = value => String(value ?? "").replace(/[^\w .:,-]/g, "").slice(0, 60);
@@ -512,27 +507,27 @@ export function createWebApi(config, deps = {}) {
         let tokens;
 
         try {
-            const response = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/token`, {
+            const response = await upstream(`${WEB_CONFIG.discordApi}/oauth2/token`, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: exchange
             });
 
             if (!response.ok) {
-                const reason = await vsyncError(response);
+                const reason = await oauthError(response);
                 const shown = reason || `HTTP ${response.status}`;
 
-                // 429 e 5xx: o problema é da VSync, não da pessoa. Vale tentar depois.
+                // 429 e 5xx: o problema é do Discord, não da pessoa. Vale tentar depois.
                 if (response.status === 429 || response.status >= 500) {
-                    console.warn(`[WEB] VSync com problema na troca do código: ${shown} (marca ${codeTag(code)})`);
+                    console.warn(`[WEB] Discord com problema na troca do código: ${shown} (marca ${codeTag(code)})`);
 
-                    throw new HttpError(502, "vsync_unavailable");
+                    throw new HttpError(502, "discord_unavailable");
                 }
 
                 // invalid_grant é o normal (código vencido ou já usado: a pessoa entra de
                 // novo). Qualquer outro nome é erro NOSSO e a pessoa não tem como resolver.
                 console.warn(
-                    `[WEB] VSync recusou a troca do código: ${shown} (marca ${codeTag(code)})` +
+                    `[WEB] Discord recusou a troca do código: ${shown} (marca ${codeTag(code)})` +
                     (reason && reason !== "invalid_grant"
                         ? " (confira HELENA_OAUTH_CLIENT_ID, HELENA_OAUTH_CLIENT_SECRET e HELENA_OAUTH_REDIRECTS)"
                         : "")
@@ -546,15 +541,15 @@ export function createWebApi(config, deps = {}) {
         } catch (error) {
             if (error instanceof HttpError) throw error;
 
-            console.warn("[WEB] VSync indisponível na troca do código:", error.message);
+            console.warn("[WEB] Discord indisponível na troca do código:", error.message);
 
-            throw new HttpError(502, "vsync_unavailable");
+            throw new HttpError(502, "discord_unavailable");
         }
 
         const accessToken = typeof tokens?.access_token === "string" ? tokens.access_token : "";
 
         if (!accessToken) {
-            console.warn(`[WEB] A VSync aceitou a troca do código, mas não devolveu o acesso (marca ${codeTag(code)}).`);
+            console.warn(`[WEB] O Discord aceitou a troca do código, mas não devolveu o acesso (marca ${codeTag(code)}).`);
 
             throw new HttpError(401, "login_failed", { detail: "troca:sem_acesso" });
         }
@@ -565,9 +560,9 @@ export function createWebApi(config, deps = {}) {
         let guilds = [];
 
         try {
-            // 2. quem é a pessoa. Às vezes a VSync responde 401 ("token inválido") logo
-            //    depois de emitir o acesso: espera um pouco e pergunta de novo antes de desistir.
-            let identity = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/userinfo`, { headers: auth });
+            // 2. quem é a pessoa. Se o Discord responder 401 logo depois de emitir o acesso, espera um
+            //    pouco e pergunta de novo antes de desistir.
+            let identity = await upstream(`${WEB_CONFIG.discordApi}/users/@me`, { headers: auth });
             let attempts = 1;
 
             for (const pause of WEB_CONFIG.userinfoRetryMs) {
@@ -575,15 +570,15 @@ export function createWebApi(config, deps = {}) {
 
                 await sleep(pause);
 
-                identity = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/userinfo`, { headers: auth });
+                identity = await upstream(`${WEB_CONFIG.discordApi}/users/@me`, { headers: auth });
                 attempts++;
             }
 
             if (!identity.ok) {
-                const reason = await vsyncError(identity);
+                const reason = await oauthError(identity);
 
                 console.warn(
-                    `[WEB] A VSync recusou ler a conta da pessoa: ${reason || `HTTP ${identity.status}`} ` +
+                    `[WEB] O Discord recusou ler a conta da pessoa: ${reason || `HTTP ${identity.status}`} ` +
                     `(${attempts} ${attempts === 1 ? "tentativa" : "tentativas"}; acesso emitido: ${describeGrant(tokens)}; marca ${codeTag(code)})`
                 );
 
@@ -591,13 +586,13 @@ export function createWebApi(config, deps = {}) {
             }
 
             if (attempts > 1) {
-                console.warn(`[WEB] A VSync só liberou a conta na tentativa ${attempts} (marca ${codeTag(code)}).`);
+                console.warn(`[WEB] O Discord só liberou a conta na tentativa ${attempts} (marca ${codeTag(code)}).`);
             }
 
             user = await identity.json();
 
             // 3. servidores (sem o escopo "guilds" a lista vem vazia)
-            const owned = await upstream(`${WEB_CONFIG.vsyncApi}/oauth2/guilds`, { headers: auth });
+            const owned = await upstream(`${WEB_CONFIG.discordApi}/users/@me/guilds`, { headers: auth });
 
             if (owned.ok) {
                 const data = await owned.json();
@@ -608,12 +603,12 @@ export function createWebApi(config, deps = {}) {
         } catch (error) {
             if (error instanceof HttpError) throw error;
 
-            console.warn("[WEB] VSync indisponível ao ler a conta:", error.message);
+            console.warn("[WEB] Discord indisponível ao ler a conta:", error.message);
 
-            throw new HttpError(502, "vsync_unavailable");
+            throw new HttpError(502, "discord_unavailable");
 
         } finally {
-            // 4. não precisamos mais do acesso da VSync: devolvemos já.
+            // 4. não precisamos mais do acesso do Discord: devolvemos já.
             //    A sessão da Helena vale por conta própria. A revogação também
             //    exige o cliente (client_id e, se houver, client_secret), como a troca.
             for (const token of [accessToken, tokens?.refresh_token]) {
@@ -624,14 +619,14 @@ export function createWebApi(config, deps = {}) {
                         revoke.set("client_secret", config.clientSecret);
                     }
 
-                    upstream(`${WEB_CONFIG.vsyncApi}/oauth2/token/revoke`, {
+                    upstream(`${WEB_CONFIG.discordApi}/oauth2/token/revoke`, {
                         method: "POST",
                         headers: { "Content-Type": "application/x-www-form-urlencoded" },
                         body: revoke
                     })
                         .then(async response => {
                             if (!response.ok) {
-                                console.warn(`[WEB] VSync não revogou o acesso: ${await vsyncError(response) || `HTTP ${response.status}`}`);
+                                console.warn(`[WEB] Discord não revogou o acesso: ${await oauthError(response) || `HTTP ${response.status}`}`);
                             }
                         })
                         .catch(() => {});
@@ -639,10 +634,18 @@ export function createWebApi(config, deps = {}) {
             }
         }
 
+        // O Discord devolve a conta como { id, username, global_name, avatar }: vira o formato da sessão.
+        user = {
+            id: user?.id,
+            username: user?.username,
+            displayName: user?.global_name ?? user?.username,
+            avatarUrl: user?.id && user?.avatar ? discordAvatar(user) : null
+        };
+
         const userId = String(user?.id ?? "");
 
         if (!/^[\w-]{1,64}$/.test(userId)) {
-            console.warn("[WEB] A VSync devolveu uma conta sem identificador válido.");
+            console.warn("[WEB] O Discord devolveu uma conta sem identificador válido.");
 
             throw new HttpError(401, "login_failed", { detail: "conta:sem_id" });
         }
@@ -654,7 +657,7 @@ export function createWebApi(config, deps = {}) {
             .map(guild => ({
                 id: String(guild.id),
                 name: String(guild.name ?? "").slice(0, 100),
-                icon: guild.iconUrl ?? guild.icon ?? null
+                icon: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=128` : null
             }));
 
         // 5. sessão da Helena
@@ -945,13 +948,6 @@ export function createWebApi(config, deps = {}) {
 
         try {
             const path = new URL(req.url, "http://localhost").pathname;
-
-            // É uma imagem pública, pedida pelo <img> do app da VSync (sem cabeçalho Origin).
-            if (path === PREVIEW_PATH && (req.method === "GET" || req.method === "HEAD")) {
-                await avatarPreview.serve(req, res);
-
-                return;
-            }
 
             // Um site que não está na lista nunca consegue falar com a API
             // pelo navegador (sem Access-Control-Allow-Origin ele nem lê a resposta).

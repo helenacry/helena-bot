@@ -12,8 +12,8 @@ import { isOwner } from "./developer.mjs";
 //   owner   só para as respostas do dono (para testar em produção sem mexer com os outros)
 //   on      para todo mundo
 //
-// A doc da VSync não diz tudo sobre como o V2 convive com body, anexo, resposta privada
-// e atualização de mensagem. Por isso o V2 nunca é a única chance: se a VSync recusar,
+// A doc do Discord não diz tudo sobre como o V2 convive com body, anexo, resposta privada
+// e atualização de mensagem. Por isso o V2 nunca é a única chance: se o Discord recusar,
 // a mesma resposta sai de novo, como embed, e o motivo vai para o log ("[V2] ...").
 
 export function v2Mode(env = process.env) {
@@ -71,12 +71,12 @@ export async function deliverCallback({ payload, userId, post, skip = false, log
         return response;
     }
 
-    log.warn(`[V2] A VSync recusou o layout (HTTP ${response.status}: ${await detailOf(response)}); usei o clássico.`);
+    log.warn(`[V2] O Discord recusou o layout (HTTP ${response.status}: ${await detailOf(response)}); usei o clássico.`);
 
     return post(classic);
 }
 
-// Mensagem enviada ao canal (comandos pelo prefixo h). "send" lança erro se a VSync recusar.
+// Mensagem enviada ao canal (comandos pelo prefixo h). "send" lança erro se o Discord recusar.
 export async function deliverMessage({ data, userId, send, skip = false, log = console }) {
     const v2 = skip ? null : v2Payload(data, userId);
 
@@ -88,7 +88,7 @@ export async function deliverMessage({ data, userId, send, skip = false, log = c
         return await send(v2);
 
     } catch (error) {
-        log.warn(`[V2] A VSync recusou o layout (${String(error?.message ?? error).slice(0, 200)}); usei o clássico.`);
+        log.warn(`[V2] O Discord recusou o layout (${String(error?.message ?? error).slice(0, 200)}); usei o clássico.`);
 
         return send(stripLayout(data));
     }

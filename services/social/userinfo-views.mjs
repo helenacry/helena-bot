@@ -24,7 +24,7 @@ db.exec(`
     )
 `);
 
-// IDs da VSync têm 18 dígitos ou 36 caracteres (UUID); o limite só barra lixo.
+// IDs do Discord têm 18 dígitos ou 36 caracteres (UUID); o limite só barra lixo.
 const MAX_ID_LENGTH = 64;
 
 const increment = db.prepare(`

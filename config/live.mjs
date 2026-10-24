@@ -3,7 +3,7 @@
 // EMBEDS ATUALIZADOS AO VIVO
 // ==========================================
 
-// A VSync não tem horário que se atualiza sozinho no
+// O Discord não tem horário que se atualiza sozinho no
 // cliente, então a contagem é feita editando a mensagem.
 // A documentação não informa um limite para edições
 // (rotas gerais: 300 por minuto por bot), por isso o

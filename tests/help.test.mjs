@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 
 // A central de ajuda (/ajuda): o catálogo vem dos comandos que o bot carregou,
 // então estes testes conferem que ele cobre tudo, que cada tela cabe nos limites
-// da VSync e que a navegação e a busca funcionam.
+// do Discord e que a navegação e a busca funcionam.
 
 const { carregarComandos, comandosCarregados, resolverComando } = await import("../command-registry.mjs");
 const { handlePanelClick, handleModalSubmit } = await import("../services/panels/panels.mjs");

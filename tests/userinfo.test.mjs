@@ -1,4 +1,4 @@
-import { db, getPlayer, createPrefixRunner } from "./helpers.mjs";
+import { db, getPlayer, createPrefixRunner, discordMember, discordGuildFetch } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -6,134 +6,64 @@ import { mkdtempSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-// O contador de visualizações fica no banco, e o teste confere que nenhum arquivo é
-// criado. Roda numa pasta temporária para qualquer arquivo perdido não sujar o projeto.
+// O /userinfo no Discord: as insígnias vêm das public_flags da conta, a data da conta do ID,
+// e o resto (entrada, impulso, castigo, cargos) do membro. O contador de visualizações fica no
+// banco, e o teste confere que nenhum arquivo é criado. Roda numa pasta temporária para qualquer
+// arquivo perdido não sujar o projeto.
 const workDir = mkdtempSync(join(tmpdir(), "helena-userinfo-"));
 
 process.chdir(workDir);
 
 const { clearUserLookupCache } = await import("../services/platform/user-lookup.mjs");
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
+const { snowflakeTime } = await import("../services/discord/normalize.mjs");
 
 const G = "900000000000000001";
 const ME = { id: "111111111111111111", username: "eu", displayName: "Eu Mesmo" };
 
 const DAY = 24 * 60 * 60 * 1000;
 
-// Membro como a API da VSync devolve (campos que o /userinfo usa).
-const member = (id, username, displayName, extra = {}) => ({
-    id, username, displayName,
-    nickname: null,
-    bot: false,
-    avatarUrl: "https://cdn.exemplo.test/" + id + ".png",
-    flags: [],
-    hiddenBadges: [],
-    createdAt: Date.UTC(2024, 4, 10, 15, 30),
-    joinedAt: Date.UTC(2025, 0, 20, 12, 0),
-    prismaActive: false,
-    prismaSince: null,
-    pulsing: false,
-    pulsingSince: null,
-    pulseBadge: null,
-    nextPulseBadge: null,
-    ...extra
-});
+// os bits das insígnias públicas (uma parte do catálogo de userinfo-badges.mjs)
+const FLAG = { STAFF: 1 << 0, BRAVERY: 1 << 6, EARLY_SUPPORTER: 1 << 9, VERIFIED_DEVELOPER: 1 << 17 };
 
-const MARIA = member("200000000000000001", "mariasilva", "Maria Silva", {
-    flags: ["BADGE_SHOW_VERIFIED", "BADGE_SHOW_PRISMA"],
-    prismaActive: true,
-    prismaSince: Date.UTC(2024, 8, 5, 10, 0),
-    pulsing: true,
-    pulsingSince: Date.now() - 100 * DAY,
-    pulseBadge: { id: "PULSE_3", months: 3 },
-    nextPulseBadge: { id: "PULSE_6", months: 6, at: Date.now() + 5 * DAY }
+const MARIA = discordMember("200000000000000001", "mariasilva", "Maria Silva", null, false, {
+    user: { avatar: "abc123", public_flags: FLAG.BRAVERY | FLAG.EARLY_SUPPORTER | FLAG.VERIFIED_DEVELOPER },
+    member: {
+        roles: ["300000000000000001", "300000000000000002"],
+        premium_since: "2025-06-01T15:30:00.000000+00:00"
+    }
 });
-
-// "Pulser desde": o pulsingSince que vem com o membro é o do SERVIDOR e fica nulo quando o
-// Pulse é de outro servidor (com pulsing=true). A data da CONTA sai do próximo selo, que chega
-// em pulsingSince + meses x 30 dias (conferido com a API de verdade).
-const NEXT_BADGE_AT = Date.UTC(2026, 11, 20, 12, 0);          // 20/12/2026 12:00 UTC
-const PULSE_FROM = Date.UTC(2026, 9, 21, 12, 0);              // 21/10/2026 12:00 UTC (60 dias antes)
 
 const MEMBERS = [
-    member(ME.id, "eu", "Eu Mesmo"),
+    discordMember(ME.id, "eu", "Eu Mesmo"),
     MARIA,
-    member("200000000000000002", "mariasouza", "Maria Souza"),
-    member("200000000000000003", "jose", "José Ávila", { nickname: "Zezinho" }),
-    member("200000000000000004", "ana", "Ana"),
-    member("200000000000000005", "helena", "Helena", { bot: true }),
-    member("200000000000000006", "carlos", "Carlos"),
-    member("200000000000000007", "paula", "Paula"),
-    member("200000000000000008", "pulsaoutro", "Pulsa Outro", {
-        pulsing: true, pulsingSince: null,
-        pulseBadge: { id: "PULSE_1", months: 1 },
-        nextPulseBadge: { id: "PULSE_2", months: 2, at: NEXT_BADGE_AT }
+    discordMember("200000000000000002", "mariasouza", "Maria Souza"),
+    discordMember("200000000000000003", "jose", "José Ávila", "Zezinho"),
+    discordMember("200000000000000004", "ana", "Ana"),
+    discordMember("200000000000000005", "helena", "Helena", null, true),
+    discordMember("200000000000000006", "carlos", "Carlos"),
+    discordMember("200000000000000007", "paula", "Paula"),
+    discordMember("200000000000000008", "castigado", "Castigado", null, false, {
+        member: { communication_disabled_until: new Date(Date.now() + 2 * DAY).toISOString() }
     }),
-    member("200000000000000009", "pulsaaqui", "Pulsa Aqui", {
-        pulsing: true, pulsingSince: PULSE_FROM,
-        pulseBadge: { id: "PULSE_1", months: 1 },
-        nextPulseBadge: { id: "PULSE_2", months: 2, at: NEXT_BADGE_AT }
-    }),
-    member("200000000000000010", "nivelmaximo", "Nível Máximo", {
-        pulsing: true, pulsingSince: null,
-        pulseBadge: { id: "PULSE_24", months: 24 },
-        nextPulseBadge: null
-    }),
-    member("200000000000000011", "soprisma", "Só Prisma", {
-        flags: ["BADGE_SHOW_PRISMA"],
-        prismaActive: true,
-        prismaSince: Date.UTC(2025, 5, 1, 9, 0)
-    })
+    discordMember("200000000000000009", "equipe", "Equipe", null, false, { user: { public_flags: FLAG.STAFF } }),
+
+    // quem só o teste do contador de visualizações consulta
+    discordMember("200000000000000013", "contagema", "Contagem A"),
+    discordMember("200000000000000014", "contagemb", "Contagem B")
 ];
 
-const calls = [];
-
-
-// liga para simular a VSync fora do ar na rota de membro
-let failMembers = false;
-
-// perfil público da conta (GET /users/:id), por ID; failAccount simula a rota fora do ar
+// perfil público da conta (GET /users/:id), por ID: só o que traz o banner
 const ACCOUNTS = {};
-let failAccount = false;
 
-// API simulada: lista de membros e membro por ID.
-globalThis.fetch = async (url, init = {}) => {
-    const u = String(url);
+// O Discord de mentira: conta as chamadas e pode ficar fora do ar (api.down).
+const api = {};
 
-    calls.push((init.method ?? "GET") + " " + u.replace("https://api.vsync.lat", ""));
-
-    const reply = (status, body) => ({
-        ok: status < 300, status, json: async () => body,
-        text: async () => JSON.stringify(body), arrayBuffer: async () => new ArrayBuffer(0),
-        headers: { get: () => null }
-    });
-
-    let m;
-
-    if ((m = u.match(/\/guilds\/[^/]+\/members\/([^/]+)$/))) {
-        if (failMembers) return reply(500, {});
-
-        const found = MEMBERS.find(x => x.id === decodeURIComponent(m[1]));
-
-        return found ? reply(200, { member: found }) : reply(404, {});
-    }
-
-    if (/\/guilds\/[^/]+$/.test(u)) return reply(200, { members: MEMBERS });
-
-    if ((m = u.match(/\/users\/([^/?]+)$/))) {
-        if (failAccount) return reply(500, {});
-
-        const account = ACCOUNTS[decodeURIComponent(m[1])];
-
-        return account ? reply(200, { account }) : reply(404, {});
-    }
-
-    return reply(404, {});
-};
+globalThis.fetch = discordGuildFetch(MEMBERS, api, ACCOUNTS);
 
 const run = await createPrefixRunner({ guildId: G, author: ME });
 
-const UNKNOWN = "Não informado pela API";
+const UNKNOWN = "Não informado";
 
 const embedOf = r => r.sent[0]?.embeds?.[0];
 
@@ -146,9 +76,11 @@ const players = () => db.prepare("SELECT COUNT(*) c FROM players").get().c;
 
 test.beforeEach(() => {
     clearUserLookupCache();
-    calls.length = 0;
-    failMembers = false;
-    failAccount = false;
+
+    api.down = false;
+    api.searches = 0;
+    api.lookups = 0;
+    api.accountCalls = 0;
 
     for (const id of Object.keys(ACCOUNTS)) delete ACCOUNTS[id];
 });
@@ -190,170 +122,6 @@ test("menção de quem não está no servidor: não encontrado", async () => {
     assert.match((await run("hui <@999999999999999999>")).title, /Usuário não encontrado/);
 });
 
-// ==========================================
-// RESULTADO
-// ==========================================
-
-test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra os dados da API", async () => {
-    const r = await run("hui mariasilva");
-
-    assert.equal(r.body, "Informações de <@200000000000000001>", "a mensagem menciona o dono das informações");
-
-    const embed = embedOf(r);
-    const fields = fieldsOf(embed);
-
-    assert.equal(embed.author.name, "mariasilva (Maria Silva)", "usuário primeiro, o nome de exibição entre parênteses");
-    assert.equal(embed.description, "👤 **Menção:** <@" + MARIA.id + ">");
-    assert.equal(embed.author.iconUrl, MARIA.avatarUrl);
-    assert.equal(embed.thumbnail.url, MARIA.avatarUrl);
-
-    assert.equal(unblock(fields["🏷️ Tag"]), "mariasilva");
-    assert.equal(unblock(fields["🪪 ID"]), MARIA.id);
-    assert.match(fields["🏅 Insígnias"], /badge_verified/);
-    assert.match(fields["🏅 Insígnias"], /badge_prisma_plus/);
-
-    assert.match(fields["📅 Conta criada em"], /10 de maio de 2024, às 12:30 \(\*\*.+\*\*\)/, "data, hora de Brasília e a idade em negrito");
-    assert.match(fields["📥 Entrou no servidor em"], /20 de janeiro de 2025/, "vem da lista de membros");
-    assert.match(fields["💎 Assinante Prisma+ desde"], /5 de setembro de 2024/);
-
-    assert.notEqual(fields["✨ Pulser desde"], UNKNOWN);
-    assert.match(fields["✨ Pulser desde"], /\(\*\*.+\*\*\)$/, "com a idade em negrito");
-    assert.match(fields["🏅 Insígnia de Pulser atual"], /pulse_3/);
-    assert.match(fields["🏅 Insígnia de Pulser atual"], /dias/);
-    assert.match(fields["⏭️ Próxima insígnia de Pulser"], /em .*(dia|hora)/);
-});
-
-test("Pulser desde: Pulse de outro servidor (pulsingSince nulo) usa a data tirada do próximo selo", async () => {
-    const fields = fieldsOf(embedOf(await run("hui pulsaoutro")));
-
-    assert.match(fields["✨ Pulser desde"], /21 de outubro de 2026/, fields["✨ Pulser desde"]);
-    assert.doesNotMatch(fields["✨ Pulser desde"], /Não informado/);
-});
-
-test("Pulser desde: quando o servidor também informa a data, as duas concordam", async () => {
-    const fields = fieldsOf(embedOf(await run("hui pulsaaqui")));
-
-    assert.match(fields["✨ Pulser desde"], /21 de outubro de 2026/, fields["✨ Pulser desde"]);
-});
-
-test("Pulser desde: no nível máximo (sem próximo selo) e sem data do servidor, continua não informado", async () => {
-    const fields = fieldsOf(embedOf(await run("hui nivelmaximo")));
-
-    assert.match(fields["✨ Pulser desde"], /Não informado pela API/);
-});
-
-test("no comando de barra, quem pulsa e veio sem nada do Pulse na interação tem o membro buscado na API", async () => {
-    const userinfo = (await carregarComandos()).get("userinfo");
-
-    const result = await userinfo.execute({
-        guildId: G,
-        channelId: "900000000000000099",
-        user: { id: "200000000000000008", username: "pulsaoutro", displayName: "Pulsa Outro", pulsing: true, createdAt: Date.UTC(2024, 4, 10, 15, 30) },
-        member: { joinedAt: Date.UTC(2023, 2, 3, 12, 0), nickname: null, roleIds: [], pulsingSince: null, timeoutUntil: null },
-        data: { options: {} }
-    });
-
-    const fields = fieldsOf(result.data.embeds[0]);
-
-    assert.match(fields["✨ Pulser desde"], /21 de outubro de 2026/, fields["✨ Pulser desde"]);
-    assert.match(fields["📥 Entrou no servidor em"], /3 de março de 2023/, "a data de entrada continua sendo a da interação");
-    assert.equal(calls.filter(call => call.includes("/members/")).length, 1, "uma busca do membro");
-});
-
-test("no comando de barra, se a interação já trouxe o Pulse, não há chamada à API", async () => {
-    const userinfo = (await carregarComandos()).get("userinfo");
-
-    const result = await userinfo.execute({
-        guildId: G,
-        channelId: "900000000000000099",
-        user: {
-            id: "200000000000000008", username: "pulsaoutro", displayName: "Pulsa Outro", pulsing: true,
-            pulseBadge: { id: "PULSE_1", months: 1 }, nextPulseBadge: { id: "PULSE_2", months: 2, at: NEXT_BADGE_AT }
-        },
-        member: { joinedAt: Date.UTC(2023, 2, 3, 12, 0) },
-        data: { options: {} }
-    });
-
-    assert.match(fieldsOf(result.data.embeds[0])["✨ Pulser desde"], /21 de outubro de 2026/);
-    assert.deepEqual(calls.filter(call => call.includes("/members/")), []);
-});
-
-const PRISMA = "💎 Assinante Prisma+ desde";
-const PULSE_FIELDS = ["✨ Pulser desde", "🏅 Insígnia de Pulser atual", "⏭️ Próxima insígnia de Pulser"];
-
-test("quem não tem Prisma+ nem Pulse fica com o cartão limpo: sem esses campos, sem 'não informado'", async () => {
-    const embed = embedOf(await run("hui ana"));
-    const fields = fieldsOf(embed);
-
-    assert.equal(fields["🏅 Insígnias"], "Nenhuma");
-    assert.match(fields["📅 Conta criada em"], /10 de maio de 2024/);
-    assert.match(fields["📥 Entrou no servidor em"], /20 de janeiro de 2025/);
-
-    for (const name of [PRISMA, ...PULSE_FIELDS]) {
-        assert.ok(!(name in fields), `${name} não deveria aparecer`);
-    }
-
-    // nenhum campo vazio de espaçamento
-    assert.ok(!embed.fields.some(field => field.name === "​"), "sobrou o campo vazio");
-
-    const text = JSON.stringify(embed);
-
-    assert.doesNotMatch(text, /Não é assinante|Não possui Pulse|Não informado/);
-
-    // a menção está na descrição (no embed é só um chip), não em um campo
-    assert.equal(embed.description, "👤 **Menção:** <@200000000000000004>");
-
-    assert.deepEqual(
-        embed.fields.map(field => field.name),
-        ["🏷️ Tag", "🪪 ID", "🏅 Insígnias", "📅 Conta criada em", "📥 Entrou no servidor em"]
-    );
-
-    // Tag, ID e Insígnias lado a lado; as datas ocupam a linha toda
-    assert.deepEqual(embed.fields.map(field => field.inline), [true, true, true, false, false]);
-});
-
-test("só Prisma+: mostra o Prisma+ e nenhum campo de Pulse", async () => {
-    const embed = embedOf(await run("hui soprisma"));
-    const fields = fieldsOf(embed);
-
-    assert.match(fields[PRISMA], /1 de junho de 2025/);
-
-    for (const name of PULSE_FIELDS) {
-        assert.ok(!(name in fields), `${name} não deveria aparecer`);
-    }
-
-    assert.ok(!embed.fields.some(field => field.name === "​"));
-});
-
-test("só Pulse: mostra o bloco do Pulse e nenhum campo de Prisma+", async () => {
-    const embed = embedOf(await run("hui pulsaaqui"));
-    const fields = fieldsOf(embed);
-
-    assert.ok(!(PRISMA in fields));
-
-    for (const name of PULSE_FIELDS) {
-        assert.ok(name in fields, `${name} faltou`);
-    }
-
-    // "Pulser desde" ocupa a linha e as duas insígnias ficam lado a lado embaixo
-    const byName = Object.fromEntries(embed.fields.map(field => [field.name, field]));
-
-    assert.equal(byName["✨ Pulser desde"].inline, false);
-    assert.equal(byName["🏅 Insígnia de Pulser atual"].inline, true);
-    assert.equal(byName["⏭️ Próxima insígnia de Pulser"].inline, true);
-    assert.ok(!embed.fields.some(field => field.name === "​"));
-});
-
-test("Prisma+ e Pulse juntos: os dois blocos aparecem, como antes", async () => {
-    const fields = fieldsOf(embedOf(await run("hui mariasilva")));
-
-    assert.match(fields[PRISMA], /5 de setembro de 2024/);
-
-    for (const name of PULSE_FIELDS) {
-        assert.ok(name in fields, `${name} faltou`);
-    }
-});
-
 test("@usuário com @, em maiúsculas, menção, ID e o alias ui", async () => {
     const ana = "Informações de <@200000000000000004>";
 
@@ -371,6 +139,69 @@ test("bots também têm informações", async () => {
 
     assert.equal(r.body, "Informações de <@200000000000000005>");
     assert.equal(unblock(fieldsOf(embedOf(r))["🏷️ Tag"]), "helena");
+    assert.equal(fieldsOf(embedOf(r))["🏅 Insígnias"], "🤖 Bot");
+});
+
+// ==========================================
+// RESULTADO
+// ==========================================
+
+test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra os dados do Discord", async () => {
+    const r = await run("hui mariasilva");
+
+    assert.equal(r.body, "Informações de <@200000000000000001>", "a mensagem menciona o dono das informações");
+
+    const embed = embedOf(r);
+    const fields = fieldsOf(embed);
+
+    const avatar = "https://cdn.discordapp.com/avatars/200000000000000001/abc123.png?size=256";
+
+    assert.equal(embed.author.name, "mariasilva (Maria Silva)", "usuário primeiro, o nome de exibição entre parênteses");
+    assert.equal(embed.description, "👤 **Menção:** <@200000000000000001>");
+    assert.equal(embed.author.iconUrl, avatar);
+    assert.equal(embed.thumbnail.url, avatar);
+
+    assert.equal(unblock(fields["🏷️ Tag"]), "mariasilva");
+    assert.equal(unblock(fields["🪪 ID"]), "200000000000000001");
+
+    // as insígnias públicas, mais o impulso do servidor
+    assert.equal(fields["🏅 Insígnias"], "🟣 ⭐ 🧑‍💻 🚀");
+
+    // a conta tem a data do ID (a conta mais velha que o bot conhece, de 2016)
+    assert.equal(
+        fields["📅 Conta criada em"].split(" (**")[0],
+        new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "America/Sao_Paulo" }).format(snowflakeTime("200000000000000001")) +
+            ", às " +
+            new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(snowflakeTime("200000000000000001"))
+    );
+    assert.match(fields["📅 Conta criada em"], /\(\*\*.+\*\*\)$/, "com a idade em negrito");
+
+    assert.match(fields["📥 Entrou no servidor em"], /20 de janeiro de 2025/);
+    assert.match(fields["🚀 Impulsiona este servidor desde"], /1 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
+
+    // não existe nada de Prisma, Pulse ou tempo de tela no Discord
+    assert.ok(!Object.keys(fields).some(name => /Prisma|Pulse|Pulser/.test(name)));
+});
+
+test("quem não tem insígnia, impulso nem castigo fica com o cartão limpo: sem esses campos", async () => {
+    const fields = fieldsOf(embedOf(await run("hui carlos")));
+
+    assert.deepEqual(Object.keys(fields), [
+        "🏷️ Tag", "🪪 ID", "🏅 Insígnias", "📅 Conta criada em", "📥 Entrou no servidor em"
+    ]);
+
+    assert.equal(fields["🏅 Insígnias"], "Nenhuma");
+});
+
+test("a equipe do Discord ganha a insígnia dela", async () => {
+    assert.equal(fieldsOf(embedOf(await run("hui equipe")))["🏅 Insígnias"], "🛡️");
+});
+
+test("quem está de castigo vê até quando (e quanto falta)", async () => {
+    const fields = fieldsOf(embedOf(await run("hui castigado")));
+
+    // faltam 2 dias (a contagem tem a precisão de 1 segundo, então pode sair "1 dia 23 horas")
+    assert.match(fields["⏳ De castigo até"], /em \*\*(2 dias|1 dia 23 horas)\*\*\)$/);
 });
 
 test("sem argumento (ou o próprio @usuário) mostra as suas informações", async () => {
@@ -382,18 +213,15 @@ test("sem argumento (ou o próprio @usuário) mostra as suas informações", asy
     }
 });
 
-// A mensagem do prefixo (MESSAGE_CREATE) traz só o autor, sem member nem joinedAt (a
-// documentação da VSync só põe member nas interações). Por isso o /userinfo da própria
-// pessoa pelo prefixo precisa buscar o membro na API para saber quando ela entrou.
+// A mensagem do prefixo pode vir sem o membro (os testes mandam só o autor): o /userinfo da
+// própria pessoa busca o membro na API para saber quando ela entrou.
 test("hui (prefixo) sem argumento mostra quando você entrou no servidor, buscando o membro na API", async () => {
     const r = await run("hui");
     const fields = fieldsOf(embedOf(r));
 
     assert.match(fields["📥 Entrou no servidor em"], /20 de janeiro de 2025/, fields["📥 Entrou no servidor em"]);
     assert.notEqual(fields["📥 Entrou no servidor em"], UNKNOWN);
-    assert.match(fields["📅 Conta criada em"], /10 de maio de 2024/, "a data da conta também vem do membro");
-
-    assert.deepEqual(calls.filter(call => call.includes("/members/")), ["GET /guilds/" + G + "/members/" + ME.id], "uma chamada, na rota de membro");
+    assert.equal(api.lookups, 1, "uma chamada, na rota de membro");
 });
 
 test("o próprio @usuário, por nome, menção ou ID, também mostra a data de entrada", async () => {
@@ -404,7 +232,7 @@ test("o próprio @usuário, por nome, menção ou ID, também mostra a data de e
     }
 });
 
-test("no comando de barra a data de entrada vem da própria interação, sem chamar a API", async () => {
+test("no comando de barra a entrada vem da própria interação, sem chamar a API", async () => {
     const comandos = await carregarComandos();
 
     const userinfo = comandos.get("userinfo");
@@ -412,19 +240,30 @@ test("no comando de barra a data de entrada vem da própria interação, sem cha
     const result = await userinfo.execute({
         guildId: G,
         channelId: "900000000000000099",
-        user: { id: ME.id, username: "eu", displayName: "Eu Mesmo", createdAt: Date.UTC(2024, 4, 10, 15, 30) },
-        member: { joinedAt: Date.UTC(2023, 2, 3, 12, 0), nickname: null, roleIds: [], pulsingSince: null, timeoutUntil: null },
+        user: { id: ME.id, username: "eu", displayName: "Eu Mesmo", createdAt: Date.UTC(2024, 4, 10, 15, 30), publicFlags: FLAG.EARLY_SUPPORTER },
+        member: { joinedAt: Date.UTC(2023, 2, 3, 12, 0), nickname: "", roleIds: [], boostingSince: null, timeoutUntil: null },
         data: { options: {} }
     });
 
     const fields = fieldsOf(result.data.embeds[0]);
 
     assert.match(fields["📥 Entrou no servidor em"], /3 de março de 2023/);
-    assert.deepEqual(calls.filter(call => call.includes("/members/")), [], "a interação já trazia o membro");
+    assert.match(fields["📅 Conta criada em"], /10 de maio de 2024/);
+    assert.equal(fields["🏅 Insígnias"], "⭐");
+    assert.equal(api.lookups, 0, "a interação já trazia o membro");
+});
+
+test("o prefixo entrega o membro do servidor: o comando usa o que veio na mensagem", async () => {
+    const run2 = await createPrefixRunner({ guildId: G, author: ME });
+
+    // sem nenhuma chamada à API: o membro viria na própria mensagem (MESSAGE_CREATE)
+    const result = await run2("hui");
+
+    assert.ok(result.sent.length === 1);
 });
 
 test("se a API falhar, o /userinfo da própria pessoa ainda responde, com a data como não informada", async () => {
-    failMembers = true;
+    api.down = true;
 
     const warn = console.warn;
 
@@ -458,17 +297,17 @@ test("olhar as informações de alguém não cria registro de jogador", async ()
 test("o contador de visualizações é da pessoa consultada", async () => {
     const footer = r => embedOf(r).footer.text;
 
-    assert.match(footer(await run("hui carlos")), /^Comando executado por: Eu Mesmo \| Visualizações: 1$/);
-    assert.match(footer(await run("hui carlos")), /Visualizações: 2$/);
-    assert.match(footer(await run("hui paula")), /Visualizações: 1$/, "cada pessoa tem o seu");
+    assert.match(footer(await run("hui contagema")), /^Comando executado por: Eu Mesmo \| Visualizações: 1$/);
+    assert.match(footer(await run("hui contagema")), /Visualizações: 2$/);
+    assert.match(footer(await run("hui contagemb")), /Visualizações: 1$/, "cada pessoa tem o seu");
 
     // a hora vem no timestamp do embed (o app a mostra ao lado do rodapé), não no texto
-    const stamp = embedOf(await run("hui paula")).timestamp;
+    const stamp = embedOf(await run("hui contagemb")).timestamp;
 
     assert.ok(Math.abs(stamp - Date.now()) < 60_000, "o timestamp é o de agora, em milissegundos");
 
     // a contagem fica no banco do bot, e nenhum arquivo é criado
-    assert.equal(db.prepare("SELECT views FROM userinfo_views WHERE user_id = ?").get("200000000000000006").views, 2);
+    assert.equal(db.prepare("SELECT views FROM userinfo_views WHERE user_id = ?").get("200000000000000013").views, 2);
     assert.deepEqual(readdirSync(workDir), [], "o contador não grava arquivo nenhum");
 });
 
@@ -486,25 +325,26 @@ test("a opção é de texto e o alias ui continua valendo", async () => {
         [["usuario", "string", false]]
     );
 
+    assert.match(userinfo.description, /Discord/);
     assert.equal(resolverComando(comandos, "ui")?.name, "userinfo");
 });
-
 
 // ==========================================
 // FORMATO: DATAS E IDADES
 // ==========================================
 
-const { formatAge, dateField, dateWithAge } = await import("../services/social/userinfo-format.mjs");
+const { formatAge, dateField, dateWithAge, formatCountdown } = await import("../services/social/userinfo-format.mjs");
 const { savePlayerName } = await import("../services/platform/player-names.mjs");
 const { handleUserinfoComponent, knownMembers } = await import("../services/panels/userinfo-panel.mjs");
 const { handleModalSubmit } = await import("../services/panels/panels.mjs");
-const { buildUserinfoEmbed, buildUserinfoDetail } = await import("../services/social/userinfo-view.mjs");
+const { buildUserinfoEmbed, buildUserinfoDetail, detailOptions, largeImage } = await import("../services/social/userinfo-view.mjs");
+const { getUserBadges, BADGE_IDS } = await import("../services/social/userinfo-badges.mjs");
 
 test("a idade vem em anos, meses e dias de calendário, sem as unidades zeradas", () => {
     // o exemplo do cartão do Zany: conta de 30/09/2016 vista em 15/10/2026
     assert.equal(formatAge(Date.UTC(2016, 8, 30, 23, 55), Date.UTC(2026, 9, 15, 12, 0)), "10 anos 15 dias");
 
-    // "2 anos 5 meses 20 dias" (a data do Nitro do mesmo cartão)
+    // "2 anos 5 meses 20 dias"
     assert.equal(formatAge(Date.UTC(2024, 3, 27, 17, 40), Date.UTC(2026, 9, 17, 12, 0)), "2 anos 5 meses 20 dias");
 
     // singular
@@ -533,6 +373,54 @@ test("a data sai no horário de Brasília, com vírgula e 'às', e a idade em ne
     assert.equal(dateWithAge(undefined), UNKNOWN);
 });
 
+const NOW0 = Date.UTC(2026, 9, 17, 12, 0);
+
+test("o que falta para o fim do castigo sai em meses, dias e horas", () => {
+    // 17/10/2026 12:00 -> 27/04/2027 11:00 UTC
+    assert.equal(formatCountdown(NOW0, Date.UTC(2027, 3, 27, 11, 0)), "6 meses 9 dias 23 horas");
+    assert.equal(formatCountdown(NOW0, NOW0 + 3 * 3_600_000), "3 horas");
+    assert.equal(formatCountdown(NOW0, NOW0 + 40 * 60_000), "menos de 1 hora");
+    assert.equal(formatCountdown(NOW0, Date.UTC(2028, 9, 18, 12, 0)), "2 anos 1 dia");
+    assert.equal(formatCountdown(NOW0, NOW0 - 1000), "agora");
+    assert.equal(formatCountdown(null, NOW0), UNKNOWN);
+});
+
+// ==========================================
+// INSÍGNIAS
+// ==========================================
+
+test("cada bit das insígnias públicas vira o ícone e o nome certos, na ordem do catálogo", () => {
+    const all = Object.values({
+        STAFF: 1 << 0, PARTNER: 1 << 1, HYPESQUAD_EVENTS: 1 << 2, BUG_HUNTER_LEVEL_1: 1 << 3, HOUSE_BRAVERY: 1 << 6,
+        HOUSE_BRILLIANCE: 1 << 7, HOUSE_BALANCE: 1 << 8, EARLY_SUPPORTER: 1 << 9, BUG_HUNTER_LEVEL_2: 1 << 14,
+        VERIFIED_BOT: 1 << 16, VERIFIED_DEVELOPER: 1 << 17, CERTIFIED_MODERATOR: 1 << 18, ACTIVE_DEVELOPER: 1 << 22
+    }).reduce((total, bit) => total | bit, 0);
+
+    const badges = getUserBadges({ publicFlags: all });
+
+    assert.equal(badges.length, 13);
+    assert.ok(badges.every(badge => badge.emoji && badge.name));
+    assert.equal(new Set(badges.map(badge => badge.emoji)).size, 13 - 1 + 1 - 1 + 1 - 0, "nenhum ícone repetido");
+
+    assert.deepEqual(badges.map(badge => badge.id), [
+        "STAFF", "PARTNER", "CERTIFIED_MODERATOR", "HYPESQUAD_EVENTS", "HOUSE_BRAVERY", "HOUSE_BRILLIANCE",
+        "HOUSE_BALANCE", "BUG_HUNTER_LEVEL_1", "BUG_HUNTER_LEVEL_2", "EARLY_SUPPORTER", "VERIFIED_DEVELOPER",
+        "ACTIVE_DEVELOPER", "VERIFIED_BOT"
+    ]);
+
+    // o catálogo e a lista pública dos ids coincidem (o impulso é o único que não vem dos bits)
+    assert.deepEqual([...BADGE_IDS].sort(), [...badges.map(badge => badge.id), "BOOSTER"].sort());
+});
+
+test("sem bits, sem insígnia; bits que o Discord criar depois são ignorados; o impulso soma a dele", () => {
+    assert.deepEqual(getUserBadges({}), []);
+    assert.deepEqual(getUserBadges({ publicFlags: 0 }), []);
+    assert.deepEqual(getUserBadges({ publicFlags: 1 << 30 }), [], "um bit que o catálogo não conhece não aparece");
+    assert.deepEqual(getUserBadges({ publicFlags: "lixo" }), []);
+
+    assert.deepEqual(getUserBadges({ boostingSince: Date.now() }).map(badge => badge.id), ["BOOSTER"]);
+});
+
 // ==========================================
 // CARTÃO NO ESTILO DO ZANY
 // ==========================================
@@ -558,7 +446,7 @@ test("Tag e ID vêm em blocos de código; a Menção é a descrição; o rodapé
 });
 
 test("autor, rodapé e nome saem como texto simples: sem barras do escape de markdown", async () => {
-    MEMBERS.push(member("200000000000000012", "estrela", "*Estrela_Z*"));
+    MEMBERS.push(discordMember("200000000000000012", "estrela", "*Estrela_Z*"));
 
     clearUserLookupCache();
 
@@ -568,41 +456,47 @@ test("autor, rodapé e nome saem como texto simples: sem barras do escape de mar
     assert.doesNotMatch(embed.author.name, /\\/);
 });
 
-test("quem já está no último nível do Pulse vê 'Nível máximo alcançado.' no lugar do próximo selo", async () => {
-    const fields = fieldsOf(embedOf(await run("hui nivelmaximo")));
+test("bots mostram 🤖 Bot, e o castigo que já acabou não aparece", () => {
+    const bot = fieldsOf(buildUserinfoEmbed({ user: { id: "1", username: "b", bot: true }, now: NOW0 }));
 
-    assert.match(fields["⏭️ Próxima insígnia de Pulser"], /pulse_24.*\*\*Nível máximo alcançado\.\*\*/);
-    assert.doesNotMatch(fields["⏭️ Próxima insígnia de Pulser"], /Não informado/);
+    assert.equal(bot["🏅 Insígnias"], "🤖 Bot");
+
+    const punished = fieldsOf(buildUserinfoEmbed({
+        user: { id: "1", username: "b", timeoutUntil: NOW0 + 3_600_000 },
+        now: NOW0
+    }));
+
+    assert.match(punished["⏳ De castigo até"], /em \*\*1 hora\*\*\)$/);
+
+    assert.ok(!("⏳ De castigo até" in fieldsOf(buildUserinfoEmbed({ user: { id: "1", username: "b", timeoutUntil: NOW0 - 1 }, now: NOW0 }))));
 });
 
 // ==========================================
 // OS DOIS MENUS
 // ==========================================
 
-const comandosOf = () => carregarComandos();
-
 const click = (customId, values, userId = ME.id) => ({
     id: "c1", guildId: G, channelId: "900000000000000099",
     user: { id: userId, username: "eu", displayName: "Eu Mesmo" },
-    data: { customId, componentType: "select", values }
+    data: { customId, componentType: 3, values }
 });
 
 const selectsOf = r => r.sent[0].components.map(row => row.components[0]);
 
 test("o cartão traz dois menus: 'Mais informações.' e 'Ver informações de outros membros no servidor.'", async () => {
     getPlayer(G, ME.id);
-    getPlayer(G, MARIA.id);
+    getPlayer(G, MARIA.user.id);
     getPlayer(G, "200000000000000004");
 
     savePlayerName(ME);
-    savePlayerName({ id: MARIA.id, username: "mariasilva", displayName: "Maria Silva" });
+    savePlayerName({ id: MARIA.user.id, username: "mariasilva", displayName: "Maria Silva" });
     savePlayerName({ id: "200000000000000004", username: "ana", displayName: "Ana" });
 
     const [more, other] = selectsOf(await run("hui mariasilva"));
 
-    assert.equal(more.customId, `userinfo:more:${ME.id}:${MARIA.id}`);
+    assert.equal(more.customId, `userinfo:more:${ME.id}:${MARIA.user.id}`);
     assert.equal(more.placeholder, "Mais informações.");
-    assert.deepEqual(more.options.map(option => option.value), ["avatar", "badges", "dates", "pulse"]);
+    assert.deepEqual(more.options.map(option => option.value), ["avatar", "banner", "badges", "dates", "roles"]);
 
     assert.equal(other.customId, `userinfo:other:${ME.id}`);
     assert.equal(other.placeholder, "Ver informações de outros membros no servidor.");
@@ -612,20 +506,22 @@ test("o cartão traz dois menus: 'Mais informações.' e 'Ver informações de o
     const ids = other.options.slice(1).map(option => option.value);
 
     assert.ok(ids.includes(ME.id) && ids.includes("200000000000000004"));
-    assert.ok(!ids.includes(MARIA.id));
+    assert.ok(!ids.includes(MARIA.user.id));
     assert.ok(other.options.every(option => option.label.length <= 100 && option.value.length <= 100));
 });
 
-test("sem Pulse nem avatar, o menu 'Mais informações.' só oferece o que existe", async () => {
+test("quem não tem cargos não ganha a opção Cargos, e sem avatar não ganha Avatar", async () => {
     const options = selectsOf(await run("hui carlos"))[0].options.map(option => option.value);
 
-    assert.ok(options.includes("avatar"), "o membro de teste tem avatar");
-    assert.ok(!options.includes("pulse"));
+    assert.deepEqual(options, ["avatar", "banner", "badges", "dates"]);
 
     const noAvatar = buildUserinfoEmbed({ user: { id: "1", username: "x", avatarUrl: null } });
 
     assert.equal(noAvatar.thumbnail, undefined);
     assert.equal(buildUserinfoDetail("avatar", { id: "1", username: "x" }), null);
+
+    assert.deepEqual(detailOptions({ id: "1", username: "x" }).map(option => option.value), ["banner", "badges", "dates"]);
+    assert.ok(detailOptions({ id: "1", username: "x", avatarUrl: "https://a.test/a.png", roleIds: ["r"] }).length <= 25);
 });
 
 test("os menus têm no máximo 25 opções, mesmo com muita gente jogando", () => {
@@ -640,45 +536,45 @@ test("os menus têm no máximo 25 opções, mesmo com muita gente jogando", () =
     assert.equal(knownMembers(G, { limit: 5 }).length, 5);
 });
 
-test("Mais informações: insígnias, datas e a evolução do Pulse, em mensagem só de quem pediu", async () => {
-    const comandos = await comandosOf();
+test("Mais informações: insígnias, datas e cargos, em mensagem só de quem pediu", async () => {
+    const comandos = await carregarComandos();
 
-    const ask = value => handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, [value]), comandos);
+    const ask = value => handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, [value]), comandos);
 
     const first = await ask("badges");
 
     assert.equal(first.type, "message");
     assert.equal(first.data.ephemeral, true);
 
-    const badges = (await ask("badges")).data.embeds[0];
+    const badges = first.data.embeds[0];
 
-    assert.match(badges.description, /Verificado/);
-    assert.match(badges.description, /Prisma\+/);
+    assert.match(badges.title, /Insígnias de Maria Silva/);
+    assert.match(badges.description, /🟣 HypeSquad Bravery/);
+    assert.match(badges.description, /⭐ Apoiador inicial/);
+    assert.match(badges.description, /🚀 Impulsiona este servidor/);
 
     const dates = (await ask("dates")).data.embeds[0];
 
     assert.deepEqual(dates.fields.map(field => field.name), [
-        "📅 Conta criada em", "📥 Entrou no servidor em", "💎 Assinante Prisma+ desde", "✨ Pulser desde"
+        "📅 Conta criada em", "📥 Entrou no servidor em", "🚀 Impulsiona este servidor desde"
     ]);
-    assert.match(dates.fields[0].value, /10 de maio de 2024.*\(\*\*.+\*\*\)/);
 
-    const pulse = (await ask("pulse")).data.embeds[0];
+    // os cargos viram menções de cargo (no embed são só chips, não avisam ninguém)
+    const roles = (await ask("roles")).data.embeds[0];
 
-    assert.match(pulse.title, /Evolução do Pulse de Maria Silva/);
-    assert.equal(pulse.description.split("\n").filter(line => /^[✅⏳]/u.test(line)).length, 9, "um nível por linha");
-    assert.match(pulse.description, /✅ .*\*\*1 mês\*\*/u);
-    assert.match(pulse.description, /⏳ .*\*\*24 meses\*\* · .+ \(em .+\)/u);
+    assert.equal(roles.title, "🎭 Cargos de Maria Silva (2)");
+    assert.equal(roles.description, "<@&300000000000000001> <@&300000000000000002>");
 });
 
 test("Mais informações: só quem usou o comando mexe, a opção vazia e a pessoa que sumiu viram aviso", async () => {
-    const comandos = await comandosOf();
+    const comandos = await carregarComandos();
 
-    const stranger = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["badges"], "999999999999999999"), comandos);
+    const stranger = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["badges"], "999999999999999999"), comandos);
 
     assert.equal(stranger.data.ephemeral, true);
     assert.match(JSON.stringify(stranger), /outra pessoa/);
 
-    const empty = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, []), comandos);
+    const empty = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, []), comandos);
 
     assert.match(JSON.stringify(empty), /Escolha uma opção/);
 
@@ -686,14 +582,78 @@ test("Mais informações: só quem usou o comando mexe, a opção vazia e a pess
 
     assert.match(JSON.stringify(gone), /Pessoa não encontrada/);
 
-    // pulse de quem não pulsa: sem esse detalhe
-    const none = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000004`, ["pulse"]), comandos);
+    // cargos de quem não tem cargo nenhum: sem esse detalhe
+    const none = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000004`, ["roles"]), comandos);
 
     assert.match(JSON.stringify(none), /Sem esse detalhe/);
 });
 
+// ==========================================
+// AVATAR E BANNER
+// ==========================================
+
+test("o avatar abre em embed privado, em tamanho grande, com o link para o original", async () => {
+    const comandos = await carregarComandos();
+
+    const result = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["avatar"]), comandos);
+
+    const embed = result.data.embeds[0];
+
+    assert.equal(result.data.ephemeral, true);
+    assert.equal(embed.title, "🖼️ Avatar de Maria Silva");
+    assert.equal(embed.image.url, "https://cdn.discordapp.com/avatars/200000000000000001/abc123.png?size=1024");
+    assert.equal(embed.description, `[Abrir em tamanho original](${embed.image.url})`);
+
+    assert.equal(largeImage("https://x.test/a.png?size=256"), "https://x.test/a.png?size=1024");
+});
+
+test("o banner só é buscado quando a pessoa o pede, no perfil completo da conta", async () => {
+    const comandos = await carregarComandos();
+
+    ACCOUNTS[MARIA.user.id] = { id: MARIA.user.id, username: "mariasilva", banner: "bnr456", accent_color: 0x8555ff };
+
+    // abrir o cartão e os outros detalhes não gasta chamada ao perfil da conta
+    await run("hui mariasilva");
+    await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["badges"]), comandos);
+
+    assert.equal(api.accountCalls, 0);
+
+    const result = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["banner"]), comandos);
+
+    assert.equal(api.accountCalls, 1);
+    assert.equal(result.data.embeds[0].title, "🌌 Banner de Maria Silva");
+    assert.equal(result.data.embeds[0].image.url, "https://cdn.discordapp.com/banners/200000000000000001/bnr456.png?size=1024");
+});
+
+test("quem não tem banner, ou se o perfil da conta falhar: a tela diz que não tem, sem quebrar", async () => {
+    const comandos = await carregarComandos();
+
+    const none = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000004`, ["banner"]), comandos);
+
+    assert.match(none.data.embeds[0].description, /não tem um banner/);
+
+    api.down = true;
+
+    const warn = console.warn;
+
+    console.warn = () => {};
+
+    try {
+        // com a API fora do ar nem o membro é achado: vira o aviso de pessoa não encontrada
+        const down = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["banner"]), comandos);
+
+        assert.ok(JSON.stringify(down).length > 0);
+    } finally {
+        console.warn = warn;
+    }
+});
+
+// ==========================================
+// OUTROS MEMBROS
+// ==========================================
+
 test("Outros membros: escolher alguém mostra o cartão dele só para quem pediu; buscar abre o formulário", async () => {
-    const comandos = await comandosOf();
+    const comandos = await carregarComandos();
 
     const card = await handleUserinfoComponent(click(`userinfo:other:${ME.id}`, ["200000000000000004"]), comandos);
 
@@ -714,7 +674,7 @@ test("Outros membros: escolher alguém mostra o cartão dele só para quem pediu
 });
 
 test("o formulário 'Procurar por @usuário...' mostra o cartão (privado) ou explica o que faltou", async () => {
-    const comandos = await comandosOf();
+    const comandos = await carregarComandos();
 
     const submit = usuario => handleModalSubmit({
         id: "s1", guildId: G, channelId: "900000000000000099",
@@ -729,385 +689,4 @@ test("o formulário 'Procurar por @usuário...' mostra o cartão (privado) ou ex
 
     assert.match(JSON.stringify(await submit("   ")), /Faltou a pessoa/);
     assert.match(JSON.stringify(await submit("ninguemassim")), /Usuário não encontrado/);
-});
-
-
-// ==========================================
-// MAIS CONFERIDO COM O ZANY E COM A DOC DA VSYNC
-// ==========================================
-
-const { formatCountdown } = await import("../services/social/userinfo-format.mjs");
-const { getUserBadges } = await import("../services/social/userinfo-badges.mjs");
-const { detailOptions } = await import("../services/social/userinfo-view.mjs");
-
-const NOW0 = Date.UTC(2026, 9, 17, 12, 0);
-
-test("o que falta para o próximo selo sai em meses, dias e horas (o formato do Zany)", () => {
-    // 17/10/2026 12:00 -> 27/04/2027 11:00 UTC
-    assert.equal(formatCountdown(NOW0, Date.UTC(2027, 3, 27, 11, 0)), "6 meses 9 dias 23 horas");
-    assert.equal(formatCountdown(NOW0, NOW0 + 3 * 3_600_000), "3 horas");
-    assert.equal(formatCountdown(NOW0, NOW0 + 40 * 60_000), "menos de 1 hora");
-    assert.equal(formatCountdown(NOW0, Date.UTC(2028, 9, 18, 12, 0)), "2 anos 1 dia");
-    assert.equal(formatCountdown(NOW0, NOW0 - 1000), "agora");
-    assert.equal(formatCountdown(null, NOW0), UNKNOWN);
-});
-
-test("o selo atual mostra há quanto tempo a pessoa pulsa, igual ao 'Impulsionando desde'", () => {
-    const user = {
-        id: "1", username: "p", displayName: "P",
-        pulsing: true,
-        pulsingSince: Date.UTC(2024, 3, 27, 17, 44),
-        pulseBadge: { id: "PULSE_12", months: 12 },
-        nextPulseBadge: { id: "PULSE_15", months: 15, at: Date.UTC(2027, 3, 27, 11, 0) }
-    };
-
-    const fields = fieldsOf(buildUserinfoEmbed({ user, now: NOW0 }));
-
-    assert.equal(fields["✨ Pulser desde"], "27 de abril de 2024, às 14:44 (**2 anos 5 meses 20 dias**)");
-    assert.match(fields["🏅 Insígnia de Pulser atual"], /pulse_12.* │ \*\*2 anos 5 meses 20 dias\*\*$/);
-    assert.match(fields["⏭️ Próxima insígnia de Pulser"], /pulse_15.* │ \*\*em 6 meses 9 dias 23 horas\*\*$/);
-});
-
-test("o plano do Prisma vem da conta (Prisma ou Prisma+), e o apelido do servidor vai no autor", async () => {
-    MEMBERS.push(member("200000000000000013", "prismabasico", "Prisma Básico", {
-        prismaActive: true, prismaPlan: "prisma", prismaSince: Date.UTC(2025, 5, 1, 9, 0)
-    }));
-
-    clearUserLookupCache();
-
-    const basic = fieldsOf(embedOf(await run("hui prismabasico")));
-
-    assert.match(basic["💎 Assinante Prisma desde"], /1 de junho de 2025/);
-    assert.ok(!("💎 Assinante Prisma+ desde" in basic));
-
-    // sem o plano na resposta, vale Prisma+ (como era)
-    assert.ok("💎 Assinante Prisma+ desde" in fieldsOf(embedOf(await run("hui soprisma"))));
-
-    // jose tem o apelido Zezinho neste servidor
-    assert.equal(embedOf(await run("hui jose")).author.name, "jose (Zezinho)");
-});
-
-test("bots mostram 🤖 Bot nas insígnias, e quem está de castigo vê até quando", () => {
-    const bot = fieldsOf(buildUserinfoEmbed({ user: { id: "1", username: "b", bot: true }, now: NOW0 }));
-
-    assert.equal(bot["🏅 Insígnias"], "🤖 Bot");
-
-    const punished = fieldsOf(buildUserinfoEmbed({
-        user: { id: "1", username: "b", timeoutUntil: NOW0 + 3_600_000 },
-        now: NOW0
-    }));
-
-    assert.match(punished["⏳ De castigo até"], /em \*\*1 hora\*\*\)$/);
-
-    // castigo que já acabou não aparece
-    assert.ok(!("⏳ De castigo até" in fieldsOf(buildUserinfoEmbed({ user: { id: "1", username: "b", timeoutUntil: NOW0 - 1 }, now: NOW0 }))));
-});
-
-test("os níveis do Pulse são acumulativos: só o selo mais alto aparece nas insígnias, com o emoji dele", () => {
-    const badges = getUserBadges({
-        flags: ["BADGE_SHOW_PULSE_1", "BADGE_SHOW_PULSE_6", "BADGE_SHOW_PULSE_3", "BADGE_SHOW_VERIFIED"]
-    });
-
-    assert.deepEqual(badges.map(badge => badge.id), ["BADGE_SHOW_PULSE_6", "BADGE_SHOW_VERIFIED"]);
-    assert.match(badges.find(badge => badge.id === "BADGE_SHOW_PULSE_6").emoji, /pulse_6/);
-});
-
-test("o menu 'Mais informações.' também oferece banner, cargos e status quando a pessoa tem", () => {
-    const plain = detailOptions({ id: "1", username: "x" }).map(option => option.value);
-
-    assert.deepEqual(plain, ["badges", "dates"]);
-
-    const full = detailOptions({
-        id: "1", username: "x", avatarUrl: "https://a.test/a.png", bannerUrl: "https://a.test/b.png",
-        pulsing: true, roleIds: ["r1"], status: "online"
-    }).map(option => option.value);
-
-    assert.deepEqual(full, ["avatar", "banner", "badges", "dates", "pulse", "roles", "status"]);
-    assert.ok(detailOptions({ id: "1", username: "x", avatarUrl: "https://a.test/a.png" }).length <= 25);
-});
-
-test("cargos aparecem como chips de menção (que no embed não notificam) e o status resume a presença", () => {
-    const roles = buildUserinfoDetail("roles", { id: "1", username: "x", displayName: "X", roleIds: ["r-1", "r-2"] });
-
-    assert.equal(roles.title, "🎭 Cargos de X (2)");
-    assert.equal(roles.description, "<@&r-1> <@&r-2>");
-    assert.equal(buildUserinfoDetail("roles", { id: "1", username: "x", roleIds: [] }), null);
-
-    const status = buildUserinfoDetail("status", {
-        id: "1", username: "x", displayName: "X", status: "dnd",
-        customStatus: { text: "Focado *agora*", emoji: "🎯", expiresAt: null },
-        activity: { name: "Minecraft", startedAt: NOW0 - 3 * 86_400_000 },
-        listening: { title: "Música", artist: "Banda" }
-    }, NOW0);
-
-    assert.match(status.description, /\*\*Status:\*\* ⛔ Não perturbe/);
-    assert.match(status.description, /\*\*Status personalizado:\*\* 🎯 Focado \\\*agora\\\*/);
-    assert.match(status.description, /\*\*Atividade:\*\* Minecraft · desde .+ \(há \*\*3 dias\*\*\)/);
-    assert.match(status.description, /\*\*Ouvindo:\*\* 🎵 Música — Banda/);
-
-    assert.equal(buildUserinfoDetail("status", { id: "1", username: "x" }), null);
-});
-
-// ==========================================
-// AVATAR E BANNER: EMBED PRIVADO (O AVATAR EM TELA LARGA, SEM ACHATAR)
-// ==========================================
-
-const { API_URL } = await import("../config/site.mjs");
-
-test("o avatar abre em embed privado, na tela larga servida pelo bot (a VSync cortaria um quadrado)", async () => {
-    MEMBERS.push(member("200000000000000015", "comcdn", "Com CDN", {
-        avatarUrl: "https://cdn.vsync.lat/att/2026/avatarabc123@256.webp"
-    }));
-
-    clearUserLookupCache();
-
-    const comandos = await carregarComandos();
-
-    const reply = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000015`, ["avatar"]), comandos);
-
-    assert.equal(reply.type, "message");
-    assert.equal(reply.data.ephemeral, true, "continua só para quem pediu");
-    assert.ok(!reply.data.attachments, "nada de anexo");
-
-    const embed = reply.data.embeds[0];
-
-    assert.equal(embed.title, "🖼️ Avatar de Com CDN");
-
-    // a imagem do embed é a tela larga do bot, com o avatar da CDN no endereço
-    assert.equal(
-        embed.image.url,
-        `${API_URL}/img/avatar.webp?u=${encodeURIComponent("https://cdn.vsync.lat/att/2026/avatarabc123@256.webp")}`
-    );
-
-    // e o link "tamanho original" continua sendo o avatar cru
-    assert.match(embed.description, /\(https:\/\/cdn\.vsync\.lat\/att\/2026\/avatarabc123@256\.webp\)/);
-});
-
-test("avatar de fora da CDN da VSync (ou sem avatar) cai na imagem crua, e o banner vai direto", async () => {
-    const comandos = await carregarComandos();
-
-    // o avatar de teste é de outro endereço: não passa pela tela larga
-    const raw = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.id}`, ["avatar"]), comandos);
-
-    assert.equal(raw.data.embeds[0].image.url, MARIA.avatarUrl);
-
-    MEMBERS.push(member("200000000000000014", "comcapa", "Com Capa", { bannerUrl: "https://cdn.vsync.lat/att/2026/capa.webp" }));
-
-    clearUserLookupCache();
-
-    const banner = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:200000000000000014`, ["banner"]), comandos);
-
-    // o banner já é largo: o quadro da VSync mostra quase tudo, então vai sem passar pelo bot
-    assert.equal(banner.data.ephemeral, true);
-    assert.equal(banner.data.embeds[0].title, "🌌 Banner de Com Capa");
-    assert.equal(banner.data.embeds[0].image.url, "https://cdn.vsync.lat/att/2026/capa.webp");
-});
-
-// ==========================================
-// PRISMA, PULSE E INSÍGNIAS DE QUEM TEM (e de quem não tem)
-// ==========================================
-
-const ids = user => getUserBadges(user).map(badge => badge.id);
-
-test("o Prisma+ vem de prismaActive e prismaPlan, não de uma flag: a insígnia aparece e vai primeiro", () => {
-    // como a API manda: nenhuma flag de Prisma, só a assinatura ativa
-    const plus = getUserBadges({ prismaActive: true, prismaPlan: "prisma_plus", flags: ["EARLY_SUPPORTER", "VERIFIED_BOT_DEVELOPER"] });
-
-    assert.deepEqual(plus.map(badge => badge.id), ["BADGE_SHOW_PRISMA", "BADGE_SHOW_EARLY_SUPPORTER", "BADGE_SHOW_VERIFIED_BOT_DEVELOPER"]);
-    assert.equal(plus[0].name, "Prisma+");
-    assert.match(plus[0].emoji, /badge_prisma_plus/);
-
-    // plano básico: "Prisma", com o emoji do pacote de ícones
-    const basic = getUserBadges({ prismaActive: true, prismaPlan: "prisma" });
-
-    assert.deepEqual(
-        basic.map(badge => [badge.id, badge.name, badge.emoji]),
-        [["BADGE_SHOW_PRISMA_BASIC", "Prisma", "<:auto_prisma:239479157123600384>"]]
-    );
-
-    // sem o plano na resposta, vale Prisma+ (como era); e a flag junto com a assinatura não duplica
-    assert.deepEqual(ids({ prismaActive: true, flags: ["BADGE_SHOW_PRISMA"] }), ["BADGE_SHOW_PRISMA"]);
-
-    // plano básico com uma flag de Prisma+: manda a assinatura de agora
-    assert.deepEqual(ids({ prismaActive: true, prismaPlan: "prisma", flags: ["BADGE_SHOW_PRISMA"] }), ["BADGE_SHOW_PRISMA_BASIC"]);
-});
-
-test("quem não assina Prisma, não pulsa e não compartilha tela não ganha insígnia nenhuma por isso", () => {
-    assert.deepEqual(ids({ prismaActive: false, prismaPlan: null, pulsing: false, pulseBadge: null, shareSeconds: 0, flags: [] }), []);
-    assert.deepEqual(ids({}), []);
-
-    // o plano sozinho, com a assinatura vencida, não mostra nada
-    assert.deepEqual(ids({ prismaActive: false, prismaPlan: "prisma_plus" }), []);
-
-    // menos de 1 hora de tela: nada
-    assert.deepEqual(ids({ shareSeconds: 3599 }), []);
-});
-
-test("as flags da conta chegam com o nome simples (ADMIN, VERIFIED...) e também como BADGE_SHOW_<nome>", () => {
-    assert.deepEqual(
-        ids({ flags: ["ADMIN", "VERIFIED", "PARTNER", "STAFF", "EARLY_SUPPORTER", "VERIFIED_BOT_DEVELOPER"] }),
-        [
-            "BADGE_SHOW_ADMIN", "BADGE_SHOW_VERIFIED", "BADGE_SHOW_PARTNER", "BADGE_SHOW_STAFF",
-            "BADGE_SHOW_EARLY_SUPPORTER", "BADGE_SHOW_VERIFIED_BOT_DEVELOPER"
-        ]
-    );
-
-    // as duas formas da mesma insígnia contam uma vez só, e os outros nomes dela valem
-    assert.deepEqual(ids({ flags: ["VERIFIED", "BADGE_SHOW_VERIFIED", "MODERATOR"] }), ["BADGE_SHOW_VERIFIED", "BADGE_SHOW_STAFF"]);
-
-    // presentes: o nível mais baixo não tem emoji, mas entra
-    assert.deepEqual(ids({ flags: ["GIFTING_PATRON"] }), ["GIFTING_PATRON"]);
-
-    // flag desconhecida é ignorada, sem quebrar
-    assert.deepEqual(ids({ flags: ["ALGO_NOVO", "BADGE_SHOW_OUTRA", null, 7] }), []);
-});
-
-test("o que a pessoa escondeu (hiddenBadges) e o que o admin escondeu (BADGE_HIDE_) não aparece", () => {
-    const user = {
-        flags: ["ADMIN", "VERIFIED", "EARLY_SUPPORTER", "BADGE_HIDE_VERIFIED"],
-        hiddenBadges: ["ADMIN"],
-        prismaActive: true, prismaPlan: "prisma_plus",
-        pulsing: true, pulseBadge: { id: "PULSE_3", months: 3 },
-        shareSeconds: 4 * 3600
-    };
-
-    assert.deepEqual(ids(user), ["BADGE_SHOW_PRISMA", "BADGE_SHOW_EARLY_SUPPORTER", "BADGE_SHOW_PULSE_3", "STREAM_1H"]);
-
-    // PRISMA, PULSE e STREAM_TIME escondem o grupo inteiro
-    assert.deepEqual(ids({ ...user, hiddenBadges: ["PRISMA", "PULSE", "STREAM_TIME"] }), ["BADGE_SHOW_ADMIN", "BADGE_SHOW_EARLY_SUPPORTER"]);
-});
-
-test("o selo de Pulse vem de pulseBadge quando as flags não trazem o nível; sem pulsar, não aparece", () => {
-    assert.deepEqual(ids({ pulsing: true, pulseBadge: { id: "PULSE_6", months: 6 } }), ["BADGE_SHOW_PULSE_6"]);
-    assert.deepEqual(ids({ pulsing: false, pulseBadge: { id: "PULSE_6", months: 6 } }), []);
-
-    // um nível que não tem selo cadastrado é ignorado
-    assert.deepEqual(ids({ pulsing: true, pulseBadge: { id: "PULSE_4", months: 4 } }), []);
-
-    // flags e pulseBadge juntos: só o mais alto
-    assert.deepEqual(ids({ pulsing: true, flags: ["BADGE_SHOW_PULSE_3"], pulseBadge: { id: "PULSE_12", months: 12 } }), ["BADGE_SHOW_PULSE_12"]);
-});
-
-test("tempo de tela: só o nível mais alto, com o nome e as marcas da página de insígnias da VSync", () => {
-    const tier = seconds => getUserBadges({ shareSeconds: seconds }).map(badge => badge.name);
-
-    assert.deepEqual(tier(3600), ["Tempo de tela: Newcomer"]);
-    assert.deepEqual(tier(5 * 3600), ["Tempo de tela: Fledgling"]);
-    assert.deepEqual(tier(74.9 * 3600), ["Tempo de tela: Breakout"]);
-    assert.deepEqual(tier(1000 * 3600), ["Tempo de tela: Sensation"]);
-    assert.deepEqual(tier(9999 * 3600), ["Tempo de tela: Phenomenon"]);
-});
-
-test("o cartão mostra o Prisma+ de quem assina (insígnia e data pelo perfil da conta) e o tempo de tela como emoji", async () => {
-    const id = "200000000000000020";
-
-    // como o membro vem da API: Prisma ativo, mas sem a data nem a flag de Prisma
-    MEMBERS.push(member(id, "mal", "rich", {
-        flags: ["EARLY_SUPPORTER", "VERIFIED_BOT_DEVELOPER"],
-        prismaActive: true, prismaPlan: "prisma_plus", prismaSince: null,
-        shareSeconds: 6 * 3600
-    }));
-
-    ACCOUNTS[id] = { id, prisma: { active: true, plan: "prisma_plus", since: Date.UTC(2026, 9, 11, 22, 5) } };
-
-    clearUserLookupCache();
-
-    const embed = embedOf(await run("hui mal"));
-
-    const fields = fieldsOf(embed);
-
-    // as insígnias: Prisma+ primeiro, depois as outras e o tempo de tela, todas como emoji, sem
-    // nome por extenso embaixo ("Tempo de tela: Fledgling" aparecia escrito e não como ícone)
-    assert.match(fields["🏅 Insígnias"], /^<:badge_prisma_plus:\d+> <:badge_early_supporter:\d+> <:badge_developer:\d+> <:auto_stream_5h:\d+>$/);
-    assert.doesNotMatch(fields["🏅 Insígnias"], /Tempo de tela/);
-
-    // a data vem do perfil da conta, que a rota do membro não trouxe
-    assert.match(fields["💎 Assinante Prisma+ desde"], /^11 de outubro de 2026/);
-    assert.ok(calls.some(call => call === "GET /users/" + id));
-
-    // o menu "Mais informações" também mostra a data e as insígnias com o nome
-    const comandos = await comandosOf();
-
-    const dates = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${id}`, ["dates"]), comandos);
-
-    assert.match(JSON.stringify(dates.data.embeds[0].fields), /11 de outubro de 2026/);
-
-    const badges = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${id}`, ["badges"]), comandos);
-
-    assert.match(badges.data.embeds[0].description, /Prisma\+/);
-    assert.match(badges.data.embeds[0].description, /Tempo de tela: Fledgling/);
-});
-
-test("se o perfil da conta falhar, o cartão sai igual, com a data como não informada", async () => {
-    const id = "200000000000000021";
-
-    MEMBERS.push(member(id, "semdata", "Sem Data", { prismaActive: true, prismaPlan: "prisma_plus", prismaSince: null }));
-
-    failAccount = true;
-
-    clearUserLookupCache();
-
-    const fields = fieldsOf(embedOf(await run("hui semdata")));
-
-    assert.match(fields["🏅 Insígnias"], /badge_prisma_plus/);
-    assert.equal(fields["💎 Assinante Prisma+ desde"], UNKNOWN);
-});
-
-test("sem a data do Prisma nem na conta, o log diz só a estrutura que a API devolveu (campos e tipos, nada pessoal)", async () => {
-    const id = "200000000000000023";
-
-    MEMBERS.push(member(id, "datafaltando", "Data Faltando", { prismaActive: true, prismaPlan: "prisma_plus", prismaSince: null }));
-
-    ACCOUNTS[id] = { id, username: "datafaltando", bio: "texto da bio pessoal", prisma: { active: true, source: "stripe", plan: "prisma_plus", since: null } };
-
-    clearUserLookupCache();
-
-    const warned = [];
-    const original = console.warn;
-
-    console.warn = (...args) => warned.push(args.join(" "));
-
-    try {
-        const fields = fieldsOf(embedOf(await run("hui datafaltando")));
-
-        assert.equal(fields["💎 Assinante Prisma+ desde"], UNKNOWN);
-
-    } finally {
-        console.warn = original;
-    }
-
-    const line = warned.find(text => text.includes("Prisma ativo sem data"));
-
-    assert.ok(line, "faltou o log");
-    assert.match(line, /prismaPlan=prisma_plus, prismaSince=null/);
-    assert.match(line, /prisma=active:boolean,source:string,plan:string,since:null/);
-
-    // nenhum valor pessoal no log
-    assert.doesNotMatch(line, /texto da bio pessoal|stripe|datafaltando/);
-});
-
-test("quem não assina Prisma não gasta chamada ao perfil da conta nem ganha campos de Prisma", async () => {
-    const id = "200000000000000022";
-
-    MEMBERS.push(member(id, "semprisma", "Sem Prisma"));
-
-    clearUserLookupCache();
-
-    const embed = embedOf(await run("hui semprisma"));
-
-    const fields = fieldsOf(embed);
-
-    assert.ok(!("💎 Assinante Prisma+ desde" in fields));
-    assert.ok(!("💎 Assinante Prisma desde" in fields));
-    assert.ok(!("✨ Pulser desde" in fields));
-    assert.equal(fields["🏅 Insígnias"], "Nenhuma");
-    assert.ok(!calls.some(call => call.startsWith("GET /users/")));
-
-    // quem tem a data no membro também não precisa da chamada
-    clearUserLookupCache();
-    calls.length = 0;
-
-    await run("hui soprisma");
-
-    assert.ok(!calls.some(call => call.startsWith("GET /users/")));
 });

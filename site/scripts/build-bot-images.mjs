@@ -1,6 +1,6 @@
 // Gera as imagens que o bot usa nas respostas (miniaturas e ícone) a partir do desenho em vetor da
 // pelúcia, em vários humores. Elas ficam em site/public/bot/ e vão ao ar junto com o site (GitHub
-// Pages): o bot as cita por endereço (config/theme.mjs, THEME_IMAGES), porque a VSync só aceita
+// Pages): o bot as cita por endereço (config/theme.mjs, THEME_IMAGES), porque o Discord só aceita
 // imagem de embed por https.
 //
 //   helena.png        ícone pequeno (autor e rodapé do embed)        128 x 128

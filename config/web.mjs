@@ -8,8 +8,8 @@
 // de ambiente; veja o README.
 
 export const WEB_CONFIG = Object.freeze({
-    // Endereço da API da VSync (troca do código, identidade e servidores).
-    vsyncApi: "https://api.vsync.lat",
+    // Endereço da API do Discord (troca do código, identidade e servidores).
+    discordApi: "https://discord.com/api/v10",
 
     // Verificação anti-robô da Cloudflare (Turnstile).
     turnstileVerifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -24,10 +24,10 @@ export const WEB_CONFIG = Object.freeze({
     // Corpo máximo aceito em uma requisição.
     maxBodyBytes: 8 * 1024,
 
-    // Tempo máximo esperando a VSync ou a Cloudflare, em milissegundos.
+    // Tempo máximo esperando o Discord ou a Cloudflare, em milissegundos.
     upstreamTimeoutMs: 10_000,
 
-    // Se a VSync responder 401 ao ler a conta logo depois de emitir o acesso, a
+    // Se o Discord responder 401 ao ler a conta logo depois de emitir o acesso, a
     // API espera estes tempos (ms) e tenta de novo antes de desistir do login.
     userinfoRetryMs: Object.freeze([800, 2500]),
 

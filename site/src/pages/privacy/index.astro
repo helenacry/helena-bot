@@ -86,10 +86,10 @@ const toc = [
       <section class="sum" aria-labelledby="resumo">
         <h2 id="resumo">Resumo em poucas linhas</h2>
         <ul>
-          <li>O bot guarda o que o jogo precisa: seu ID da VSync, o nome de exibição e o seu progresso (dinheiro, itens, nível, crime, casamento).</li>
+          <li>O bot guarda o que o jogo precisa: seu ID do Discord, o nome de exibição e o seu progresso (dinheiro, itens, nível, crime, casamento).</li>
           <li>Mensagens que não são comandos não são guardadas.</li>
           <li>As páginas do site não usam cookies nem estatísticas de visita. O painel guarda a sua sessão no navegador e um registro de segurança, com IP e navegador, por <strong>{claimLogDays}</strong> dias.</li>
-          <li>Não vendemos dados, não mostramos anúncios e não criamos perfis para publicidade. A Helena não é para menores de 12 anos.</li>
+          <li>Não vendemos dados, não mostramos anúncios e não criamos perfis para publicidade. A Helena não é para menores de 13 anos.</li>
           <li>Você pode pedir para ver, corrigir, levar ou apagar o que guardamos sobre você, e a resposta vem em até 15 dias.</li>
         </ul>
         <p class="note">Este resumo ajuda a ler. O que vale é o texto completo abaixo.</p>
@@ -98,24 +98,24 @@ const toc = [
       <section id="responsavel">
         <h2><span class="n">01</span> Quem é responsável</h2>
         <p>Os responsáveis pelos dados (os "controladores", na Lei Geral de Proteção de Dados, a LGPD, Lei nº 13.709/2018) são as duas pessoas que criaram e mantêm a Helena, <Creators short />. Elas decidem em conjunto por que e como os dados são usados, e respondem por isso perante você e a Autoridade Nacional de Proteção de Dados (ANPD). A organização do GitHub é só o lugar onde o código do projeto fica.</p>
-        <p>Essas mesmas pessoas fazem o papel de encarregado pelo tratamento de dados, ou seja, o canal entre você, a Helena e a ANPD. Para falar com elas, use o contato da seção 15 (<Creators /> ou o <a href={SITE.supportUrl} rel="noopener">servidor oficial</a>). Não há e-mail público.</p>
+        <p>Essas mesmas pessoas fazem o papel de encarregado pelo tratamento de dados, ou seja, o canal entre você, a Helena e a ANPD. Para falar com elas, use o contato da seção 15 (<Creators />{SITE.supportUrl && <> ou o <a href={SITE.supportUrl} rel="noopener">servidor oficial</a></>}). Não há e-mail público.</p>
       </section>
 
       <section id="escopo">
         <h2><span class="n">02</span> O que isto cobre</h2>
-        <p>Esta política vale para o bot, para este site e para o painel da conta. Ela não cobre o que a VSync, a Cloudflare, o GitHub e o Discloud fazem com os dados por conta própria: cada um tem a sua política (seção 6).</p>
+        <p>Esta política vale para o bot, para este site e para o painel da conta. Ela não cobre o que o Discord, a Cloudflare, o GitHub e o Discloud fazem com os dados por conta própria: cada um tem a sua política (seção 6).</p>
       </section>
 
       <section id="bot">
         <h2><span class="n">03</span> Dados que o bot recebe</h2>
-        <p>Quando você usa um comando, aperta um botão ou envia um formulário do bot, a VSync entrega à Helena:</p>
+        <p>Quando você usa um comando, aperta um botão ou envia um formulário do bot, o Discord entrega à Helena:</p>
         <ul>
           <li>o seu ID de usuário, o nome de exibição (ou o nome de usuário) e se você é um bot;</li>
           <li>o ID do servidor e do canal onde você usou o comando;</li>
           <li>o que você escolheu ou digitou no comando, no botão ou no formulário.</li>
         </ul>
-        <p>Nos servidores onde a Helena está, a VSync entrega a ela as mensagens do canal. A Helena só olha o começo do texto, para ver se é um comando com o prefixo <code>h</code>. Se não for, a mensagem é descartada na hora e <strong>não é guardada</strong>.</p>
-        <p>O <code>/userinfo</code> consulta o perfil público de quem você escolher na VSync. Guardamos só a contagem de quantas vezes o perfil de cada pessoa foi consultado, ligada ao ID dela.</p>
+        <p>Nos servidores onde a Helena está, o Discord entrega a ela as mensagens do canal. A Helena só olha o começo do texto, para ver se é um comando com o prefixo <code>h</code>. Se não for, a mensagem é descartada na hora e <strong>não é guardada</strong>.</p>
+        <p>O <code>/userinfo</code> consulta o perfil público de quem você escolher no Discord. Guardamos só a contagem de quantas vezes o perfil de cada pessoa foi consultado, ligada ao ID dela.</p>
         <p>Não precisamos de dados pessoais sensíveis (como saúde, religião, orientação sexual, origem racial ou política) e não pedimos nenhum. A bio e o nome são textos livres: não escreva ali dados sensíveis seus nem dados de outras pessoas.</p>
       </section>
 
@@ -149,20 +149,20 @@ const toc = [
       <section id="site">
         <h2><span class="n">05</span> Site e painel</h2>
         <p><strong>As páginas</strong> (início, wiki, termos e privacidade) não usam cookies nem rastreadores próprios, e não fazemos estatística de visitas. As fontes, as imagens e a busca da wiki vêm do próprio site: abrir uma página não chama nenhum serviço de terceiros além do GitHub, que hospeda o site.</p>
-        <p><strong>O painel</strong> existe para você coletar o daily e as gemas pelo navegador. Ao clicar em "Entrar com a VSync", você autoriza a Helena a ler o seu nome de usuário, o nome de exibição, a foto e a lista de servidores onde você está. Mostramos só os que a Helena também conhece.</p>
+        <p><strong>O painel</strong> existe para você coletar o daily e as gemas pelo navegador. Ao clicar em "Entrar com o Discord", você autoriza a Helena a ler o seu nome de usuário, o nome de exibição, a foto e a lista de servidores onde você está. Mostramos só os que a Helena também conhece.</p>
         <ul>
           <li><strong>Sessão.</strong> Guardamos o seu ID, o nome, a foto, a lista de servidores em comum, o IP e o navegador, por até <strong>{sessionHours} horas</strong>. O código da sessão não fica guardado: só um hash dele, que não serve para entrar na sua sessão.</li>
           <li><strong>Registro de segurança.</strong> Cada entrada, saída, coleta e recusa grava o seu ID, o tipo, o servidor, o resultado, o IP, o navegador e a data. Serve para impedir fraude e resolver reclamações.</li>
           <li><strong>Verificação anti-robô.</strong> Ao coletar, a Cloudflare (Turnstile) analisa o seu navegador e o seu IP. A Helena só recebe o resultado: passou ou não.</li>
         </ul>
-        <p>A Helena usa o acesso que a VSync dá no login só para ler essas informações e logo depois o devolve (revoga). Ela não lê as suas mensagens nem age em seu nome na VSync.</p>
+        <p>A Helena usa o acesso que o Discord dá no login só para ler essas informações e logo depois o devolve (revoga). Ela não lê as suas mensagens nem age em seu nome no Discord.</p>
       </section>
 
       <section id="terceiros">
         <h2><span class="n">06</span> Serviços de terceiros</h2>
-        <p>Estes serviços ajudam a Helena a funcionar. O Discloud, a Cloudflare e o GitHub tratam dados por nossa conta, como fornecedores (os "operadores", na LGPD). A VSync trata os dados da sua conta por conta própria, como plataforma, e é ela quem confere a idade das contas.</p>
+        <p>Estes serviços ajudam a Helena a funcionar. O Discloud, a Cloudflare e o GitHub tratam dados por nossa conta, como fornecedores (os "operadores", na LGPD). O Discord trata os dados da sua conta por conta própria, como plataforma, e é ela quem confere a idade das contas.</p>
         <ul>
-          <li><strong>VSync.</strong> É onde você usa o bot e faz o login do painel. Recebe e envia os dados da seção 3.</li>
+          <li><strong>Discord.</strong> É onde você usa o bot e faz o login do painel. Recebe e envia os dados da seção 3.</li>
           <li><strong>Cloudflare.</strong> Verifica que quem coleta no painel não é um robô (Turnstile).</li>
           <li><strong>GitHub.</strong> Hospeda estas páginas. Recebe o IP e o navegador de quem as abre, como em qualquer site.</li>
           <li><strong>Discloud.</strong> Hospeda o bot, o banco de dados e a API do painel (<code>helena.discloud.dev</code>). Por isso enxerga o que está no banco, descrito na seção 4, e o tráfego entre o seu navegador e a API, com o IP e o navegador de quem usa o painel. O Discloud faz cópias de segurança automáticas do app, com o banco, e as guarda por alguns dias; por isso um dado apagado ainda pode existir nessas cópias por pouco tempo. O tráfego passa pela Cloudflare, que o Discloud usa na frente dos apps.</li>
@@ -179,7 +179,7 @@ const toc = [
             </thead>
             <tbody>
               <tr><td>Fazer o jogo funcionar</td><td data-label="Dados">ID, nome, servidor, comandos e dados do jogo</td><td data-label="Base na LGPD">Execução do serviço que você pediu (art. 7º, V)</td></tr>
-              <tr><td>Entrar no painel e coletar</td><td data-label="Dados">Identidade e servidores da VSync</td><td data-label="Base na LGPD">Consentimento, quando você clica em entrar (art. 7º, I)</td></tr>
+              <tr><td>Entrar no painel e coletar</td><td data-label="Dados">Identidade e servidores do Discord</td><td data-label="Base na LGPD">Consentimento, quando você clica em entrar (art. 7º, I)</td></tr>
               <tr><td>Segurança e combate a fraude</td><td data-label="Dados">Registro do painel, IP, navegador, bloqueios, ajustes de administradores</td><td data-label="Base na LGPD">Legítimo interesse (art. 7º, IX)</td></tr>
               <tr><td>Suporte e reclamações</td><td data-label="Dados">O que você nos contar e o histórico ligado ao seu ID</td><td data-label="Base na LGPD">Legítimo interesse (art. 7º, IX)</td></tr>
               <tr><td>Cumprir a lei</td><td data-label="Dados">O que uma ordem legal exigir</td><td data-label="Base na LGPD">Obrigação legal (art. 7º, II)</td></tr>
@@ -226,15 +226,15 @@ const toc = [
           <li>a retirada do consentimento, o que no painel você faz saindo e deixando de usá-lo;</li>
           <li>a revisão, por uma pessoa, de uma decisão automatizada que afete você (seção 10).</li>
         </ul>
-        <p><strong>Como pedir.</strong> Fale com os criadores pelo contato da seção 15, de preferência com a mesma conta da VSync a que os dados pertencem. Para confirmar que o pedido é seu, podemos pedir uma prova simples, como usar um comando que indicarmos com essa conta. Hoje não existe um comando para apagar tudo sozinho: o pedido é tratado à mão, e <strong>a resposta vem em até 15 dias</strong>, pelo mesmo canal.</p>
-        <p><strong>O que acontece.</strong> Ao pedir a exclusão, apagamos ou anonimizamos os dados de jogo, as gemas, o nome guardado, as sessões e os registros do painel ligados ao seu ID. Podemos manter o mínimo para cumprir a lei ou nos defender, como o registro de um bloqueio por abuso. O seu nome pode seguir aparecendo em mensagens antigas que já estão na VSync, porque elas não ficam com a Helena.</p>
+        <p><strong>Como pedir.</strong> Fale com os criadores pelo contato da seção 15, de preferência com a mesma conta do Discord a que os dados pertencem. Para confirmar que o pedido é seu, podemos pedir uma prova simples, como usar um comando que indicarmos com essa conta. Hoje não existe um comando para apagar tudo sozinho: o pedido é tratado à mão, e <strong>a resposta vem em até 15 dias</strong>, pelo mesmo canal.</p>
+        <p><strong>O que acontece.</strong> Ao pedir a exclusão, apagamos ou anonimizamos os dados de jogo, as gemas, o nome guardado, as sessões e os registros do painel ligados ao seu ID. Podemos manter o mínimo para cumprir a lei ou nos defender, como o registro de um bloqueio por abuso. O seu nome pode seguir aparecendo em mensagens antigas que já estão no Discord, porque elas não ficam com a Helena.</p>
         <p>Se você achar que tratamos seus dados de forma errada, pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
       </section>
 
       <section id="seguranca">
         <h2><span class="n">10</span> Segurança</h2>
         <ul>
-          <li>O login do painel é feito pela VSync. A Helena não vê nem guarda senha.</li>
+          <li>O login do painel é feito pelo Discord. A Helena não vê nem guarda senha.</li>
           <li>O código da sessão é guardado só como hash.</li>
           <li>A API do painel limita as tentativas por IP e por pessoa e só libera o uso pelo navegador a partir do site oficial.</li>
           <li>Os segredos (como o token do bot e a chave secreta do Turnstile) ficam só no servidor, nunca no site.</li>
@@ -246,8 +246,8 @@ const toc = [
 
       <section id="menores">
         <h2><span class="n">11</span> Crianças e adolescentes</h2>
-        <p>A Helena <strong>não é para crianças</strong>. Quem tem menos de 12 anos não deve usá-la, e não queremos tratar dados de criança: se descobrirmos uma conta assim, bloqueamos o acesso e apagamos os dados dela. Adolescentes (de 12 a 17 anos) podem usar se a VSync permitir, e o que guia o tratamento dos dados deles é o melhor interesse do adolescente (LGPD, art. 14).</p>
-        <p>Para todos, e por isso também para adolescentes: coletamos só o que o jogo precisa, não vendemos dados, não mostramos anúncios, não criamos perfis para publicidade e não vendemos nada, nem caixas de recompensa. Não conferimos a idade de ninguém (quem faz isso é a VSync) e não perguntamos, para não coletar a mais.</p>
+        <p>A Helena <strong>não é para crianças</strong>. Quem tem menos de 13 anos não deve usá-la, e não queremos tratar dados de criança: se descobrirmos uma conta assim, bloqueamos o acesso e apagamos os dados dela. Adolescentes (de 12 a 17 anos) podem usar se o Discord permitir, e o que guia o tratamento dos dados deles é o melhor interesse do adolescente (LGPD, art. 14).</p>
+        <p>Para todos, e por isso também para adolescentes: coletamos só o que o jogo precisa, não vendemos dados, não mostramos anúncios, não criamos perfis para publicidade e não vendemos nada, nem caixas de recompensa. Não conferimos a idade de ninguém (quem faz isso é o Discord) e não perguntamos, para não coletar a mais.</p>
         <p>Se você responde por uma criança ou um adolescente e quer ver ou apagar os dados dele, ou se quer denunciar um conteúdo que prejudique uma criança ou um adolescente, use o contato da seção 15: esses pedidos têm prioridade. Esse cuidado também segue o Estatuto Digital da Criança e do Adolescente (Lei nº 15.211/2025) no que se aplica a um serviço como este.</p>
       </section>
 
@@ -267,7 +267,7 @@ const toc = [
               <tr><td>Páginas do site</td><td data-label="O que é">Nenhum cookie próprio.</td></tr>
               <tr><td>Tema: <code>helena-theme</code> (localStorage)</td><td data-label="O que é">A sua escolha entre o tema claro e o escuro, se você usar o botão do cabeçalho. Fica só no seu navegador.</td></tr>
               <tr><td>Painel: <code>helena.session</code> (localStorage)</td><td data-label="O que é">O código da sua sessão e a hora em que ela vence. Sair do painel apaga.</td></tr>
-              <tr><td>Painel: <code>helena.oauth</code> (sessionStorage)</td><td data-label="O que é">Dois códigos temporários do login com a VSync. Apagados assim que o login termina.</td></tr>
+              <tr><td>Painel: <code>helena.oauth</code> (sessionStorage)</td><td data-label="O que é">Dois códigos temporários do login com o Discord. Apagados assim que o login termina.</td></tr>
               <tr><td>Painel: desafio anti-robô</td><td data-label="O que é">A Cloudflare pode guardar cookies ou dados próprios do navegador para o Turnstile funcionar.</td></tr>
             </tbody>
           </table>
@@ -281,7 +281,7 @@ const toc = [
 
       <section id="contato">
         <h2><span class="n">15</span> Contato</h2>
-        <p>Para qualquer pedido ou dúvida sobre dados, use <Creators /> ou o <a href={SITE.supportUrl} rel="noopener">servidor oficial</a>.</p>
+        <p>Para qualquer pedido ou dúvida sobre dados, use <Creators />{SITE.supportUrl && <> ou o <a href={SITE.supportUrl} rel="noopener">servidor oficial</a></>}.</p>
         <p>Como o GitHub é público, <strong>não escreva dados pessoais nem documentos em issues, comentários ou mensagens abertas</strong>. Faça o primeiro contato sem detalhes e peça uma conversa privada com um dos criadores; os detalhes vão só por lá. Não há e-mail público.</p>
       </section>
 

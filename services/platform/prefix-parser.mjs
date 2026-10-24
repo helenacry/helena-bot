@@ -11,7 +11,7 @@ import {
 
 // Converte o texto digitado ("hdepositar 100",
 // "hajuda categoria:economia") no mesmo formato
-// que a VSync entrega nos comandos de barra:
+// que o Discord entrega nos comandos de barra:
 //
 //   data.options = { nome: valor, ... }
 //

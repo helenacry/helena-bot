@@ -23,7 +23,7 @@ test("services/ é dividido por assunto: nenhum arquivo solto, e cada pasta apar
 
     const folders = entries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort();
 
-    assert.deepEqual(folders, ["combat", "crime", "economy", "panels", "platform", "progress", "social", "web"]);
+    assert.deepEqual(folders, ["combat", "crime", "discord", "economy", "panels", "platform", "progress", "social", "web"]);
 
     for (const folder of folders) {
         assert.match(readme, new RegExp(`^  ${folder}/ `, "m"), `docs/structure.md não descreve services/${folder}/`);

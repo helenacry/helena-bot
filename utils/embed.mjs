@@ -2,7 +2,7 @@
 /**
  * Sistema central de embeds da Helena.
  *
- * Formato baseado na documentação oficial da VSync. O desenho (cores, recibo, humores da
+ * Formato baseado na documentação oficial do Discord. O desenho (cores, recibo, humores da
  * pelúcia, o que vai no topo e no rodapé) está em docs/bot-design.md e em config/theme.mjs.
  */
 

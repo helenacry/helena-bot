@@ -2,65 +2,45 @@
 import { fetchAccount } from "../platform/user-lookup.mjs";
 
 // ==========================================
-// DADOS QUE SÓ O PERFIL DA CONTA TEM
+// O PERFIL COMPLETO DA CONTA
 // ==========================================
 
-// O membro de um servidor traz prismaActive e prismaPlan, mas o início da assinatura (prismaSince)
-// pode vir vazio mesmo com a assinatura ativa. O perfil da conta (GET /users/:id) traz o mesmo dado em
-// prisma.since. Aqui completa o usuário com ele, só quando falta: quem não assina Prisma não gasta
-// chamada nenhuma, e se a API falhar o cartão segue com o que já tem (a data aparece como não
-// informada).
+// O membro que o Discord entrega junto do servidor não traz o banner. Ele só vem no perfil da
+// conta (GET /users/:id), que a Helena busca só quando a pessoa pede a tela do banner.
 
-// Milissegundos a partir de um número (já em ms) ou de uma data em texto; null se não for uma data.
-function toMillis(value) {
-    if (value === null || value === undefined || value === "") {
-        return null;
-    }
+const CDN = "https://cdn.discordapp.com";
 
-    const at = typeof value === "number" ? value : Date.parse(String(value));
-
-    return Number.isFinite(at) && at > 0 ? at : null;
+// O banner é animado quando o código começa com "a_", mas o .png serve nos dois casos (o
+// primeiro quadro) e abre em qualquer lugar.
+export function bannerUrl(id, hash, size = 1024) {
+    return hash ? `${CDN}/banners/${id}/${hash}.png?size=${size}` : null;
 }
 
-export async function completeUser(user) {
-    if (!user?.id || !user.prismaActive || toMillis(user.prismaSince) !== null) {
+// Devolve o usuário com bannerUrl (e a cor de destaque), ou o mesmo usuário se a busca falhar
+// (a tela do banner então diz que não tem). Nunca lança.
+export async function withBanner(user) {
+    if (!user?.id) {
+        return user;
+    }
+
+    if (user.bannerUrl !== undefined) {
         return user;
     }
 
     try {
         const account = await fetchAccount(user.id);
 
-        const prisma = account?.prisma;
-
-        const since = toMillis(prisma?.since);
-
-        if (since === null) {
-            // Só a estrutura (nomes e tipos dos campos), nunca valores de uma pessoa: para saber, pelo
-            // log, o que a API devolveu quando a data não veio.
-            const kind = value => value === null ? "null" : Array.isArray(value) ? "lista" : typeof value;
-
-            console.warn(
-                "[USERINFO] Prisma ativo sem data. Membro: prismaPlan=" + String(user.prismaPlan) +
-                ", prismaSince=" + kind(user.prismaSince) + ". Conta: " +
-                (account && typeof account === "object"
-                    ? Object.keys(account).join(",") + "; prisma=" +
-                      (prisma && typeof prisma === "object"
-                          ? Object.entries(prisma).map(([key, value]) => key + ":" + kind(value)).join(",")
-                          : kind(prisma))
-                    : "sem resposta")
-            );
-        }
-
-        const plan = ["prisma", "prisma_plus"].includes(prisma?.plan) ? prisma.plan : null;
-
         return {
             ...user,
-            ...(since !== null ? { prismaSince: since } : {}),
-            ...(!user.prismaPlan && plan ? { prismaPlan: plan } : {})
+            bannerUrl: bannerUrl(user.id, account?.banner),
+            accentColor: account?.accent_color ?? user.accentColor ?? null
         };
 
     } catch (error) {
-        console.warn("[USERINFO] Não consegui buscar o perfil da conta:", error.message);
+        console.warn(
+            "[USERINFO] Não consegui buscar o perfil da conta:",
+            error.message
+        );
 
         return user;
     }

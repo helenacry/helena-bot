@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 // Os comandos do duelo (/atacar, /aceitarduelo, /recusarduelo): quem é avisado
 // e o que o texto promete. As regras do duelo em si estão em combat.test.mjs.
 //
-// Na VSync, a menção só notifica quando está no texto da mensagem (body); dentro
+// No Discord, a menção só notifica quando está no texto da mensagem (body); dentro
 // do embed ela vira um chip sem aviso (services/platform/mentions.mjs).
 
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");

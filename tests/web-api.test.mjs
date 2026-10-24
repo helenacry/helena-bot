@@ -41,7 +41,7 @@ const BASE_CONFIG = Object.freeze({
 guildIds.add(G1);
 guildIds.add(G2);
 
-// VSync e Cloudflare simuladas. "calls" guarda tudo o que a API pediu.
+// Discord e Cloudflare simulados. "calls" guarda tudo o que a API pediu.
 function makeUpstream() {
     const calls = [];
 
@@ -61,26 +61,26 @@ function makeUpstream() {
                 params.get("redirect_uri") === REDIRECT;
 
             return good
-                ? reply(200, { access_token: "vsat_abc", refresh_token: "vsrt_abc", token_type: "Bearer", expires_in: 604800, scope: "identify guilds" })
+                ? reply(200, { access_token: "dcat_abc", refresh_token: "dcrt_abc", token_type: "Bearer", expires_in: 604800, scope: "identify guilds" })
                 : reply(401, { error: "invalid_grant" });
         }
 
-        if (u.endsWith("/oauth2/userinfo")) {
-            return init.headers?.Authorization === "Bearer vsat_abc"
-                ? reply(200, { id: USER, username: "jogadora", displayName: "Jogadora", avatarUrl: "https://cdn.exemplo.test/a.png" })
+        if (u.endsWith("/users/@me")) {
+            return init.headers?.Authorization === "Bearer dcat_abc"
+                ? reply(200, { id: USER, username: "jogadora", global_name: "Jogadora", avatar: "a1b2c3" })
                 : reply(401, { error: "invalid_token" });
         }
 
-        if (u.endsWith("/oauth2/guilds")) {
+        if (u.endsWith("/users/@me/guilds")) {
             return reply(200, [
-                { id: G1, name: "Servidor Um", iconUrl: "https://cdn.exemplo.test/1.png" },
+                { id: G1, name: "Servidor Um", icon: "icone1" },
                 { id: G3, name: "Sem Helena" },
                 { id: G2, name: "Servidor Dois" }
             ]);
         }
 
         if (u.endsWith("/oauth2/token/revoke")) {
-            // como a VSync de verdade: a revogação exige o cliente (client_id)
+            // como o Discord de verdade: a revogação exige o cliente (client_id)
             return params.get("client_id") === "app-id"
                 ? reply(200, {})
                 : reply(401, { error: "invalid_client" });
@@ -102,8 +102,8 @@ async function startApi(overrides = {}, { random = () => 0.5, intercept, sleep =
 
     const state = { now: T0 };
 
-    // intercept(url, init) pode devolver a resposta no lugar da VSync simulada
-    // (para fazer a VSync errar); sem devolver nada, vale a simulada.
+    // intercept(url, init) pode devolver a resposta no lugar do Discord simulado
+    // (para fazer o Discord errar); sem devolver nada, vale o simulado.
     const fetchImpl = intercept
         ? async (url, init) => (await intercept(String(url), init)) ?? upstream.fetch(url, init)
         : upstream.fetch;
@@ -282,7 +282,7 @@ test("rota que não existe, método errado, corpo grande e JSON ruim", async () 
 // LOGIN
 // ==========================================
 
-test("o login troca o código, devolve a sessão e a VSync fica sem acesso", async () => {
+test("o login troca o código, devolve a sessão e o Discord fica sem acesso", async () => {
     await withApi({}, async ctx => {
         const result = await login(ctx);
 
@@ -291,25 +291,25 @@ test("o login troca o código, devolve a sessão e a VSync fica sem acesso", asy
         assert.equal(result.json.expiresAt, T0 + WEB_CONFIG.sessionTtl);
 
         assert.deepEqual({ ...result.json.user }, {
-            id: USER, username: "jogadora", displayName: "Jogadora", avatarUrl: "https://cdn.exemplo.test/a.png"
+            id: USER, username: "jogadora", displayName: "Jogadora", avatarUrl: "https://cdn.discordapp.com/avatars/" + USER + "/a1b2c3.png?size=256"
         });
 
-        // o que foi enviado à VSync na troca
+        // o que foi enviado ao Discord na troca
         const exchange = ctx.upstream.calls.find(c => c.url.endsWith("/oauth2/token"));
 
         assert.equal(exchange.params.get("grant_type"), "authorization_code");
         assert.equal(exchange.params.get("code_verifier"), VERIFIER);
         assert.equal(exchange.params.get("client_secret"), null, "sem segredo configurado, só PKCE");
 
-        // o acesso da VSync é devolvido na hora (o da Helena vale por conta própria)
+        // o acesso do Discord é devolvido na hora (o da Helena vale por conta própria)
         const revoked = ctx.upstream.calls
             .filter(c => c.url.endsWith("/oauth2/token/revoke"))
             .map(c => c.params.get("token"))
             .sort();
 
-        assert.deepEqual(revoked, ["vsat_abc", "vsrt_abc"]);
+        assert.deepEqual(revoked, ["dcat_abc", "dcrt_abc"]);
 
-        // a revogação também identifica o cliente (a doc da VSync exige), sem segredo se não há
+        // a revogação também identifica o cliente (o Discord exige), sem segredo se não há
         for (const call of ctx.upstream.calls.filter(c => c.url.endsWith("/oauth2/token/revoke"))) {
             assert.equal(call.params.get("client_id"), "app-id");
             assert.equal(call.params.get("client_secret"), null);
@@ -371,7 +371,7 @@ async function warnings(fn) {
 
 const answer = (status, body) => ({ ok: status < 300, status, json: async () => body });
 
-test("a VSync recusa por erro nosso (invalid_client): a pessoa vê login_failed e o log diz o que conferir", async () => {
+test("o Discord recusa por erro nosso (invalid_client): a pessoa vê login_failed e o log diz o que conferir", async () => {
     const intercept = url => url.endsWith("/oauth2/token") ? answer(401, { error: "invalid_client", error_description: "texto qualquer" }) : undefined;
 
     await withApi({}, async ctx => {
@@ -407,12 +407,12 @@ test("código vencido ou já usado (invalid_grant) é normal: login_failed, sem 
     });
 });
 
-test("quando a VSync deixa o login falhar depois da troca, o log e a resposta dizem em que passo", async () => {
+test("quando o Discord deixa o login falhar depois da troca, o log e a resposta dizem em que passo", async () => {
     const cases = [
         ["troca sem acesso", url => url.endsWith("/oauth2/token") ? answer(200, {}) : undefined, "troca:sem_acesso", /não devolveu o acesso/],
-        ["conta recusada com nome", url => url.endsWith("/oauth2/userinfo") ? answer(401, { error: "invalid_token" }) : undefined, "conta:invalid_token", /invalid_token/],
-        ["conta recusada sem nome", url => url.endsWith("/oauth2/userinfo") ? answer(403, null) : undefined, "conta:403", /HTTP 403/],
-        ["conta sem id", url => url.endsWith("/oauth2/userinfo") ? answer(200, { username: "ninguem" }) : undefined, "conta:sem_id", /sem identificador/]
+        ["conta recusada com nome", url => url.endsWith("/users/@me") ? answer(401, { error: "invalid_token" }) : undefined, "conta:invalid_token", /invalid_token/],
+        ["conta recusada sem nome", url => url.endsWith("/users/@me") ? answer(403, null) : undefined, "conta:403", /HTTP 403/],
+        ["conta sem id", url => url.endsWith("/users/@me") ? answer(200, { username: "ninguem" }) : undefined, "conta:sem_id", /sem identificador/]
     ];
 
     for (const [name, intercept, detail, logged] of cases) {
@@ -432,14 +432,14 @@ test("quando a VSync deixa o login falhar depois da troca, o log e a resposta di
     }
 });
 
-// A VSync de verdade responde assim a um acesso que ela mesma considera inválido: o nome do erro vem em "code".
+// Uma resposta de acesso inválido que traz o nome do erro em "code" (o log mostra só nomes seguros).
 const INVALID_TOKEN = { error: "Token inválido, expirado ou revogado.", code: "invalid_token" };
 
-test("a VSync que diz 'token inválido' logo após emitir o acesso: a API espera e pergunta de novo, e o login sai", async () => {
+test("o Discord que diz 'token inválido' logo após emitir o acesso: a API espera e pergunta de novo, e o login sai", async () => {
     let asked = 0;
     const pauses = [];
 
-    const intercept = url => url.endsWith("/oauth2/userinfo") && ++asked === 1 ? answer(401, INVALID_TOKEN) : undefined;
+    const intercept = url => url.endsWith("/users/@me") && ++asked === 1 ? answer(401, INVALID_TOKEN) : undefined;
 
     await withApi({}, async ctx => {
         const lines = await warnings(async () => {
@@ -458,11 +458,11 @@ test("a VSync que diz 'token inválido' logo após emitir o acesso: a API espera
     }, { intercept, sleep: async ms => { pauses.push(ms); } });
 });
 
-test("se a VSync insistir no 401, são três perguntas e o log diz a causa, o acesso emitido (sem o token) e a marca do código", async () => {
+test("se o Discord insistir no 401, são três perguntas e o log diz a causa, o acesso emitido (sem o token) e a marca do código", async () => {
     let asked = 0;
     const pauses = [];
 
-    const intercept = url => url.endsWith("/oauth2/userinfo") ? (++asked, answer(401, INVALID_TOKEN)) : undefined;
+    const intercept = url => url.endsWith("/users/@me") ? (++asked, answer(401, INVALID_TOKEN)) : undefined;
 
     await withApi({}, async ctx => {
         const lines = await warnings(async () => {
@@ -480,15 +480,15 @@ test("se a VSync insistir no 401, são três perguntas e o log diz a causa, o ac
         assert.match(lines[0], /3 tentativas/);
         assert.match(lines[0], /tipo=Bearer validade=604800 escopo="identify guilds" renovação=true/);
         assert.match(lines[0], /marca [0-9a-f]{8}/);
-        assert.doesNotMatch(lines[0], /vsat_abc|vsrt_abc/, "o token nunca vai para o log");
+        assert.doesNotMatch(lines[0], /dcat_abc|dcrt_abc/, "o token nunca vai para o log");
         assert.equal(get("SELECT COUNT(*) c FROM web_sessions").c, 0);
     }, { intercept, sleep: async ms => { pauses.push(ms); } });
 });
 
-test("só o 401 ganha nova tentativa: outro erro da VSync ao ler a conta falha de uma vez", async () => {
+test("só o 401 ganha nova tentativa: outro erro do Discord ao ler a conta falha de uma vez", async () => {
     let asked = 0;
 
-    const intercept = url => url.endsWith("/oauth2/userinfo") ? (++asked, answer(403, null)) : undefined;
+    const intercept = url => url.endsWith("/users/@me") ? (++asked, answer(403, null)) : undefined;
 
     await withApi({}, async ctx => {
         const lines = await warnings(async () => {
@@ -521,7 +521,7 @@ test("a marca do código é a mesma para o mesmo código e não revela o código
     assert.equal(marks[0], marks[1]);
 });
 
-test("a VSync com problema (429 ou 5xx) na troca vira vsync_unavailable, não 'não deu para entrar'", async () => {
+test("o Discord com problema (429 ou 5xx) na troca vira discord_unavailable, não 'não deu para entrar'", async () => {
     for (const [status, body] of [[503, { error: "server_error" }], [500, null], [429, { error: "rate_limited" }]]) {
         const intercept = url => url.endsWith("/oauth2/token") ? answer(status, body) : undefined;
 
@@ -530,7 +530,7 @@ test("a VSync com problema (429 ou 5xx) na troca vira vsync_unavailable, não 'n
                 const result = await login(ctx);
 
                 assert.equal(result.status, 502, String(status));
-                assert.equal(result.json.error, "vsync_unavailable", String(status));
+                assert.equal(result.json.error, "discord_unavailable", String(status));
             });
 
             assert.equal(lines.length, 1);
@@ -540,7 +540,7 @@ test("a VSync com problema (429 ou 5xx) na troca vira vsync_unavailable, não 'n
     }
 });
 
-test("se a VSync recusar a revogação, o login funciona e o aviso aparece no log", async () => {
+test("se o Discord recusar a revogação, o login funciona e o aviso aparece no log", async () => {
     const intercept = url => url.endsWith("/oauth2/token/revoke") ? answer(401, { error: "invalid_client" }) : undefined;
 
     await withApi({}, async ctx => {
@@ -570,7 +570,7 @@ test("login recusado: endereço de retorno fora da lista, verifier ruim, código
 
         assert.equal(strange.status, 400);
         assert.equal(strange.json.error, "invalid_redirect");
-        assert.equal(ctx.upstream.calls.length, 0, "nem chegou a falar com a VSync");
+        assert.equal(ctx.upstream.calls.length, 0, "nem chegou a falar com o Discord");
 
         const noSlash = await call(ctx, "POST", "/api/auth/login", {
             body: { code: "good-code", codeVerifier: VERIFIER, redirectUri: REDIRECT.slice(0, -1) }
@@ -603,7 +603,7 @@ test("login recusado: endereço de retorno fora da lista, verifier ruim, código
     });
 });
 
-test("VSync fora do ar: erro claro, sem sessão", async () => {
+test("Discord fora do ar: erro claro, sem sessão", async () => {
     reset();
 
     const api = createWebApi(BASE_CONFIG, {
@@ -624,7 +624,7 @@ test("VSync fora do ar: erro claro, sem sessão", async () => {
         const result = await login(ctx);
 
         assert.equal(result.status, 502);
-        assert.equal(result.json.error, "vsync_unavailable");
+        assert.equal(result.json.error, "discord_unavailable");
         assert.equal(get("SELECT COUNT(*) c FROM web_sessions").c, 0);
 
     } finally {
@@ -982,7 +982,7 @@ test("o painel mostra os servidores em comum, o daily de cada um e as gemas, sem
         const first = me.json.guilds[0];
 
         assert.equal(first.name, "Servidor Um");
-        assert.equal(first.icon, "https://cdn.exemplo.test/1.png");
+        assert.equal(first.icon, "https://cdn.discordapp.com/icons/" + G1 + "/icone1.png?size=128");
         assert.equal(first.player, null, "quem nunca jogou ali aparece sem registro");
         assert.equal(first.prison, null);
         assert.equal(first.daily.available, true);

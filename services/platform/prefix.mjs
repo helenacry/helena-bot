@@ -219,7 +219,7 @@ export async function processarPrefixo({
     }
 
     // Adaptador: entrega o mesmo formato do comando de
-    // barra da VSync. data.options é um objeto indexado
+    // barra do Discord. data.options é um objeto indexado
     // pelo nome da opção, e opções do tipo user chegam
     // como ID (string).
     const interaction = {
@@ -228,6 +228,10 @@ export async function processarPrefixo({
         guildId: message.guildId,
         channelId: message.channelId,
         user,
+
+        // o membro (apelido, cargos, entrada no servidor), como o comando de barra entrega
+        member: message.member ?? null,
+
         data: {
             name: commandName,
             options
@@ -245,7 +249,7 @@ export async function processarPrefixo({
 
         const data = result.data;
 
-        // Com HELENA_V2 ligado o embed sai como layout V2; se a VSync recusar, sai o
+        // Com HELENA_V2 ligado o embed sai como layout V2; se o Discord recusar, sai o
         // clássico. A resposta com atualização ao vivo (live) fica sempre no clássico,
         // porque as edições seguintes são feitas com embed.
         const sent = await deliverMessage({
@@ -253,7 +257,7 @@ export async function processarPrefixo({
                 body: data.body ?? "",
                 ...(data.embeds ? { embeds: data.embeds } : {}),
                 ...(data.components ? { components: data.components } : {}),
-                ...(data.attachments ? { attachments: data.attachments } : {}),
+                ...(data.files ? { files: data.files } : {}),
                 ...(data.layout ? { layout: data.layout } : {})
             },
             userId: actorId,

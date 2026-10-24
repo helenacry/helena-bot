@@ -26,7 +26,7 @@ export function stopStatusRotation() {
 // ==========================================
 
 // updatePresence(message):
-// Envia a atividade para a VSync.
+// Envia a atividade para o Discord.
 //
 // getMessages():
 // Retorna a lista atualizada de atividades.

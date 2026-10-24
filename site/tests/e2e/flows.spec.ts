@@ -3,6 +3,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { SITE } from "../../src/config.ts";
+
+// O ID do aplicativo que o site usa no login: o de config.ts ou, nos testes, o da variável
+// PUBLIC_DISCORD_CLIENT_ID (o mesmo valor com que o site foi construído).
+const CLIENT_ID = String(process.env.PUBLIC_DISCORD_CLIENT_ID || SITE.clientId);
+
 /** Ilhas com client:visible só ganham vida quando chegam à tela: espera a hidratação terminar. */
 const hydrated = (selector: string) => `astro-island:has(${selector}):not([ssr])`;
 
@@ -237,18 +243,21 @@ test.describe("painel da conta", () => {
     ]
   };
 
-  test("sem sessão, mostra a entrada e leva à VSync com PKCE", async ({ page }) => {
-    await page.route("https://vsync.lat/**", route => route.fulfill({ status: 200, contentType: "text/html", body: "<title>VSync</title>" }));
+  test("sem sessão, mostra a entrada e leva ao Discord com PKCE", async ({ page }) => {
+    // sem o ID do aplicativo não há login para testar (o painel avisa que não está configurado)
+    test.skip(!CLIENT_ID, "Preencha o ID do aplicativo em site/src/config.ts (ou use PUBLIC_DISCORD_CLIENT_ID).");
+
+    await page.route("https://discord.com/**", route => route.fulfill({ status: 200, contentType: "text/html", body: "<title>Discord</title>" }));
     await page.goto("account/", { waitUntil: "networkidle" });
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Pegue o seu daily e as suas gemas");
 
-    await page.getByRole("button", { name: "Entrar com a VSync" }).click();
-    await page.waitForURL(/vsync\.lat\/oauth2\/authorize/);
+    await page.getByRole("button", { name: "Entrar com o Discord" }).click();
+    await page.waitForURL(/discord\.com\/oauth2\/authorize/);
 
     const url = new URL(page.url());
     expect(Object.fromEntries(url.searchParams)).toMatchObject({
-      client_id: "235205613573263360",
+      client_id: CLIENT_ID,
       response_type: "code",
       scope: "identify guilds",
       code_challenge_method: "S256"
@@ -296,7 +305,7 @@ test.describe("painel da conta", () => {
     await page.goto("account/", { waitUntil: "networkidle" });
 
     await expect(page.getByRole("alert")).toHaveText("Sua sessão acabou. Entre de novo.");
-    await expect(page.getByRole("button", { name: "Entrar com a VSync" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Entrar com o Discord" })).toBeVisible();
   });
 
   test("API fora do ar mostra o aviso com a saída", async ({ page }) => {

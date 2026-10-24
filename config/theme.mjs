@@ -23,7 +23,7 @@ export const PALETTE = Object.freeze({
 });
 
 // As imagens saem de site/public/bot (npm --prefix site run bot-images) e vão ao ar com o
-// site, porque a VSync só mostra imagem de embed por endereço https. Publique o site
+// site, porque o Discord só mostra imagem de embed por endereço https. Publique o site
 // antes de subir um bot que cite uma imagem nova.
 export const IMAGE_BASE = `${SITE_URL}bot/`;
 

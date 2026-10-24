@@ -1,13 +1,9 @@
 
 import { readdir } from "node:fs/promises";
 
-const API = "https://api.vsync.lat";
-const TOKEN = process.env.VSYNC_BOT_TOKEN;
+import { discordApi } from "./services/discord/api.mjs";
 
-const headers = {
-    Authorization: `Bot ${TOKEN}`,
-    "Content-Type": "application/json"
-};
+import { toDiscordCommand } from "./services/discord/format.mjs";
 
 const COMMANDS_DIR = new URL("./commands/", import.meta.url);
 
@@ -45,16 +41,16 @@ function caminhoRelativo(url) {
 
 // Aliases: um comando pode declarar aliases: ["bal", "carteira"]
 // para ser chamado também por hbal e hcarteira, e por /bal e
-// /carteira. Cada alias é registrado na VSync como um comando
+// /carteira. Cada alias é registrado no Discord como um comando
 // de barra próprio, com a mesma descrição e as mesmas opções.
 
 const aliasesPorComandos = new WeakMap();
 
-// Mesma regra de nome dos comandos de barra da VSync:
+// Regra de nome dos comandos de barra do Discord:
 // 1 a 32 caracteres, minúsculas, números, "-" ou "_".
 const ALIAS_VALIDO = /^[a-z0-9_-]{1,32}$/;
 
-// Limite de comandos globais por aplicativo na VSync.
+// Limite de comandos de barra globais por aplicativo no Discord.
 const LIMITE_COMANDOS = 100;
 
 function indexarAliases(comandos, origem) {
@@ -172,20 +168,15 @@ export async function carregarComandos() {
 export async function registrarComandos(appId, comandos) {
     const aliases = aliasesPorComandos.get(comandos) ?? new Map();
 
-    const montar = (name, { description, options }) => ({
-        name,
-        description,
-        ...(options ? { options } : {})
-    });
-
     // Cada comando seguido dos seus aliases, que repetem a
-    // descrição e as opções do comando original.
+    // descrição e as opções do comando original. toDiscordCommand confere as regras do
+    // Discord (nome, descrição, opções) e diz exatamente o que está errado.
     const payload = [
         ...[...comandos.values()].map(
-            comando => montar(comando.name, comando)
+            comando => toDiscordCommand(comando.name, comando)
         ),
         ...[...aliases].map(
-            ([alias, comando]) => montar(alias, comando)
+            ([alias, comando]) => toDiscordCommand(alias, comando)
         )
     ];
 
@@ -193,23 +184,15 @@ export async function registrarComandos(appId, comandos) {
         throw new Error(
             `São ${payload.length} comandos de barra (${comandos.size} ` +
             `comandos + ${aliases.size} aliases), acima do limite de ` +
-            `${LIMITE_COMANDOS} da VSync. Remova aliases.`
+            `${LIMITE_COMANDOS} do Discord. Remova aliases.`
         );
     }
 
-    const resposta = await fetch(
-        `${API}/applications/${appId}/commands`,
-        {
-            method: "PUT",
-            headers,
-            body: JSON.stringify(payload)
-        }
-    );
+    try {
+        await discordApi().registerCommands(appId, payload);
 
-    if (!resposta.ok) {
-        throw new Error(
-            `Erro ao registrar comandos: ${resposta.status} - ${await resposta.text()}`
-        );
+    } catch (error) {
+        throw new Error(`Erro ao registrar comandos: ${error.message}`);
     }
 
     console.log(

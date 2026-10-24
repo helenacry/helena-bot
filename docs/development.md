@@ -7,7 +7,7 @@ Como rodar, testar e estender o bot.
 ## Requisitos
 
 - **Node.js 24** (testado nessa versão). O banco usa o módulo `node:sqlite`, que já vem com o Node.
-- Um aplicativo de bot criado no portal do desenvolvedor da VSync (Configurações → Desenvolvedores), com o token do bot.
+- Um aplicativo de bot criado no [portal do desenvolvedor do Discord](https://discord.com/developers/applications), com o token do bot e a **Message Content Intent** ligada. O passo a passo está em [Configurar no Discord](discord-setup.md).
 
 ## Instalação
 
@@ -29,25 +29,25 @@ npm start
 | Branch | `main` | `testes` |
 | Arquivo de variáveis | `.env` | `.env.test` |
 | Comando | `npm start` | `npm run start:test` |
-| Bot | o oficial | **outro** aplicativo de bot na VSync |
+| Bot | o oficial | **outro** aplicativo de bot no Discord |
 | Banco | `data/helena.db` | `data/helena-test.db` |
 
 Fluxo: desenvolva e teste na `testes`; quando estiver validado, traga para a `main`.
 
 Para montar o ambiente de testes:
 
-1. Crie um segundo aplicativo de bot no portal da VSync e adicione-o a um servidor seu de teste.
+1. Crie um segundo aplicativo de bot no portal do Discord e adicione-o a um servidor seu de teste.
 2. Copie `.env.test.example` para `.env.test` e preencha com o token do bot de testes e o seu ID.
 3. **Deixe vazios** `HELENA_SUPPORT_GUILD_ID`, `HELENA_USERS_CHANNEL_ID` e `HELENA_CLUSTERS_CHANNEL_ID`. Se preenchidos, o bot de testes sobrescreve os contadores do servidor de suporte da produção.
 4. `npm run start:test`.
 
-> A VSync limita as conexões de gateway por bot (2). Ao reiniciar, encerre o processo anterior; se instâncias antigas ficarem rodando, a nova é recusada com `Muitas sessões`.
+> O Discord limita as conexões de gateway por bot (2). Ao reiniciar, encerre o processo anterior; se instâncias antigas ficarem rodando, a nova é recusada com `Muitas sessões`.
 
 ## Variáveis de ambiente
 
 | Variável | Descrição |
 |---|---|
-| `VSYNC_BOT_TOKEN` | Token do bot. |
+| `DISCORD_BOT_TOKEN` | Token do bot. |
 | `HELENA_OWNER_ID` | IDs dos proprietários (comandos `/dev*` e selo DEV). Aceita vários, separados por vírgula. |
 | `HELENA_ADMIN_IDS` | IDs autorizados nos comandos `/admin*`. |
 | `HELENA_MARKET` | `off` (ou `0`, `false`, `no`) desliga a bolsa e deixa todos os preços na tabela. Padrão: ligada. |
@@ -55,8 +55,7 @@ Para montar o ambiente de testes:
 | `HELENA_DATABASE_PATH` | Caminho do banco SQLite. Padrão: `./data/helena.db`. |
 | `HELENA_SUPPORT_GUILD_ID`, `HELENA_USERS_CHANNEL_ID`, `HELENA_CLUSTERS_CHANNEL_ID` | Contadores do servidor de suporte. Se algum estiver vazio, ficam desligados. |
 | `HELENA_CLUSTER_TOTAL`, `HELENA_STATS_INTERVAL` | Total de clusters e intervalo de atualização (ms) dos contadores. |
-| `HELENA_BADGE_GUILD_ID` | Servidor(es) onde estão os emojis `auto_*` das insígnias do `/userinfo`, separados por vírgula. Vazio: vale o `HELENA_SUPPORT_GUILD_ID`; sem ele, a Helena procura nos primeiros servidores em que está. Veja [Insígnias do /userinfo](game-systems.md#insígnias-do-userinfo). |
-| `HELENA_V2` | Layout V2 da VSync no lugar dos embeds: `off` (padrão), `owner` (só nas respostas do dono, para testar em produção) ou `on` (todos). Veja [Componentes V2](game-systems.md#componentes-v2). |
+| `HELENA_V2` | Layout V2 do Discord no lugar dos embeds: `off` (padrão), `owner` (só nas respostas do dono, para testar em produção) ou `on` (todos). Veja [Componentes V2](game-systems.md#componentes-v2). |
 | `HELENA_LIVE_INTERVAL_MS` | Intervalo das contagens ao vivo, como o tempo da prisão. Padrão 10000, mínimo 2000. |
 
 ## Criando um comando
@@ -86,15 +85,15 @@ export default {
 
 Comando novo entra sozinho na central de ajuda (`/ajuda`), na lista do site e na wiki, sem lista escrita à mão. A categoria vem da **pasta** (`commands/economy` é Economia, `commands/social` é Social...), e as exceções, como o combate que mora em `crime/`, estão em `config/command-categories.mjs`. Comandos de `admin/`, `dev/` e o de teste não aparecem para os jogadores. A wiki exige um texto sobre o comando novo (veja [Site e wiki](site.md#wiki)).
 
-Escreva uma `description` clara (até 100 caracteres, é o que a VSync mostra na lista de comandos) e uma `description` em cada opção: a ajuda usa os dois para montar o "como usar".
+Escreva uma `description` clara (até 100 caracteres, é o que o Discord mostra na lista de comandos) e uma `description` em cada opção: a ajuda usa os dois para montar o "como usar".
 
 ### Aliases
 
-`aliases: ["ex"]` faz o comando responder também a `hex` e `/ex`. Cada alias é registrado na VSync como um comando próprio, com a mesma descrição e opções.
+`aliases: ["ex"]` faz o comando responder também a `hex` e `/ex`. Cada alias é registrado no Discord como um comando próprio, com a mesma descrição e opções.
 
 - Nome de 1 a 32 caracteres: minúsculas sem acento, números, `-` ou `_`.
 - Não pode repetir o nome de um comando nem de outro alias. O bot recusa iniciar se repetir.
-- A VSync aceita no máximo **100 comandos globais** (comandos mais aliases). O bot recusa registrar se passar disso.
+- O Discord aceita no máximo **100 comandos globais** (comandos mais aliases). O bot recusa registrar se passar disso.
 
 ## Testes
 
@@ -104,7 +103,7 @@ npm run site:check     # tipos do site
 npm run site:build && npm run site:verify && npm run site:test   # o site (depois de npm run site:install)
 ```
 
-`npm test` usa o executor nativo do Node (`node --test`). Cada arquivo de `tests/` roda num processo próprio, com um banco SQLite temporário, sem tocar em `data/` e sem chamar a VSync (a API é simulada). Rode a suíte **sozinha**, sem o navegador dos testes do site em paralelo: `prison-escape.test.mjs` fica instável por CPU. Os testes de navegador (`site/tests/e2e`) abrem o Edge instalado (no CI, o Chromium) e conferem acessibilidade com **axe** (WCAG 2.2 AA), rolagem lateral e elementos que vazam da margem, nenhum pedido a terceiros e erros no console, em 3 larguras e 2 temas, além dos fluxos (conversa de exemplo, laboratório do crime, busca de comandos e da wiki, tema, menu do celular e o painel da conta com a API simulada).
+`npm test` usa o executor nativo do Node (`node --test`). Cada arquivo de `tests/` roda num processo próprio, com um banco SQLite temporário, sem tocar em `data/` e sem chamar o Discord (a API é simulada). Rode a suíte **sozinha**, sem o navegador dos testes do site em paralelo: `prison-escape.test.mjs` fica instável por CPU. Os testes de navegador (`site/tests/e2e`) abrem o Edge instalado (no CI, o Chromium) e conferem acessibilidade com **axe** (WCAG 2.2 AA), rolagem lateral e elementos que vazam da margem, nenhum pedido a terceiros e erros no console, em 3 larguras e 2 temas, além dos fluxos (conversa de exemplo, laboratório do crime, busca de comandos e da wiki, tema, menu do celular e o painel da conta com a API simulada).
 
 ## Banco de dados
 

@@ -327,7 +327,7 @@ test("a barra usa o mesmo intervalo, depois de achar o comando e antes da prisã
 
     const resolved = find("resolverComando(comandos, commandName)");
     const gate = find("commandGate.check(actorId)");
-    const prison = find("prisonBlock(\n                comando.name");
+    const prison = find("prisonBlock(\n        comando.name");
     const profile = find("comando.name === \"perfil\"");
 
     assert.ok(resolved < gate, "comando desconhecido não gasta o intervalo");

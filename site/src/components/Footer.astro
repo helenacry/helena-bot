@@ -10,7 +10,7 @@ import { url } from "../lib/url";
         <Plush size={44} />
         <span class="word">Helena</span>
       </a>
-      <p>Bot de economia e RPG para a VSync. Um projeto independente, com os valores tirados do próprio código do bot.</p>
+      <p>Bot de economia e RPG para o Discord. Um projeto independente, com os valores tirados do próprio código do bot.</p>
       <p class="credits">
         Criada por
         {SITE.creators.map((creator, index) => (
@@ -34,7 +34,7 @@ import { url } from "../lib/url";
       <ul role="list">
         <li><a href={url("/wiki/")}>Wiki</a></li>
         <li><a href={`${url("/")}#duvidas`}>Perguntas frequentes</a></li>
-        <li><a href={SITE.supportUrl} rel="noopener">Servidor oficial</a></li>
+        {SITE.supportUrl && <li><a href={SITE.supportUrl} rel="noopener">Servidor oficial</a></li>}
         {SITE.codeUrl && <li><a href={SITE.codeUrl} rel="noopener">Código no GitHub</a></li>}
       </ul>
     </nav>
@@ -50,7 +50,7 @@ import { url } from "../lib/url";
   </div>
 
   <div class="wrap legal">
-    <p>A Helena não é um produto da VSync. Os valores de jogo vêm do bot e mudam com as atualizações.</p>
+    <p>A Helena não é um produto do Discord. Os valores de jogo vêm do bot e mudam com as atualizações.</p>
     <p class="tabular">© 2026 Helena</p>
   </div>
 </footer>

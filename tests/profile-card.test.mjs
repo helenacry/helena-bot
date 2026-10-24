@@ -607,14 +607,14 @@ test("a imagem de exemplo do site usa o desenho novo (título com emoji e selo D
 });
 
 // ==========================================
-// TEXTO COM EMOJI, SÍMBOLOS E TOKENS DA VSYNC
+// TEXTO COM EMOJI, SÍMBOLOS E TOKENS DO DISCORD
 // ==========================================
 
 const { canDraw, readCoverage } = await import("../services/social/card-glyphs.mjs");
 
 const NASTY_BIOS = [
     "oi 😀 tudo bem?", "💜💜💜", "👨‍👩‍👧‍👦 família 🏳️‍🌈", "🇧🇷 Brasil 🇵🇹", "1️⃣ primeiro", "❤️ amor ❤️‍🔥", "👍🏽 joia",
-    "Olá <:festa:3f2a9c1e-5b7d-4c0e-8a11-9d6e2b7a4f10> mundo <a:dance:1111-2222>", "fala <@bc86cc02-1111-2222> e <#abcd> <@&cargo-1>",
+    "Olá <:festa:3f2a9c1e-5b7d-4c0e-8a11-9d6e2b7a4f10> mundo <a:dance:2234567890123456>", "fala <@bc86cc02-1111-2222> e <#4234567890123456> <@&5234567890123456>",
     "𝓑𝓲𝓸 𝓲𝓷𝓽𝓮𝓻𝓮𝓼𝓼𝓪𝓷𝓽𝓮 𝕗𝕚𝕟𝕒𝕝 ＡＢＣ", "꒰ঌ sou calma ໒꒱ ✧･ﾟ: *✧･ﾟ:* ★彡 ♡ ✿ ❀", "日本語 한국어 العربية русский", "texto\u200bcom\u200dinvisíveis\u202etrocado",
     "😀".repeat(80), "linha 1 😀\nlinha 2 🎉\r\nlinha 3", "</text><script>alert(1)</script> & \" ' < >", "abc\ud83dxyz\ude00",
     "™ © ® R$ 10,00 50% #1 — “aspas” …"
@@ -643,10 +643,10 @@ test("o Poppins do projeto: o que ele desenha e o que não (a lista vem do arqui
     assert.ok(ranges.every(([start, end]) => start <= end));
 });
 
-test("plain: tokens da VSync somem, fonte estilizada vira letra comum e símbolo sem desenho sai", () => {
+test("plain: tokens do Discord somem, fonte estilizada vira letra comum e símbolo sem desenho sai", () => {
     // emoji personalizado e menções (o cartão não mostra o ID de ninguém)
-    assert.equal(plain("Olá <:festa:3f2a9c1e-5b7d> mundo <a:dance:1111-2222>"), "Olá mundo");
-    assert.equal(plain("fala <@bc86cc02-1111> e <#abcd> <@&cargo-1>"), "fala e");
+    assert.equal(plain("Olá <:festa:1234567890123456> mundo <a:dance:2234567890123456>"), "Olá mundo");
+    assert.equal(plain("fala <@3234567890123456> e <#4234567890123456> <@&5234567890123456>"), "fala e");
 
     // letras estilizadas, largura total e acento solto voltam a ser texto comum
     assert.equal(plain("𝓑𝓲𝓸 𝗕𝗼𝗹𝗱 ＡＢＣ ①㎏"), "Bio Bold ABC 1kg");
@@ -683,7 +683,7 @@ test("o cartão sai (e só com caracteres que o Poppins desenha) para qualquer b
     }
 });
 
-test("bio só de símbolos, de outro alfabeto ou de token da VSync mostra a bio padrão", async () => {
+test("bio só de símbolos, de outro alfabeto ou de token do Discord mostra a bio padrão", async () => {
     for (const bio of ["꒰ ✿ ꒱", "<:festa:1-2>", "<@1234>", "日本語"]) {
         assert.ok(textsOf(await profileSvg({ ...SAMPLE, bio })).includes("Nenhuma bio definida."), bio);
     }

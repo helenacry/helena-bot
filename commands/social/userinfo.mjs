@@ -13,14 +13,6 @@ import {
 } from "../../services/social/userinfo-view.mjs";
 
 import {
-    loadBadgeEmojis
-} from "../../services/social/badge-emojis.mjs";
-
-import {
-    completeUser
-} from "../../services/social/userinfo-account.mjs";
-
-import {
     userinfoComponents
 } from "../../services/social/userinfo-components.mjs";
 
@@ -46,41 +38,22 @@ function errorResponse(message) {
 
 // De quem são as informações? Sem argumento, de quem usou o comando.
 // Com texto, procura a pessoa no servidor só pelo @usuário (que é
-// único) ou por menção/ID: apelidos e nomes de exibição das
-// plataformas não entram na busca, como no /perfil.
+// único) ou por menção/ID: apelidos e nomes de exibição não entram na
+// busca, como no /perfil.
 //
-// As informações de quem usou o comando. O comando de barra traz o membro na
-// própria interação (joinedAt, apelido...), mas a mensagem do prefixo traz só o
-// autor: sem data de entrada, e sem insígnias nem datas da conta. Nesse caso busca
-// o membro na API (GET /guilds/:g/members/:id), a mesma rota das outras pessoas.
-// Se a API falhar, segue com o que já tem (a data aparece como não informada).
+// As informações de quem usou o comando. Tanto o comando de barra quanto a mensagem do
+// prefixo h trazem o membro (entrada no servidor, cargos, impulso, castigo) junto da conta.
+// Só se o membro faltar (conversa privada ou uma resposta incompleta) busca na API.
 async function selfProfile(interaction) {
     const base = interaction.user;
     const member = interaction.member;
 
-    // Só a data de entrada vem da interação: o resto do membro tem campos de
-    // SERVIDOR com o mesmo nome de campos da CONTA (como pulsingSince), e misturar
-    // tudo trocaria um pelo outro.
-    const joined =
-        member?.joinedAt !== undefined && member?.joinedAt !== null
-            ? { joinedAt: member.joinedAt }
-            : {};
-
-    const known = { ...base, ...joined };
-
-    // Quem pulsa mas veio sem nada do Pulse na interação precisa do membro da API
-    // para mostrar desde quando (e os selos).
-    const lacksPulse =
-        Boolean(base?.pulsing) &&
-        !base?.pulsingSince &&
-        !base?.nextPulseBadge;
-
-    if (joined.joinedAt !== undefined && !lacksPulse) {
-        return known;
+    if (member?.joinedAt !== undefined && member?.joinedAt !== null) {
+        return { ...base, ...member };
     }
 
     if (!interaction.guildId || !base?.id) {
-        return known;
+        return { ...base };
     }
 
     try {
@@ -90,7 +63,7 @@ async function selfProfile(interaction) {
         );
 
         if (found.status === "found") {
-            return { ...base, ...found.user, ...found.user.raw, ...joined };
+            return { ...base, ...found.user };
         }
 
     } catch (error) {
@@ -100,7 +73,7 @@ async function selfProfile(interaction) {
         );
     }
 
-    return known;
+    return { ...base };
 }
 
 // Devolve { user, self } ou { response } com o aviso a mostrar.
@@ -145,10 +118,10 @@ async function findTarget(interaction) {
         return { user: await selfProfile(interaction), self: true };
     }
 
-    // A busca já trouxe o membro completo (insígnias, Pulse,
-    // Prisma+, datas), sem precisar de outra chamada à API.
+    // A busca já trouxe o membro completo (insígnias, datas, cargos),
+    // sem precisar de outra chamada à API.
     return {
-        user: { ...found.user, ...found.user.raw },
+        user: found.user,
         self: false
     };
 }
@@ -160,7 +133,7 @@ async function findTarget(interaction) {
 export default {
     name: "userinfo",
     aliases: ["ui"],
-    description: "Veja as informações e insígnias de um usuário do VSync",
+    description: "Veja as informações e insígnias de um usuário do Discord",
     options: [
         {
             name: "usuario",
@@ -184,8 +157,7 @@ export default {
 
             const { self } = target;
 
-            // completa a data do Prisma pelo perfil da conta quando o membro veio sem ela
-            const user = await completeUser(target.user);
+            const user = target.user;
 
             if (!user?.id) {
                 return errorResponse(
@@ -210,9 +182,6 @@ export default {
             // ==================================
             // CARTÃO
             // ==================================
-
-            // os ícones das insígnias vêm do servidor (cache de 1 minuto; nunca lança)
-            await loadBadgeEmojis();
 
             const embed = buildUserinfoEmbed({
                 user,

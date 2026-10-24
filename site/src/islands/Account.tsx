@@ -1,4 +1,4 @@
-/** Painel da conta: entrar com a VSync, ver os servidores em comum e coletar o daily e as gemas. */
+/** Painel da conta: entrar com o Discord, ver os servidores em comum e coletar o daily e as gemas. */
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 
 import {
@@ -321,7 +321,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
     window.history.replaceState(null, "", window.location.pathname);
 
     if (params.error) {
-      loginScreen(params.error === "access_denied" ? "Login cancelado. Você pode tentar de novo quando quiser." : errorText("login_failed", { detail: `vsync:${params.error}` }));
+      loginScreen(params.error === "access_denied" ? "Login cancelado. Você pode tentar de novo quando quiser." : errorText("login_failed", { detail: `discord:${params.error}` }));
       return;
     }
 
@@ -330,7 +330,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
       return;
     }
 
-    setView({ kind: "busy", title: "Entrando…", text: "Falando com a VSync." });
+    setView({ kind: "busy", title: "Entrando…", text: "Falando com o Discord." });
 
     const result = await call("/api/auth/login", {
       method: "POST",
@@ -458,7 +458,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
     return (
       <section class="acc-box acc-notice">
         <h1 ref={heading} tabIndex={-1}>Painel indisponível</h1>
-        <p>O painel da conta ainda não foi ligado. Enquanto isso, resgate o daily com o comando <code>/daily</code>, direto na VSync.</p>
+        <p>O painel da conta ainda não foi ligado. Enquanto isso, resgate o daily com o comando <code>/daily</code>, direto no Discord.</p>
       </section>
     );
   }
@@ -489,13 +489,15 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
           <span class="label">Painel do jogador</span>
           <h1 ref={heading} tabIndex={-1}>Pegue o seu daily e as suas gemas</h1>
           <p class="acc-lede">
-            Entre com a sua conta da VSync para resgatar a recompensa diária nos servidores onde a Helena está e coletar gemas, que valem em todos eles.
+            Entre com a sua conta do Discord para resgatar a recompensa diária nos servidores onde a Helena está e coletar gemas, que valem em todos eles.
           </p>
           {view.message && <p class="acc-warn" role="alert">{view.message}</p>}
-          <button type="button" class="btn btn-primary" onClick={() => void startLogin()}>Entrar com a VSync</button>
+          {clientId
+            ? <button type="button" class="btn btn-primary" onClick={() => void startLogin()}>Entrar com o Discord</button>
+            : <p class="acc-warn" role="alert">O login ainda não foi configurado. Use o comando <code>/daily</code> direto no Discord.</p>}
           <ul class="acc-facts">
             <li>A Helena vê só o seu nome, o seu avatar e a lista dos seus servidores.</li>
-            <li>Ela nunca recebe a sua senha, e o acesso que a VSync dá é devolvido assim que você entra.</li>
+            <li>Ela nunca recebe a sua senha, e o acesso que o Discord dá é devolvido assim que você entra.</li>
             <li>A sessão dura 6 horas. Sair encerra tudo.</li>
           </ul>
         </section>
@@ -590,7 +592,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
         ) : (
           <section class="acc-box acc-notice">
             <h2>Nenhum servidor em comum</h2>
-            <p>A Helena não está em nenhum servidor seu. Adicione-a a um servidor da VSync e volte aqui.</p>
+            <p>A Helena não está em nenhum servidor seu. Adicione-a a um servidor do Discord e volte aqui.</p>
           </section>
         )}
       </section>

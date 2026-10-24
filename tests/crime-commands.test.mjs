@@ -1,5 +1,5 @@
 import {
-    db, set, get, seq, createPrefixRunner, fieldsOf, receiptOf
+    db, set, get, seq, createPrefixRunner, fieldsOf, receiptOf, discordMember, discordGuildFetch
 } from "./helpers.mjs";
 
 import test from "node:test";
@@ -17,42 +17,16 @@ const { getPlayer } = await import("./helpers.mjs");
 const G = "900000000000000001";
 const ME = { id: "111111111111111111", username: "eu", displayName: "Eu Mesmo" };
 
-const member = (id, username, displayName, bot = false) => ({
-    id, username, displayName, nickname: null, bot,
-    avatarUrl: "https://cdn.exemplo.test/" + id + ".png"
-});
-
 const MEMBERS = [
-    member(ME.id, "eu", "Eu Mesmo"),
-    member("200000000000000001", "maria", "Maria Silva"),
-    member("200000000000000002", "mario", "Mário Souza"),
-    member("200000000000000003", "ricardo", "Ricardo"),
-    member("200000000000000009", "helena", "Helena", true)
+    discordMember(ME.id, "eu", "Eu Mesmo"),
+    discordMember("200000000000000001", "maria", "Maria Silva"),
+    discordMember("200000000000000002", "mario", "Mário Souza"),
+    discordMember("200000000000000003", "ricardo", "Ricardo"),
+    discordMember("200000000000000009", "helena", "Helena", null, true)
 ];
 
-// API simulada: lista de membros e membro individual.
-globalThis.fetch = async url => {
-    const u = String(url);
-
-    const reply = (status, body) => ({
-        ok: status < 300, status, json: async () => body,
-        text: async () => JSON.stringify(body), headers: { get: () => null }
-    });
-
-    let m;
-
-    if ((m = u.match(/\/guilds\/[^/]+\/members\/([^/]+)$/))) {
-        const found = MEMBERS.find(x => x.id === decodeURIComponent(m[1]));
-
-        return found ? reply(200, { member: found }) : reply(404, {});
-    }
-
-    if (/\/guilds\/[^/]+$/.test(u)) {
-        return reply(200, { members: MEMBERS });
-    }
-
-    return reply(404, {});
-};
+// API simulada do Discord: pesquisa de membros e membro individual.
+globalThis.fetch = discordGuildFetch(MEMBERS);
 
 const run = await createPrefixRunner({ guildId: G, author: ME });
 

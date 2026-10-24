@@ -46,7 +46,7 @@ const links = [
         <Icon name="sun" class="i-sun" />
         <Icon name="moon" class="i-moon" />
       </button>
-      <a class="cta" href={SITE.inviteUrl} rel="noopener">Adicionar<span class="long">&nbsp;à VSync</span></a>
+      {SITE.inviteUrl && <a class="cta" href={SITE.inviteUrl} rel="noopener">Adicionar<span class="long">&nbsp;ao Discord</span></a>}
       <button class="burger" type="button" id="menu-btn" aria-expanded="false" aria-controls="nav">
         <Icon name="menu" class="i-open" />
         <Icon name="close" class="i-close" />

@@ -1,6 +1,6 @@
 
 /**
- * Componentes de layout V2 da VSync.
+ * Componentes de layout V2 do Discord.
  *
  * Regras da documentação (fundamentos/componentes): blocos text, separator,
  * section (1 a 3 textos + um botão ou uma miniatura) e container (barra de cor),
@@ -27,7 +27,7 @@ export const V2_LIMITS = Object.freeze({
 // REGRAS DA DOCUMENTAÇÃO
 // ==========================================
 
-// Conta os componentes como a VSync: o container, cada texto, a seção e o acessório
+// Conta os componentes como o Discord: o container, cada texto, a seção e o acessório
 // dela, cada linha e cada botão ou menu.
 export function countComponents(components) {
     let total = 0;
@@ -159,7 +159,7 @@ export function layoutProblems(components) {
 
 export const text = content => ({ type: "text", content });
 
-// "## Título", "### Grupo": a doc da VSync aceita títulos com # no começo da linha.
+// "## Título", "### Grupo": a doc do Discord aceita títulos com # no começo da linha.
 export const heading = (title, level = 2) => text(`${"#".repeat(level)} ${title}`);
 
 // Letra pequena ("-# texto"), para notas e rodapés.
@@ -386,7 +386,7 @@ export function toV2Data(data, { clear = false } = {}) {
         return null;
     }
 
-    if (Array.isArray(data.attachments) && data.attachments.length) {
+    if ((Array.isArray(data.attachments) && data.attachments.length) || (Array.isArray(data.files) && data.files.length)) {
         return null;
     }
 

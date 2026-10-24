@@ -67,7 +67,7 @@ test("comando inexistente continua ignorado", async () => {
     assert.equal(r.sent.length, 0);
 });
 
-test("o registro na VSync inclui cada alias com a mesma descrição e opções", async () => {
+test("o registro no Discord inclui cada alias com a mesma descrição e opções", async () => {
     let body = null;
 
     const original = globalThis.fetch;
@@ -87,7 +87,7 @@ test("o registro na VSync inclui cada alias com a mesma descrição e opções",
     const byName = new Map(body.map(c => [c.name, c]));
 
     assert.equal(byName.size, body.length, "nenhum nome repetido");
-    assert.ok(body.length <= 100, "dentro do limite da VSync");
+    assert.ok(body.length <= 100, "dentro do limite do Discord");
     assert.ok(body.every(c => /^[a-z0-9_-]{1,32}$/.test(c.name)), "nomes válidos");
     assert.ok(body.every(c => c.description.length >= 1 && c.description.length <= 100));
 

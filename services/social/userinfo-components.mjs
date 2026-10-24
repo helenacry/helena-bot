@@ -5,10 +5,10 @@ import { detailOptions } from "./userinfo-view.mjs";
 // MENUS DO /USERINFO
 // ==========================================
 
-// Dois menus embaixo do cartão, como no Zany (a VSync só tem menu de texto, sem seletor de
+// Dois menus embaixo do cartão, como no Zany (o menu de texto não tem seletor de
 // pessoas, então o segundo lista quem já joga neste servidor):
 //
-//   userinfo:more:<dono>:<alvo>    "Mais informações."  (avatar, insígnias, datas, Pulse)
+//   userinfo:more:<dono>:<alvo>    "Mais informações."  (avatar, banner, insígnias, datas, cargos)
 //   userinfo:other:<dono>          "Ver informações de outros membros no servidor."
 //   userinfo:buscar:<dono>         formulário da opção "Procurar por @usuário..."
 //

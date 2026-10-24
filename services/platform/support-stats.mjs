@@ -2,13 +2,13 @@
 import { DatabaseSync } from "node:sqlite";
 import { resolve } from "node:path";
 
+import { discordApi } from "../discord/api.mjs";
+
 // ==========================================
 // CONFIGURAÇÕES
 // ==========================================
 
-const API = "https://api.vsync.lat";
-
-const TOKEN = process.env.VSYNC_BOT_TOKEN;
+const TOKEN = process.env.DISCORD_BOT_TOKEN;
 
 const CONFIG = {
     guildId: process.env.HELENA_SUPPORT_GUILD_ID,
@@ -27,8 +27,10 @@ const CONFIG = {
         Number(process.env.HELENA_CLUSTER_TOTAL) || 1
     ),
 
+    // O Discord só deixa renomear um mesmo canal 2 vezes a cada 10 minutos: por isso o
+    // intervalo nunca é menor que 5 minutos (e o nome só é enviado quando muda).
     interval: Math.max(
-        60_000,
+        300_000,
         Number(process.env.HELENA_STATS_INTERVAL) || 300_000
     )
 };
@@ -158,17 +160,12 @@ function buildChannelNames() {
 }
 
 // ==========================================
-// EDITAR CANAL PELA API OFICIAL VSYNC
+// EDITAR CANAL PELA API DO DISCORD
 // ==========================================
 
-// PATCH /guilds/:g/channels/:c
+// PATCH /channels/:c  { "name": "Novo nome" }
 //
-// Permissão necessária: MANAGE_CHANNELS
-//
-// Corpo:
-// {
-//     "name": "Novo nome"
-// }
+// Permissão necessária: Gerenciar canais (MANAGE_CHANNELS) no servidor de suporte.
 
 async function updateChannel(
     channelId,
@@ -188,36 +185,7 @@ async function updateChannel(
         return;
     }
 
-    const url =
-        `${API}/guilds/${encodeURIComponent(CONFIG.guildId)}` +
-        `/channels/${encodeURIComponent(channelId)}`;
-
-    const response = await fetch(
-        url,
-        {
-            method: "PATCH",
-
-            headers: {
-                Authorization: `Bot ${TOKEN}`,
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                name
-            }),
-
-            signal: AbortSignal.timeout(15_000)
-        }
-    );
-
-    if (!response.ok) {
-        const detail = await response.text();
-
-        throw new Error(
-            `Falha ao atualizar canal ${channelId}: ` +
-            `HTTP ${response.status} - ${detail}`
-        );
-    }
+    await discordApi().renameChannel(channelId, name);
 
     // Uma resposta antiga não deve atualizar o cache
     // de uma nova sessão do Gateway.

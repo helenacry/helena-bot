@@ -2,7 +2,7 @@
 
 [← Voltar ao README](../README.md) · [Índice da documentação](README.md)
 
-Como as respostas da Helena no chat (embeds e o layout V2 da VSync) são desenhadas. É a mesma identidade do site (o livro-caixa): recibo para números, carimbo para estados, a pelúcia para o humor. Quem cria ou muda um comando segue esta página.
+Como as respostas da Helena no chat (embeds e o layout V2 do Discord) são desenhadas. É a mesma identidade do site (o livro-caixa): recibo para números, carimbo para estados, a pelúcia para o humor. Quem cria ou muda um comando segue esta página.
 
 ## Anatomia de uma resposta
 
@@ -88,4 +88,4 @@ receipt([
 1. Mude o comando (ou a tela em `services/`) e rode a prévia.
 2. Atualize o teste do comando: o título, a linha do recibo e o rodapé são o que ele confere (`receiptOf` em `tests/helpers.mjs` lê o recibo de uma resposta).
 3. Se a resposta aparece na conversa de exemplo do site (`/daily`, `/trabalhar`, `/loja`, `/crime`, `/prisao`), atualize `site/src/lib/sim.ts`; `tests/site-sim.test.mjs` avisa quando os dois se afastam.
-4. Uma imagem nova (humor ou ícone) entra por `site/scripts/build-bot-images.mjs`, e o **site precisa ser publicado antes do bot**: a VSync só mostra imagem de embed por endereço https.
+4. Uma imagem nova (humor ou ícone) entra por `site/scripts/build-bot-images.mjs`, e o **site precisa ser publicado antes do bot**: o Discord só mostra imagem de embed por endereço https.

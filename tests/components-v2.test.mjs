@@ -278,7 +278,7 @@ test("layoutProblems aponta o que a API recusaria", () => {
     assert.ok(has(many, /41 componentes/));
 });
 
-test("countComponents conta como a VSync: container, textos, seção com acessório, linha e botões", () => {
+test("countComponents conta como o Discord: container, textos, seção com acessório, linha e botões", () => {
     const layout = [{
         type: "container",
         components: [
@@ -348,7 +348,7 @@ test("callback: V2 ligado manda o layout; aceito, não manda de novo", async () 
     });
 });
 
-test("callback: se a VSync recusar o V2, a mesma resposta sai como clássico e o motivo vai para o log", async () => {
+test("callback: se o Discord recusar o V2, a mesma resposta sai como clássico e o motivo vai para o log", async () => {
     await withMode("on", async () => {
         const posts = [];
         const warnings = [];
@@ -467,7 +467,7 @@ test("pelo prefixo: com o V2 ligado o embed sai como layout; desligado, como sem
     assert.equal(on.body, "");
 });
 
-test("pelo prefixo: se a VSync recusar o layout, o mesmo comando sai como embed", async () => {
+test("pelo prefixo: se o Discord recusar o layout, o mesmo comando sai como embed", async () => {
     const G = "900000000000000001";
     const user = { id: OTHER, username: "teste", displayName: "Teste" };
 

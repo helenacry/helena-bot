@@ -7,7 +7,7 @@ A Helena roda dentro do servidor onde ela foi adicionada. Você não precisa se 
 
 ## Adicione a Helena ao servidor
 
-Use o botão **Adicionar à VSync** no [site da Helena](site:). Se você não pode adicionar bots no seu servidor, peça para quem administra.
+Use o botão **Adicionar ao Discord** no [site da Helena](site:). Se você não pode adicionar bots no seu servidor, peça para quem administra.
 
 ## Sua conta abre sozinha
 
@@ -26,7 +26,7 @@ Todo comando funciona de duas formas. Escolha a que preferir:
 
 | Forma | Exemplo | Como é |
 | --- | --- | --- |
-| Comando de barra | `/daily` | Digite `/` e escolha o comando na lista da VSync. |
+| Comando de barra | `/daily` | Digite `/` e escolha o comando na lista do Discord. |
 | Prefixo `h` | `hdaily` | Escreva `h` colado no nome do comando, no chat. |
 
 Quando o comando pede informações, no prefixo você escreve na ordem, separando por espaço, ou usa `nome:valor`:

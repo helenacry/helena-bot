@@ -1,4 +1,4 @@
-import { db, set } from "./helpers.mjs";
+import { db, set, discordMember, discordGuildFetch } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -8,59 +8,32 @@ const { savePlayerName } = await import("../services/platform/player-names.mjs")
 
 const G = "900000000000000001";
 
-const member = (id, username, displayName, nickname = null, bot = false) => ({
-    id, username, displayName, nickname, bot,
-    avatarUrl: "https://cdn.exemplo.test/" + id + ".png"
-});
-
 const MEMBERS = [
-    member("100000000000000001", "eu", "Eu Mesmo"),
-    member("200000000000000001", "mariasilva", "Maria Silva"),
-    member("200000000000000002", "mariasouza", "Maria Souza"),
-    member("200000000000000003", "jose", "José Ávila", "Zezinho"),
-    member("200000000000000004", "ana", "Ana"),
-    member("200000000000000005", "helena", "Helena", null, true)
+    discordMember("100000000000000001", "eu", "Eu Mesmo"),
+    discordMember("200000000000000001", "mariasilva", "Maria Silva"),
+    discordMember("200000000000000002", "mariasouza", "Maria Souza"),
+    discordMember("200000000000000003", "jose", "José Ávila", "Zezinho"),
+    discordMember("200000000000000004", "ana", "Ana"),
+    discordMember("200000000000000005", "helena", "Helena", null, true)
 ];
 
-let apiDown = false;
-let listCalls = 0;
+// O Discord de mentira: conta as pesquisas e pode ficar fora do ar.
+const api = {};
 
-globalThis.fetch = async url => {
-    const u = String(url);
+globalThis.fetch = discordGuildFetch(MEMBERS, api);
 
-    const reply = (status, body) => ({
-        ok: status < 300, status, json: async () => body, text: async () => ""
-    });
-
-    if (apiDown) return reply(500, {});
-
-    let m;
-
-    if ((m = u.match(/\/guilds\/[^/]+\/members\/([^/]+)$/))) {
-        const found = MEMBERS.find(x => x.id === decodeURIComponent(m[1]));
-
-        return found ? reply(200, { member: found }) : reply(404, {});
-    }
-
-    if (/\/guilds\/[^/]+$/.test(u)) {
-        listCalls++;
-
-        return reply(200, { members: MEMBERS });
-    }
-
-    return reply(404, {});
-};
-
+// os mesmos membros no formato da Helena, para o ranking de nomes
 const users = MEMBERS.map(x => ({
-    id: x.id, username: x.username, displayName: x.displayName,
-    nickname: x.nickname ?? "", avatarUrl: x.avatarUrl, bot: x.bot
+    id: x.user.id, username: x.user.username, displayName: x.user.global_name,
+    nickname: x.nick ?? "", avatarUrl: null, bot: x.user.bot
 }));
 
 const names = list => list.map(u => u.displayName).join("|");
 
 test.beforeEach(() => {
-    apiDown = false;
-    listCalls = 0;
+    api.down = false;
+    api.searches = 0;
+    api.lookups = 0;
     lookup.clearUserLookupCache();
 });
 
@@ -100,12 +73,40 @@ test("resolveUser: found, ambiguous e not_found", async () => {
     assert.equal((await lookup.resolveUser(G, "ninguem")).status, "not_found");
 });
 
-test("a lista de membros é baixada uma vez e fica em cache", async () => {
+test("a pesquisa do Discord é feita uma vez por texto e fica em cache", async () => {
     await lookup.resolveUser(G, "ana");
+    await lookup.resolveUser(G, "ANA");
+    await lookup.resolveUser(G, "ana");
+
+    assert.equal(api.searches, 1, "o mesmo texto, em qualquer caixa, não pesquisa de novo");
+
     await lookup.resolveUser(G, "maria");
     await lookup.resolveUser(G, "ninguem");
 
-    assert.equal(listCalls, 1);
+    assert.equal(api.searches, 3, "outro texto pesquisa");
+});
+
+test("a pesquisa pede ao Discord só o texto digitado, sem o @ do começo", async () => {
+    const seen = [];
+    const inner = globalThis.fetch;
+
+    globalThis.fetch = async (url, init) => {
+        seen.push(String(url));
+
+        return inner(url, init);
+    };
+
+    try {
+        await lookup.resolveUser(G, "@ana");
+    } finally {
+        globalThis.fetch = inner;
+    }
+
+    assert.equal(seen.length, 1);
+    assert.ok(
+        seen[0].endsWith("/guilds/900000000000000001/members/search?query=ana&limit=25"),
+        seen[0]
+    );
 });
 
 test("menção, ID e menção de quem não está no servidor", async () => {
@@ -122,7 +123,7 @@ test("com a API fora do ar, usa os nomes que a Helena já conhece", async () => 
     savePlayerName({ id: "300000000000000001", displayName: "Carlos Conhecido" });
     set("INSERT OR IGNORE INTO players (guild_id, user_id) VALUES (?, ?)", G, "300000000000000001");
 
-    apiDown = true;
+    api.down = true;
 
     const byName = await lookup.resolveUser(G, "carlos");
     assert.equal(byName.status, "found");
@@ -186,7 +187,7 @@ test("resolveUser by username com a API fora do ar: nome não acha, menção sim
     savePlayerName({ id: "300000000000000001", displayName: "Carlos Conhecido" });
     set("INSERT OR IGNORE INTO players (guild_id, user_id) VALUES (?, ?)", G, "300000000000000001");
 
-    apiDown = true;
+    api.down = true;
 
     assert.equal((await lookup.resolveUser(G, "carlos", { by: "username" })).status, "not_found");
     assert.equal((await lookup.resolveUser(G, "<@300000000000000001>", { by: "username" })).status, "found");

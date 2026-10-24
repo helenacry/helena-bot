@@ -18,7 +18,7 @@ O bot pode rodar no Railway em vez do computador de quem o mantém. A imagem vem
 
 ### Levar o banco sem duplicar o bot
 
-Só um bot pode ficar ligado por vez: dois respondem cada comando em dobro e a VSync limita as conexões por bot. Por isso a ordem importa:
+Só um bot pode ficar ligado por vez: dois respondem cada comando em dobro e o Discord limita as conexões por bot. Por isso a ordem importa:
 
 1. No Railway, em Settings, Deploy, ponha **Custom Start Command** = `sleep infinity` e faça o deploy: o contêiner sobe com o volume, mas sem ligar o bot.
 2. No computador, **pare o bot** e exporte: `npm run db:export -- helena-export.db` (mostra quantos jogadores foram). O que acontecer depois da cópia não vai junto. O contador do `/userinfo` também mora no banco: se o bot ainda rodava com a versão antiga (que guardava num JSON), ligue-o uma vez com a nova antes, para ele importar o JSON antigo, e só então pare e exporte.
