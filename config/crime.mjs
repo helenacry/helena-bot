@@ -109,7 +109,7 @@ export const LAUNDERING_CONFIG = Object.freeze({
     energyCost: 40,
 
     // Valor por operação (dinheiro sujo).
-    minAmount: reais(1_000),
+    minAmount: reais(20_000),
     maxAmount: reais(30_000),
 
     // Gemas para liberar a lavanderia privada (uma

@@ -303,20 +303,20 @@ test("preso, o envio do modal também é bloqueado", async () => {
 
 test("lavagem: o modal inicia uma lavagem pública", async () => {
     reset();
-    set("UPDATE players SET dirty_money = 500000, energy = 100, energy_updated_at = 0 WHERE guild_id=? AND user_id=?", G, ME);
+    set("UPDATE players SET dirty_money = 2500000, energy = 100, energy_updated_at = 0 WHERE guild_id=? AND user_id=?", G, ME);
 
-    const response = await send(submit("lavagem:publica", { valor: "5000" }));
+    const response = await send(submit("lavagem:publica", { valor: "20000" }));
 
     assert.match(titleOf(response), /Lavagem iniciada/);
     assert.equal(get("SELECT kind, amount FROM laundering_jobs").kind, "public");
-    assert.equal(get("SELECT amount a FROM laundering_jobs").a, 500000);
+    assert.equal(get("SELECT amount a FROM laundering_jobs").a, 2000000);
 });
 
 test("lavagem: privada bloqueada avisa; liberar exige digitar LIBERAR", async () => {
     reset();
-    set("UPDATE players SET dirty_money = 500000, energy = 100, energy_updated_at = 0 WHERE guild_id=? AND user_id=?", G, ME);
+    set("UPDATE players SET dirty_money = 2500000, energy = 100, energy_updated_at = 0 WHERE guild_id=? AND user_id=?", G, ME);
 
-    assert.match(titleOf(await send(submit("lavagem:privada", { valor: "5000" }))), /privada bloqueada/);
+    assert.match(titleOf(await send(submit("lavagem:privada", { valor: "20000" }))), /privada bloqueada/);
 
     // confirmação errada: nada é cobrado
     set("INSERT INTO global_users (user_id, gems) VALUES (?, 10) ON CONFLICT(user_id) DO UPDATE SET gems = 10", ME);

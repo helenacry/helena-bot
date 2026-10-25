@@ -188,7 +188,7 @@ test("a ficha cresce com crime, roubo e lavagem", async () => {
     set("UPDATE crime_players SET launder_ready_at = 0");
     db.exec("DELETE FROM prison_players");
 
-    await run("hlavagem 5000 publica");
+    await run("hlavagem 20000 publica");
     assert.equal(get("SELECT criminal_record r FROM crime_players WHERE user_id=?", ME.id).r, 2);
 });
 

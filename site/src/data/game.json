@@ -792,7 +792,7 @@
       "cleanShare": 0.5
     },
     "laundering": {
-      "minAmount": 1000,
+      "minAmount": 20000,
       "maxAmount": 30000,
       "privateUnlockGems": 10,
       "kinds": {

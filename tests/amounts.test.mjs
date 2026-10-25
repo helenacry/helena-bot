@@ -78,10 +78,10 @@ test("hsacar all e hsacar tudo sacam todo o banco", async () => {
 test("hlavagem all lava todo o dinheiro sujo (até o limite por operação)", async () => {
     db.exec("DELETE FROM laundering_jobs; DELETE FROM crime_players;");
 
-    set("UPDATE players SET dirty_money = 500000, energy = 100, energy_updated_at = 0 WHERE guild_id=? AND user_id=?", G, ME.id);
+    set("UPDATE players SET dirty_money = 2500000, energy = 100, energy_updated_at = 0 WHERE guild_id=? AND user_id=?", G, ME.id);
 
     const r = await run("hlavagem all");
 
     assert.match(r.title, /Lavagem iniciada/);
-    assert.equal(get("SELECT amount a FROM laundering_jobs WHERE user_id=?", ME.id).a, 500000);
+    assert.equal(get("SELECT amount a FROM laundering_jobs WHERE user_id=?", ME.id).a, 2500000);
 });

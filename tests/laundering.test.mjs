@@ -41,30 +41,30 @@ test("valor fora dos limites é recusado", async () => {
 test("pública: lotes de 1 min, retorno mínimo de 35%, credita ao fim", () => {
     reset();
 
-    const r = startLaundering(G, A, { amount: reais(5000), kind: "public", channelId: "c1", now: T0, rng: () => 0 });
+    const r = startLaundering(G, A, { amount: reais(20000), kind: "public", channelId: "c1", now: T0, rng: () => 0 });
 
-    assert.equal(r.duration, 7 * 60, "R$5.000 a R$750/min = 7 lotes");
-    assert.equal(job(A).payout, reais(1750), "35% de R$5.000");
-    assert.equal(get("SELECT dirty_money d FROM players WHERE user_id=?", A).d, reais(25000), "o sujo sai na hora");
+    assert.equal(r.duration, 27 * 60, "R$20.000 a R$750/min = 27 lotes");
+    assert.equal(job(A).payout, reais(7000), "35% de R$20.000");
+    assert.equal(get("SELECT dirty_money d FROM players WHERE user_id=?", A).d, reais(10000), "o sujo sai na hora");
     assert.equal(get("SELECT energy e FROM players WHERE user_id=?", A).e, 60);
 
     assert.equal(settleDue(T0 + 100).length, 0, "antes do fim nada entra");
     assert.equal(wallet(A), 0);
 
-    const done = settleDue(T0 + 420);
+    const done = settleDue(T0 + 27 * 60);
 
     assert.equal(done.length, 1);
-    assert.equal(wallet(A), reais(1750));
+    assert.equal(wallet(A), reais(7000));
     assert.equal(settleDue(T0 + 9999).length, 0, "não credita duas vezes");
 });
 
 test("uma lavagem por jogador e uma pública por servidor", async () => {
     reset();
 
-    startLaundering(G, A, { amount: reais(2000), kind: "public", now: T0, rng: () => 0 });
+    startLaundering(G, A, { amount: reais(20000), kind: "public", now: T0, rng: () => 0 });
 
-    assert.equal(await blockedTitle(() => startLaundering(G, A, { amount: reais(1000), kind: "public", now: T0 + 5 })), "Lavagem em andamento");
-    assert.equal(await blockedTitle(() => startLaundering(G, B, { amount: reais(1000), kind: "public", now: T0 + 5 })), "Lavanderia pública ocupada");
+    assert.equal(await blockedTitle(() => startLaundering(G, A, { amount: reais(20000), kind: "public", now: T0 + 5 })), "Lavagem em andamento");
+    assert.equal(await blockedTitle(() => startLaundering(G, B, { amount: reais(20000), kind: "public", now: T0 + 5 })), "Lavanderia pública ocupada");
 
     assert.ok(getLaunderingStatus(G, B, T0 + 5).publicBusyRemaining > 0);
 });
@@ -72,16 +72,16 @@ test("uma lavagem por jogador e uma pública por servidor", async () => {
 test("recarga de 24h na pública é compartilhada com a privada", async () => {
     reset();
 
-    startLaundering(G, A, { amount: reais(1000), kind: "public", now: T0, rng: () => 0 });
+    startLaundering(G, A, { amount: reais(20000), kind: "public", now: T0, rng: () => 0 });
     settleDue(T0 + 9999);
 
-    assert.equal(await blockedTitle(() => startLaundering(G, A, { amount: reais(1000), kind: "public", now: T0 + 500 })), "Lavanderia em recarga");
+    assert.equal(await blockedTitle(() => startLaundering(G, A, { amount: reais(20000), kind: "public", now: T0 + 500 })), "Lavanderia em recarga");
 });
 
 test("privada exige gemas, uma vez só", async () => {
     reset();
 
-    assert.equal(await blockedTitle(() => startLaundering(G, A, { amount: reais(1000), kind: "private", now: T0 })), "Lavanderia privada bloqueada");
+    assert.equal(await blockedTitle(() => startLaundering(G, A, { amount: reais(20000), kind: "private", now: T0 })), "Lavanderia privada bloqueada");
     assert.equal(await blockedTitle(() => unlockPrivate(G, A)), "Gemas insuficientes");
 
     set("UPDATE global_users SET gems = 10 WHERE user_id = ?", A);
@@ -91,15 +91,15 @@ test("privada exige gemas, uma vez só", async () => {
     assert.equal(get("SELECT gems g FROM global_users WHERE user_id=?", A).g, 0);
     assert.equal(await blockedTitle(() => unlockPrivate(G, A)), "Já liberada");
 
-    startLaundering(G, A, { amount: reais(1200), kind: "private", now: T0, rng: () => 0.999 });
+    startLaundering(G, A, { amount: reais(20000), kind: "private", now: T0, rng: () => 0.999 });
 
-    assert.ok(job(A).payout >= reais(1200) * 0.84, "privada rende cerca de 85%");
+    assert.ok(job(A).payout >= reais(20000) * 0.84, "privada rende cerca de 85%");
 });
 
 test("a prisão pausa a lavagem; as penas acompanham", () => {
     reset();
 
-    startLaundering(G, A, { amount: reais(1000), kind: "public", now: T0, rng: () => 0 });
+    startLaundering(G, A, { amount: reais(20000), kind: "public", now: T0, rng: () => 0 });
 
     const before = job(A).finish_at;
 
@@ -115,7 +115,7 @@ test("preso não inicia lavagem", async () => {
 
     imprison(G, A, 1800, "teste", T0);
 
-    assert.equal(await blockedTitle(() => startLaundering(G, A, { amount: reais(1000), kind: "public", now: T0 + 5 })), "Você está preso");
+    assert.equal(await blockedTitle(() => startLaundering(G, A, { amount: reais(20000), kind: "public", now: T0 + 5 })), "Você está preso");
 });
 
 test("o sweeper credita o que venceu e avisa o canal", async () => {
