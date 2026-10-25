@@ -73,7 +73,11 @@ receipt([
 
 ## Emojis próprios
 
-Os desenhos ficam em `assets/emojis/<nome>.svg` (a pelúcia, tinta escura, lilás e sombra em violeta) e a lista em `config/icons.mjs`. No Discord cada um é um emoji do aplicativo chamado `h_<nome>`, que vale em qualquer servidor. O código escreve o emoji comum e passa por `icon()` (`services/platform/app-emojis.mjs`), que troca pelo da Helena quando ele existe no aplicativo e deixa o comum quando não existe.
+Os desenhos ficam em `assets/emojis/<nome>.svg` (a pelúcia, tinta escura, lilás e sombra em violeta: contorno de 6, sombra deslocada em `#3b1ba0`, cores da paleta) e a lista em `config/icons.mjs`, que diz qual emoji comum cada um substitui (um desenho pode valer por vários: 🔧 🛠️ ⚙️ viram a chave inglesa). No Discord cada um é um emoji do aplicativo chamado `h_<nome>`, que vale em qualquer servidor.
+
+**Nenhum comando precisa saber disso.** O código continua escrevendo o emoji comum. Na hora de enviar, `services/discord/format.mjs` troca pelo da Helena (`customize()`, de `services/platform/app-emojis.mjs`) no título, na descrição e nos campos do embed, no texto do layout V2, no corpo da mensagem e nos emojis de botões e menus. Fica de fora o que não aceita emoji personalizado (autor e rodapé do embed, rótulos, placeholders e descrições de menu). Se a troca estourar o limite de caracteres, o texto sai com os emojis comuns. Emoji que ainda não foi enviado ao aplicativo, os de itens do jogo e os quadradinhos coloridos de status ficam como são.
+
+- **Desenhar um novo:** crie o SVG em `assets/emojis/<nome>.svg` (128 × 128, fundo transparente), acrescente o nome e o emoji comum em `config/icons.mjs`, veja a folha com `npm run emojis:sheet -- folha.png` e envie com `node --env-file=.env scripts/dev/emojis.mjs upload` (só envia os que faltam; `--replace` troca os que já existem). `tests/icons.test.mjs` confere que cada nome tem desenho e que cada PNG cabe no limite do Discord.
 
 ## Texto
 

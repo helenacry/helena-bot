@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs><g id="s"><path d="M64 8C70 30 98 44 98 78c0 24-16 38-34 38S30 102 30 78c0-16 8-24 14-34 4 10 8 12 12 12C52 36 56 20 64 8Z"/></g></defs>
+  <use xlink:href="#s" transform="translate(5 6)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <use xlink:href="#s" fill="#ff6367" stroke="#14101c" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M64 68C70 80 82 84 82 98c0 10-8 16-18 16S46 108 46 98c0-8 6-14 10-20 2 4 4 6 8 6-2-6-2-10 0-16Z" fill="#e7b643"/>
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs><g id="s"><g transform="rotate(-40 64 64)" fill="none" stroke-width="24"><rect x="8" y="46" width="64" height="36" rx="18"/><rect x="56" y="46" width="64" height="36" rx="18"/></g></g></defs>
+  <use xlink:href="#s" transform="translate(5 6)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <g transform="rotate(-40 64 64)" fill="none"><rect x="8" y="46" width="64" height="36" rx="18" stroke="#14101c" stroke-width="24"/><rect x="56" y="46" width="64" height="36" rx="18" stroke="#14101c" stroke-width="24"/><rect x="8" y="46" width="64" height="36" rx="18" stroke="#7684b1" stroke-width="11"/><rect x="56" y="46" width="64" height="36" rx="18" stroke="#d3b3ff" stroke-width="11"/></g>
+</svg>

@@ -34,7 +34,7 @@ async function sheet(output) {
     const names = Object.keys(ICONS);
 
     const cell = 150;
-    const columns = 6;
+    const columns = 10;
     const rows = Math.ceil(names.length / columns);
     const band = rows * cell;
 

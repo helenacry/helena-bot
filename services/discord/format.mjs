@@ -1,4 +1,6 @@
 
+import { customize, icon } from "../platform/app-emojis.mjs";
+
 // ==========================================
 // DO FORMATO DA HELENA PARA O DO DISCORD
 // ==========================================
@@ -98,6 +100,16 @@ export function emojiOf(value) {
 
 const clip = (value, max) => String(value ?? "").slice(0, max);
 
+// O texto com os emojis da Helena no lugar dos comuns (services/platform/app-emojis.mjs). O emoji
+// personalizado é bem mais comprido que o comum ("<:h_tag:1563747480649072683>"): se a troca estourar
+// o limite do campo, o texto segue com os emojis comuns em vez de ser cortado no meio do código.
+const withIcons = (text, max) => {
+    const plain = String(text ?? "");
+    const swapped = customize(plain);
+
+    return swapped.length <= max ? swapped : plain;
+};
+
 const httpsUrl = value => {
     const url = String(value ?? "");
 
@@ -115,16 +127,18 @@ export function toDiscordEmbed(embed) {
 
     const out = {};
 
-    if (embed.title) out.title = clip(embed.title, 256);
-    if (embed.description) out.description = clip(embed.description, 4096);
+    // Título, descrição e campos aceitam emoji personalizado: o da Helena entra no lugar do comum.
+    // Autor e rodapé não aceitam (mostrariam o código cru), então ficam como vieram.
+    if (embed.title) out.title = clip(withIcons(embed.title, 256), 256);
+    if (embed.description) out.description = clip(withIcons(embed.description, 4096), 4096);
 
     const color = colorInt(embed.color);
 
     if (color !== undefined) out.color = color;
 
     const fields = (embed.fields ?? []).slice(0, 25).map(field => ({
-        name: clip(field.name, 256) || "​",
-        value: clip(field.value, 1024) || "​",
+        name: clip(withIcons(field.name, 256), 256) || "​",
+        value: clip(withIcons(field.value, 1024), 1024) || "​",
         inline: Boolean(field.inline)
     }));
 
@@ -162,6 +176,9 @@ export function toDiscordEmbed(embed) {
 // COMPONENTES
 // ==========================================
 
+// O emoji de um botão ou de uma opção de menu: o da Helena no lugar do comum.
+const iconEmoji = value => emojiOf(typeof value === "string" ? icon(value) : value);
+
 function toButton(component) {
     const link = component.style === "link" || Boolean(component.url);
 
@@ -169,7 +186,7 @@ function toButton(component) {
         type: COMPONENT.button,
         style: link ? BUTTON_STYLE.link : (BUTTON_STYLE[component.style] ?? BUTTON_STYLE.secondary),
         ...(component.label ? { label: clip(component.label, 80) } : {}),
-        ...(component.emoji ? { emoji: emojiOf(component.emoji) } : {}),
+        ...(component.emoji ? { emoji: iconEmoji(component.emoji) } : {}),
 
         // botão de link leva url e nunca custom_id; os outros, o contrário
         ...(link ? { url: component.url } : { custom_id: clip(component.customId, 100) }),
@@ -189,19 +206,23 @@ function toSelect(component) {
             label: clip(option.label, 100),
             value: clip(option.value, 100),
             ...(option.description ? { description: clip(option.description, 100) } : {}),
-            ...(option.emoji ? { emoji: emojiOf(option.emoji) } : {}),
+            ...(option.emoji ? { emoji: iconEmoji(option.emoji) } : {}),
             ...(option.default ? { default: true } : {})
         })),
         ...(component.disabled ? { disabled: true } : {})
     };
 }
 
-export function toDiscordComponent(component) {
+// "swap" = pôr os emojis da Helena nos textos (o limite do V2 é de 4000 caracteres no total:
+// toDiscordMessage refaz sem a troca se ela estourar).
+export function toDiscordComponent(component, swap = true) {
+    const words = (text, max) => (swap ? withIcons(text, max) : String(text ?? ""));
+
     switch (component?.type) {
         case "row":
             return {
                 type: COMPONENT.row,
-                components: (component.components ?? []).map(toDiscordComponent).filter(Boolean)
+                components: (component.components ?? []).map(child => toDiscordComponent(child, swap)).filter(Boolean)
             };
 
         case "button":
@@ -219,21 +240,21 @@ export function toDiscordComponent(component) {
                 type: COMPONENT.container,
                 ...(color !== undefined ? { accent_color: color } : {}),
                 ...(component.spoiler ? { spoiler: true } : {}),
-                components: (component.components ?? []).map(toDiscordComponent).filter(Boolean)
+                components: (component.components ?? []).map(child => toDiscordComponent(child, swap)).filter(Boolean)
             };
         }
 
         case "text":
-            return { type: COMPONENT.text, content: String(component.content ?? "") };
+            return { type: COMPONENT.text, content: words(component.content, 4000) };
 
         case "section":
             return {
                 type: COMPONENT.section,
                 components: (component.texts ?? []).map(content => ({
                     type: COMPONENT.text,
-                    content: String(typeof content === "string" ? content : content?.content ?? "")
+                    content: words(typeof content === "string" ? content : content?.content ?? "", 4000)
                 })),
-                accessory: toDiscordComponent(component.accessory)
+                accessory: toDiscordComponent(component.accessory, swap)
             };
 
         case "thumbnail":
@@ -274,12 +295,33 @@ function filesOf(data) {
 // { json, files }: o corpo da mensagem para a API e os arquivos que vão junto.
 //   body       o texto (é ele que avisa quem foi mencionado)
 //   ephemeral  só quem usou o comando vê (não vale ao atualizar uma mensagem)
+const V2_TEXT_LIMIT = 4000;
+
+// O total de caracteres dos blocos de texto de uma lista de componentes do Discord (o V2 limita a soma).
+function textLength(components) {
+    let total = 0;
+
+    for (const component of components ?? []) {
+        if (component?.type === COMPONENT.text) total += String(component.content ?? "").length;
+
+        total += textLength(component?.components);
+    }
+
+    return total;
+}
+
 export function toDiscordMessage(data = {}, { update = false } = {}) {
     const source = Array.isArray(data.components) ? data.components : [];
 
-    const components = source.map(toDiscordComponent).filter(Boolean);
-
     const v2 = source.some(component => V2_TYPES.has(component?.type));
+
+    let components = source.map(component => toDiscordComponent(component)).filter(Boolean);
+
+    // No V2 o texto de todos os blocos somado cabe em 4000 caracteres, e o emoji da Helena é bem mais
+    // comprido que o comum: se a troca estourar, a mensagem sai inteira com os emojis comuns.
+    if (v2 && textLength(components) > V2_TEXT_LIMIT) {
+        components = source.map(component => toDiscordComponent(component, false)).filter(Boolean);
+    }
 
     const files = filesOf(data);
 
@@ -299,7 +341,7 @@ export function toDiscordMessage(data = {}, { update = false } = {}) {
         }
 
     } else {
-        if (data.body !== undefined) json.content = clip(data.body, 2000);
+        if (data.body !== undefined) json.content = clip(withIcons(data.body, 2000), 2000);
 
         if (Array.isArray(data.embeds)) {
             json.embeds = data.embeds.map(toDiscordEmbed).filter(Boolean).slice(0, 10);
