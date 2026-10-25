@@ -67,7 +67,7 @@ class FakeSocket {
 function setup(overrides = {}) {
     FakeSocket.instances = [];
 
-    const calls = { ready: [], dispatch: [], closed: [], fatal: [] };
+    const calls = { ready: [], resumed: [], dispatch: [], closed: [], fatal: [] };
 
     const gateway = createGateway({
         token: "segredo",
@@ -76,6 +76,7 @@ function setup(overrides = {}) {
         log: quiet,
         reconnectDelay: () => 5,
         onReady: data => calls.ready.push(data),
+        onResumed: () => calls.resumed.push(true),
         onDispatch: (name, data) => calls.dispatch.push([name, data]),
         onClose: info => calls.closed.push(info.code),
         onFatal: info => calls.fatal.push(info.code),
@@ -294,6 +295,11 @@ test("RESUMED zera as tentativas e não chama onReady de novo", async () => {
 
     assert.equal(calls.ready.length, 1);
     assert.equal(calls.dispatch.length, 0, "RESUMED não é um evento do jogo");
+
+    // quem usa o gateway fica sabendo: depois de uma queda (onClose) e sem READY novo, é o único aviso
+    // para religar o que o onClose desligou (a rotação de status e os contadores)
+    assert.equal(calls.resumed.length, 1);
+    assert.deepEqual(calls.closed, [1006]);
 
     gateway.close();
 });

@@ -6,8 +6,9 @@ import WebSocket from "ws";
 // ==========================================
 
 // A conexão que traz os eventos em tempo real: identifica o bot, mantém o batimento, retoma a
-// sessão quando cai (sem perder eventos) e reconecta sozinha. Quem usa recebe só três coisas:
-// onReady, onDispatch(nome, dados) e onClose.
+// sessão quando cai (sem perder eventos) e reconecta sozinha. Quem usa recebe só quatro coisas:
+// onReady (sessão nova), onResumed (sessão retomada: o Discord não manda o READY de novo, então
+// nada do que o READY montou pode ter sido desmontado no onClose), onDispatch(nome, dados) e onClose.
 
 export const GATEWAY_URL = "wss://gateway.discord.gg";
 
@@ -57,6 +58,7 @@ export function createGateway({
     intents = DEFAULT_INTENTS,
     presence = () => null,
     onReady = () => {},
+    onResumed = () => {},
     onDispatch = () => {},
     onClose = () => {},
     onFatal = () => {},
@@ -229,6 +231,8 @@ export function createGateway({
             attempts = 0;
 
             log.log("[GATEWAY] Sessão retomada.");
+
+            await onResumed();
 
             return;
         }

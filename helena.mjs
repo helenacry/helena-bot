@@ -1070,14 +1070,24 @@ function conectarGateway() {
 
         onDispatch: tratarEvento,
 
-        // Enquanto o gateway estiver desconectado, a rotação e os
-        // contadores ficam parados (e recomeçam no próximo READY).
+        // A sessão voltou sem READY (o caso normal depois de uma queda curta): a rotação e os
+        // contadores, parados no onClose, recomeçam. A lista de servidores nunca foi apagada.
+        onResumed: () => {
+            startStatusRotation(
+                atualizarPresenca,
+                obterMensagensStatus
+            );
+
+            startSupportStats();
+        },
+
+        // Enquanto o gateway estiver desconectado, a rotação e os contadores ficam parados (e
+        // recomeçam no READY ou no RESUMED). A lista de servidores NÃO é apagada: numa sessão
+        // retomada o Discord não manda os servidores de novo, e a API do site (o daily por
+        // servidor) depende dela. O READY de uma sessão nova a refaz do zero.
         onClose: () => {
             stopStatusRotation();
             stopSupportStats();
-
-            guildIds.clear();
-            guildCountComplete = false;
         },
 
         // Token errado ou intenção não liberada: reconectar não adianta. O bot continua de pé
