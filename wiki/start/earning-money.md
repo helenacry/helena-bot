@@ -9,14 +9,16 @@ Dinheiro é o que move o jogo: compra itens, paga multa e é o que os outros jog
 
 | Fonte | Quanto rende | Quando |
 | --- | --- | --- |
-| Recompensa diária (`/daily`) | de {{v:daily.day1}} a {{v:daily.day7}} | a cada {{v:daily.cooldown}} |
+| Recompensa diária (no painel do site) | de {{v:daily.day1}} a {{v:daily.day7}} | a cada {{v:daily.cooldown}} |
 | Trabalho (`/trabalhar`) | de {{v:jobs.firstSalary}} a {{v:jobs.lastSalary}} por turno, conforme o emprego | a cada {{v:work.cooldown}} |
 | Missões (`/missoes`) | {{v:missions.total}} no total, mais XP | todo dia |
 | Vender itens (`/vender`) | metade do preço de compra | quando quiser |
 
 ## Recompensa diária
 
-O `/daily` paga {{v:daily.reward}} e aumenta com a sua sequência de dias:
+O **daily** paga {{v:daily.reward}} e aumenta com a sua sequência de dias. Ele é coletado no **painel do site**: entre com a sua conta do Discord e escolha o servidor. O `/daily` mostra se o seu está disponível e leva até lá.
+
+A sequência:
 
 - cada dia seguido soma **{{v:daily.streakBonus}}**;
 - no **sétimo dia** entra um bônus de **{{v:daily.weeklyBonus}}**, e o prêmio chega a {{v:daily.day7}};

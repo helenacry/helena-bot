@@ -1,8 +1,13 @@
-import { formatMoney } from "../../database/economy.mjs";
+import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
-import { claimDaily } from "../../services/economy/daily.mjs";
+import { claimDaily, getDailyStatus } from "../../services/economy/daily.mjs";
+
+import { loadWebConfig } from "../../services/web/web-api.mjs";
+
+import { SITE_URL } from "../../config/site.mjs";
 
 import {
+    createEmbed,
     embedResponse,
     errorEmbed,
     HELENA_COLORS,
@@ -101,6 +106,55 @@ function claimedResponse(result) {
 }
 
 // ==========================================
+// O DAILY É COLETADO NO SITE
+// ==========================================
+
+// Com o painel do site no ar (a API ligada, HELENA_WEB_PORT e o resto), o daily só se coleta lá, como
+// na Alfacusa: o /daily mostra se está disponível neste servidor e leva ao painel. Sem o painel (o bot
+// de teste, ou quem roda sem o site) o comando segue pagando como sempre, para ninguém ficar sem daily.
+// HELENA_DAILY_ON_SITE=off força o comando a pagar mesmo com o painel ligado.
+export function dailyOnSite(env = process.env) {
+    return loadWebConfig(env).enabled && String(env.HELENA_DAILY_ON_SITE ?? "").trim().toLowerCase() !== "off";
+}
+
+export const DAILY_PANEL_URL = `${SITE_URL}account/`;
+
+function siteResponse(guildId, userId) {
+    // o primeiro comando já abre a conta, como nos outros
+    getPlayer(guildId, userId);
+
+    const status = getDailyStatus(guildId, userId);
+
+    const state = status.available
+        ? "✅ Disponível agora neste servidor"
+        : `⏳ Libera <t:${Math.floor(Date.now() / 1000) + status.remaining}:R> neste servidor`;
+
+    const embed = createEmbed({
+        title: "🎁 Bônus diário",
+
+        description: [
+            `-# ${state}`,
+            "",
+            "O daily agora é coletado no site da Helena. Entre com a sua conta do Discord e pegue o seu: " +
+            "cada servidor tem a própria recarga de 24 horas e a própria sequência."
+        ].join("\n"),
+
+        color: status.available ? HELENA_COLORS.success : HELENA_COLORS.wait,
+        footer: "",
+        timestamp: false
+    });
+
+    const response = embedResponse(embed);
+
+    response.data.components = [{
+        type: "row",
+        components: [{ type: "button", style: "link", label: "Coletar no site", emoji: "🌐", url: DAILY_PANEL_URL }]
+    }];
+
+    return response;
+}
+
+// ==========================================
 // COMANDO /DAILY
 // ==========================================
 
@@ -112,7 +166,7 @@ export default {
     aliases: ["diario"],
 
     description:
-        "Resgate sua recompensa diária e aumente sua sequência",
+        "Veja o seu bônus diário (a coleta é no site da Helena)",
 
     async execute(interaction) {
         const guildId = interaction.guildId;
@@ -125,6 +179,10 @@ export default {
         }
 
         try {
+            if (dailyOnSite()) {
+                return siteResponse(guildId, userId);
+            }
+
             const result = claimDaily(guildId, userId);
 
             if (result.status === "cooldown") {
