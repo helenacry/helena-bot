@@ -41,7 +41,7 @@ O `/userinfo` (atalho `/ui`) é outra coisa: mostra as **informações e insígn
 
 O cartão mostra a **menção**, o **@usuário** e o **ID** (em caixas de código, fáceis de copiar), as **insígnias** da conta só em **ícones** (o nome de cada uma e o que ela quer dizer estão em **Mais informações**), o **Nitro** (só quando há sinal de que a pessoa tem), a **etiqueta de servidor** (se a pessoa usa uma), quando a conta foi criada e quando entrou no servidor. Cada data traz a **idade** pelo tempo que passou, nas três maiores unidades: "2 anos 5 meses 19 dias", "7 meses 18 dias 8 horas" e, para quem entrou há menos de um dia, "19 horas 52 minutos". O que a Helena não sabe fica de fora: ela não escreve "nenhuma" nem "não detectado" de uma conta que pode ter e o Discord não mostra.
 
-Quem impulsiona o servidor vê também desde quando e, lado a lado, a **insígnia de impulso atual** (a gema do nível, entre os 9, e há quanto tempo) e a **próxima** (a gema e em quanto tempo ela chega). Quem informou a data da assinatura do Nitro (veja abaixo) vê o mesmo para o **Nitro**: "Assinante Nitro desde" e as insígnias de Nitro atual e próxima, nos 8 níveis. Bots levam a marca 🤖 e quem está de castigo vê até quando. No rodapé aparecem quem usou o comando, quantas vezes aquele perfil já foi consultado e a hora.
+Quem impulsiona algum servidor onde a Helena está vê também "Impulsionando desde" (o impulso mais antigo entre esses servidores) e, lado a lado, a **insígnia de impulso atual** (há quanto tempo, entre os 9 níveis) e a **próxima** (em quanto tempo ela chega). Os emblemas são os emojis comuns do Discord: 💠 para o impulso, 🦁, 🌠 e os outros para as insígnias da conta. Bots levam a marca 🤖 e quem está de castigo vê até quando. No rodapé aparecem quem usou o comando, quantas vezes aquele perfil já foi consultado e a hora.
 
 Embaixo do cartão há dois menus, só para quem usou o comando:
 
@@ -57,12 +57,8 @@ O Discord não guarda o que uma pessoa já foi, então a Helena só mostra o que
 
 Em **Meu histórico** (no menu do seu próprio cartão) você escolhe, com três botões: **Ocultar** (a Helena para de guardar e não mostra o que já tinha), **Mostrar** de novo ou **Apagar tudo**. Também dá para escrever `hui ocultar`, `hui mostrar` ou `hui apagar`. A [política de privacidade](site:privacy/) tem os detalhes.
 
-### Informar o Nitro e o impulso
-
-O Discord não entrega a bots a data em que alguém assinou o Nitro nem desde quando impulsiona servidores (isso só o próprio dono da conta vê). Quem quiser o cartão com essas linhas informa as duas datas em **Meu histórico**, com **Informar Nitro** e **Informar impulso**: é só digitar a data (`07/03/2026`, ou `07/03/2026 09:18` se souber a hora; vale o horário de Brasília). Elas aparecem no **seu** cartão como "Assinante Nitro desde" e "Impulsionando desde", com a insígnia de cada nível, marcadas como **informado pela própria pessoa**, porque a Helena não consegue conferir. **Limpar datas** apaga as duas, e **Apagar tudo** leva também o histórico. O Nitro segue a lista pública das insígnias (Bronze 1 mês, Prata 3, Ouro 6, Platina 12, Diamante 24, Esmeralda 36, Rubi 60 e Fogo 72).
-
 > [!NOTE]
-> **O que a Helena nunca mostra.** O Discord também não entrega a bots a bio, os pronomes, as conexões nem o tema de duas cores do perfil. O impulso, sem a data informada, é contado só neste servidor.
+> **O que a Helena não consegue mostrar.** O Discord não entrega a bots a data em que alguém assinou o Nitro, a bio, os pronomes, as conexões nem o tema de duas cores do perfil: isso só o próprio dono da conta vê. Por isso o cartão não tem "assinante Nitro desde" nem a insígnia de Nitro. O impulso a Helena lê sozinha, mas só nos servidores onde ela está: quem impulsiona um servidor onde ela não está aparece depois que ela entrar lá.
 
 ## Próximo passo
 

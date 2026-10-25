@@ -95,44 +95,6 @@ export const ICONS = Object.freeze({
     factory: "🏭",
     hospital: "🏥",
 
-    // insígnias da conta do Discord (o /userinfo; cada uma leva um emoji comum só dela)
-    badge_staff: "🔱",
-    badge_partner: "🤝",
-    badge_moderator: "🔰",
-    badge_events: "🎪",
-    badge_bravery: "🦁",
-    badge_brilliance: "🦉",
-    badge_balance: "🐬",
-    badge_bug1: "🐛",
-    badge_bug2: "🐞",
-    badge_supporter: "🌠",
-    badge_developer: "🧑‍💻",
-    badge_active: "🧰",
-    badge_verified: "☑️",
-    nitro: "💠",
-
-    // os nove níveis da insígnia de impulso (o /userinfo). `null`: não trocam nenhum emoji comum, só
-    // existem pelo nome (iconNamed("boost_3", "💎")); o comum é o que aparece se o desenho não foi enviado.
-    boost_1: null,
-    boost_2: null,
-    boost_3: null,
-    boost_4: null,
-    boost_5: null,
-    boost_6: null,
-    boost_7: null,
-    boost_8: null,
-    boost_9: null,
-
-    // os oito níveis da insígnia de Nitro (Bronze, Prata, Ouro, Platina, Diamante, Esmeralda, Rubi e Fogo)
-    nitro_1: null,
-    nitro_2: null,
-    nitro_3: null,
-    nitro_4: null,
-    nitro_5: null,
-    nitro_6: null,
-    nitro_7: null,
-    nitro_8: null,
-
     // telas e botões
     search: ["🔎", "🔍"],
     folder: ["📂", "📁"],
@@ -150,5 +112,5 @@ export const ICONS = Object.freeze({
     pin: "📍"
 });
 
-/** Os emojis comuns de um nome, sempre em lista (vazia para os que só existem pelo nome). */
-export const fallbacksOf = name => [ICONS[name]].flat().filter(Boolean);
+/** Os emojis comuns de um nome, sempre em lista. */
+export const fallbacksOf = name => [ICONS[name]].flat();

@@ -176,7 +176,7 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
     assert.equal(unblock(fields["🪪 ID"]), "200000000000000001");
 
     // as insígnias públicas, só os ícones (os nomes estão em Mais informações), mais a gema do impulso
-    assert.equal(fields["🏅 Insígnias"], "🦁 🌠 🧑‍💻 💎");
+    assert.equal(fields["🏅 Insígnias"], "🦁 🌠 🧑‍💻 💠");
 
     // a conta tem a data do ID (a conta mais velha que o bot conhece, de 2016)
     assert.equal(
@@ -189,12 +189,12 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
 
     assert.match(fields["📥 Entrou no servidor em"], /20 de janeiro de 2025/);
     // o impulso: desde quando, e a insígnia de agora e a próxima (nível, tempo e quando chega o próximo)
-    assert.match(fields["🚀 Impulsionando este servidor desde"], /01 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
-    assert.match(fields["🏅 Insígnia de impulso atual"], /^💎 \| \*\*.+\*\*$/);
-    assert.match(fields["▶️ Próxima insígnia de impulso"], /^💎 \| em \*\*.+\*\*$/);
+    assert.match(fields["🚀 Impulsionando desde"], /01 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
+    assert.match(fields["🏅 Insígnia de impulso atual"], /^💠 \| \*\*.+\*\*$/);
+    assert.match(fields["▶️ Próxima insígnia de impulso"], /^💠 \| em \*\*.+\*\*$/);
 
     // o Nitro: a Maria não tem avatar animado nem banner, então nada o prova e o cartão não diz nada dele
-    assert.equal(fields["💠 Nitro"], undefined);
+    assert.equal(fields["🌀 Nitro"], undefined);
 
     // não existe nada de Prisma, Pulse ou tempo de tela no Discord
     assert.ok(!Object.keys(fields).some(name => /Prisma|Pulse|Pulser/.test(name)));
@@ -607,13 +607,13 @@ test("Mais informações: insígnias, datas e cargos, em mensagem só de quem pe
     // cada insígnia com o nome e o que ela quer dizer
     assert.match(badges.description, /🦁 \*\*HypeSquad Bravery\*\*\n-# Casa Bravery do HypeSquad\./);
     assert.match(badges.description, /🌠 \*\*Apoiador inicial\*\*/);
-    assert.match(badges.description, /🚀 \*\*Impulsiona este servidor\*\*/);
-    assert.match(badges.description, /não informa a bots/, "o aviso do que o Discord não entrega");
+    assert.match(badges.description, /💠 \*\*Impulsiona este servidor\*\*/);
+    assert.match(badges.description, /não as informa a bots/, "o aviso do que o Discord não entrega");
 
     const dates = (await ask("dates")).data.embeds[0];
 
     assert.deepEqual(dates.fields.map(field => field.name), [
-        "📅 Conta criada em", "📥 Entrou no servidor em", "🚀 Impulsionando este servidor desde"
+        "📅 Conta criada em", "📥 Entrou no servidor em", "🚀 Impulsionando desde"
     ]);
 
     // os cargos viram menções de cargo (no embed são só chips, não avisam ninguém)

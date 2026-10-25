@@ -70,7 +70,7 @@ test("com todos os bits ligados, todas as insígnias aparecem, cada uma com nome
     }
 });
 
-test("cada insígnia tem um desenho próprio no catálogo de emojis, e nenhum emoji se repete", () => {
+test("os emblemas são os emojis comuns do Discord: nenhum tem desenho próprio da Helena e nenhum se repete", () => {
     const names = Object.keys(ICONS);
 
     const used = new Set();
@@ -80,12 +80,17 @@ test("cada insígnia tem um desenho próprio no catálogo de emojis, e nenhum em
 
         const owners = names.filter(name => fallbacksOf(name).includes(badge.emoji));
 
-        assert.equal(owners.length, 1, `${badge.id} (${badge.emoji}) precisa de exatamente um desenho: ${owners}`);
-        assert.match(owners[0], /^badge_/, badge.id);
+        assert.deepEqual(owners, [], `${badge.id} (${badge.emoji}) seria trocado por um desenho da Helena: ${owners}`);
     }
 
     assert.equal(used.size, BADGES.length, "dois selos com o mesmo emoji");
-    assert.ok(names.includes("nitro"));
+
+    // o do impulso (💠) e o do Nitro (🌀) também ficam como são: o 💎 e o 🚀 têm desenho no catálogo
+    for (const emoji of ["💠", "🌀"]) {
+        assert.deepEqual(names.filter(name => fallbacksOf(name).includes(emoji)), [], emoji);
+    }
+
+    assert.ok(!names.some(name => /^(badge_|nitro|boost_)/.test(name)), "sem desenhos de emblemas no catálogo");
 });
 
 test("bits acima de 31 não quebram nada: o & de 32 bits do JavaScript não os enxerga, a conta é em BigInt", () => {
@@ -160,10 +165,10 @@ test("Nitro: avatar animado, banner e perfil por servidor são sinais fortes; se
 test("Nitro no cartão: a linha diz 'provável' com os sinais e some quando não há sinal (a API não prova a falta)", () => {
     const base = { id: "1", username: "ana", displayName: "Ana", createdAt: 0 };
 
-    assert.equal(infoOf(buildUserinfoEmbed({ user: base }))["💠 Nitro"], undefined, "sem sinal, o cartão não afirma nada");
+    assert.equal(infoOf(buildUserinfoEmbed({ user: base }))["🌀 Nitro"], undefined, "sem sinal, o cartão não afirma nada");
 
     assert.equal(
-        infoOf(buildUserinfoEmbed({ user: { ...base, avatarHash: "a_1", bannerUrl: "https://x.test/b.png" } }))["💠 Nitro"],
+        infoOf(buildUserinfoEmbed({ user: { ...base, avatarHash: "a_1", bannerUrl: "https://x.test/b.png" } }))["🌀 Nitro"],
         "**Provável** (avatar animado, banner no perfil)"
     );
 });
@@ -174,7 +179,7 @@ test("a tela de Nitro e impulso explica o que a API não entrega", () => {
     assert.match(detail.title, /Nitro e impulso de Ana/);
     assert.match(detail.fields[0].value, /\*\*Provável\*\* \(avatar animado\)/);
     assert.match(detail.fields[0].value, /só conta a assinatura do Nitro ao próprio dono da conta/);
-    assert.equal(detail.fields[1].value, "Não impulsiona este servidor.");
+    assert.equal(detail.fields[1].value, "Não impulsiona nenhum servidor onde a Helena está.");
 });
 
 // ==========================================
@@ -238,7 +243,7 @@ test("impulso: começar no dia 31 não estoura o fim dos meses curtos", () => {
     assert.equal(ladder.level, 1);
 });
 
-test("o cartão de quem impulsiona mostra desde quando, o nível e o próximo nível; a tela de Nitro lista os 9 degraus", () => {
+test("o cartão de quem impulsiona mostra desde quando, a insígnia de agora e a próxima; a tela de Nitro lista os 9 degraus", () => {
     const now = Date.UTC(2026, 7, 20, 0, 0, 0);
 
     const user = { id: "1", username: "ana", displayName: "Ana", createdAt: 0, boostingSince: SINCE };
@@ -247,64 +252,85 @@ test("o cartão de quem impulsiona mostra desde quando, o nível e o próximo n�
 
     const info = infoOf(card);
 
-    assert.match(info["🚀 Impulsionando este servidor desde"], /15 de janeiro de 2026/);
+    assert.match(info["🚀 Impulsionando desde"], /15 de janeiro de 2026/);
 
-    // a insígnia de agora e a próxima, uma linha cada (a idade e a contagem em calendário)
-    assert.equal(info["🏅 Insígnia de impulso atual"], "💎 | **7 meses 4 dias 12 horas**");
-    assert.equal(info["▶️ Próxima insígnia de impulso"], "💎 | em **1 mês 25 dias 12 horas**");
+    // a insígnia de agora e a próxima: o emblema | quanto tempo, e o emblema | quando chega
+    assert.equal(info["🏅 Insígnia de impulso atual"], "💠 | **7 meses 4 dias 12 horas**");
+    assert.equal(info["▶️ Próxima insígnia de impulso"], "💠 | em **1 mês 25 dias 12 horas**");
 
     // e ficam juntas, nessa ordem, logo depois do impulso
     const keys = Object.keys(info);
 
-    assert.deepEqual(keys.slice(keys.indexOf("🚀 Impulsionando este servidor desde")), [
-        "🚀 Impulsionando este servidor desde", "🏅 Insígnia de impulso atual", "▶️ Próxima insígnia de impulso"
+    assert.deepEqual(keys.slice(keys.indexOf("🚀 Impulsionando desde")), [
+        "🚀 Impulsionando desde", "🏅 Insígnia de impulso atual", "▶️ Próxima insígnia de impulso"
     ]);
 
     const detail = buildUserinfoDetail("nitro", user, now);
 
     const ladder = detail.fields.find(item => item.name.includes("Níveis"));
 
-    const lines = ladder.value.split("\n").filter(line => line.startsWith("💎"));
+    const lines = ladder.value.split("\n").filter(line => line.startsWith("💠"));
 
     assert.equal(lines.length, 9);
     assert.equal(lines.filter(line => line.endsWith("✅")).length, 4, "4 degraus já alcançados");
-    assert.match(lines[0], /^💎 \*\*Nível 1\*\* · 1 mês · <t:\d+:D> ✅$/);
-    assert.match(lines[8], /^💎 \*\*Nível 9\*\* · 24 meses · <t:\d+:D> ⏳$/);
+    assert.match(lines[0], /^💠 \*\*Nível 1\*\* · 1 mês · <t:\d+:D> ✅$/);
+    assert.match(lines[8], /^💠 \*\*Nível 9\*\* · 24 meses · <t:\d+:D> ⏳$/);
 });
 
-test("a insígnia de impulso usa a gema do nível quando o desenho existe, e fala do nível máximo e de quem ainda não tem", async () => {
+test("o impulso vale o mais antigo entre este servidor e os outros onde a Helena está; sem impulso nenhum, sem as linhas", () => {
+    const now = Date.UTC(2026, 7, 20, 0, 0, 0);
+
+    const base = { id: "1", username: "ana", createdAt: 0 };
+
+    const since = card => infoOf(card)["🚀 Impulsionando desde"];
+
+    // só em outro servidor (boostSince): aparece igual, sem precisar de impulso neste
+    assert.match(since(buildUserinfoEmbed({ user: { ...base, boostSince: Date.UTC(2024, 5, 2, 0, 28) }, now })), /^01 de junho de 2024, às 21:28/);
+
+    // nos dois: vale o mais antigo
+    assert.match(since(buildUserinfoEmbed({ user: { ...base, boostingSince: SINCE, boostSince: Date.UTC(2024, 5, 2, 0, 28) }, now })), /^01 de junho de 2024/);
+    assert.match(since(buildUserinfoEmbed({ user: { ...base, boostingSince: Date.UTC(2023, 0, 10, 15), boostSince: SINCE }, now })), /^10 de janeiro de 2023/);
+
+    // sem nenhum: nada de linha de impulso nem de insígnia
+    const none = infoOf(buildUserinfoEmbed({ user: base, now }));
+
+    assert.equal(none["🚀 Impulsionando desde"], undefined);
+    assert.equal(none["🏅 Insígnia de impulso atual"], undefined);
+    assert.equal(none["🏅 Insígnias"], undefined);
+});
+
+test("a insígnia de impulso: o nível máximo, quem ainda não completou 1 mês, e o emoji é sempre o comum do Discord", async () => {
     const { setAppEmojis } = await import("../services/platform/app-emojis.mjs");
+    const { ICONS } = await import("../config/icons.mjs");
 
     try {
-        setAppEmojis(Array.from({ length: 9 }, (_unused, index) => ({ id: String(500000000000000000n + BigInt(index)), name: `h_boost_${index + 1}`, animated: false })));
+        // com todos os desenhos da Helena no aplicativo, os emblemas continuam sendo os emojis comuns
+        setAppEmojis(Object.keys(ICONS).map((name, index) => ({ id: String(500000000000000000n + BigInt(index)), name: `h_${name}`, animated: false })));
 
         const now = Date.UTC(2026, 7, 20, 0, 0, 0);
 
-        const make = since => buildUserinfoEmbed({ user: { id: "1", username: "ana", createdAt: 0, boostingSince: since }, now });
+        // com os desenhos no aplicativo, o nome dos campos leva o emoji da Helena: acha o campo pelo fim do nome
+        const make = since => {
+            const card = buildUserinfoEmbed({ user: { id: "1", username: "ana", createdAt: 0, boostingSince: since, publicFlags: 1 << 6 }, now });
 
-        const value = (card, name) => infoOf(card)[name];
-
-        // nível 4: a gema 4 na de agora e a 5 na próxima
-        const four = make(SINCE);
-
-        assert.match(value(four, "🏅 Insígnia de impulso atual"), /^<:h_boost_4:500000000000000003> \| \*\*/);
-        assert.match(value(four, "▶️ Próxima insígnia de impulso"), /^<:h_boost_5:500000000000000004> \| em /);
+            return label => card.fields.find(field => field.name.endsWith(label))?.value;
+        };
 
         // mais de 24 meses: nível máximo, sem próximo nível
         const top = make(Date.UTC(2024, 5, 1, 21, 28, 0));
 
-        assert.match(value(top, "🏅 Insígnia de impulso atual"), /^<:h_boost_9:500000000000000008> \| \*\*/);
-        assert.equal(value(top, "▶️ Próxima insígnia de impulso"), "<:h_boost_9:500000000000000008> | **Nível máximo alcançado.**");
+        assert.match(top("Insígnia de impulso atual"), /^💠 \| \*\*2 anos/);
+        assert.equal(top("Próxima insígnia de impulso"), "💠 | **Nível máximo alcançado.**");
 
         // menos de 1 mês: ainda sem insígnia, e a próxima é o nível 1
-        // nas insígnias do cartão, quem impulsiona leva a gema do nível dele (e não o foguete)
-        assert.equal(value(four, "🏅 Insígnias"), "<:h_boost_4:500000000000000003>");
-        assert.equal(value(top, "🏅 Insígnias"), "<:h_boost_9:500000000000000008>");
-
         const fresh = make(Date.UTC(2026, 7, 10, 0, 0, 0));
 
-        assert.match(value(fresh, "🏅 Insígnia de impulso atual"), /^Ainda sem insígnia \| \*\*10 dias\*\*$/);
-        assert.match(value(fresh, "▶️ Próxima insígnia de impulso"), /^<:h_boost_1:500000000000000000> \| em \*\*21 dias\*\*$/);
+        assert.match(fresh("Insígnia de impulso atual"), /^Ainda sem insígnia \| \*\*10 dias\*\*$/);
+        assert.match(fresh("Próxima insígnia de impulso"), /^💠 \| em \*\*21 dias\*\*$/);
+
+        // a insígnia da conta (HypeSquad Bravery) e a do impulso: os emojis comuns, sem <:h_...:id>
+        assert.equal(top("Insígnias"), "🦁 💠");
+        assert.doesNotMatch(top("Insígnias") + top("Insígnia de impulso atual"), /<a?:h_/);
 
     } finally {
         setAppEmojis([]);
