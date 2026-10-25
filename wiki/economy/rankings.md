@@ -1,9 +1,9 @@
 ---
 title: Ranking
-description: Os três rankings do servidor, como a posição é calculada e o que significa o número do seu cartão de perfil.
+description: Os rankings do servidor e o ranking global de todos os servidores, como a posição é calculada e o que significa o número do seu cartão de perfil.
 ---
 
-O `/ranking` (atalho `/top`) mostra os 10 melhores jogadores do servidor em três classificações.
+O `/ranking` (atalho `/top`) mostra os 10 melhores jogadores em três classificações, **neste servidor** ou **no mundo todo** (o ranking global).
 
 ## Os três rankings
 
@@ -31,6 +31,18 @@ O **RANK** que aparece no seu cartão de perfil é a sua posição no ranking de
 ## Um ranking por servidor
 
 Patrimônio e nível valem **por servidor**. Já as gemas são da conta: o ranking de gemas mostra o saldo global de cada pessoa, mas só entre quem joga naquele servidor.
+
+## O ranking global
+
+Para ver quem está na frente **em todos os servidores**, use a opção `escopo:global` (`hranking escopo:global`) ou o botão **Global** embaixo do ranking. O botão **Neste servidor** volta para o ranking do servidor.
+
+| Ranking global | Quem fica na frente |
+| --- | --- |
+| **XP total** | quem tem mais XP **somando todos os servidores** em que joga |
+| **Patrimônio** | quem tem mais dinheiro, somando carteira e banco de todos os servidores |
+| **Gemas** | quem tem mais gemas (elas já são da conta) |
+
+O primeiro do **XP total** é quem aparece no status da Helena ("Top XP"). Se você pedir o "nível" no global, a Helena mostra o XP total, e o contrário vale no servidor. Os empates seguem a mesma regra do servidor. No ranking global aparecem o nome de exibição e o nível, e **só** de quem já usou a Helena.
 
 ## Próximo passo
 

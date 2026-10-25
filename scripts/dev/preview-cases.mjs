@@ -78,6 +78,7 @@ export const CASES = [
             { cmd: "hmissoes" },
             { cmd: "hranking" },
             { cmd: "hranking tipo:level", note: "por nível" },
+            { cmd: "hranking escopo:global", note: "global" },
             { cmd: "hcooldowns" },
             { cmd: "hajuda" },
             { cmd: "hajuda categoria:economia", note: "categoria" },

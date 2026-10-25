@@ -1,5 +1,5 @@
 
-import { buildRanking } from "../economy/ranking-view.mjs";
+import { buildRanking, typeForScope } from "../economy/ranking-view.mjs";
 
 import {
     notYours,
@@ -12,9 +12,13 @@ import {
 // RANKING: CLIQUES
 // ==========================================
 
-// customId: rank:tipo:<dono>:<tipo>. Só quem abriu o ranking troca de classificação.
+// Só quem abriu o ranking mexe nele. Os botões trocam a classificação e o alcance na mesma mensagem:
+//
+//   rank:tipo:<dono>:<tipo>          classificação do servidor
+//   rank:tipo:<dono>:<tipo>:g        classificação global
+//   rank:escopo:<dono>:<s|g>:<tipo>  muda o alcance (o tipo vai junto, se existir no novo alcance)
 export function handleRankingClick(interaction) {
-    const [, action, ownerId, type] = String(
+    const [, action, ownerId, first, second] = String(
         interaction.data?.customId || ""
     ).split(":");
 
@@ -22,7 +26,18 @@ export function handleRankingClick(interaction) {
         return notYours();
     }
 
-    if (action !== "tipo") {
+    let scope;
+    let type;
+
+    if (action === "tipo") {
+        scope = second === "g" ? "global" : "server";
+        type = first;
+
+    } else if (action === "escopo") {
+        scope = first === "g" ? "global" : "server";
+        type = typeForScope(second, scope);
+
+    } else {
         return warn("Botão desconhecido", "Esse botão não é reconhecido.");
     }
 
@@ -30,7 +45,8 @@ export function handleRankingClick(interaction) {
         return update(buildRanking({
             guildId: interaction.guildId,
             userId: ownerId,
-            type
+            type,
+            scope
         }));
 
     } catch (error) {

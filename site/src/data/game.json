@@ -101,7 +101,7 @@
           "aliases": [
             "top"
           ],
-          "description": "Consulte os melhores jogadores do servidor"
+          "description": "Consulte os melhores jogadores do servidor ou de todos os servidores"
         },
         {
           "name": "sacar",

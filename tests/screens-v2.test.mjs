@@ -307,10 +307,17 @@ test("ranking no V2: uma linha por jogador, sem menção, o nome protegido e os 
     assert.equal(view.embed.fields[0].name, "📍 Sua posição");
 
     assert.deepEqual(customIds(view.layout), [
-        `rank:tipo:${OWNER}:money`, `rank:tipo:${OWNER}:level`, `rank:tipo:${OWNER}:gems`
+        `rank:tipo:${OWNER}:money`, `rank:tipo:${OWNER}:level`, `rank:tipo:${OWNER}:gems`,
+        `rank:escopo:${OWNER}:s:money`, `rank:escopo:${OWNER}:g:money`
     ]);
 
-    const buttons = view.layout[0].components.at(-1).components;
+    // a linha dos tipos e, embaixo, a do alcance (neste servidor / global)
+    const buttons = view.layout[0].components.at(-2).components;
+    const scopes = view.layout[0].components.at(-1).components;
+
+    assert.deepEqual(scopes.map(item => item.label), ["Neste servidor", "Global"]);
+    assert.equal(scopes[0].disabled, true, "o alcance atual fica desligado");
+    assert.notEqual(scopes[1].disabled, true);
 
     assert.equal(buttons[0].disabled, true, "o tipo atual fica desligado");
     assert.notEqual(buttons[1].disabled, true);
@@ -344,6 +351,7 @@ test("/ranking: o clássico mantém o embed e ganha os botões; o V2 leva o layo
     assert.ok(!("layout" in classic));
     assert.equal(classic.embeds[0].title, "🏆 Ranking · Patrimônio");
     assert.equal(classic.components[0].components.length, 3);
+    assert.equal(classic.components[1].components.length, 2, "a linha do alcance: neste servidor e global");
 
     const gems = (await run("hranking tipo:gems")).sent[0];
 
