@@ -65,7 +65,7 @@ const facts = [
     <div class="stage">
       <span class="slab" aria-hidden="true"></span>
       <Plush size={132} class="peek" />
-      <Simulator client:load card={{ src: card.src, width: Number(card.attributes.width), height: Number(card.attributes.height) }} avatar={{ src: avatar.src, width: 40, height: 40 }} bot={url("/bot/")} />
+      <Simulator client:load card={{ src: card.src, width: Number(card.attributes.width), height: Number(card.attributes.height) }} avatar={{ src: avatar.src, width: 40, height: 40 }} bot={url("/bot/")} account={url("/account/")} />
       <p class="caption">Simulação com as regras e os textos reais do bot. No servidor, os botões da loja e da fuga também funcionam.</p>
     </div>
   </div>

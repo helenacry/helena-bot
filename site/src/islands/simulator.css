@@ -155,6 +155,7 @@
   .sim-line { display: block; }
   .sim-line.quote { padding-inline-start: 0.6rem; border-inline-start: 3px solid var(--chat-line); color: var(--chat-ink-soft); }
   .sim-line.small { font-size: 0.74rem; color: var(--chat-ink-soft); }
+  .sim-line.head { margin-block-start: 0.15rem; font-weight: 700; font-size: 0.86rem; color: var(--chat-ink); }
 
   .sim-embed code {
     padding: 0.05rem 0.3rem;
@@ -199,6 +200,18 @@
     color: var(--chat-ink-soft);
     max-inline-size: 28rem;
   }
+  select.sim-select {
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    border: 1px solid var(--chat-line);
+    color: var(--chat-ink);
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  select.sim-select:disabled { cursor: default; opacity: 0.55; }
+  a.sim-btn { display: inline-flex; align-items: center; gap: 0.3rem; min-block-size: 2.75rem; text-decoration: none; }
+  a.sim-btn:hover { filter: brightness(1.12); }
   .sim-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
   .sim-btn {
     padding: 0.35rem 0.7rem;

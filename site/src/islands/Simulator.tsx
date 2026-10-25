@@ -8,6 +8,8 @@ import {
   availability,
   initialState,
   isJailed,
+  jobOption,
+  pickJob,
   remainingSeconds,
   run,
   type Command,
@@ -25,6 +27,8 @@ export interface SimulatorProps {
   avatar: { src: string; width: number; height: number };
   /** A pasta das imagens do bot (a pelúcia de cada humor e o ícone), com a barra no fim. */
   bot: string;
+  /** O painel da conta, para onde o botão "Coletar no site" do /daily leva. */
+  account: string;
 }
 
 interface Message {
@@ -54,12 +58,13 @@ function rich(text: string): ComponentChildren[] {
   });
 }
 
-/** Uma linha por linha: "> " é citação e "-# " é letra pequena, como no chat. */
+/** Uma linha por linha: "> " é citação, "-# " é letra pequena e "### " é título, como no chat. */
 function Lines({ text }: { text: string }) {
   return (
     <>
       {text.split("\n").map((line, index) => {
         if (line === "") return <span class="sim-line" key={index}><br /></span>;
+        if (line.startsWith("### ")) return <span class="sim-line head" key={index}>{rich(line.slice(4))}</span>;
         if (line.startsWith("> ")) return <span class="sim-line quote" key={index}>{rich(line.slice(2))}</span>;
         if (line.startsWith("-# ")) return <span class="sim-line small" key={index}>{rich(line.slice(3))}</span>;
         return <span class="sim-line" key={index}>{rich(line)}</span>;
@@ -89,18 +94,22 @@ function Receipt({ rows, remaining }: { rows: Embed["rows"]; remaining: number |
 
 function EmbedView({ embed, remaining, bot }: { embed: Embed; remaining: number | null; bot: string }) {
   return (
-    <div class={`sim-embed accent-${embed.accent}`}>
-      <div class="sim-embed-head">
-        <div class="sim-embed-top">
-          <p class="sim-author">
-            <img src={`${bot}helena.png`} width={128} height={128} alt="" />
-            <span>HELENA · {embed.section.toUpperCase()}</span>
-          </p>
-          <p class="sim-embed-title">{embed.title}</p>
-        </div>
+    <div class={`sim-embed accent-${embed.accent}${embed.plain ? " plain" : ""}`}>
+      {embed.plain ? (
+        <p class="sim-embed-title">{embed.title}</p>
+      ) : (
+        <div class="sim-embed-head">
+          <div class="sim-embed-top">
+            <p class="sim-author">
+              <img src={`${bot}helena.png`} width={128} height={128} alt="" />
+              <span>HELENA · {embed.section.toUpperCase()}</span>
+            </p>
+            <p class="sim-embed-title">{embed.title}</p>
+          </div>
 
-        <img class="sim-thumb" src={`${bot}mood-${embed.mood}.png`} width={256} height={256} alt="" />
-      </div>
+          <img class="sim-thumb" src={`${bot}mood-${embed.mood}.png`} width={256} height={256} alt="" />
+        </div>
+      )}
 
       <p class="sim-embed-desc"><Lines text={embed.say} /></p>
 
@@ -119,15 +128,58 @@ function EmbedView({ embed, remaining, bot }: { embed: Embed; remaining: number 
         </dl>
       )}
 
-      <p class="sim-embed-foot">
-        <img src={`${bot}helena.png`} width={128} height={128} alt="" />
-        <span>{embed.footer}</span>
-      </p>
+      {!embed.plain && (
+        <p class="sim-embed-foot">
+          <img src={`${bot}helena.png`} width={128} height={128} alt="" />
+          <span>{embed.footer}</span>
+        </p>
+      )}
     </div>
   );
 }
 
-function Controls({ reply }: { reply: Extract<Reply, { kind: "embed" }> }) {
+interface ControlsProps {
+  reply: Extract<Reply, { kind: "embed" }>;
+  account: string;
+  /** Já tem emprego: o menu de empregos de uma mensagem antiga não escolhe mais nada. */
+  employed: boolean;
+  onPick: () => void;
+}
+
+function Controls({ reply, account, employed, onPick }: ControlsProps) {
+  if (reply.link) {
+    return (
+      <div class="sim-comps">
+        <div class="sim-row">
+          <a class="sim-btn link" href={account}>
+            <span aria-hidden="true">{reply.link.emoji}</span> {reply.link.label} <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // O menu de verdade: um <select> (teclado e leitor de tela de graça). Escolher vale na hora.
+  if (reply.picker) {
+    const option = jobOption();
+
+    return (
+      <div class="sim-comps">
+        <select
+          class="sim-select"
+          aria-label="Escolha uma profissão"
+          disabled={employed}
+          onChange={event => {
+            if ((event.currentTarget as HTMLSelectElement).value) onPick();
+          }}
+        >
+          <option value="" selected>Escolha uma profissão</option>
+          <option value="job">{option.label} · {option.description}</option>
+        </select>
+      </div>
+    );
+  }
+
   if (reply.shop) {
     return (
       <div class="sim-comps" aria-hidden="true">
@@ -163,7 +215,7 @@ function Controls({ reply }: { reply: Extract<Reply, { kind: "embed" }> }) {
   return null;
 }
 
-export default function Simulator({ card, avatar, bot }: SimulatorProps) {
+export default function Simulator({ card, avatar, bot, account }: SimulatorProps) {
   const [sim, setSim] = useState<SimState>(initialState);
   const [messages, setMessages] = useState<Message[]>([{ id: 1, command: "perfil", reply: { kind: "card" } }]);
   const [now, setNow] = useState(0);
@@ -223,6 +275,16 @@ export default function Simulator({ card, avatar, bot }: SimulatorProps) {
     );
   }
 
+  // Escolher no menu de empregos edita a própria mensagem (sem "digitando"), como o Discord faz.
+  function pick(id: number) {
+    if (busy || sim.employed) return;
+
+    const { state: after, reply } = pickJob(sim);
+
+    setSim(after);
+    setMessages(list => list.map(message => (message.id === id ? { ...message, reply } : message)));
+  }
+
   function reset() {
     timers.current.forEach(window.clearTimeout);
     timers.current = [];
@@ -275,7 +337,7 @@ export default function Simulator({ card, avatar, bot }: SimulatorProps) {
                 {message.reply?.kind === "embed" && (
                   <>
                     <EmbedView embed={message.reply.embed} remaining={message.reply.live === "jail" ? remaining : null} bot={bot} />
-                    <Controls reply={message.reply} />
+                    <Controls reply={message.reply} account={account} employed={sim.employed} onPick={() => pick(message.id)} />
                   </>
                 )}
               </div>

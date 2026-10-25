@@ -2,11 +2,11 @@
 // o comando, o relógio e o sorteio, e devolve o novo estado e a resposta do bot.
 //
 // Os textos e as cores das respostas são os dos comandos de verdade
-// (commands/economy/daily.mjs, work.mjs, crime/crime.mjs, prison.mjs) e todo
-// número vem de src/data/game.json, que sai do código do bot. O recibo é montado
+// (commands/economy/daily.mjs, work.mjs, crime/crime.mjs, prison.mjs, services/economy/jobs.mjs)
+// e todo número vem de src/data/game.json, que sai do código do bot. O recibo é montado
 // pela mesma regra de utils/receipt.mjs (tests/site-sim.test.mjs compara os dois).
 
-import { game, data } from "./game.ts";
+import { game, data, type Job } from "./game.ts";
 import { money, duration, span } from "./format.ts";
 import { rewardScale, wholeReais } from "./crime-math.ts";
 
@@ -40,11 +40,22 @@ export interface Embed {
   fields: Field[];
   footer: string;
   mood: Mood;
+  /** Embed sem seção, pelúcia nem rodapé: só o título e o texto (o "Bônus diário"). */
+  plain?: boolean;
 }
 
+/** `link` é o botão de link do Discord ("Coletar no site"); `picker`, o menu "Escolha uma profissão". */
 export type Reply =
   | { kind: "card" }
-  | { kind: "embed"; embed: Embed; live?: "jail"; shop?: boolean; escape?: boolean };
+  | {
+      kind: "embed";
+      embed: Embed;
+      live?: "jail";
+      shop?: boolean;
+      escape?: boolean;
+      link?: { emoji: string; label: string };
+      picker?: boolean;
+    };
 
 export type Command = "perfil" | "daily" | "trabalhar" | "loja" | "crime" | "prisao";
 
@@ -60,6 +71,8 @@ export interface SimState {
   wins: number;
   busts: number;
   dirtyEarned: number;
+  /** Quem acabou de chegar não tem emprego: o primeiro /trabalhar abre o menu de empregos. */
+  employed: boolean;
   used: Partial<Record<Command, true>>;
 }
 
@@ -70,7 +83,6 @@ const BLOCKED_IN_JAIL: ReadonlySet<Command> = new Set(["daily", "trabalhar", "cr
 
 /** Depois de usar, o comando fica em recarga (texto do botão). */
 export const COOLDOWN_LABEL: Partial<Record<Command, string>> = {
-  daily: "24 h",
   trabalhar: duration(game.work.cooldownSeconds),
   crime: duration(game.crime.cooldownSeconds)
 };
@@ -86,6 +98,7 @@ export const initialState = (): SimState => ({
   wins: 0,
   busts: 0,
   dirtyEarned: 0,
+  employed: false,
   used: {}
 });
 
@@ -182,37 +195,113 @@ function jailBlock(state: SimState, now: number): Reply {
   };
 }
 
+// Com o painel do site no ar, o /daily não paga: mostra se o bônus está disponível e leva ao site,
+// onde ele é coletado (commands/economy/daily.mjs, siteResponse). Por isso não muda o estado.
 function daily(state: SimState): { state: SimState; reply: Reply } {
-  const total = game.daily.ladder[0] ?? game.daily.reward;
-  const next: SimState = { ...state, wallet: cents(state.wallet + total), used: { ...state.used, daily: true } };
+  return {
+    state,
+    reply: {
+      kind: "embed",
+      link: { emoji: "🌐", label: "Coletar no site" },
+      embed: {
+        accent: "success",
+        section: "Daily",
+        title: "🎁 Bônus diário",
+        say:
+          "-# ✅ Disponível agora neste servidor\n" +
+          "\n" +
+          "O daily agora é coletado no site da Helena. Entre com a sua conta do Discord e pegue o seu: " +
+          "cada servidor tem a própria recarga de 24 horas e a própria sequência.",
+        rows: [],
+        fields: [],
+        mood: "feliz",
+        footer: "",
+        plain: true
+      }
+    }
+  };
+}
+
+// O nível do exemplo: quem chega começa no 1 (a linha "Nível" do /trabalhar também).
+const LEVEL = 1;
+
+const jobDetail = (job: Job): string => `${money(job.salary)} · nível ${job.level}`;
+
+// O menu de empregos que o primeiro /trabalhar abre (services/economy/jobs.mjs, buildJobs). Os cargos
+// bloqueados são 22: o exemplo mostra os 3 primeiros e resume o resto, para não virar uma parede de texto.
+function jobMenu(): Reply {
+  const open = data.jobs.filter(job => job.level <= LEVEL);
+  const locked = data.jobs.filter(job => job.level > LEVEL);
+  const shown = locked.slice(0, 3);
 
   return {
-    state: next,
+    kind: "embed",
+    picker: true,
+    embed: {
+      accent: "success",
+      section: "Carreira",
+      title: "💼 Empregos",
+      say: [
+        "🧾 Antes de trabalhar, escolha um emprego no menu abaixo.",
+        `📌 Você está sem emprego. Seu nível é **${LEVEL}**.`,
+        "",
+        `### ✅ Disponíveis para você (${open.length})`,
+        ...open.map(job => `💼 **${job.name}** · ${jobDetail(job)}`),
+        "",
+        `### 🔒 Ainda bloqueados (${locked.length})`,
+        ...shown.map(job => `🔒 ${job.name} · ${jobDetail(job)}`),
+        ...(locked.length > shown.length ? [`-# …e mais ${locked.length - shown.length} cargos, que abrem a cada nível`] : []),
+        "",
+        "-# Trabalhar rende experiência, e cada nível novo libera cargos melhores."
+      ].join("\n"),
+      rows: [],
+      fields: [],
+      mood: "feliz",
+      footer: "Escolha no menu para começar a trabalhar"
+    }
+  };
+}
+
+/** A opção do menu "Escolha uma profissão" (o único cargo aberto no nível 1), como o bot a escreve. */
+export function jobOption(): { label: string; description: string } {
+  const job = data.jobs[0];
+
+  return {
+    label: `💼 ${job?.name ?? "Entregador"}`,
+    description: `${money(job?.salary ?? 0)} por expediente · nível ${job?.level ?? 1}`
+  };
+}
+
+/** A pessoa escolheu o emprego no menu (services/panels/jobs-panel.mjs): a mensagem vira a confirmação. */
+export function pickJob(state: SimState): { state: SimState; reply: Reply } {
+  const job = data.jobs[0];
+
+  return {
+    state: { ...state, employed: true },
     reply: {
       kind: "embed",
       embed: {
         accent: "success",
-        section: "Daily",
-        title: "🎁 Recompensa do dia",
-        say:
-          "Dia **1** de 7 da sua sequência.\n" +
-          "🔥 **1 dia** seguidos · recorde de 1 dia\n" +
-          "🟩⬜⬜⬜⬜⬜🎁",
+        section: "Carreira",
+        title: "🎉 Novo emprego",
+        say: `Você agora é **${job?.name ?? "Entregador"}**. Use \`/trabalhar\` para o primeiro expediente.`,
         rows: [
-          ["Recompensa base", signed(game.daily.reward, money(game.daily.reward))],
-          null,
-          ["Total", signed(total, money(total))],
-          ["Carteira", money(next.wallet)]
+          ["Cargo", job?.name ?? "Entregador"],
+          ["Salário", money(job?.salary ?? 0)],
+          ["Nível exigido", String(job?.level ?? 1)]
         ],
         fields: [],
-        mood: "feliz",
-        footer: "Volte em 24 horas para manter a sequência"
+        mood: "festa",
+        footer: "Um novo capítulo na sua carreira"
       }
     }
   };
 }
 
 function work(state: SimState): { state: SimState; reply: Reply } {
+  // sem emprego (quem acabou de chegar) não há o que pagar: primeiro escolhe o cargo no menu
+  if (!state.employed) return { state, reply: jobMenu() };
+
   const job = data.jobs[0];
   const pay = job?.salary ?? 0;
   const energy = Math.max(0, state.energy - game.work.energy);

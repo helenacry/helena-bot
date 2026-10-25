@@ -123,22 +123,62 @@ test("o recibo soma certo: sujo, multas, cadeia e o limpo depois da lavagem", ()
 
 const NOW = 1_800_000_000_000;
 
-test("daily: paga o prêmio do dia 1 e a conta bate (carteira de exemplo R$ 10 + R$ 500)", () => {
-    const { state, reply } = sim.run(sim.initialState(), "daily", NOW);
+// quem já escolheu o primeiro emprego (o menu que o primeiro /trabalhar abre)
+const employed = () => sim.pickJob(sim.initialState()).state;
 
-    assert.equal(state.wallet, 10 + game.daily.ladder[0]);
-    assert.equal(reply.embed.title, "🎁 Recompensa do dia");
-    assert.equal(rows(reply)["Total"], "+R$ 500,00");
-    assert.equal(rows(reply)["Carteira"], "R$ 510,00");
-    assert.equal(rows(reply)["Bônus de sequência"], undefined, "no primeiro dia não há bônus");
-    assert.match(reply.embed.say, /Dia \*\*1\*\* de 7 da sua sequência/);
+test("daily: com o painel no ar o comando não paga, só diz que está disponível e leva ao site", () => {
+    const start = sim.initialState();
+
+    const { state, reply } = sim.run(start, "daily", NOW);
+
+    assert.equal(state, start, "não muda o estado");
+    assert.equal(state.wallet, 10, "a carteira de exemplo fica como estava");
+    assert.equal(reply.embed.title, "🎁 Bônus diário");
+    assert.equal(reply.embed.plain, true, "sem seção, pelúcia nem rodapé, como o do bot");
+    assert.deepEqual(reply.link, { emoji: "🌐", label: "Coletar no site" });
+    assert.match(reply.embed.say, /✅ Disponível agora neste servidor/);
+    assert.match(reply.embed.say, /coletado no site da Helena/);
+    assert.deepEqual(reply.embed.rows, []);
     assert.equal(reply.embed.accent, "success");
-    assert.equal(state.used.daily, true);
-    assert.equal(sim.availability(state, "daily", NOW).ok, false, "em recarga");
+    assert.equal(sim.availability(state, "daily", NOW).ok, true, "não entra em recarga: é só a consulta");
+});
+
+test("trabalhar: o primeiro uso abre o menu de empregos, sem pagar nem gastar nada", () => {
+    const start = sim.initialState();
+
+    const { state, reply } = sim.run(start, "trabalhar", NOW);
+
+    assert.equal(state, start);
+    assert.equal(reply.picker, true);
+    assert.equal(reply.embed.title, "💼 Empregos");
+    assert.match(reply.embed.say, /^🧾 Antes de trabalhar, escolha um emprego no menu abaixo\./);
+    assert.match(reply.embed.say, /Você está sem emprego\. Seu nível é \*\*1\*\*/);
+    assert.match(reply.embed.say, new RegExp(`### ✅ Disponíveis para você \\(${data.jobs.filter(job => job.level <= 1).length}\\)`));
+    assert.match(reply.embed.say, new RegExp(`### 🔒 Ainda bloqueados \\(${data.jobs.filter(job => job.level > 1).length}\\)`));
+    assert.match(reply.embed.say, new RegExp(`💼 \\*\\*${data.jobs[0].name}\\*\\*`));
+    assert.equal(reply.embed.footer, "Escolha no menu para começar a trabalhar");
+    assert.equal(sim.availability(state, "trabalhar", NOW).ok, true, "o menu não consome a espera");
+
+    const option = sim.jobOption();
+
+    assert.equal(option.label, `💼 ${data.jobs[0].name}`);
+    assert.match(option.description, /por expediente · nível 1$/);
+});
+
+test("escolher o emprego confirma na mesma mensagem e libera o expediente", () => {
+    const { state, reply } = sim.pickJob(sim.initialState());
+
+    assert.equal(state.employed, true);
+    assert.equal(reply.embed.title, "🎉 Novo emprego");
+    assert.match(reply.embed.say, new RegExp(`Você agora é \\*\\*${data.jobs[0].name}\\*\\*`));
+    assert.equal(reply.picker, undefined, "a confirmação não tem mais o menu");
+    assert.equal(rows(reply)["Cargo"], data.jobs[0].name);
+    assert.equal(rows(reply)["Nível exigido"], "1");
+    assert.equal(state.wallet, 10, "escolher não paga");
 });
 
 test("trabalhar: paga o primeiro emprego, gasta a energia de verdade e dá o XP do bot", () => {
-    const { state, reply } = sim.run(sim.initialState(), "trabalhar", NOW);
+    const { state, reply } = sim.run(employed(), "trabalhar", NOW);
 
     assert.equal(state.wallet, 10 + data.jobs[0].salary);
     assert.equal(state.energy, game.energy.max - game.work.energy);
@@ -237,8 +277,11 @@ test("os títulos, as linhas do recibo e os rodapés das respostas de exemplo ex
     const bot = file => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 
     const expected = {
-        "commands/economy/daily.mjs": ['section: "Daily"', "🎁 Recompensa do dia", "Recompensa base", '"Total"', '"Carteira"', "de 7 da sua sequência", "seguidos · recorde de", "Volte em 24 horas para manter a sequência"],
-        "commands/economy/work.mjs": ['section: "Trabalho"', "💼 Expediente concluído", "feito e pago.", '"Pagamento"', '"Experiência"', '"Energia"', '"Carteira"', '"Nível"', "Próximo expediente em 1 hora"],
+        // o /daily do bot só consulta e leva ao site (siteResponse); o texto é uma soma de duas linhas
+        "commands/economy/daily.mjs": ["🎁 Bônus diário", "✅ Disponível agora neste servidor", "O daily agora é coletado no site da Helena. Entre com a sua conta do Discord e pegue o seu: ", "cada servidor tem a própria recarga de 24 horas e a própria sequência.", "Coletar no site", "🌐"],
+        "services/economy/jobs.mjs": ['section: "Carreira"', "💼 Empregos", "📌 Você está sem emprego. Seu nível é", "### ✅ Disponíveis para você", "### 🔒 Ainda bloqueados", "Trabalhar rende experiência, e cada nível novo libera cargos melhores.", "Escolha no menu para começar a trabalhar", "por expediente · nível"],
+        "services/panels/jobs-panel.mjs": ['section: "Carreira"', "🎉 Novo emprego", "para o primeiro expediente.", '"Cargo"', '"Salário"', '"Nível exigido"', "Um novo capítulo na sua carreira"],
+        "commands/economy/work.mjs": ["🧾 Antes de trabalhar, escolha um emprego no menu abaixo.", 'section: "Trabalho"', "💼 Expediente concluído", "feito e pago.", '"Pagamento"', '"Experiência"', '"Energia"', '"Carteira"', '"Nível"', "Próximo expediente em 1 hora"],
         "commands/crime/crime.mjs": ['section: "Crime"', "🕵️ Crime bem-sucedido", "💎 Golpe de mestre", '"Dinheiro sujo"', '"Total sujo"', "não vale nada", "/lavagem", "Próximo crime em ", "🚨 Você foi pego", '"Multa"', '"Prisão"', '"Ferimento"', "nada (carteira vazia)", "Preso, você não trabalha, não compra e não mexe em dinheiro.", "/prisao acompanha a sua pena"],
         "commands/crime/prison.mjs": ['section: "Prisão"', '"Tempo restante"', '"Pena total"', '"Motivo"', '"Crimes"', '"Sucessos"', '"Capturas"', '"Total arrecadado (sujo)"', "⛓️ Você está preso", "🔓 Você está livre", "Trabalho, compras, depósitos e outras", "Nenhuma pena em curso.", "Atualizado automaticamente", "Ficha criminal"],
         "services/crime/prison.mjs": ['section: "Prisão"', "⛓️ Você está preso", "Este comando fica bloqueado enquanto", "você cumpre pena. Consultas continuam", '"Tempo restante"', '"Motivo"', "Atualizado automaticamente. Use /prisao"]

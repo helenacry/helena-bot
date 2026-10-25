@@ -13,7 +13,7 @@ const CLIENT_ID = String(process.env.PUBLIC_DISCORD_CLIENT_ID || SITE.clientId);
 const hydrated = (selector: string) => `astro-island:has(${selector}):not([ssr])`;
 
 test.describe("página inicial", () => {
-  test("a conversa de exemplo segue as regras do bot: daily, crime que dá errado e cadeia", async ({ page }) => {
+  test("a conversa de exemplo segue as regras do bot: daily só no site, crime que dá errado e cadeia", async ({ page }) => {
     // sorteio fixo em 0,9: o crime sempre falha (a chance de dar certo é 50%)
     await page.addInitScript(() => { Math.random = () => 0.9; });
     await page.goto("./", { waitUntil: "networkidle" });
@@ -21,10 +21,12 @@ test.describe("página inicial", () => {
     const log = page.getByRole("log", { name: "Mensagens" });
     await expect(log.getByRole("img", { name: /Cartão de perfil da Helena/ })).toBeVisible();
 
+    // o /daily não paga: diz que está disponível e leva ao painel do site
     await page.getByRole("button", { name: "/daily", exact: true }).click();
-    await expect(log).toContainText("Recompensa do dia");
-    await expect(log).toContainText("R$ 510,00");
-    await expect(page.locator(".sim-chips").getByRole("button", { name: /\/daily/ })).toBeDisabled();
+    await expect(log).toContainText("Bônus diário");
+    await expect(log).toContainText("Disponível agora neste servidor");
+    await expect(log.getByRole("link", { name: /Coletar no site/ })).toHaveAttribute("href", /\/account\/$/);
+    await expect(page.locator(".sim-chips").getByRole("button", { name: /\/daily/ })).toBeEnabled();
 
     await page.getByRole("button", { name: "/crime", exact: true }).click();
     await expect(log).toContainText("Você foi pego");
@@ -37,6 +39,26 @@ test.describe("página inicial", () => {
 
     await page.getByRole("button", { name: "Recomeçar o exemplo" }).click();
     await expect(page.getByRole("button", { name: "/prisao", exact: true })).toHaveCount(0);
+  });
+
+  test("o primeiro /trabalhar abre o menu de empregos; escolher o cargo libera o expediente", async ({ page }) => {
+    await page.goto("./", { waitUntil: "networkidle" });
+
+    const log = page.getByRole("log", { name: "Mensagens" });
+
+    await page.getByRole("button", { name: "/trabalhar", exact: true }).click();
+    await expect(log).toContainText("Antes de trabalhar, escolha um emprego no menu abaixo.");
+    await expect(log).toContainText("Ainda bloqueados");
+    await expect(log).not.toContainText("Expediente concluído");
+
+    // o menu de verdade: escolher vale na hora e a mesma mensagem vira a confirmação
+    await log.getByRole("combobox", { name: "Escolha uma profissão" }).selectOption({ index: 1 });
+    await expect(log).toContainText("Novo emprego");
+    await expect(log.getByRole("combobox")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "/trabalhar", exact: true }).click();
+    await expect(log).toContainText("Expediente concluído");
+    await expect(page.locator(".sim-chips").getByRole("button", { name: /\/trabalhar/ })).toBeDisabled();
   });
 
   for (const theme of ["light", "dark"] as const) {
@@ -58,9 +80,10 @@ test.describe("página inicial", () => {
         await expect(page.locator(".sim-embed")).not.toHaveCount(0);
       }
 
-      // um bloco de resposta por comando, cada um com o nome da seção no topo e o rodapé
+      // um bloco de resposta por comando; só o bônus diário é simples (sem seção nem rodapé)
       await expect(page.locator(".sim-embed")).toHaveCount(5);
-      await expect(page.locator(".sim-author").first()).toContainText("HELENA · DAILY");
+      await expect(page.locator(".sim-embed.plain")).toHaveCount(1);
+      await expect(page.locator(".sim-author").first()).toContainText("HELENA · CARREIRA");
 
       // nenhum recibo rola por dentro e a página não ganha rolagem lateral
       const clipped = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>(".sim-receipt")].filter(el => el.scrollWidth > el.clientWidth + 1).length);
