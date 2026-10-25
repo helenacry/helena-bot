@@ -137,29 +137,39 @@ test("/saldo: classic com embed e botões; V2 com o layout; o layout nunca vai n
 // CENTRAL DE AJUDA
 // ==========================================
 
-test("ajuda no V2: uma seção por categoria com o botão Abrir, o mesmo clique do menu de antes", () => {
+test("ajuda no V2: o início é um cartão só, como o da Alfacusa (título, prefixo, menu, dicas e três links)", () => {
     const view = buildHelpHome({ ownerId: OWNER, catalog });
 
     assert.deepEqual(layoutProblems(view.layout), []);
+    assert.ok(countComponents(view.layout) <= 40);
 
-    const sections = view.layout[0].components.filter(component => component.type === "section");
+    // um container só, sem rodapé fora dele
+    assert.equal(view.layout.length, 1);
 
-    assert.equal(sections.length, catalog.categories.length);
+    const inside = view.layout[0].components;
 
-    sections.forEach((section, index) => {
-        const category = catalog.categories[index];
+    assert.deepEqual(inside.map(component => component.type), ["text", "text", "row", "separator", "text", "row"]);
 
-        assert.match(section.texts[0], new RegExp(`^\\*\\*${category.emoji} ${category.label}\\*\\* · \\d+ comandos?$`, "u"));
-        assert.equal(section.accessory.label, "Abrir");
-        assert.equal(section.accessory.customId, `ajuda:pg:${OWNER}:${category.id}:1`);
-    });
+    assert.equal(inside[0].content, "## 📚 Menu de comandos");
+    assert.equal(inside[1].content, "-# Prefixo neste servidor: `h`\nEncontre o que precisa escolhendo uma categoria abaixo.");
 
-    // Buscar e Fechar embaixo, e o rodapé fora do container
-    assert.match(allText(view.layout), /ajuda:buscar:/);
-    assert.match(allText(view.layout), /ajuda:fechar:/);
-    assert.match(view.layout[1].content, /^-# \d+ comandos no total$/);
+    // o menu de categorias fica dentro do cartão
+    const menu = inside[2].components[0];
 
-    // o clássico continua com o menu
+    assert.equal(menu.type, "select");
+    assert.equal(menu.placeholder, "Selecione uma categoria");
+    assert.deepEqual(menu.options.map(option => option.value), catalog.categories.map(category => category.id));
+
+    assert.match(inside[4].content, /Dúvidas\? Use `\/ajuda comando:daily`/);
+    assert.match(inside[4].content, /Resumo de cada sistema do jogo: \[wiki\]/);
+
+    // os três links, sem Buscar nem Fechar
+    assert.deepEqual(inside[5].components.map(component => component.label), ["Website", "Painel do jogador", "Privacidade"]);
+    assert.ok(inside[5].components.every(component => component.style === "link" && component.url.startsWith("https://")));
+
+    assert.doesNotMatch(allText(view.layout), /ajuda:buscar:|ajuda:fechar:/);
+
+    // o clássico leva o mesmo menu
     assert.equal(view.components[0].components[0].type, "select");
 });
 
@@ -238,9 +248,12 @@ test("/ajuda no V2: sai o layout, sem embed, e o clique segue o layout; no clás
         assert.equal(v2.components[0].type, "container");
         assert.deepEqual(layoutProblems(v2.components), []);
 
-        const abrir = v2.components[0].components.find(component => component.type === "section");
+        // escolher uma categoria no menu que fica dentro do cartão
+        const menu = v2.components[0].components.find(component => component.type === "row").components[0];
 
-        const click = handlePanelClick({ guildId: G, user: ME, data: { customId: abrir.accessory.customId } });
+        assert.equal(menu.type, "select");
+
+        const click = handlePanelClick({ guildId: G, user: ME, data: { customId: menu.customId, values: [menu.options[0].value] } });
 
         // o clique atualiza a mensagem com a categoria, em V2 sem o clássico antigo
         const next = toV2Data(click.data, { clear: true });

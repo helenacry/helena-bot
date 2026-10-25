@@ -224,47 +224,42 @@ test("como usar: obrigatórias entre < > e opcionais entre [ ]", () => {
 // TELAS
 // ==========================================
 
-test("o início é o menu de comandos: prefixo, categorias no menu, busca, dicas e os links do site", () => {
+test("o início é igual ao menu da Alfacusa: título, prefixo, chamada, menu, duas dicas e três links (sem mais nada)", () => {
     const view = buildHelpHome({ ownerId: OWNER, catalog });
 
     assertFits(view, "início");
 
-    assert.match(view.embed.title, /Menu de comandos/);
-    assert.match(view.embed.description, /Prefixo neste servidor: `h`/);
-    assert.match(view.embed.description, /`\/daily`/);
-    assert.match(view.embed.description, /`hdaily`/);
-    assert.match(view.embed.description, /<assim>/);
-    assert.match(view.embed.description, /Encontre o que precisa escolhendo uma categoria abaixo/);
-    assert.match(view.embed.description, /Dúvidas\? Use `\/ajuda comando:daily`/);
+    assert.equal(view.embed.title, "📚 Menu de comandos");
+    assert.equal(
+        view.embed.description.split("\n").slice(0, 2).join("|"),
+        "-# Prefixo neste servidor: `h`|Encontre o que precisa escolhendo uma categoria abaixo."
+    );
+    assert.match(view.embed.description, /Dúvidas\? Use `\/ajuda comando:daily` ou entre no \[servidor oficial\]\(/);
     assert.ok(view.embed.description.includes(HELP_CONFIG.wikiUrl), "a wiki");
+    assert.ok(view.embed.description.includes(SUPPORT_URL), "o servidor oficial");
 
-    // as categorias ficam no menu (com a frase de cada uma), não em campos soltos
+    // sem a explicação das opções, sem lista de categorias, sem autor, miniatura nem rodapé
+    assert.doesNotMatch(view.embed.description, /<assim>/);
     assert.deepEqual(view.embed.fields, []);
+    assert.equal(view.embed.author, undefined);
+    assert.equal(view.embed.thumbnail, undefined);
+    assert.equal(view.embed.footer.text, "");
 
     const [menu] = selects(view.components);
 
     assert.equal(menu.placeholder, "Selecione uma categoria");
     assert.equal(menu.customId, `ajuda:cat:${OWNER}`);
     assert.ok(menu.options.every(option => option.description), "cada categoria diz o que cobre");
-
-    // os links, como no menu da Alfacusa: site, painel do jogador, privacidade, wiki e o servidor oficial
-    const links = buttons(view.components).filter(item => item.style === "link");
-
-    assert.deepEqual(links.map(item => item.label), ["Website", "Painel do jogador", "Privacidade", "Wiki", "Servidor oficial"]);
-    assert.deepEqual(links.map(item => item.url), [
-        SITE_URL,
-        `${SITE_URL}account/`,
-        `${SITE_URL}privacy/`,
-        HELP_CONFIG.wikiUrl,
-        SUPPORT_URL
-    ]);
-    assert.ok(links.every(item => item.url.startsWith("https://") && !item.customId));
     assert.deepEqual(menu.options.map(option => option.value), catalog.categories.map(category => category.id));
 
-    assert.deepEqual(
-        buttons(view.components).filter(item => item.style !== "link").map(item => item.customId),
-        [`ajuda:buscar:${OWNER}`, `ajuda:fechar:${OWNER}`]
-    );
+    // só os três links, como no menu da Alfacusa (nada de Buscar nem Fechar)
+    assert.equal(view.components.length, 2);
+
+    const links = buttons(view.components);
+
+    assert.deepEqual(links.map(item => item.label), ["Website", "Painel do jogador", "Privacidade"]);
+    assert.deepEqual(links.map(item => item.url), [SITE_URL, `${SITE_URL}account/`, `${SITE_URL}privacy/`]);
+    assert.ok(links.every(item => item.style === "link" && item.url.startsWith("https://") && !item.customId));
 });
 
 test("a ajuda nunca mais diz que os comandos 'serão adicionados em breve'", () => {

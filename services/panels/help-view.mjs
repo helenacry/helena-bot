@@ -98,70 +98,54 @@ const closeButton = ownerId => button(`ajuda:fechar:${ownerId}`, "Fechar", "✖�
 // INÍCIO
 // ==========================================
 
-// Os links do rodapé do menu, como no menu de comandos da Alfacusa: o site, o painel do jogador, a
-// privacidade, a wiki e (se houver) o servidor oficial. Botões de link não levam customId.
+// Os links do menu, como no menu de comandos da Alfacusa: o site, o painel do jogador e a
+// privacidade. Botões de link não levam customId.
 const linkButton = (label, emoji, url) => ({ type: "button", style: "link", label, emoji, url });
 
-// "withWiki" false tira o botão da wiki (o V2 já tem o link no texto e só pode ter 40 componentes).
-export const helpLinks = ({ withWiki = true } = {}) => [
+export const helpLinks = () => [
     linkButton("Website", "🌐", SITE_URL),
     linkButton("Painel do jogador", "🎮", `${SITE_URL}account/`),
-    linkButton("Privacidade", "🔒", `${SITE_URL}privacy/`),
-    ...(withWiki ? [linkButton("Wiki", "📚", WIKI_URL)] : []),
-    ...(SUPPORT_URL ? [linkButton("Servidor oficial", "💬", SUPPORT_URL)] : [])
+    linkButton("Privacidade", "🔒", `${SITE_URL}privacy/`)
 ];
 
+// O início é só isto, igual ao menu da Alfacusa: o prefixo, a chamada, o menu de categorias, duas
+// dicas e os três links. Nada de lista de categorias nem de explicação das opções: isso vem quando
+// a pessoa escolhe uma categoria.
 export function buildHelpHome({ ownerId, catalog }) {
-    // O mesmo texto no embed e no V2: o prefixo, a chamada e as duas dicas do fim.
     const intro = [
-        "-# Prefixo neste servidor: `h` (`hdaily` ou `/daily`)",
+        "-# Prefixo neste servidor: `h`",
         "Encontre o que precisa escolhendo uma categoria abaixo."
     ];
 
     const tips = [
-        "💬 Dúvidas? Use `/ajuda comando:daily` ou o botão **Buscar**.",
-        `📖 Regras e exemplos de cada sistema: [wiki](${WIKI_URL}).`,
-        "-# `<assim>` é uma opção obrigatória e `[assim]` é opcional. No prefixo, escreva na ordem ou como `nome:valor`."
+        `💬 Dúvidas? Use \`/ajuda comando:daily\` ou entre no [servidor oficial](${SUPPORT_URL}).`,
+        `📖 Resumo de cada sistema do jogo: [wiki](${WIKI_URL}).`
     ];
 
+    // O clássico: um embed sem autor, miniatura nem rodapé, com o menu e os links embaixo.
     const embed = createEmbed({
-        section: "Ajuda",
         title: "📚 Menu de comandos",
         description: [...intro, "", ...tips].join("\n"),
         color: HELENA_COLORS.primary,
-        mood: "feliz",
-        footer: `${plural(catalog.total, "comando", "comandos")} no total`
+        footer: "",
+        timestamp: false
     });
 
-    // O V2: uma seção por categoria, com o botão Abrir ao lado (no lugar do menu).
+    // O V2: tudo dentro de um cartão só, com o menu no meio (como no da Alfacusa).
     const layout = [
         container([
-            text("-# HELENA · AJUDA"),
-
             text("## 📚 Menu de comandos"),
 
             text(intro.join("\n")),
 
-            divider(),
-
-            ...catalog.categories.map(category => section(
-                [
-                    `**${category.emoji} ${category.label}** · ${plural(category.commands.length, "comando", "comandos")}`,
-                    HELP_CONFIG.blurbs[category.id] ?? ""
-                ].filter(Boolean),
-                button(`ajuda:pg:${ownerId}:${category.id}:1`, "Abrir", "📂", "secondary")
-            )),
+            categoryMenu(ownerId, catalog, null),
 
             divider(),
 
             text(tips.join("\n")),
 
-            row(...helpLinks({ withWiki: false })),
-
-            row(searchButton(ownerId), closeButton(ownerId))
-        ], { color: HELENA_COLORS.primary }),
-
-        subtext(`${plural(catalog.total, "comando", "comandos")} no total`)
+            row(...helpLinks())
+        ], { color: HELENA_COLORS.primary })
     ];
 
     return {
@@ -171,8 +155,7 @@ export function buildHelpHome({ ownerId, catalog }) {
 
         components: [
             categoryMenu(ownerId, catalog, null),
-            row(...helpLinks()),
-            row(searchButton(ownerId), closeButton(ownerId))
+            row(...helpLinks())
         ]
     };
 }
