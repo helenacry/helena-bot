@@ -86,6 +86,15 @@ Os desenhos ficam em `assets/emojis/<nome>.svg` (a pelúcia, tinta escura, lilá
 - O rodapé é uma dica curta (até uns 60 caracteres), sem o prefixo "Helena •". O ícone dela já vem no rodapé.
 - Erros dizem o que aconteceu e o que fazer. Nada de "Ocorreu um erro" sem motivo.
 
+## A lista de comandos do Discord
+
+Quando a pessoa digita `/`, o Discord mostra cada comando com a descrição embaixo. No registro (`command-registry.mjs`), a Helena abre cada descrição com a categoria entre colchetes, como a Alfacusa: `[💰 Economia] Consulte o seu saldo`, `[🕵️ Crime] Cometa um crime em busca de dinheiro sujo`. A categoria vem de `config/command-categories.mjs` (`slashTag` e `slashDescription`); os comandos do dono levam `[🔧 Admin]` e `[🧪 Dev]`. A descrição é cortada com "…" para caber nos 100 caracteres do Discord.
+
+- O emoji é o **comum**: o Discord não desenha emoji personalizado na descrição de um comando.
+- A etiqueta existe **só no registro**. A ajuda, o site e a wiki mostram a descrição pura, porque já mostram a categoria ao lado.
+- Comando novo não precisa de nada: a categoria sai da pasta onde ele mora (e o arquivo de categorias cobre as exceções). Escreva a descrição sem etiqueta, em até uns 85 caracteres.
+- O Discord guarda o registro em cache: uma descrição nova pode levar alguns minutos para aparecer.
+
 ## Prévia
 
 `node scripts/dev/preview-replies.mjs --shots --v2` roda os comandos de verdade num banco temporário e desenha cada resposta (clássico e V2) num HTML parecido com o chat; os casos ficam em `scripts/dev/preview-cases.mjs`. Rode antes de dar um comando por pronto.

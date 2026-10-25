@@ -5,6 +5,8 @@ import { discordApi } from "./services/discord/api.mjs";
 
 import { toDiscordCommand } from "./services/discord/format.mjs";
 
+import { slashDescription } from "./config/command-categories.mjs";
+
 const COMMANDS_DIR = new URL("./commands/", import.meta.url);
 
 // Lista os .mjs de commands/ e de todas as subpastas
@@ -168,15 +170,27 @@ export async function carregarComandos() {
 export async function registrarComandos(appId, comandos) {
     const aliases = aliasesPorComandos.get(comandos) ?? new Map();
 
+    // A pasta de cada comando (de onde sai a categoria da etiqueta "[💰 Economia]" da descrição).
+    const origem = ultimaCarga?.comandos === comandos ? ultimaCarga.origem : new Map();
+
+    const paraDiscord = (nome, comando) => toDiscordCommand(nome, {
+        ...comando,
+        description: slashDescription(
+            comando.name,
+            String(origem.get(comando.name) ?? "").split("/")[0],
+            comando.description
+        )
+    });
+
     // Cada comando seguido dos seus aliases, que repetem a
     // descrição e as opções do comando original. toDiscordCommand confere as regras do
     // Discord (nome, descrição, opções) e diz exatamente o que está errado.
     const payload = [
         ...[...comandos.values()].map(
-            comando => toDiscordCommand(comando.name, comando)
+            comando => paraDiscord(comando.name, comando)
         ),
         ...[...aliases].map(
-            ([alias, comando]) => toDiscordCommand(alias, comando)
+            ([alias, comando]) => paraDiscord(alias, comando)
         )
     ];
 
