@@ -26,7 +26,7 @@ export const SITE = {
 
   // Convite permanente do servidor de suporte da Helena no Discord (discord.gg/...).
   // Vazio, os links "Servidor oficial" somem.
-  supportUrl: "",
+  supportUrl: "https://discord.gg/NDBwQW99RZ",
 
   // Repositório do código (opcional). Vazio, o item some do rodapé.
   codeUrl: "",
