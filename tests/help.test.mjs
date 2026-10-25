@@ -11,6 +11,7 @@ const { carregarComandos, comandosCarregados, resolverComando } = await import("
 const { handlePanelClick, handleModalSubmit } = await import("../services/panels/panels.mjs");
 const { COMMAND_CATEGORIES, HIDDEN_FOLDERS, HIDDEN_COMMANDS } = await import("../config/command-categories.mjs");
 const { HELP_CONFIG } = await import("../config/help.mjs");
+const { SITE_URL, SUPPORT_URL } = await import("../config/site.mjs");
 const { collectSiteData } = await import("../scripts/site/data-source.mjs");
 
 const catalogModule = await import("../services/platform/command-catalog.mjs");
@@ -43,7 +44,8 @@ const G = "g-help";
 const flat = components => components.flatMap(rowItem => rowItem.components);
 const buttons = components => flat(components).filter(item => item.type === "button");
 const selects = components => flat(components).filter(item => item.type === "select");
-const idsOf = components => flat(components).map(item => item.customId);
+// Botão de link não tem customId (leva um endereço): só conta o que tem.
+const idsOf = components => flat(components).map(item => item.customId).filter(Boolean);
 const text = view => JSON.stringify(view.embed);
 
 // Cada tela precisa caber nos limites (o createEmbed corta em silêncio, então
@@ -222,36 +224,47 @@ test("como usar: obrigatórias entre < > e opcionais entre [ ]", () => {
 // TELAS
 // ==========================================
 
-test("o início tem o menu de categorias, a busca, o como usar e a wiki", () => {
+test("o início é o menu de comandos: prefixo, categorias no menu, busca, dicas e os links do site", () => {
     const view = buildHelpHome({ ownerId: OWNER, catalog });
 
     assertFits(view, "início");
 
-    assert.match(view.embed.title, /Central de ajuda/);
+    assert.match(view.embed.title, /Menu de comandos/);
+    assert.match(view.embed.description, /Prefixo neste servidor: `h`/);
     assert.match(view.embed.description, /`\/daily`/);
     assert.match(view.embed.description, /`hdaily`/);
     assert.match(view.embed.description, /<assim>/);
+    assert.match(view.embed.description, /Encontre o que precisa escolhendo uma categoria abaixo/);
+    assert.match(view.embed.description, /Dúvidas\? Use `\/ajuda comando:daily`/);
+    assert.ok(view.embed.description.includes(HELP_CONFIG.wikiUrl), "a wiki");
 
-    const categories = view.embed.fields.slice(0, -1);
-
-    assert.equal(categories.length, catalog.categories.length);
-
-    categories.forEach((field, index) => {
-        const category = catalog.categories[index];
-
-        assert.ok(field.name.includes(category.label));
-        assert.ok(field.value.includes(`${category.commands.length} comando`));
-    });
-
-    assert.equal(view.embed.fields.at(-1).name, "📚 Wiki e site");
-    assert.ok(view.embed.fields.at(-1).value.includes(HELP_CONFIG.wikiUrl));
+    // as categorias ficam no menu (com a frase de cada uma), não em campos soltos
+    assert.deepEqual(view.embed.fields, []);
 
     const [menu] = selects(view.components);
 
+    assert.equal(menu.placeholder, "Selecione uma categoria");
     assert.equal(menu.customId, `ajuda:cat:${OWNER}`);
+    assert.ok(menu.options.every(option => option.description), "cada categoria diz o que cobre");
+
+    // os links, como no menu da Alfacusa: site, painel do jogador, privacidade, wiki e o servidor oficial
+    const links = buttons(view.components).filter(item => item.style === "link");
+
+    assert.deepEqual(links.map(item => item.label), ["Website", "Painel do jogador", "Privacidade", "Wiki", "Servidor oficial"]);
+    assert.deepEqual(links.map(item => item.url), [
+        SITE_URL,
+        `${SITE_URL}account/`,
+        `${SITE_URL}privacy/`,
+        HELP_CONFIG.wikiUrl,
+        SUPPORT_URL
+    ]);
+    assert.ok(links.every(item => item.url.startsWith("https://") && !item.customId));
     assert.deepEqual(menu.options.map(option => option.value), catalog.categories.map(category => category.id));
 
-    assert.deepEqual(buttons(view.components).map(item => item.customId), [`ajuda:buscar:${OWNER}`, `ajuda:fechar:${OWNER}`]);
+    assert.deepEqual(
+        buttons(view.components).filter(item => item.style !== "link").map(item => item.customId),
+        [`ajuda:buscar:${OWNER}`, `ajuda:fechar:${OWNER}`]
+    );
 });
 
 test("a ajuda nunca mais diz que os comandos 'serão adicionados em breve'", () => {
@@ -405,7 +418,7 @@ test("o menu de categorias abre a categoria, e os botões navegam entre as pági
 
     const home = handlePanelClick(click(`ajuda:home:${OWNER}`));
 
-    assert.match(home.data.embeds[0].title, /Central de ajuda/);
+    assert.match(home.data.embeds[0].title, /Menu de comandos/);
 
     assert.equal(handlePanelClick(click(`ajuda:noop:${OWNER}`)).type, "defer_update");
 });
@@ -482,7 +495,7 @@ test("o botão Buscar abre o formulário, e o envio mostra os resultados só par
 test("/ajuda abre o início, com os componentes", async () => {
     const response = await runHelp({});
 
-    assert.match(embedOf(response).title, /Central de ajuda/);
+    assert.match(embedOf(response).title, /Menu de comandos/);
     assert.deepEqual(selects(response.data.components).map(item => item.customId), [`ajuda:cat:${OWNER}`]);
 });
 
@@ -524,7 +537,7 @@ test("pelo prefixo: hajuda, hajuda categoria:combate e hajuda comando:daily", as
 
     const home = await run("hajuda");
 
-    assert.match(home.title, /Central de ajuda/);
+    assert.match(home.title, /Menu de comandos/);
     assert.ok(idsOf(home.components).includes(`ajuda:cat:${OWNER}`));
 
     assert.match((await run("hajuda categoria:combate")).title, /Combate/);
@@ -535,5 +548,14 @@ test("pelo prefixo: hajuda, hajuda categoria:combate e hajuda comando:daily", as
     assert.match(old.text, /Valor inválido para \\"categoria\\"/);
     assert.match(old.text, /utilidades/);
     assert.match((await run("hajuda comando:daily")).title, /\/daily/);
-    assert.match((await run("hhelp")).title, /Central de ajuda/, "atalho help");
+    assert.match((await run("hhelp")).title, /Menu de comandos/, "atalho help");
+});
+
+test("o servidor oficial é o mesmo no bot (config/site.mjs) e no site (site/src/config.ts)", async () => {
+    const { readFileSync } = await import("node:fs");
+
+    const site = readFileSync(new URL("../site/src/config.ts", import.meta.url), "utf8");
+
+    assert.match(SUPPORT_URL, /^https:\/\/discord\.gg\/[A-Za-z0-9]+$/);
+    assert.ok(site.includes(`supportUrl: "${SUPPORT_URL}"`), "o link do site tem de ser o do bot");
 });

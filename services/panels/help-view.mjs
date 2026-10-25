@@ -1,5 +1,7 @@
 import { HELP_CONFIG } from "../../config/help.mjs";
 
+import { SITE_URL, WIKI_URL, SUPPORT_URL } from "../../config/site.mjs";
+
 import {
     categoryOfCatalog,
     usageOf,
@@ -60,7 +62,7 @@ function categoryMenu(ownerId, catalog, selected) {
     return row({
         type: "select",
         customId: `ajuda:cat:${ownerId}`,
-        placeholder: "📂 Escolha uma categoria",
+        placeholder: "Selecione uma categoria",
         minValues: 1,
         maxValues: 1,
         options: catalog.categories.map(category => ({
@@ -96,41 +98,38 @@ const closeButton = ownerId => button(`ajuda:fechar:${ownerId}`, "Fechar", "✖�
 // INÍCIO
 // ==========================================
 
+// Os links do rodapé do menu, como no menu de comandos da Alfacusa: o site, o painel do jogador, a
+// privacidade, a wiki e (se houver) o servidor oficial. Botões de link não levam customId.
+const linkButton = (label, emoji, url) => ({ type: "button", style: "link", label, emoji, url });
+
+// "withWiki" false tira o botão da wiki (o V2 já tem o link no texto e só pode ter 40 componentes).
+export const helpLinks = ({ withWiki = true } = {}) => [
+    linkButton("Website", "🌐", SITE_URL),
+    linkButton("Painel do jogador", "🎮", `${SITE_URL}account/`),
+    linkButton("Privacidade", "🔒", `${SITE_URL}privacy/`),
+    ...(withWiki ? [linkButton("Wiki", "📚", WIKI_URL)] : []),
+    ...(SUPPORT_URL ? [linkButton("Servidor oficial", "💬", SUPPORT_URL)] : [])
+];
+
 export function buildHelpHome({ ownerId, catalog }) {
+    // O mesmo texto no embed e no V2: o prefixo, a chamada e as duas dicas do fim.
+    const intro = [
+        "-# Prefixo neste servidor: `h` (`hdaily` ou `/daily`)",
+        "Encontre o que precisa escolhendo uma categoria abaixo."
+    ];
+
+    const tips = [
+        "💬 Dúvidas? Use `/ajuda comando:daily` ou o botão **Buscar**.",
+        `📖 Regras e exemplos de cada sistema: [wiki](${WIKI_URL}).`,
+        "-# `<assim>` é uma opção obrigatória e `[assim]` é opcional. No prefixo, escreva na ordem ou como `nome:valor`."
+    ];
+
     const embed = createEmbed({
         section: "Ajuda",
-        title: "📖 Central de ajuda",
-
-        description: [
-            "Tudo o que a Helena faz, por categoria. Escolha uma categoria no menu abaixo " +
-            "ou toque em **Buscar** para achar um comando pelo nome ou pelo que ele faz.",
-            "",
-            "**Como usar um comando**",
-            "• **De barra:** `/daily`. Escreva `/` e escolha na lista.",
-            "• **Com prefixo:** `hdaily`. O `h` vem colado no nome.",
-            "• **Opções:** `<assim>` é obrigatória e `[assim]` é opcional. No prefixo, escreva na ordem " +
-            "ou como `nome:valor`."
-        ].join("\n"),
-
+        title: "📚 Menu de comandos",
+        description: [...intro, "", ...tips].join("\n"),
         color: HELENA_COLORS.primary,
         mood: "feliz",
-
-        fields: [
-            ...catalog.categories.map(category => ({
-                name: `${category.emoji} ${category.label}`,
-                value:
-                    `${HELP_CONFIG.blurbs[category.id] ?? ""}\n` +
-                    `**${plural(category.commands.length, "comando", "comandos")}**`,
-                inline: true
-            })),
-
-            {
-                name: "📚 Wiki e site",
-                value: `Regras, tabelas e exemplos de cada sistema:\n${HELP_CONFIG.wikiUrl}`,
-                inline: false
-            }
-        ],
-
         footer: `${plural(catalog.total, "comando", "comandos")} no total`
     });
 
@@ -139,22 +138,9 @@ export function buildHelpHome({ ownerId, catalog }) {
         container([
             text("-# HELENA · AJUDA"),
 
-            text("## 📖 Central de ajuda"),
+            text("## 📚 Menu de comandos"),
 
-            text(
-                "Tudo o que a Helena faz, por categoria. Toque em **Abrir** numa categoria " +
-                "ou em **Buscar** para achar um comando pelo nome ou pelo que ele faz."
-            ),
-
-            divider(),
-
-            text([
-                "**Como usar um comando**",
-                "• **De barra:** `/daily`. Escreva `/` e escolha na lista.",
-                "• **Com prefixo:** `hdaily`. O `h` vem colado no nome.",
-                "• **Opções:** `<assim>` é obrigatória e `[assim]` é opcional. No prefixo, escreva na ordem " +
-                "ou como `nome:valor`."
-            ].join("\n")),
+            text(intro.join("\n")),
 
             divider(),
 
@@ -168,7 +154,9 @@ export function buildHelpHome({ ownerId, catalog }) {
 
             divider(),
 
-            text(`📚 **Wiki:** ${HELP_CONFIG.wikiUrl}`),
+            text(tips.join("\n")),
+
+            row(...helpLinks({ withWiki: false })),
 
             row(searchButton(ownerId), closeButton(ownerId))
         ], { color: HELENA_COLORS.primary }),
@@ -183,6 +171,7 @@ export function buildHelpHome({ ownerId, catalog }) {
 
         components: [
             categoryMenu(ownerId, catalog, null),
+            row(...helpLinks()),
             row(searchButton(ownerId), closeButton(ownerId))
         ]
     };

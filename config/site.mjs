@@ -26,3 +26,8 @@ export const WIKI_URL = `${SITE_URL}wiki/`;
 export const SITE_LABEL = SITE_URL
     .replace(/^https?:\/\//, "")
     .replace(/\/+$/, "");
+
+// O convite permanente do servidor oficial da Helena no Discord. O menu de ajuda leva um botão para
+// ele. O site tem o mesmo link em site/src/config.ts (supportUrl): tests/site.test.mjs confere que os
+// dois são iguais.
+export const SUPPORT_URL = "https://discord.gg/NDBwQW99RZ";

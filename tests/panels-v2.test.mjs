@@ -229,7 +229,7 @@ test("/ajuda no V2: sai o layout, sem embed, e o clique segue o layout; no clás
     const classic = (await run("hajuda")).sent[0];
 
     assert.ok(!("layout" in classic));
-    assert.equal(classic.embeds[0].title, "📖 Central de ajuda");
+    assert.equal(classic.embeds[0].title, "📚 Menu de comandos");
 
     await withV2(async () => {
         const v2 = (await run("hajuda")).sent[0];
