@@ -10,10 +10,14 @@ import { ICONS, ICON_PREFIX, fallbacksOf } from "../../config/icons.mjs";
 // lista (teste, falha da API, emoji ainda não enviado) tudo segue com o emoji comum.
 //
 //   icon("🏷️")        o emoji de UM lugar do código: o da Helena se existe, senão o comum
+//   iconNamed(nome, comum)   o desenho de um nome que não troca nenhum emoji comum (os níveis do impulso)
 //   customize(texto)   o mesmo para todo emoji de um texto: é o que o envio da mensagem usa
 
 // o emoji comum (sem o seletor de variação) -> "<:h_nome:id>"
 const custom = new Map();
+
+// o nome do desenho (sem o h_) -> "<:h_nome:id>", para todos, inclusive os que não trocam emoji comum
+const named = new Map();
 
 // A expressão que acha qualquer um dos emojis comuns que têm desenho no aplicativo (os mais
 // compridos primeiro: a família 👨‍👩‍👧 antes de qualquer pedaço dela).
@@ -27,6 +31,11 @@ const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 /** O emoji da Helena no lugar do comum, se ele existe: icon("🏷️") -> "<:h_tag:123>" ou "🏷️". */
 export function icon(fallback) {
     return custom.get(keyOf(fallback)) ?? fallback;
+}
+
+/** O desenho da Helena pelo nome ("boost_3"), ou o emoji comum dado se ele ainda não foi enviado. */
+export function iconNamed(name, fallback = "") {
+    return named.get(name) ?? fallback;
 }
 
 /**
@@ -45,6 +54,7 @@ export function customize(text) {
 /** Guarda os emojis do aplicativo (o que a API devolve: { id, name, animated }). Devolve quantos desenhos casaram. */
 export function setAppEmojis(items) {
     custom.clear();
+    named.clear();
 
     const byName = new Map((items ?? []).map(item => [item.name, item]));
 
@@ -58,6 +68,8 @@ export function setAppEmojis(items) {
         }
 
         matched += 1;
+
+        named.set(name, `<${found.animated ? "a" : ""}:${found.name}:${found.id}>`);
 
         for (const fallback of fallbacksOf(name)) {
             custom.set(keyOf(fallback), `<${found.animated ? "a" : ""}:${found.name}:${found.id}>`);

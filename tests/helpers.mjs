@@ -42,7 +42,8 @@ const migrations = [
     ["../database/crime-migrations.mjs", "runCrimeMigrations"],
     ["../database/web-migrations.mjs", "runWebMigrations"],
     ["../database/market-migrations.mjs", "runMarketMigrations"],
-    ["../database/family-migrations.mjs", "runFamilyMigrations"]
+    ["../database/family-migrations.mjs", "runFamilyMigrations"],
+    ["../database/userinfo-history-migrations.mjs", "runUserinfoHistoryMigrations"]
 ];
 
 // Silencia o log das migrações.

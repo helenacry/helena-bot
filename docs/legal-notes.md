@@ -4,6 +4,14 @@
 
 Revisão técnico-jurídica dos [Termos de uso](../site/src/pages/terms/index.astro) e da [Política de Privacidade](../site/src/pages/privacy/index.astro), feita em 22/10/2026 (versão 2.0 dos dois). **Não é parecer de advogado e não substitui um.** Serve para registrar o que os textos prometem, em que se apoiam e o que ainda precisa de decisão de vocês. Os testes em `tests/site.test.mjs` travam o que está escrito aqui como "o texto diz".
 
+## O que mudou na versão 2.1 da Política de Privacidade (25/10/2026)
+
+Só a política subiu para a 2.1; os termos seguem na 2.0.
+
+- **Histórico do `/userinfo`.** Duas tabelas novas (`userinfo_history` e `userinfo_privacy`). A Helena anota o @usuário, o nome de exibição e o código (hash) da foto e do banner, **só de quem já usou a Helena**, quando mudam, desde o primeiro uso, com no máximo 25 de cada tipo. Nunca guarda mensagens, calls, lista de servidores nem a imagem. A pessoa oculta, mostra de novo ou apaga tudo em "Meu histórico" (menu do próprio cartão, ou `hui ocultar`). Base: legítimo interesse, com o mínimo de dados, e a opção de sair dentro do próprio comando. **Decisão aberta:** se o histórico deve ser só de quem pede para entrar (consentimento) em vez de só de quem pede para sair.
+- **Onde as páginas moram.** O texto dizia que o GitHub hospedava as páginas. Agora o próprio bot serve o site no Discloud (`helena.discloud.dev`, atrás da Cloudflare) e o endereço antigo do GitHub Pages só redireciona.
+- **O que não existe.** A Helena não guarda nem pede o tipo de Nitro: o Discord só o entrega com o escopo `identify.premium`, restrito a parceiros aprovados.
+
 ## O que mudou na versão 2.0
 
 - **Quem responde pela Helena.** O texto falava de "um desenvolvedor" e de "uma pessoa". Agora diz que são **duas pessoas** (`@matheustonon1` e `@agorismo`), que são os **controladores** dos dados (LGPD, art. 5º, VI) e fazem o papel de **encarregado** (art. 41). A organização `helenacry` aparece só como o lugar do código. Os nomes vêm de `site/src/config.ts`.

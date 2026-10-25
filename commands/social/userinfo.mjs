@@ -17,6 +17,15 @@ import {
 } from "../../services/social/userinfo-account.mjs";
 
 import {
+    observeTarget
+} from "../../services/social/userinfo-history.mjs";
+
+import {
+    privacyAction,
+    privacyResponse
+} from "../../services/social/userinfo-privacy.mjs";
+
+import {
     userinfoComponents
 } from "../../services/social/userinfo-components.mjs";
 
@@ -142,7 +151,7 @@ export default {
         {
             name: "usuario",
             description:
-                "@usuário ou @menção de quem você quer ver (vazio = você)",
+                "@usuário ou menção (vazio = você). Ou ocultar, mostrar, apagar: o seu histórico",
             type: "string",
             required: false
         }
@@ -150,6 +159,17 @@ export default {
 
     async execute(interaction) {
         try {
+            // ==================================
+            // O PRÓPRIO HISTÓRICO (ocultar, mostrar, apagar)
+            // ==================================
+            // As palavras ocultar, mostrar e apagar no lugar do @usuário (`hui ocultar`) abrem a tela de
+            // privacidade do histórico da própria pessoa; o mesmo tem o item "Meu histórico" do menu.
+            const action = privacyAction(interaction.data?.options?.usuario);
+
+            if (action) {
+                return privacyResponse(String(interaction.user?.id ?? ""), action);
+            }
+
             // ==================================
             // IDENTIFICAÇÃO
             // ==================================
@@ -189,8 +209,13 @@ export default {
 
             // O perfil completo da conta (banner, flags completas, etiqueta de servidor) para o Nitro e as
             // insígnias; se a API falhar, o cartão sai com o que já temos.
+            const account = await withAccount(user);
+
+            // quem usa a Helena ganha uma linha no histórico se o nome, a foto ou o banner mudou
+            observeTarget(account);
+
             const embed = buildUserinfoEmbed({
-                user: await withAccount(user),
+                user: account,
                 actorName:
                     interaction.user?.displayName ||
                     interaction.user?.username,

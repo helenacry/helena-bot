@@ -235,23 +235,69 @@ test("o cartão de quem impulsiona mostra desde quando, o nível e o próximo n�
 
     const card = buildUserinfoEmbed({ user, now });
 
-    const value = card.fields.find(field => field.name === "🚀 Impulsiona este servidor").value;
+    const field = name => card.fields.find(item => item.name === name);
 
-    const [since, badge] = value.split("\n");
+    assert.match(field("🚀 Impulsionando este servidor desde").value, /15 de janeiro de 2026/);
 
-    assert.match(since, /15 de janeiro de 2026/);
-    assert.match(badge, /^Insígnia de impulso: \*\*nível 4 de 9\*\* · o nível 5 \(9 meses\) chega em \*\*57 dias\*\* \(<t:\d+:D>\)$/);
+    // a insígnia de agora e a próxima, lado a lado (a idade e a contagem em calendário)
+    const current = field("🏅 Insígnia de impulso atual");
+    const next = field("▶️ Próxima insígnia de impulso");
+
+    assert.equal(current.inline, true);
+    assert.equal(next.inline, true);
+    assert.equal(current.value, "💎 **Nível 4 de 9** | **7 meses 4 dias**");
+    assert.equal(next.value, "💎 **Nível 5** | em **1 mês 25 dias 12 horas**");
+
+    // nenhum campo do cartão passa de 1024 caracteres, e os dois ficam um do lado do outro
+    const names = card.fields.map(item => item.name);
+
+    assert.equal(names.indexOf("▶️ Próxima insígnia de impulso"), names.indexOf("🏅 Insígnia de impulso atual") + 1);
 
     const detail = buildUserinfoDetail("nitro", user, now);
 
-    const ladder = detail.fields.find(field => field.name.includes("Níveis"));
+    const ladder = detail.fields.find(item => item.name.includes("Níveis"));
 
-    const lines = ladder.value.split("\n").filter(line => line.startsWith("✅") || line.startsWith("⏳"));
+    const lines = ladder.value.split("\n").filter(line => line.startsWith("💎"));
 
     assert.equal(lines.length, 9);
-    assert.equal(lines.filter(line => line.startsWith("✅")).length, 4, "4 degraus já alcançados");
-    assert.match(lines[0], /^✅ \*\*Nível 1\*\* · 1 mês · <t:\d+:D>$/);
-    assert.match(lines[8], /^⏳ \*\*Nível 9\*\* · 24 meses · <t:\d+:D>$/);
+    assert.equal(lines.filter(line => line.endsWith("✅")).length, 4, "4 degraus já alcançados");
+    assert.match(lines[0], /^💎 \*\*Nível 1\*\* · 1 mês · <t:\d+:D> ✅$/);
+    assert.match(lines[8], /^💎 \*\*Nível 9\*\* · 24 meses · <t:\d+:D> ⏳$/);
+});
+
+test("a insígnia de impulso usa a gema do nível quando o desenho existe, e fala do nível máximo e de quem ainda não tem", async () => {
+    const { setAppEmojis } = await import("../services/platform/app-emojis.mjs");
+
+    try {
+        setAppEmojis(Array.from({ length: 9 }, (_unused, index) => ({ id: String(500000000000000000n + BigInt(index)), name: `h_boost_${index + 1}`, animated: false })));
+
+        const now = Date.UTC(2026, 7, 20, 0, 0, 0);
+
+        const make = since => buildUserinfoEmbed({ user: { id: "1", username: "ana", createdAt: 0, boostingSince: since }, now });
+
+        const value = (card, name) => card.fields.find(field => field.name === name).value;
+
+        // nível 4: a gema 4 na de agora e a 5 na próxima
+        const four = make(SINCE);
+
+        assert.match(value(four, "🏅 Insígnia de impulso atual"), /^<:h_boost_4:500000000000000003> /);
+        assert.match(value(four, "▶️ Próxima insígnia de impulso"), /^<:h_boost_5:500000000000000004> /);
+
+        // mais de 24 meses: nível máximo, sem próximo nível
+        const top = make(Date.UTC(2024, 5, 1, 21, 28, 0));
+
+        assert.match(value(top, "🏅 Insígnia de impulso atual"), /^<:h_boost_9:500000000000000008> \*\*Nível 9 de 9\*\*/);
+        assert.equal(value(top, "▶️ Próxima insígnia de impulso"), "<:h_boost_9:500000000000000008> **Nível máximo alcançado.**");
+
+        // menos de 1 mês: ainda sem insígnia, e a próxima é o nível 1
+        const fresh = make(Date.UTC(2026, 7, 10, 0, 0, 0));
+
+        assert.match(value(fresh, "🏅 Insígnia de impulso atual"), /^Ainda sem insígnia \| \*\*10 dias\*\*$/);
+        assert.match(value(fresh, "▶️ Próxima insígnia de impulso"), /^<:h_boost_1:500000000000000000> \*\*Nível 1\*\* \| em \*\*21 dias\*\*$/);
+
+    } finally {
+        setAppEmojis([]);
+    }
 });
 
 test("o cartão e as telas cabem nos limites do embed, mesmo com todas as insígnias", () => {

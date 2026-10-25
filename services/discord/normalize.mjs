@@ -79,7 +79,18 @@ export function normalizeUser(raw, member = null) {
 
         // o banner só vem no perfil completo (GET /users/:id), não no membro
         bannerHash: raw.banner ?? null,
-        accentColor: raw.accent_color ?? null
+        accentColor: raw.accent_color ?? null,
+
+        // o que enfeita o perfil (também só no perfil completo): a cor do banner ("#232428"), as cores do
+        // estilo do nome (números), a cor da plaquinha e a decoração do avatar
+        bannerColor: typeof raw.banner_color === "string" ? raw.banner_color : null,
+
+        nameColors: Array.isArray(raw.display_name_styles?.colors)
+            ? raw.display_name_styles.colors.filter(color => Number.isInteger(color) && color >= 0 && color <= 0xffffff).slice(0, 5)
+            : [],
+
+        nameplatePalette: raw.collectibles?.nameplate?.palette ? String(raw.collectibles.nameplate.palette) : null,
+        avatarDecoration: raw.avatar_decoration_data?.asset ? String(raw.avatar_decoration_data.asset) : null
     };
 }
 

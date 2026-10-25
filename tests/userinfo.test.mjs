@@ -182,12 +182,10 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
     assert.match(fields["📅 Conta criada em"], /\(\*\*.+\*\*\)$/, "com a idade em negrito");
 
     assert.match(fields["📥 Entrou no servidor em"], /20 de janeiro de 2025/);
-    // o impulso: desde quando, e em que pé está a insígnia de impulso (nível e quando chega o próximo)
-    const [boostSince, boostBadge] = fields["🚀 Impulsiona este servidor"].split("\n");
-
-    assert.match(boostSince, /1 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
-    assert.match(boostBadge, /^Insígnia de impulso: \*\*nível \d de 9\*\*/);
-    assert.match(boostBadge, /<t:\d+:D>/, "a data do próximo nível, no relógio do Discord");
+    // o impulso: desde quando, e a insígnia de agora e a próxima (nível, tempo e quando chega o próximo)
+    assert.match(fields["🚀 Impulsionando este servidor desde"], /1 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
+    assert.match(fields["🏅 Insígnia de impulso atual"], /\*\*Nível \d de 9\*\* \| \*\*.+\*\*$/);
+    assert.match(fields["▶️ Próxima insígnia de impulso"], /\*\*Nível \d\*\* \| em \*\*.+\*\*$/);
 
     // o Nitro: a Maria não tem avatar animado nem banner, então nada o prova
     assert.equal(fields["💠 Nitro"], "Não detectado");
@@ -509,7 +507,11 @@ test("o cartão traz dois menus: 'Mais informações.' e 'Ver informações de o
 
     assert.equal(more.customId, `userinfo:more:${ME.id}:${MARIA.user.id}`);
     assert.equal(more.placeholder, "Mais informações.");
-    assert.deepEqual(more.options.map(option => option.value), ["avatar", "banner", "badges", "nitro", "dates", "roles"]);
+    assert.deepEqual(
+        more.options.map(option => option.value),
+        ["avatar", "banner", "colors", "badges", "nitro", "dates", "names", "oldavatars", "oldbanners", "roles"],
+        "sem o item 'Meu histórico': ele só aparece no próprio cartão"
+    );
 
     assert.equal(other.customId, `userinfo:other:${ME.id}`);
     assert.equal(other.placeholder, "Ver informações de outros membros no servidor.");
@@ -526,14 +528,17 @@ test("o cartão traz dois menus: 'Mais informações.' e 'Ver informações de o
 test("quem não tem cargos não ganha a opção Cargos, e sem avatar não ganha Avatar", async () => {
     const options = selectsOf(await run("hui carlos"))[0].options.map(option => option.value);
 
-    assert.deepEqual(options, ["avatar", "banner", "badges", "nitro", "dates"]);
+    assert.deepEqual(options, ["avatar", "banner", "colors", "badges", "nitro", "dates", "names", "oldavatars", "oldbanners"]);
 
     const noAvatar = buildUserinfoEmbed({ user: { id: "1", username: "x", avatarUrl: null } });
 
     assert.equal(noAvatar.thumbnail, undefined);
     assert.equal(buildUserinfoDetail("avatar", { id: "1", username: "x" }), null);
 
-    assert.deepEqual(detailOptions({ id: "1", username: "x" }).map(option => option.value), ["banner", "badges", "nitro", "dates"]);
+    assert.deepEqual(
+        detailOptions({ id: "1", username: "x" }).map(option => option.value),
+        ["banner", "colors", "badges", "nitro", "dates", "names", "oldavatars", "oldbanners"]
+    );
     assert.ok(detailOptions({ id: "1", username: "x", avatarUrl: "https://a.test/a.png", roleIds: ["r"] }).length <= 25);
 });
 
@@ -571,7 +576,7 @@ test("Mais informações: insígnias, datas e cargos, em mensagem só de quem pe
     const dates = (await ask("dates")).data.embeds[0];
 
     assert.deepEqual(dates.fields.map(field => field.name), [
-        "📅 Conta criada em", "📥 Entrou no servidor em", "🚀 Impulsiona este servidor"
+        "📅 Conta criada em", "📥 Entrou no servidor em", "🚀 Impulsionando este servidor desde"
     ]);
 
     // os cargos viram menções de cargo (no embed são só chips, não avisam ninguém)
@@ -709,4 +714,44 @@ test("o formulário 'Procurar por @usuário...' mostra o cartão (privado) ou ex
 
     assert.match(JSON.stringify(await submit("   ")), /Faltou a pessoa/);
     assert.match(JSON.stringify(await submit("ninguemassim")), /Usuário não encontrado/);
+});
+
+// ==========================================
+// HISTÓRICO: AS PALAVRAS NO COMANDO E O QUE O USO GRAVA
+// ==========================================
+
+test("hui ocultar, hui mostrar e hui apagar mexem no histórico de quem usou, sem mostrar cartão", async () => {
+    const { isHidden } = await import("../services/social/userinfo-history.mjs");
+
+    const hide = await run("hui ocultar");
+
+    assert.match(embedOf(hide).title, /Histórico oculto/);
+    assert.equal(isHidden(ME.id), true);
+    assert.equal(hide.sent[0].components[0].components.length, 3, "os três botões");
+    assert.notEqual(hide.body, `<@${ME.id}>`, "não é o cartão");
+
+    assert.match(embedOf(await run("hui mostrar")).title, /Histórico visível/);
+    assert.equal(isHidden(ME.id), false);
+
+    assert.match(embedOf(await run("hui apagar")).title, /Histórico apagado/);
+    assert.match(embedOf(await run("hui privar")).title, /Seu histórico do \/userinfo/);
+
+    // um @usuário comum continua sendo busca (ninguém tem o @ "ocultar" aqui, e o texto não é ação)
+    assert.match((await run("hui ocultarpessoa")).title, /Usuário não encontrado/);
+});
+
+test("usar um comando grava o @usuário, o nome e a foto de quem usou (e o /userinfo grava o banner de quem já usa a Helena)", async () => {
+    const { readHistory, resetHistoryMemory } = await import("../services/social/userinfo-history.mjs");
+
+    resetHistoryMemory();
+
+    const before = readHistory(ME.id).usernames.length;
+
+    await run("hui");
+
+    const history = readHistory(ME.id);
+
+    assert.ok(history.usernames.length >= Math.max(1, before));
+    assert.equal(history.usernames[0].value, "eu");
+    assert.equal(history.tracked, true);
 });

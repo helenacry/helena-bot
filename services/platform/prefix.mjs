@@ -10,6 +10,10 @@ import {
 } from "./player-names.mjs";
 
 import {
+    observe as observeUserinfoHistory
+} from "../social/userinfo-history.mjs";
+
+import {
     parseArguments,
     PrefixUsageError
 } from "./prefix-parser.mjs";
@@ -174,6 +178,7 @@ export async function processarPrefixo({
     }
 
     savePlayerName(user);
+    observeUserinfoHistory(user);
 
     // Preso não trabalha, não compra nem movimenta dinheiro.
     const bloqueioPrisao = prisonBlock(

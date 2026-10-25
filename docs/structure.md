@@ -31,7 +31,7 @@ scripts/                 Ferramentas de linha de comando (npm run db:export, dis
                          site:card, wiki:build). Ficam fora de site/ porque leem o código do bot
 site/                    O site (projeto Astro à parte): início, wiki, painel da conta, termos e privacidade
 docs/                    Documentação (desenvolvimento, sistemas, hospedagem, site, notas jurídicas)
-.github/workflows/       Publicação do site no GitHub Pages (pages.yml)
+.github/workflows/       Redirecionamento do endereço antigo do site, no GitHub Pages (pages.yml)
 wiki/                    Texto da wiki em Markdown (vira site/src/content/wiki.json com npm run wiki:build)
 Dockerfile               Imagem para a nuvem (veja docs/hosting-railway.md)
 tests/                   Testes automáticos (npm test)

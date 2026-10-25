@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 
 const { ICONS, ICON_PREFIX, fallbacksOf } = await import("../config/icons.mjs");
-const { icon, customize, setAppEmojis, loadAppEmojis } = await import("../services/platform/app-emojis.mjs");
+const { icon, iconNamed, customize, setAppEmojis, loadAppEmojis } = await import("../services/platform/app-emojis.mjs");
 const { renderEmoji } = await import("../scripts/dev/emojis.mjs");
 const { receipt, iconFor, signed } = await import("../utils/receipt.mjs");
 const { emojiOf, toDiscordEmbed, toDiscordMessage, toDiscordComponent } = await import("../services/discord/format.mjs");
@@ -81,6 +81,26 @@ test("com o emoji no aplicativo, icon() devolve o dele, com ou sem o seletor de 
     // o que não tem desenho próprio fica como está
     assert.equal(icon("🔥"), "🔥");
     assert.equal(icon("🪪"), "🪪");
+});
+
+test("iconNamed acha o desenho pelo nome, mesmo os que não trocam emoji comum, e senão devolve o emoji dado", () => {
+    assert.equal(iconNamed("boost_3", "💎"), "💎", "sem o emoji no aplicativo, o comum");
+    assert.equal(iconNamed("boost_3"), "", "e sem comum, vazio");
+
+    setAppEmojis([{ id: "777", name: "h_boost_3", animated: false }, { id: "111", name: "h_tag", animated: false }]);
+
+    assert.equal(iconNamed("boost_3", "💎"), "<:h_boost_3:777>");
+    assert.equal(iconNamed("tag", "?"), "<:h_tag:111>", "os de sempre também valem pelo nome");
+    assert.equal(iconNamed("boost_4", "💎"), "💎", "os que não foram enviados ficam com o comum");
+
+    // os nove níveis existem e nenhum troca emoji comum (só valem pelo nome)
+    for (let level = 1; level <= 9; level += 1) {
+        assert.ok(`boost_${level}` in ICONS, `boost_${level}`);
+        assert.deepEqual(fallbacksOf(`boost_${level}`), []);
+    }
+
+    // customize não toca em texto algum por causa deles
+    assert.equal(customize("💎 nível 3"), "💎 nível 3");
 });
 
 test("o emoji do aplicativo vira { name, id } no botão e no menu", () => {

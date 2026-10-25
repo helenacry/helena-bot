@@ -76,6 +76,14 @@ import {
 } from "./services/platform/player-names.mjs";
 
 import {
+    runUserinfoHistoryMigrations
+} from "./database/userinfo-history-migrations.mjs";
+
+import {
+    observe as observeUserinfoHistory
+} from "./services/social/userinfo-history.mjs";
+
+import {
     runAchievementMigrations
 } from "./database/achievement-migrations.mjs";
 
@@ -440,6 +448,7 @@ runCrimeMigrations();
 runWebMigrations();
 runMarketMigrations();
 runFamilyMigrations();
+runUserinfoHistoryMigrations();
 
 // Traz o contador antigo do /userinfo (JSON) para o banco, uma vez.
 // O arquivo vira views.json.imported; sem ele, não faz nada.
@@ -751,6 +760,11 @@ async function tratarInteracao(interaction) {
 
     if (interaction.user?.id) {
         savePlayerName(
+            interaction.user
+        );
+
+        // o histórico de nomes e ícones de quem usa a Helena (services/social/userinfo-history.mjs)
+        observeUserinfoHistory(
             interaction.user
         );
     }

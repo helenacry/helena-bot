@@ -35,7 +35,7 @@ export function userinfoComponents({ ownerId, user, members = [] }) {
                 placeholder: "Mais informações.",
                 minValues: 1,
                 maxValues: 1,
-                options: detailOptions(user)
+                options: detailOptions(user, { self: String(ownerId) === String(user.id) })
             }]
         },
 

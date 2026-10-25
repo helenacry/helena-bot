@@ -374,9 +374,11 @@ test("termos e privacidade: abrem para buscadores, ficam ligados ao resto do sit
 // REVISÃO JURÍDICA (LGPD, ECA Digital, CDC): o que os textos precisam dizer
 // ==========================================
 
-test("termos e privacidade: versão 2.0 e nenhuma fala no singular sobre quem mantém a Helena", () => {
+test("termos (2.0) e privacidade (2.1): nenhuma fala no singular sobre quem mantém a Helena", () => {
+    const versions = { terms: "2.0", privacy: "2.1" };
+
     for (const name of Object.keys(LEGAL_FILES)) {
-        assert.match(legalSource[name], /version="2\.0"/, `${name}: versão`);
+        assert.ok(legalSource[name].includes(`version="${versions[name]}"`), `${name}: versão ${versions[name]}`);
 
         const text = plainText(name);
 
@@ -567,7 +569,9 @@ test("a política cobre todas as tabelas do banco que guardam dados de pessoas",
         daily_streaks: "sequencia do daily",
         web_sessions: "sessao",
         web_claim_log: "registro de seguranca",
-        userinfo_views: "contagem de quantas vezes o perfil de cada pessoa foi consultado"
+        userinfo_views: "contagem de quantas vezes o perfil de cada pessoa foi consultado",
+        userinfo_history: "historico de nomes, fotos e banners do /userinfo",
+        userinfo_privacy: "pediu para ocultar o historico"
     };
 
     // tabelas sem nada de pessoa (só IDs técnicos e ajustes do bot)

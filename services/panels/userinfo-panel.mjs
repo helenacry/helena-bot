@@ -9,6 +9,10 @@ import { SEARCH_VALUE } from "../social/userinfo-components.mjs";
 
 import { buildUserinfoDetail } from "../social/userinfo-view.mjs";
 
+import { observeTarget, readHistory } from "../social/userinfo-history.mjs";
+
+import { PRIVACY_MENU_VALUE, privacyView } from "../social/userinfo-privacy.mjs";
+
 import {
     openModal,
     textField
@@ -19,6 +23,7 @@ import {
     priv,
     runCommand,
     sameUser,
+    update,
     warn
 } from "./panel-kit.mjs";
 
@@ -73,6 +78,18 @@ export async function handleUserinfoComponent(interaction, comandos) {
         return notYours();
     }
 
+    // ----------------------------------
+    // OS BOTÕES DE "MEU HISTÓRICO" (ocultar, mostrar, apagar)
+    // ----------------------------------
+
+    if (action === "priv") {
+        if (!["ocultar", "mostrar", "apagar"].includes(targetId)) {
+            return warn("Botão desconhecido", "Esse botão não é reconhecido.");
+        }
+
+        return update(privacyView(ownerId, targetId));
+    }
+
     const choice = interaction.data?.values?.[0];
 
     if (!choice) {
@@ -84,6 +101,17 @@ export async function handleUserinfoComponent(interaction, comandos) {
     // ----------------------------------
 
     if (action === "more") {
+        // "Meu histórico": só no próprio cartão, abre a tela de privacidade com os três botões
+        if (choice === PRIVACY_MENU_VALUE) {
+            if (String(targetId) !== String(ownerId)) {
+                return warn("Só no seu cartão", "O histórico só pode ser mexido por quem ele é: abra o seu `/userinfo`.");
+            }
+
+            const view = privacyView(ownerId, "status");
+
+            return priv({ type: "message", data: { embeds: [view.embed], components: view.components } });
+        }
+
         const found = await resolveUser(interaction.guildId, targetId);
 
         if (found.status !== "found") {
@@ -92,9 +120,20 @@ export async function handleUserinfoComponent(interaction, comandos) {
 
         // o banner, as flags completas e a etiqueta só existem no perfil completo da conta: busca só
         // para as telas que precisam deles
-        const person = ["banner", "badges", "nitro"].includes(choice) ? await withAccount(found.user) : found.user;
+        const needsAccount = ["banner", "colors", "badges", "nitro", "oldbanners"].includes(choice);
 
-        const embed = buildUserinfoDetail(choice, person);
+        const person = needsAccount ? await withAccount(found.user) : found.user;
+
+        // as telas de histórico: anota o que mudou agora (só se a pessoa usa a Helena) e lê o que há
+        let history;
+
+        if (["names", "oldavatars", "oldbanners"].includes(choice)) {
+            observeTarget(person);
+
+            history = readHistory(person.id);
+        }
+
+        const embed = buildUserinfoDetail(choice, person, Date.now(), { history });
 
         return embed
             ? privateEmbed(embed)

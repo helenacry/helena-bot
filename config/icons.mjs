@@ -111,6 +111,18 @@ export const ICONS = Object.freeze({
     badge_verified: "☑️",
     nitro: "💠",
 
+    // os nove níveis da insígnia de impulso (o /userinfo). `null`: não trocam nenhum emoji comum, só
+    // existem pelo nome (iconNamed("boost_3", "💎")); o comum é o que aparece se o desenho não foi enviado.
+    boost_1: null,
+    boost_2: null,
+    boost_3: null,
+    boost_4: null,
+    boost_5: null,
+    boost_6: null,
+    boost_7: null,
+    boost_8: null,
+    boost_9: null,
+
     // telas e botões
     search: ["🔎", "🔍"],
     folder: ["📂", "📁"],
@@ -128,5 +140,5 @@ export const ICONS = Object.freeze({
     pin: "📍"
 });
 
-/** Os emojis comuns de um nome, sempre em lista. */
-export const fallbacksOf = name => [ICONS[name]].flat();
+/** Os emojis comuns de um nome, sempre em lista (vazia para os que só existem pelo nome). */
+export const fallbacksOf = name => [ICONS[name]].flat().filter(Boolean);

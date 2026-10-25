@@ -76,6 +76,7 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   gf:aceitar|recusar|cancelar:<ligação>    /gozofone    (family-panel.mjs)
 //   gf:nome:<nascimento>                     registrar o filho (formulário)
 //   userinfo:more|other:<dono>[:<alvo>]      /userinfo    (userinfo-panel.mjs, menus)
+//   userinfo:priv:<dono>:<ação>              /userinfo    (botões do "Meu histórico": ocultar, mostrar, apagar)
 //   userinfo:buscar:<dono>                   /userinfo    (formulário "Procurar por @usuário...")
 //
 // O ID do dono vai no customId: os botões pessoais só funcionam
