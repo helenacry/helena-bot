@@ -2,7 +2,7 @@
 
 [← Voltar ao README](../README.md) · [Índice da documentação](README.md)
 
-Como as respostas da Helena no chat (embeds e o layout V2 do Discord) são desenhadas. É a identidade do site (o livro-caixa, a pelúcia, a paleta), com as contas em linhas de emoji como as do `/work` da Alfacusa. Quem cria ou muda um comando segue esta página.
+Como as respostas da Helena no chat (embeds e o layout V2 do Discord) são desenhadas. É a identidade do site (o livro-caixa, a pelúcia, a paleta), com as contas em linhas de emoji. Quem cria ou muda um comando segue esta página.
 
 ## Anatomia de uma resposta
 
@@ -54,7 +54,7 @@ Tela sobre a pessoa (saldo, perfil, conquistas) usa o avatar dela no lugar do hu
 
 ## As contas
 
-`receipt(linhas)` devolve uma linha por conta, no estilo do `/work` da Alfacusa (`💵 | Você trabalhou… **$700.00**`): o emoji do assunto, uma barra, o nome e o valor em negrito.
+`receipt(linhas)` devolve uma linha por conta (`💵 | Você trabalhou… **$700.00**`): o emoji do assunto, uma barra, o nome e o valor em negrito.
 
 ```js
 receipt([
@@ -88,7 +88,7 @@ Os desenhos ficam em `assets/emojis/<nome>.svg` (a pelúcia, tinta escura, lilá
 
 ## A lista de comandos do Discord
 
-Quando a pessoa digita `/`, o Discord mostra cada comando com a descrição embaixo. No registro (`command-registry.mjs`), a Helena abre cada descrição com a categoria entre colchetes, como a Alfacusa: `[💰 Economia] Consulte o seu saldo`, `[🕵️ Crime] Cometa um crime em busca de dinheiro sujo`. A categoria vem de `config/command-categories.mjs` (`slashTag` e `slashDescription`); os comandos do dono levam `[🔧 Admin]` e `[🧪 Dev]`. A descrição é cortada com "…" para caber nos 100 caracteres do Discord.
+Quando a pessoa digita `/`, o Discord mostra cada comando com a descrição embaixo. No registro (`command-registry.mjs`), a Helena abre cada descrição com a categoria entre colchetes: `[💰 Economia] Consulte o seu saldo`, `[🕵️ Crime] Cometa um crime em busca de dinheiro sujo`. A categoria vem de `config/command-categories.mjs` (`slashTag` e `slashDescription`); os comandos do dono levam `[🔧 Admin]` e `[🧪 Dev]`. A descrição é cortada com "…" para caber nos 100 caracteres do Discord.
 
 - O emoji é o **comum**: o Discord não desenha emoji personalizado na descrição de um comando.
 - A etiqueta existe **só no registro**. A ajuda, o site e a wiki mostram a descrição pura, porque já mostram a categoria ao lado.

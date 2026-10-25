@@ -49,7 +49,7 @@ const buttons = ownerId => row(
     button(`bolsa:fechar:${ownerId}`, "Fechar", "✖️", "danger")
 );
 
-// Uma lista com um item por linha, como a da Alfacusa: o emoji, o nome e os preços de compra e de
+// Uma lista com um item por linha: o emoji, o nome e os preços de compra e de
 // venda de agora. O ▲ marca o item em alta.
 function priceTable(market) {
     const items = sellableItems();

@@ -5,7 +5,7 @@ import { detailOptions } from "./userinfo-view.mjs";
 // MENUS DO /USERINFO
 // ==========================================
 
-// Dois menus embaixo do cartão, como no Zany (o menu de texto não tem seletor de
+// Dois menus embaixo do cartão (o menu de texto não tem seletor de
 // pessoas, então o segundo lista quem já joga neste servidor):
 //
 //   userinfo:more:<dono>:<alvo>    "Mais informações."  (avatar, banner, insígnias, datas, cargos)

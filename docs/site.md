@@ -50,7 +50,7 @@ scripts/site/          geradores que leem o bot: dados, cartão de exemplo e wik
 
 ## Wiki
 
-A wiki fica em `wiki/` (um `.md` por página, no estilo da wiki da Alfacusa) e é publicada junto com o site, em `/wiki/`. O `npm run wiki:build` converte os `.md` em `site/src/content/wiki.json`, que **é inteiro gerado: não edite à mão**; o Astro o desenha (menu, sumário, anterior e próxima, busca). O `npm test` falha se o arquivo ficar para trás.
+A wiki fica em `wiki/` (um `.md` por página) e é publicada junto com o site, em `/wiki/`. O `npm run wiki:build` converte os `.md` em `site/src/content/wiki.json`, que **é inteiro gerado: não edite à mão**; o Astro o desenha (menu, sumário, anterior e próxima, busca). O `npm test` falha se o arquivo ficar para trás.
 
 ```
 wiki/

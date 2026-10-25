@@ -98,7 +98,7 @@ const closeButton = ownerId => button(`ajuda:fechar:${ownerId}`, "Fechar", "✖�
 // INÍCIO
 // ==========================================
 
-// Os links do menu, como no menu de comandos da Alfacusa: o site, o painel do jogador e a
+// Os links do menu: o site, o painel do jogador e a
 // privacidade. Botões de link não levam customId.
 const linkButton = (label, emoji, url) => ({ type: "button", style: "link", label, emoji, url });
 
@@ -108,7 +108,7 @@ export const helpLinks = () => [
     linkButton("Privacidade", "🔒", `${SITE_URL}privacy/`)
 ];
 
-// O início é só isto, igual ao menu da Alfacusa: o prefixo, a chamada, o menu de categorias, duas
+// O início é só isto: o prefixo, a chamada, o menu de categorias, duas
 // dicas e os três links. Nada de lista de categorias nem de explicação das opções: isso vem quando
 // a pessoa escolhe uma categoria.
 export function buildHelpHome({ ownerId, catalog }) {
@@ -131,7 +131,7 @@ export function buildHelpHome({ ownerId, catalog }) {
         timestamp: false
     });
 
-    // O V2: tudo dentro de um cartão só, com o menu no meio (como no da Alfacusa).
+    // O V2: tudo dentro de um cartão só, com o menu no meio.
     const layout = [
         container([
             text("## 📚 Menu de comandos"),

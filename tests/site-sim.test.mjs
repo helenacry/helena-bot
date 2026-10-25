@@ -318,8 +318,8 @@ const { HELENA_COLORS } = await import("../utils/embed.mjs");
 const { format } = await import("../site/src/lib/format.ts").then(module => ({ format: module }));
 
 // O recibo do site é o papel térmico (nome e valor ligados por pontilhado, linha fina entre os
-// grupos). O bot deixou esse desenho de lado nas respostas (agora são linhas com emoji, como a
-// Alfacusa); o site fica com o dele.
+// grupos). O bot deixou esse desenho de lado nas respostas (agora são linhas com emoji);
+// o site fica com o dele.
 test("o recibo do site: largura mínima de 28, pontilhado entre o nome e o valor, linha fina nos null e nunca nas pontas", () => {
     assert.deepEqual(
         sim.receipt([["Pagamento", "+R$ 420,00"], ["Experiência", "+25 XP"], null, ["Carteira", "R$ 1.350,00"]]),

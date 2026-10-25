@@ -352,7 +352,7 @@ const { buildUserinfoEmbed, buildUserinfoDetail, detailOptions, largeImage } = a
 const { getUserBadges, BADGE_IDS } = await import("../services/social/userinfo-badges.mjs");
 
 test("a idade vem em anos, meses e dias de calendário, sem as unidades zeradas", () => {
-    // o exemplo do cartão do Zany: conta de 30/09/2016 vista em 15/10/2026
+    // um exemplo: conta de 30/09/2016 vista em 15/10/2026
     assert.equal(formatAge(Date.UTC(2016, 8, 30, 23, 55), Date.UTC(2026, 9, 15, 12, 0)), "10 anos 15 dias");
 
     // "2 anos 5 meses 20 dias"
@@ -433,7 +433,7 @@ test("sem bits, sem insígnia; bits que o Discord criar depois são ignorados; o
 });
 
 // ==========================================
-// CARTÃO NO ESTILO DO ZANY
+// O CARTÃO
 // ==========================================
 
 test("Tag e ID vêm em blocos de código; a Menção é a descrição; o rodapé leva o avatar de quem usou", async () => {

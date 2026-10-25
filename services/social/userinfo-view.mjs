@@ -24,7 +24,7 @@ import {
 // TELAS DO /USERINFO
 // ==========================================
 
-// O cartão do /userinfo (um embed, no estilo do Zany) e os detalhes do menu "Mais
+// O cartão do /userinfo (um embed) e os detalhes do menu "Mais
 // informações". No embed, author, footer e o nome dos campos são texto simples; description e o
 // valor dos campos aceitam markdown, bloco de código e menção (que no embed é só visual, não
 // notifica); o timestamp aparece ao lado do rodapé.

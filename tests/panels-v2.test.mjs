@@ -137,7 +137,7 @@ test("/saldo: classic com embed e botões; V2 com o layout; o layout nunca vai n
 // CENTRAL DE AJUDA
 // ==========================================
 
-test("ajuda no V2: o início é um cartão só, como o da Alfacusa (título, prefixo, menu, dicas e três links)", () => {
+test("ajuda no V2: o início é um cartão só (título, prefixo, menu, dicas e três links)", () => {
     const view = buildHelpHome({ ownerId: OWNER, catalog });
 
     assert.deepEqual(layoutProblems(view.layout), []);

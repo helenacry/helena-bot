@@ -547,7 +547,7 @@ export function handleInventoryClick(interaction) {
 // INVENTÁRIO: ENVIO DO FORMULÁRIO
 // ==========================================
 
-// Depois do formulário vem a confirmação (com botão), como na Alfacusa:
+// Depois do formulário vem a confirmação (com botão):
 // escolher o item, escolher a quantidade e confirmar.
 export function handleInventoryModal(interaction) {
     const fields = readFields(interaction);

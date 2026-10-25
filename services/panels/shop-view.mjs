@@ -224,7 +224,7 @@ const toolButtons = ownerId => [
 // DESENHO V2 (LAYOUT PRÓPRIO)
 // ==========================================
 
-// No V2 a loja é limpa, como a vitrine da Alfacusa: título com a imagem da Helena ao lado,
+// No V2 a loja é limpa: título com a imagem da Helena ao lado,
 // uma linha de apoio com quem está olhando, a carteira e as gemas, e cada prateleira como uma
 // seção com o botão "Entrar" à direita. Os mesmos botões e customIds do desenho clássico,
 // então os cliques são tratados pelo mesmo código (shop-panels.mjs).

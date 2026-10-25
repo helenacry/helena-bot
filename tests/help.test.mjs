@@ -224,7 +224,7 @@ test("como usar: obrigatórias entre < > e opcionais entre [ ]", () => {
 // TELAS
 // ==========================================
 
-test("o início é igual ao menu da Alfacusa: título, prefixo, chamada, menu, duas dicas e três links (sem mais nada)", () => {
+test("o início é enxuto: título, prefixo, chamada, menu, duas dicas e três links (sem mais nada)", () => {
     const view = buildHelpHome({ ownerId: OWNER, catalog });
 
     assertFits(view, "início");
@@ -252,7 +252,7 @@ test("o início é igual ao menu da Alfacusa: título, prefixo, chamada, menu, d
     assert.ok(menu.options.every(option => option.description), "cada categoria diz o que cobre");
     assert.deepEqual(menu.options.map(option => option.value), catalog.categories.map(category => category.id));
 
-    // só os três links, como no menu da Alfacusa (nada de Buscar nem Fechar)
+    // só os três links (nada de Buscar nem Fechar)
     assert.equal(view.components.length, 2);
 
     const links = buttons(view.components);

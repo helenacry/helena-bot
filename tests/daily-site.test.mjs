@@ -83,7 +83,7 @@ test("com o painel ligado, /daily não paga: mostra que está disponível e leva
         assert.match(embed.description, /O daily agora é coletado no site da Helena/);
         assert.match(embed.description, /cada servidor tem a própria recarga de 24 horas/);
 
-        // sem autor, miniatura nem rodapé: igual ao cartão da Alfacusa
+        // sem autor, miniatura nem rodapé
         assert.equal(embed.author, undefined);
         assert.equal(embed.thumbnail, undefined);
         assert.equal(embed.footer.text, "");

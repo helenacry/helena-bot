@@ -64,7 +64,7 @@ export function isHiddenCommand(commandName, folder) {
 // ==========================================
 
 // Quando a pessoa digita "/", o Discord lista cada comando com a descrição embaixo. A Helena abre
-// cada uma com a categoria entre colchetes, como a Alfacusa: "[💰 Economia] Consulte o seu saldo".
+// cada uma com a categoria entre colchetes: "[💰 Economia] Consulte o seu saldo".
 // Só vale no registro dos comandos (command-registry.mjs): a ajuda, o site e a wiki mostram a
 // descrição sem a etiqueta, porque já mostram a categoria ao lado. O Discord não desenha emoji
 // personalizado na descrição, por isso o emoji é o comum.

@@ -14,8 +14,8 @@ import { row } from "../panels/panel-kit.mjs";
 // ==========================================
 
 // Uma tela só para o /empregos e para o primeiro /trabalhar: quem ainda não tem emprego vê o que já
-// pode assumir, o que falta liberar e um menu para escolher. O desenho segue o /jobs da Alfacusa
-// (✅ disponíveis, 🔒 bloqueados, menu "Escolha uma profissão").
+// pode assumir, o que falta liberar e um menu para escolher. O desenho: ✅ disponíveis,
+// 🔒 bloqueados e o menu "Escolha uma profissão".
 //
 //   emp:escolher:<dono>      o menu (só quem abriu escolhe)
 

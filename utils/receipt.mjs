@@ -3,7 +3,7 @@
 // RECIBO E CARIMBO
 // ==========================================
 
-// As contas de uma resposta em texto para o chat, no estilo do /work da Alfacusa: uma linha por
+// As contas de uma resposta em texto para o chat: uma linha por
 // conta, com o emoji do assunto, uma barra e o valor em negrito.
 //
 //   receipt([

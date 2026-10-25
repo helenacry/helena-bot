@@ -109,8 +109,8 @@ function claimedResponse(result) {
 // O DAILY É COLETADO NO SITE
 // ==========================================
 
-// Com o painel do site no ar (a API ligada, HELENA_WEB_PORT e o resto), o daily só se coleta lá, como
-// na Alfacusa: o /daily mostra se está disponível neste servidor e leva ao painel. Sem o painel (o bot
+// Com o painel do site no ar (a API ligada, HELENA_WEB_PORT e o resto), o daily só se coleta lá:
+// o /daily mostra se está disponível neste servidor e leva ao painel. Sem o painel (o bot
 // de teste, ou quem roda sem o site) o comando segue pagando como sempre, para ninguém ficar sem daily.
 // HELENA_DAILY_ON_SITE=off força o comando a pagar mesmo com o painel ligado.
 export function dailyOnSite(env = process.env) {

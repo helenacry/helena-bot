@@ -133,7 +133,7 @@ test("loadAppEmojis lê a lista da API e, se ela falhar, deixa os emojis comuns 
 });
 
 // ==========================================
-// AS CONTAS: UMA LINHA COM EMOJI, COMO A ALFACUSA
+// AS CONTAS: UMA LINHA COM EMOJI
 // ==========================================
 
 test("receipt: emoji, barra, nome e valor em negrito; linha em branco entre grupos, nunca nas pontas", () => {
