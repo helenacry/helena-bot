@@ -5,6 +5,10 @@ import {
     setHidden
 } from "./userinfo-history.mjs";
 
+import { clearDeclared, getDeclared } from "./userinfo-declared.mjs";
+
+import { dateField } from "./userinfo-format.mjs";
+
 import { icon } from "../platform/app-emojis.mjs";
 
 import {
@@ -60,11 +64,21 @@ const button = (ownerId, action, label, emoji, style, disabled) => ({
     ...(disabled ? { disabled: true } : {})
 });
 
+// Os botões das datas informadas (abrem o formulário; "limpar" apaga as duas).
+const declareButton = (ownerId, kind, label, emoji, disabled) => ({
+    type: "button",
+    customId: `userinfo:decl:${ownerId}:${kind}`,
+    label,
+    emoji,
+    style: "secondary",
+    ...(disabled ? { disabled: true } : {})
+});
+
 /**
  * A tela de privacidade do histórico (um embed e os três botões). `action` é o que a pessoa acabou de
  * pedir ("ocultar", "mostrar", "apagar") e já vem aplicado aqui; "status" só mostra como está.
  */
-export function privacyView(userId, action = "status") {
+export function privacyView(userId, action = "status", { notice = "" } = {}) {
     const id = String(userId);
 
     const what = ACTIONS.has(action) ? action : "status";
@@ -72,7 +86,7 @@ export function privacyView(userId, action = "status") {
     let title = "🔎 Seu histórico do /userinfo";
     let say =
         "O `/userinfo` mostra os nomes, as fotos e os banners que a Helena já viu em você, só de quem usa a Helena e só a partir do primeiro uso. " +
-        "Pelos botões você oculta, mostra de novo ou apaga tudo.";
+        "Pelos botões você oculta, mostra de novo ou apaga tudo. Dá também para informar desde quando você assina o Nitro e desde quando impulsiona servidores: o Discord não entrega isso a bots, e as datas aparecem só no seu cartão, marcadas como informadas.";
     let color = HELENA_COLORS.primary;
     let mood = isHidden(id) ? "dormindo" : "feliz";
 
@@ -92,7 +106,7 @@ export function privacyView(userId, action = "status") {
         mood = "feliz";
 
     } else if (what === "apagar") {
-        const removed = clearHistory(id);
+        const removed = clearHistory(id) + clearDeclared(id);
 
         title = "🗑️ Histórico apagado";
         say = removed
@@ -102,30 +116,43 @@ export function privacyView(userId, action = "status") {
     }
 
     const hidden = isHidden(id);
+    const declared = getDeclared(id);
     const saved = countHistory(id);
 
     return {
         embed: ledgerEmbed({
             section: "Privacidade",
             title,
-            say,
+            say: notice ? say + "\n\n" + notice : say,
             rows: [
                 ["Histórico", hidden ? "oculto" : "visível"],
-                ["Registros guardados", String(saved)]
+                ["Registros guardados", String(saved)],
+                ["Nitro desde", declared.nitroSince ? dateField(declared.nitroSince, { time: declared.nitroExact }) : "não informado"],
+                ["Impulso desde", declared.boostSince ? dateField(declared.boostSince, { time: declared.boostExact }) : "não informado"]
             ],
             color,
             mood,
             footer: "A Helena nunca guarda mensagens, calls nem servidores"
         }),
 
-        components: [{
-            type: "row",
-            components: [
-                button(id, "ocultar", "Ocultar", icon("🔒"), "secondary", hidden),
-                button(id, "mostrar", "Mostrar", icon("🔓"), "secondary", !hidden),
-                button(id, "apagar", "Apagar tudo", icon("🗑️"), "danger", saved === 0)
-            ]
-        }]
+        components: [
+            {
+                type: "row",
+                components: [
+                    button(id, "ocultar", "Ocultar", icon("🔒"), "secondary", hidden),
+                    button(id, "mostrar", "Mostrar", icon("🔓"), "secondary", !hidden),
+                    button(id, "apagar", "Apagar tudo", icon("🗑️"), "danger", saved === 0 && !declared.nitroSince && !declared.boostSince)
+                ]
+            },
+            {
+                type: "row",
+                components: [
+                    declareButton(id, "nitro", "Informar Nitro", icon("💠")),
+                    declareButton(id, "boost", "Informar impulso", icon("🚀")),
+                    declareButton(id, "limpar", "Limpar datas", icon("🧹"), !declared.nitroSince && !declared.boostSince)
+                ]
+            }
+        ]
     };
 }
 

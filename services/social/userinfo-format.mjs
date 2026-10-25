@@ -60,8 +60,11 @@ export function dateFrom(value) {
         : date;
 }
 
+// O dia com dois dígitos ("05 de maio de 2024"), no horário de Brasília.
 const DAY_FORMAT = new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
     timeZone: "America/Sao_Paulo"
 });
 
@@ -70,109 +73,28 @@ const TIME_FORMAT = new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo"
 });
 
-// "30 de setembro de 2016, às 20:55" (horário de Brasília).
-export function dateField(value) {
+// "30 de setembro de 2016, às 20:55" (horário de Brasília). Com { time: false }, só o dia: é o que se
+// mostra de uma data que a própria pessoa informou sem a hora.
+export function dateField(value, { time = true } = {}) {
     const date = dateFrom(value);
 
     if (!date) {
         return UNKNOWN;
     }
 
-    return `${DAY_FORMAT.format(date)}, às ${TIME_FORMAT.format(date)}`;
+    return time
+        ? `${DAY_FORMAT.format(date)}, às ${TIME_FORMAT.format(date)}`
+        : DAY_FORMAT.format(date);
 }
 
-// A idade em anos, meses e dias de CALENDÁRIO (na data de Brasília, sem contar a hora): "10 anos
-// 15 dias", sem as unidades zeradas. null se a data não existe; "menos de 1 dia" se foi hoje.
+// Brasília, sem horário de verão (fixo em UTC-3).
 const BRASILIA = 3 * 60 * 60 * 1000;
 
-// Meia-noite (UTC) do dia de calendário de Brasília em que o instante cai.
-function calendarDay(ms) {
-    const shifted = new Date(ms - BRASILIA);
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
 
-    return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
-}
-
-// A data daqui a n meses, com o dia limitado ao tamanho do mês (31/01 + 1 mês = 28 ou 29/02).
-function addMonths(day, months) {
-    const date = new Date(day);
-
-    const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1));
-
-    const length = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
-
-    return Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), Math.min(date.getUTCDate(), length));
-}
-
-// Menos de 1 dia de idade: "20 horas 34 minutos" (ou só as horas, ou só os minutos).
-function formatShortAge(elapsed) {
-    const hours = Math.floor(elapsed / 3_600_000);
-    const minutes = Math.floor((elapsed % 3_600_000) / 60_000);
-
-    const parts = [];
-
-    if (hours) parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
-    if (minutes) parts.push(`${minutes} ${minutes === 1 ? "minuto" : "minutos"}`);
-
-    return parts.length ? parts.join(" ") : "menos de 1 minuto";
-}
-
-export function formatAge(from, to = Date.now()) {
-    const start = dateFrom(from);
-
-    if (!start) {
-        return null;
-    }
-
-    // quem entrou há 20 horas não tem "1 dia": abaixo de 24 horas conta o tempo de verdade
-    const elapsed = new Date(to).getTime() - start.getTime();
-
-    if (elapsed >= 0 && elapsed < 86_400_000) {
-        return formatShortAge(elapsed);
-    }
-
-    const first = calendarDay(start.getTime());
-    const last = calendarDay(new Date(to).getTime());
-
-    if (!(last > first)) {
-        return "menos de 1 dia";
-    }
-
-    const a = new Date(first);
-    const b = new Date(last);
-
-    let total = (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + (b.getUTCMonth() - a.getUTCMonth());
-
-    // o último mês cheio que cabe até a data de hoje
-    if (addMonths(first, total) > last) {
-        total -= 1;
-    }
-
-    const days = Math.round((last - addMonths(first, total)) / 86_400_000);
-    const years = Math.floor(total / 12);
-    const months = total % 12;
-
-    const parts = [];
-
-    if (years) parts.push(`${years} ${years === 1 ? "ano" : "anos"}`);
-    if (months) parts.push(`${months} ${months === 1 ? "mês" : "meses"}`);
-    if (days) parts.push(`${days} ${days === 1 ? "dia" : "dias"}`);
-
-    return parts.length ? parts.join(" ") : "menos de 1 dia";
-}
-
-// "30 de setembro de 2016, às 20:55 (**10 anos 15 dias**)"
-export function dateWithAge(value, now = Date.now()) {
-    const age = formatAge(value, now);
-
-    if (age === null) {
-        return UNKNOWN;
-    }
-
-    return `${dateField(value)} (**${age}**)`;
-}
-
-// Quanto falta de um instante até outro, em anos, meses, dias e horas de calendário, sem as
-// unidades zeradas: "6 meses 9 dias 23 horas". "agora" se já passou; "menos de 1 hora" se falta quase nada.
+// A data daqui a n meses, com o dia limitado ao tamanho do mês (31/01 + 1 mês = 28 ou 29/02) e a mesma hora.
 function addMonthsInstant(ms, months) {
     const date = new Date(ms);
 
@@ -190,6 +112,84 @@ function addMonthsInstant(ms, months) {
     );
 }
 
+const UNITS = [
+    ["ano", "anos"],
+    ["mês", "meses"],
+    ["dia", "dias"],
+    ["hora", "horas"],
+    ["minuto", "minutos"]
+];
+
+// As três maiores unidades a partir da primeira que não é zero, sem as zeradas: "2 anos 5 meses 19 dias",
+// "7 meses 18 dias 8 horas", "19 horas 51 minutos". `values` vem na ordem de UNITS.
+function topUnits(values) {
+    const first = values.findIndex(value => value > 0);
+
+    if (first === -1) {
+        return null;
+    }
+
+    return values
+        .slice(first, first + 3)
+        .map((value, index) => (value ? `${value} ${UNITS[first + index][value === 1 ? 0 : 1]}` : null))
+        .filter(Boolean)
+        .join(" ");
+}
+
+// A idade de uma data até agora, pelo tempo que de fato passou (no relógio de Brasília): "2 anos 5 meses
+// 19 dias", "7 meses 18 dias 8 horas", "19 horas 51 minutos". Mostra as três maiores unidades, sem as
+// zeradas. null se a data não existe; "menos de 1 minuto" se acabou de acontecer (ou ainda vai acontecer).
+export function formatAge(from, to = Date.now()) {
+    const start = dateFrom(from);
+
+    if (!start) {
+        return null;
+    }
+
+    const end = new Date(to).getTime();
+
+    if (!Number.isFinite(end) || end - start.getTime() < MINUTE) {
+        return "menos de 1 minuto";
+    }
+
+    // as contas de calendário (meses com tamanhos diferentes) no relógio de Brasília
+    const a = start.getTime() - BRASILIA;
+    const b = end - BRASILIA;
+
+    const dateA = new Date(a);
+    const dateB = new Date(b);
+
+    let total = (dateB.getUTCFullYear() - dateA.getUTCFullYear()) * 12 + (dateB.getUTCMonth() - dateA.getUTCMonth());
+
+    // o último mês cheio que cabe até agora
+    if (addMonthsInstant(a, total) > b) {
+        total -= 1;
+    }
+
+    const rest = b - addMonthsInstant(a, total);
+
+    return topUnits([
+        Math.floor(total / 12),
+        total % 12,
+        Math.floor(rest / DAY),
+        Math.floor((rest % DAY) / HOUR),
+        Math.floor((rest % HOUR) / MINUTE)
+    ]);
+}
+
+// "30 de setembro de 2016, às 20:55 (**10 anos 15 dias**)"; { time: false } tira o "às 20:55".
+export function dateWithAge(value, now = Date.now(), options = {}) {
+    const age = formatAge(value, now);
+
+    if (age === null) {
+        return UNKNOWN;
+    }
+
+    return `${dateField(value, options)} (**${age}**)`;
+}
+
+// Quanto falta de um instante até outro, em anos, meses, dias e horas de calendário, sem as
+// unidades zeradas: "6 meses 9 dias 23 horas". "agora" se já passou; "menos de 1 hora" se falta quase nada.
 export function formatCountdown(from, to) {
     if (from == null || to == null) {
         return UNKNOWN;

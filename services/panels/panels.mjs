@@ -38,6 +38,8 @@ import { handleRankingClick } from "./ranking-panel.mjs";
 
 import { handleMissionsClick } from "./missions-panel.mjs";
 
+import { handleDeclareModal } from "./userinfo-panel.mjs";
+
 import {
     handleHelpClick,
     handleHelpModal
@@ -329,6 +331,11 @@ export async function handleModalSubmit(interaction, comandos) {
 
     // "Procurar por @usuário..." do /userinfo: o mesmo comando, só para quem pediu.
     if (area === "userinfo") {
+        // as datas de Nitro e de impulso que a pessoa informa no próprio cartão
+        if (action === "declare") {
+            return handleDeclareModal(interaction);
+        }
+
         const query = (readFields(interaction).usuario ?? "").trim();
 
         if (!query) {

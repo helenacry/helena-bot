@@ -76,7 +76,7 @@ Não. Um roubo que falha **não manda para a cadeia**, mas gasta energia e a esp
 
 ### Que dados a Helena guarda sobre mim?
 
-Os dados do jogo, o seu ID e o nome de exibição, mais o histórico de nomes, fotos e banners do `/userinfo` (que você oculta ou apaga em **Meu histórico**, no menu do seu próprio cartão). As mensagens que não são comandos **não são guardadas**. Tudo está detalhado na [Política de Privacidade](site:privacy/).
+Os dados do jogo, o seu ID e o nome de exibição, mais o histórico de nomes, fotos e banners do `/userinfo` e, se você quiser, as datas de Nitro e de impulso que você mesmo informar (você oculta, tira ou apaga tudo em **Meu histórico**, no menu do seu próprio cartão). As mensagens que não são comandos **não são guardadas**. Tudo está detalhado na [Política de Privacidade](site:privacy/).
 
 ### Como peço para apagar os meus dados?
 

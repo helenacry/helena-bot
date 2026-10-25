@@ -21,6 +21,10 @@ import {
 } from "../../services/social/userinfo-history.mjs";
 
 import {
+    withDeclared
+} from "../../services/social/userinfo-declared.mjs";
+
+import {
     privacyAction,
     privacyResponse
 } from "../../services/social/userinfo-privacy.mjs";
@@ -209,7 +213,8 @@ export default {
 
             // O perfil completo da conta (banner, flags completas, etiqueta de servidor) para o Nitro e as
             // insígnias; se a API falhar, o cartão sai com o que já temos.
-            const account = await withAccount(user);
+            // com as datas de Nitro e de impulso que a própria pessoa informou, se informou
+            const account = withDeclared(await withAccount(user));
 
             // quem usa a Helena ganha uma linha no histórico se o nome, a foto ou o banner mudou
             observeTarget(account);

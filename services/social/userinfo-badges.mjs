@@ -169,7 +169,22 @@ function wholeMonths(from, to) {
  *
  * Devolve null se a pessoa não impulsiona (since vazio).
  */
-export function boostLadder(since, now = Date.now()) {
+export const boostLadder = (since, now = Date.now()) => ladderOf(since, now, BOOST_MONTHS);
+
+// ------------------------------------------------------------------ insígnia de Nitro
+
+// Os meses de assinatura em que a insígnia de Nitro muda (do nível 1 ao 8), segundo a lista pública
+// das insígnias: Bronze 1, Prata 3, Ouro 6, Platina 12, Diamante 24, Esmeralda 36, Rubi 60 e Fogo 72.
+// O Discord não entrega a data da assinatura a bots: ela só entra aqui quando a própria pessoa a informa
+// (services/social/userinfo-declared.mjs), e a escada é a mesma conta do impulso.
+export const NITRO_MONTHS = Object.freeze([1, 3, 6, 12, 24, 36, 60, 72]);
+
+export const NITRO_TIERS = Object.freeze(["Bronze", "Prata", "Ouro", "Platina", "Diamante", "Esmeralda", "Rubi", "Fogo"]);
+
+export const nitroLadder = (since, now = Date.now()) => ladderOf(since, now, NITRO_MONTHS);
+
+// A escada de uma assinatura ou impulso que começou em "since", com os degraus nos meses de "monthsList".
+function ladderOf(since, now, monthsList) {
     const start = Number(since);
 
     if (!Number.isFinite(start) || start <= 0) {
@@ -178,7 +193,7 @@ export function boostLadder(since, now = Date.now()) {
 
     const months = wholeMonths(start, now);
 
-    const steps = BOOST_MONTHS.map((count, index) => {
+    const steps = monthsList.map((count, index) => {
         const at = addMonths(start, count);
 
         return { level: index + 1, months: count, reached: at <= now, at };
@@ -191,7 +206,7 @@ export function boostLadder(since, now = Date.now()) {
     return {
         months,
         level,
-        levels: BOOST_MONTHS.length,
+        levels: monthsList.length,
         next: upcoming
             ? { level: upcoming.level, months: upcoming.months, at: upcoming.at, days: Math.max(1, Math.ceil((upcoming.at - now) / DAY)) }
             : null,

@@ -80,7 +80,7 @@ const fieldsOf = embed => Object.fromEntries([
 ]);
 
 // o valor do Tag e do ID vem entre crases (código de uma linha)
-const unblock = value => String(value).replace(/^`|`$/g, "");
+const unblock = value => String(value).replace(/^```\n/, "").replace(/\n```$/, "").replace(/^`|`$/g, "");
 
 const players = () => db.prepare("SELECT COUNT(*) c FROM players").get().c;
 
@@ -181,7 +181,7 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
     // a conta tem a data do ID (a conta mais velha que o bot conhece, de 2016)
     assert.equal(
         fields["📅 Conta criada em"].split(" (**")[0],
-        new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "America/Sao_Paulo" }).format(snowflakeTime("200000000000000001")) +
+        new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(snowflakeTime("200000000000000001")) +
             ", às " +
             new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(snowflakeTime("200000000000000001"))
     );
@@ -189,9 +189,9 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
 
     assert.match(fields["📥 Entrou no servidor em"], /20 de janeiro de 2025/);
     // o impulso: desde quando, e a insígnia de agora e a próxima (nível, tempo e quando chega o próximo)
-    assert.match(fields["🚀 Impulsionando este servidor desde"], /1 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
-    assert.match(fields["🏅 Insígnia de impulso atual"], /\*\*Nível \d de 9\*\* \| \*\*.+\*\*$/);
-    assert.match(fields["▶️ Próxima insígnia de impulso"], /\*\*Nível \d\*\* \| em \*\*.+\*\*$/);
+    assert.match(fields["🚀 Impulsionando este servidor desde"], /01 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
+    assert.match(fields["🏅 Insígnia de impulso atual"], /^💎 \| \*\*.+\*\*$/);
+    assert.match(fields["▶️ Próxima insígnia de impulso"], /^💎 \| em \*\*.+\*\*$/);
 
     // o Nitro: a Maria não tem avatar animado nem banner, então nada o prova e o cartão não diz nada dele
     assert.equal(fields["💠 Nitro"], undefined);
@@ -207,8 +207,9 @@ test("quem não tem insígnia, Nitro, impulso nem castigo fica com o cartão lim
         "👤 Menção", "🏷️ Tag", "🪪 ID", "📅 Conta criada em", "📥 Entrou no servidor em"
     ]);
 
-    assert.doesNotMatch(embed.description, /Nenhuma|Não detectado|Insígnias|Nitro/);
-    assert.deepEqual(embed.fields ?? [], [], "uma informação por linha, sem campos");
+    const text = JSON.stringify(embed);
+
+    assert.doesNotMatch(text, /Nenhuma|Não detectado|Insígnias|Nitro|Impuls/, "o que a Helena não sabe fica de fora");
 });
 
 test("a equipe do Discord ganha a insígnia dela (só o ícone no cartão; o nome fica em Mais informações)", async () => {
@@ -358,12 +359,18 @@ const { handleModalSubmit } = await import("../services/panels/panels.mjs");
 const { buildUserinfoEmbed, buildUserinfoDetail, detailOptions, largeImage } = await import("../services/social/userinfo-view.mjs");
 const { getUserBadges, BADGE_IDS } = await import("../services/social/userinfo-badges.mjs");
 
-test("a idade vem em anos, meses e dias de calendário, sem as unidades zeradas", () => {
-    // um exemplo: conta de 30/09/2016 vista em 15/10/2026
-    assert.equal(formatAge(Date.UTC(2016, 8, 30, 23, 55), Date.UTC(2026, 9, 15, 12, 0)), "10 anos 15 dias");
+test("a idade é o tempo que de fato passou, nas três maiores unidades, sem as zeradas", () => {
+    // os três casos do cartão de referência (conta, assinatura do Nitro e entrada no servidor), em Brasília
+    const now = Date.UTC(2026, 9, 25, 20, 26);
 
-    // "2 anos 5 meses 20 dias"
-    assert.equal(formatAge(Date.UTC(2024, 3, 27, 17, 40), Date.UTC(2026, 9, 17, 12, 0)), "2 anos 5 meses 20 dias");
+    assert.equal(formatAge(Date.UTC(2024, 4, 5, 23, 9), now), "2 anos 5 meses 19 dias");
+    assert.equal(formatAge(Date.UTC(2026, 2, 7, 12, 18), now), "7 meses 18 dias 8 horas");
+    assert.equal(formatAge(Date.UTC(2026, 9, 25, 0, 34), now), "19 horas 52 minutos");
+
+    // conta de 30/09/2016 (20:55 em Brasília) vista em 15/10/2026 (09:00)
+    assert.equal(formatAge(Date.UTC(2016, 8, 30, 23, 55), Date.UTC(2026, 9, 15, 12, 0)), "10 anos 14 dias");
+
+    assert.equal(formatAge(Date.UTC(2024, 3, 27, 17, 40), Date.UTC(2026, 9, 17, 12, 0)), "2 anos 5 meses 19 dias");
 
     // singular
     assert.equal(formatAge(Date.UTC(2025, 0, 1, 12), Date.UTC(2026, 1, 2, 12)), "1 ano 1 mês 1 dia");
@@ -371,33 +378,42 @@ test("a idade vem em anos, meses e dias de calendário, sem as unidades zeradas"
     // só dias
     assert.equal(formatAge(Date.UTC(2026, 9, 1, 12), Date.UTC(2026, 9, 11, 12)), "10 dias");
 
-    // menos de 24 horas conta o tempo de verdade (entrou há 20 horas não é "1 dia")
+    // abaixo de 24 horas: horas e minutos (entrou há 20 horas não é "1 dia")
     assert.equal(formatAge(Date.UTC(2026, 9, 17, 8), Date.UTC(2026, 9, 17, 20)), "12 horas");
     assert.equal(formatAge(Date.UTC(2026, 9, 25, 0, 34), Date.UTC(2026, 9, 25, 21, 8)), "20 horas 34 minutos");
     assert.equal(formatAge(Date.UTC(2026, 9, 25, 20, 0), Date.UTC(2026, 9, 25, 21, 1)), "1 hora 1 minuto");
     assert.equal(formatAge(Date.UTC(2026, 9, 25, 20, 0), Date.UTC(2026, 9, 25, 20, 40)), "40 minutos");
     assert.equal(formatAge(Date.UTC(2026, 9, 25, 20, 0), Date.UTC(2026, 9, 25, 20, 0, 30)), "menos de 1 minuto");
 
-    // 24 horas ou mais volta ao calendário de Brasília
+    // a partir de 1 dia, as três maiores unidades (as menores ficam de fora)
     assert.equal(formatAge(Date.UTC(2026, 9, 24, 12), Date.UTC(2026, 9, 25, 12)), "1 dia");
+    assert.equal(formatAge(Date.UTC(2026, 9, 1, 12), Date.UTC(2026, 9, 3, 16, 30)), "2 dias 4 horas 30 minutos");
 
-    // uma data no futuro (relógio torto) não vira horas negativas
-    assert.equal(formatAge(Date.UTC(2026, 9, 25, 20), Date.UTC(2026, 9, 25, 19)), "menos de 1 dia");
+    // uma data no futuro (relógio torto) não vira tempo negativo
+    assert.equal(formatAge(Date.UTC(2026, 9, 25, 20), Date.UTC(2026, 9, 25, 19)), "menos de 1 minuto");
 
-    // virada de ano: 31/12 para 1/3 do ano seguinte
+    // virada de ano e mês curto: 31/12 para 1/3, e 31/01 para 1/03 de um ano bissexto
     assert.equal(formatAge(Date.UTC(2025, 11, 31, 12), Date.UTC(2026, 2, 1, 12)), "2 meses 1 dia");
+    assert.equal(formatAge(Date.UTC(2024, 0, 31, 12), Date.UTC(2024, 2, 1, 12)), "1 mês 1 dia");
 
     assert.equal(formatAge(null), null);
     assert.equal(formatAge("lixo"), null);
 });
 
-test("a data sai no horário de Brasília, com vírgula e 'às', e a idade em negrito", () => {
+test("a data sai no horário de Brasília, com o dia de dois dígitos, vírgula e 'às', e a idade em negrito", () => {
     assert.equal(dateField(Date.UTC(2016, 8, 30, 23, 55)), "30 de setembro de 2016, às 20:55");
+    assert.equal(dateField(Date.UTC(2024, 4, 5, 23, 9)), "05 de maio de 2024, às 20:09", "o dia leva zero à esquerda");
+    assert.equal(dateField(Date.UTC(2026, 2, 7, 15), { time: false }), "07 de março de 2026", "sem a hora (data informada só com o dia)");
     assert.equal(dateField(null), UNKNOWN);
 
     assert.equal(
         dateWithAge(Date.UTC(2016, 8, 30, 23, 55), Date.UTC(2026, 9, 15, 12, 0)),
-        "30 de setembro de 2016, às 20:55 (**10 anos 15 dias**)"
+        "30 de setembro de 2016, às 20:55 (**10 anos 14 dias**)"
+    );
+
+    assert.equal(
+        dateWithAge(Date.UTC(2026, 2, 7, 15), Date.UTC(2026, 9, 25, 20, 26), { time: false }),
+        "07 de março de 2026 (**7 meses 18 dias 5 horas**)"
     );
 
     assert.equal(dateWithAge(undefined), UNKNOWN);
@@ -455,7 +471,7 @@ test("sem bits, sem insígnia; bits que o Discord criar depois são ignorados; o
 // O CARTÃO
 // ==========================================
 
-test("Menção, Tag e ID são uma linha cada, entre crases (sem caixas); o rodapé leva o avatar de quem usou", async () => {
+test("a Menção é a descrição; Tag e ID vêm em blocos de código, lado a lado; o rodapé leva o avatar de quem usou", async () => {
     const userinfo = (await carregarComandos()).get("userinfo");
 
     const result = await userinfo.execute({
@@ -468,13 +484,11 @@ test("Menção, Tag e ID são uma linha cada, entre crases (sem caixas); o rodap
 
     const embed = result.data.embeds[0];
 
-    const lines = embed.description.split("\n");
-
-    assert.equal(lines[0], "👤 **Menção:** <@200000000000000004>");
-    assert.equal(lines[1], "🏷️ **Tag:** `ana`");
-    assert.equal(lines[2], "🪪 **ID:** `200000000000000004`");
-    assert.ok(!embed.description.includes("```"), "nada de bloco de código");
-    assert.deepEqual(embed.fields ?? [], [], "a informação toda cabe no texto, uma por linha");
+    assert.equal(embed.fields[0].value, "```\nana\n```");
+    assert.equal(embed.fields[1].value, "```\n200000000000000004\n```");
+    assert.equal(embed.fields[0].inline, true);
+    assert.equal(embed.fields[1].inline, true);
+    assert.equal(embed.description, "👤 **Menção:** <@200000000000000004>");
     assert.deepEqual(embed.footer.iconUrl, "https://cdn.exemplo.test/eu.png");
     assert.match(embed.footer.text, /^Comando executado por: Eu Mesmo \| Visualizações: \d+$/);
 });
@@ -594,7 +608,7 @@ test("Mais informações: insígnias, datas e cargos, em mensagem só de quem pe
     assert.match(badges.description, /🦁 \*\*HypeSquad Bravery\*\*\n-# Casa Bravery do HypeSquad\./);
     assert.match(badges.description, /🌠 \*\*Apoiador inicial\*\*/);
     assert.match(badges.description, /🚀 \*\*Impulsiona este servidor\*\*/);
-    assert.match(badges.description, /não as informa a bots/, "o aviso do que o Discord não entrega");
+    assert.match(badges.description, /não informa a bots/, "o aviso do que o Discord não entrega");
 
     const dates = (await ask("dates")).data.embeds[0];
 

@@ -14,6 +14,16 @@ import { observeTarget, readHistory } from "../social/userinfo-history.mjs";
 import { PRIVACY_MENU_VALUE, privacyView } from "../social/userinfo-privacy.mjs";
 
 import {
+    DECLARED_KINDS,
+    clearDeclared,
+    parseDeclaredDate,
+    setDeclared,
+    withDeclared
+} from "../social/userinfo-declared.mjs";
+
+import { dateField } from "../social/userinfo-format.mjs";
+
+import {
     openModal,
     textField
 } from "./modals.mjs";
@@ -67,6 +77,58 @@ const privateEmbed = embed => priv({
     data: { embeds: [embed] }
 });
 
+// O formulário de uma data informada (userinfo:declare:<dono>:<tipo>; o envio é tratado abaixo).
+function declareForm(ownerId, kind) {
+    return openModal({
+        customId: `userinfo:declare:${ownerId}:${kind}`,
+        title: kind === "nitro" ? "Desde quando você assina o Nitro?" : "Desde quando você impulsiona?",
+        fields: [
+            textField({
+                id: "data",
+                label: "Data (dd/mm/aaaa) e hora, se souber",
+                placeholder: "07/03/2026  ou  07/03/2026 09:18",
+                required: false,
+                maxLength: 20
+            })
+        ]
+    });
+}
+
+/** O envio do formulário: guarda a data (ou, vazio, tira) e volta à tela de privacidade. */
+export function handleDeclareModal(interaction) {
+    const [, , ownerId, kind] = String(interaction.data?.customId ?? "").split(":");
+
+    if (!sameUser(interaction, ownerId)) {
+        return notYours();
+    }
+
+    if (!DECLARED_KINDS.includes(kind)) {
+        return warn("Formulário desconhecido", "Esse formulário não é reconhecido.");
+    }
+
+    const raw = String((interaction.data?.fields ?? []).find(field => field.customId === "data")?.value ?? "").trim();
+
+    const label = kind === "nitro" ? "Nitro" : "impulso";
+
+    if (!raw) {
+        setDeclared(ownerId, kind, null);
+
+        return update(privacyView(ownerId, "status", { notice: `✅ Tirei a data do ${label}.` }));
+    }
+
+    const parsed = parseDeclaredDate(raw, kind);
+
+    if (!parsed.ok) {
+        return warn("Data inválida", parsed.reason);
+    }
+
+    setDeclared(ownerId, kind, parsed.time, parsed.exact);
+
+    return update(privacyView(ownerId, "status", {
+        notice: `✅ Guardei: ${label} desde ${dateField(parsed.time, { time: parsed.exact })}. Aparece no seu /userinfo, marcado como informado.`
+    }));
+}
+
 // customId: userinfo:more:<dono>:<alvo> ou userinfo:other:<dono> (a escolha vem em data.values).
 // Assíncrono: busca a pessoa na API e roda o /userinfo dela.
 export async function handleUserinfoComponent(interaction, comandos) {
@@ -88,6 +150,24 @@ export async function handleUserinfoComponent(interaction, comandos) {
         }
 
         return update(privacyView(ownerId, targetId));
+    }
+
+    // ----------------------------------
+    // OS BOTÕES DAS DATAS INFORMADAS (Nitro, impulso, limpar)
+    // ----------------------------------
+
+    if (action === "decl") {
+        if (targetId === "limpar") {
+            clearDeclared(ownerId);
+
+            return update(privacyView(ownerId, "status", { notice: "✅ Apaguei as datas que você tinha informado." }));
+        }
+
+        if (!DECLARED_KINDS.includes(targetId)) {
+            return warn("Botão desconhecido", "Esse botão não é reconhecido.");
+        }
+
+        return declareForm(ownerId, targetId);
     }
 
     const choice = interaction.data?.values?.[0];
@@ -122,7 +202,8 @@ export async function handleUserinfoComponent(interaction, comandos) {
         // para as telas que precisam deles
         const needsAccount = ["banner", "colors", "badges", "nitro", "oldbanners"].includes(choice);
 
-        const person = needsAccount ? await withAccount(found.user) : found.user;
+        // as datas de Nitro e de impulso que a própria pessoa informou (o Discord não entrega a bots)
+        const person = withDeclared(needsAccount ? await withAccount(found.user) : found.user);
 
         // as telas de histórico: anota o que mudou agora (só se a pessoa usa a Helena) e lê o que há
         let history;

@@ -3,7 +3,9 @@ import {
     getUserBadges,
     getAccountNotes,
     nitroSigns,
-    boostLadder
+    boostLadder,
+    nitroLadder,
+    NITRO_TIERS
 } from "./userinfo-badges.mjs";
 
 import { PALETTE } from "../../config/theme.mjs";
@@ -44,6 +46,10 @@ function add(fields, name, value, inline = false) {
         inline
     });
 }
+
+// Bloco de código de uma linha (a caixa do Tag e do ID). A primeira linha depois das três
+// crases seria lida como linguagem, por isso o texto vem na linha de baixo.
+const block = text => "```\n" + text + "\n```";
 
 // A mesma imagem, em tamanho grande (o Discord redimensiona pelo ?size=).
 export const largeImage = url => String(url ?? "").replace(/size=\d+/, "size=1024");
@@ -88,60 +94,103 @@ function nitroSummary(nitro) {
         : state;
 }
 
-// O impulso para o cartão e as telas: desde quando (a data e a idade).
-const boostSummary = (user, now) => dateWithAge(user.boostingSince, now);
+// ------------------------------------------------------------------ impulso e Nitro (as duas escadas)
+
+// A marca de uma data que a própria pessoa informou (a Helena não consegue conferir).
+const INFORMED = "\n-# informado pela própria pessoa";
 
 // A gema do nível da insígnia de impulso (a da Helena; sem ela, a gema comum).
 const gem = level => iconNamed(`boost_${level}`, "💎");
 
-/**
- * A insígnia de impulso de agora (o nível e há quanto tempo) e a próxima (o nível e quando chega), como
- * { current, next } já com o texto. null se a pessoa não impulsiona este servidor.
- */
-function boostParts(user, now = Date.now()) {
-    const ladder = boostLadder(user.boostingSince, now);
+// O medalhão do nível da insígnia de Nitro (Bronze a Fogo).
+const medal = level => iconNamed(`nitro_${level}`, "💠");
 
+// Desde quando a pessoa impulsiona: a data que ela informou (vale em qualquer servidor) ou a do impulso
+// deste servidor, a mais antiga. null se não impulsiona.
+function boostOrigin(user) {
+    const declared = Number(user.declaredBoostSince) > 0 ? Number(user.declaredBoostSince) : null;
+    const server = Number(user.boostingSince) > 0 ? Number(user.boostingSince) : null;
+
+    if (declared && (!server || declared <= server)) {
+        return { since: declared, informed: true, exact: Boolean(user.declaredBoostSinceExact) };
+    }
+
+    return server ? { since: server, informed: false, exact: true } : null;
+}
+
+// Desde quando a pessoa assina o Nitro: só se ela informou (o Discord não entrega a bots). null se não.
+function nitroOrigin(user) {
+    return Number(user.nitroSince) > 0
+        ? { since: Number(user.nitroSince), informed: true, exact: Boolean(user.nitroSinceExact) }
+        : null;
+}
+
+// "05 de março de 2026, às 09:18 (**7 meses 18 dias 8 horas**)", com a marca de "informado" se for o caso.
+const sinceText = (origin, now) =>
+    dateWithAge(origin.since, now, { time: origin.exact }) + (origin.informed ? INFORMED : "");
+
+// De uma escada (impulso ou Nitro), o texto da insígnia de agora (o ícone do nível e há quanto tempo) e o da
+// próxima (o ícone e quando chega). null se não há data.
+function ladderParts(ladder, since, now, iconOf) {
     if (!ladder) {
         return null;
     }
 
-    const age = formatAge(user.boostingSince, now);
+    const age = formatAge(since, now);
 
     return {
+        level: ladder.level,
+
         current: ladder.level === 0
             ? `Ainda sem insígnia | **${age}**`
-            : `${gem(ladder.level)} **Nível ${ladder.level} de ${ladder.levels}** | **${age}**`,
+            : `${iconOf(ladder.level)} | **${age}**`,
 
         next: ladder.next
-            ? `${gem(ladder.next.level)} **Nível ${ladder.next.level}** | em **${formatCountdown(now, ladder.next.at)}**`
-            : `${gem(ladder.level)} **Nível máximo alcançado.**`,
-
-        level: ladder.level
+            ? `${iconOf(ladder.next.level)} | em **${formatCountdown(now, ladder.next.at)}**`
+            : `${iconOf(ladder.level)} | **Nível máximo alcançado.**`
     };
 }
 
-/** Os mesmos dois textos como campos lado a lado (a tela "Nitro e impulso"). Vazio se não impulsiona. */
-export function boostFields(user, now = Date.now()) {
-    const parts = boostParts(user, now);
+function boostParts(user, now) {
+    const origin = boostOrigin(user);
 
-    return parts
-        ? [
-            { name: icon("🏅") + " Insígnia de impulso atual", value: parts.current, inline: true },
-            { name: icon("▶️") + " Próxima insígnia de impulso", value: parts.next, inline: true }
-        ]
-        : [];
+    return origin ? ladderParts(boostLadder(origin.since, now), origin.since, now, gem) : null;
 }
 
-// A insígnia do cartão é só o ícone (o nome de cada uma está em "Mais informações > Insígnias"); a de
-// quem impulsiona este servidor é a gema do nível dele.
-function badgeIcon(badge, user, now) {
-    if (badge.id !== "BOOSTER") {
-        return badge.emoji;
-    }
+function nitroParts(user, now) {
+    const origin = nitroOrigin(user);
 
-    const level = boostParts(user, now)?.level ?? 0;
+    return origin ? ladderParts(nitroLadder(origin.since, now), origin.since, now, medal) : null;
+}
 
-    return level > 0 ? gem(level) : icon("🚀");
+// Os dois campos lado a lado: a insígnia de agora e a próxima.
+const pairFields = (parts, currentName, nextName) => parts
+    ? [
+        { name: icon("🏅") + " " + currentName, value: parts.current, inline: true },
+        { name: icon("▶️") + " " + nextName, value: parts.next, inline: true }
+    ]
+    : [];
+
+/** A insígnia de impulso atual e a próxima, lado a lado (vazio se a pessoa não impulsiona). */
+export const boostFields = (user, now = Date.now()) =>
+    pairFields(boostParts(user, now), "Insígnia de impulso atual", "Próxima insígnia de impulso");
+
+/** A insígnia de Nitro atual e a próxima, lado a lado (vazio se a pessoa não informou a data da assinatura). */
+export const nitroFields = (user, now = Date.now()) =>
+    pairFields(nitroParts(user, now), "Insígnia de nitro atual", "Próxima insígnia de nitro");
+
+// As insígnias do cartão são só os ícones (o nome de cada uma e o que ela quer dizer estão em Mais
+// informações): as da conta, o medalhão do Nitro e a gema do impulso, quando a pessoa tem as datas.
+function badgeIcons(user, now) {
+    const nitro = nitroParts(user, now);
+    const boost = boostParts(user, now);
+
+    return [
+        user.bot ? icon("🤖") : null,
+        ...getUserBadges(user).filter(badge => badge.id !== "BOOSTER").map(badge => badge.emoji),
+        nitro ? (nitro.level > 0 ? medal(nitro.level) : icon("💠")) : null,
+        boost ? (boost.level > 0 ? gem(boost.level) : icon("🚀")) : null
+    ].filter(Boolean);
 }
 
 // ==========================================
@@ -155,56 +204,60 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
 
     const username = plain(user.username || "desconhecido", 120);
 
-    const badges = getUserBadges(user);
-
     const nitro = nitroSigns(user);
 
-    // Uma informação por linha, o nome e o valor juntos (campos de embed gastam duas linhas cada e, no
-    // celular, Tag e ID viravam caixas enormes empilhadas). O que a Helena não sabe fica de fora, em vez
-    // de dizer "nenhuma" ou "não detectado" de quem pode ter e a API não mostra.
-    const lines = [
-        icon("👤") + " **Menção:** <@" + user.id + ">",
-        icon("🏷️") + " **Tag:** `" + username.replace(/`/g, "'") + "`",
-        icon("🪪") + " **ID:** `" + String(user.id) + "`"
-    ];
+    const subscribed = nitroOrigin(user);
 
-    // As insígnias, só os ícones (o nome de cada uma e o que ela quer dizer estão em Mais informações).
-    const icons = [user.bot ? icon("🤖") : null, ...badges.map(badge => badgeIcon(badge, user, now))].filter(Boolean);
+    const boosting = boostOrigin(user);
+
+    const fields = [];
+
+    add(fields, icon("🏷️") + " Tag", block(username), true);
+    add(fields, icon("🪪") + " ID", block(String(user.id)), true);
+
+    // As insígnias, só os ícones. Sem nenhuma, o campo fica de fora: a API não mostra as de Nitro e de
+    // impulso, então "nenhuma" seria uma afirmação que a Helena não pode fazer.
+    const icons = badgeIcons(user, now);
 
     if (icons.length) {
-        lines.push(icon("🏅") + " **Insígnias:** " + icons.join(" "));
+        add(fields, icon("🏅") + " Insígnias", icons.join(" "), true);
     }
 
-    // O Nitro é deduzido (a API não informa a assinatura): só aparece com sinal, e diz quais são.
-    if (nitro.state !== "none") {
-        lines.push(icon("💠") + " **Nitro:** " + nitroSummary(nitro));
+    // Sem a data da assinatura, o Nitro é deduzido (a API não informa): só aparece com sinal, e diz quais.
+    if (!subscribed && nitro.state !== "none") {
+        add(fields, icon("💠") + " Nitro", nitroSummary(nitro), true);
     }
 
     // A etiqueta de servidor que a pessoa exibe ao lado do nome.
     if (user.primaryGuild?.tag) {
-        lines.push(icon("🔖") + " **Etiqueta de servidor:** `" + plain(user.primaryGuild.tag, 10).replace(/`/g, "'") + "`");
+        add(fields, icon("🔖") + " Etiqueta de servidor", block(plain(user.primaryGuild.tag, 10)), true);
     }
 
-    lines.push(
-        icon("📅") + " **Conta criada em:** " + dateWithAge(user.createdAt, now),
-        icon("📥") + " **Entrou no servidor em:** " + dateWithAge(user.joinedAt, now)
-    );
+    add(fields, icon("📅") + " Conta criada em", dateWithAge(user.createdAt, now));
+    add(fields, icon("📥") + " Entrou no servidor em", dateWithAge(user.joinedAt, now));
 
-    // Só entra para quem impulsiona: sem impulso, as linhas ficam de fora em vez de "não informado".
-    const boost = user.boostingSince ? boostParts(user, now) : null;
+    // Só entram quando há a data: sem ela, os campos ficam de fora em vez de "não informado".
+    if (subscribed) {
+        add(fields, icon("💠") + " Assinante Nitro desde", sinceText(subscribed, now));
+    }
 
-    if (boost) {
-        lines.push(
-            icon("🚀") + " **Impulsionando este servidor desde:** " + boostSummary(user, now),
-            icon("🏅") + " **Insígnia de impulso atual:** " + boost.current,
-            icon("▶️") + " **Próxima insígnia de impulso:** " + boost.next
+    if (boosting) {
+        add(
+            fields,
+            icon("🚀") + (boosting.informed ? " Impulsionando desde" : " Impulsionando este servidor desde"),
+            sinceText(boosting, now)
         );
+    }
+
+    for (const field of [...boostFields(user, now), ...nitroFields(user, now)]) {
+        add(fields, field.name, field.value, field.inline);
     }
 
     // De castigo (timeout) só aparece enquanto vale.
     if (Number(user.timeoutUntil) > now) {
-        lines.push(
-            icon("⏳") + " **De castigo até:** " +
+        add(
+            fields,
+            icon("⏳") + " De castigo até",
             `${dateField(user.timeoutUntil)} (em **${formatCountdown(now, user.timeoutUntil)}**)`
         );
     }
@@ -227,7 +280,9 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
             : undefined,
 
         // A menção no embed é só um chip; quem avisa a pessoa é o body da mensagem.
-        description: lines.join("\n"),
+        description: icon("👤") + " **Menção:** <@" + user.id + ">",
+
+        fields,
 
         footer: {
             text: footer,
@@ -438,9 +493,22 @@ export function buildUserinfoDetail(kind, user, now = Date.now(), extras = {}) {
 
             const notes = getAccountNotes(user);
 
+            // as insígnias de Nitro e de impulso só entram se a própria pessoa informou as datas
+            const subscribed = nitroParts(user, now);
+            const boosting = boostParts(user, now);
+            const informedNote = "\n-# Informado pela própria pessoa: a Helena não consegue conferir.";
+
             const lines = [
                 ...(user.bot ? [`${icon("🤖")} **Bot**: conta de aplicativo.`] : []),
-                ...badges.map(badge => `${badge.emoji} **${safe(badge.name)}**\n-# ${badge.about}`)
+                ...badges.map(badge => `${badge.emoji} **${safe(badge.name)}**\n-# ${badge.about}`),
+
+                ...(subscribed
+                    ? [`${subscribed.level > 0 ? medal(subscribed.level) : icon("💠")} **Assinante Nitro${subscribed.level > 0 ? ` (${NITRO_TIERS[subscribed.level - 1]})` : ""}**${informedNote}`]
+                    : []),
+
+                ...(boostOrigin(user)?.informed && boosting
+                    ? [`${boosting.level > 0 ? gem(boosting.level) : icon("🚀")} **Impulsiona servidores**${informedNote}`]
+                    : [])
             ];
 
             return {
@@ -450,7 +518,7 @@ export function buildUserinfoDetail(kind, user, now = Date.now(), extras = {}) {
                     lines.length ? lines.join("\n") : "Nenhuma insígnia visível.",
                     ...(notes.length ? ["", ...notes.map(note => `${icon("ℹ️")} ${note.text}`)] : []),
                     "",
-                    "-# Vem das flags públicas da conta no Discord. As insígnias de Nitro e de Quests não aparecem aqui: o Discord não as informa a bots."
+                    "-# Vem das flags públicas da conta no Discord. As insígnias de Nitro, de impulso e de Quests o Discord não informa a bots: as de Nitro e de impulso só aparecem se a própria pessoa informar as datas em Meu histórico."
                 ].join("\n"),
 
                 color: USERINFO_COLOR
@@ -460,23 +528,50 @@ export function buildUserinfoDetail(kind, user, now = Date.now(), extras = {}) {
         case "nitro": {
             const nitro = nitroSigns(user);
 
-            const ladder = boostLadder(user.boostingSince, now);
+            const subscribed = nitroOrigin(user);
+
+            const boosting = boostOrigin(user);
 
             const fields = [];
 
-            add(
-                fields,
-                icon("💠") + " Nitro",
-                nitroSummary(nitro) + "\n-# O Discord só conta a assinatura do Nitro ao próprio dono da conta. " +
-                    "A Helena deduz pelo que o perfil mostra (avatar animado, banner, perfil por servidor); " +
-                    "quem tem Nitro e não usa nada disso aparece como \"não detectado\"."
-            );
+            const monthsText = count => `${count} ${count === 1 ? "mês" : "meses"}`;
 
-            if (!ladder) {
+            if (subscribed) {
+                add(fields, icon("💠") + " Assinante Nitro desde", sinceText(subscribed, now));
+
+                for (const field of nitroFields(user, now)) {
+                    add(fields, field.name, field.value, field.inline);
+                }
+
+                add(
+                    fields,
+                    icon("🏅") + " Níveis da insígnia de Nitro",
+                    nitroLadder(subscribed.since, now).steps
+                        .map(step => `${medal(step.level)} **${NITRO_TIERS[step.level - 1]}** · ${monthsText(step.months)} · ${day(step.at)} ${step.reached ? icon("✅") : icon("⏳")}`)
+                        .join("\n") +
+                        "\n-# A data foi informada pela própria pessoa. Os níveis seguem a lista pública das insígnias de Nitro."
+                );
+
+            } else {
+                add(
+                    fields,
+                    icon("💠") + " Nitro",
+                    nitroSummary(nitro) + "\n-# O Discord só conta a assinatura do Nitro ao próprio dono da conta. " +
+                        "A Helena deduz pelo que o perfil mostra (avatar animado, banner, perfil por servidor); " +
+                        "quem tem Nitro e não usa nada disso aparece como \"não detectado\". " +
+                        "Quem quiser mostrar a data da assinatura informa em Meu histórico."
+                );
+            }
+
+            if (!boosting) {
                 add(fields, icon("🚀") + " Impulso", "Não impulsiona este servidor.");
 
             } else {
-                add(fields, icon("🚀") + " Impulsionando este servidor desde", boostSummary(user, now));
+                add(
+                    fields,
+                    icon("🚀") + (boosting.informed ? " Impulsionando desde" : " Impulsionando este servidor desde"),
+                    sinceText(boosting, now)
+                );
 
                 for (const field of boostFields(user, now)) {
                     add(fields, field.name, field.value, field.inline);
@@ -485,10 +580,12 @@ export function buildUserinfoDetail(kind, user, now = Date.now(), extras = {}) {
                 add(
                     fields,
                     icon("🏅") + " Níveis da insígnia de impulso",
-                    ladder.steps
-                        .map(step => `${gem(step.level)} **Nível ${step.level}** · ${step.months} ${step.months === 1 ? "mês" : "meses"} · ${day(step.at)} ${step.reached ? icon("✅") : icon("⏳")}`)
+                    boostLadder(boosting.since, now).steps
+                        .map(step => `${gem(step.level)} **Nível ${step.level}** · ${monthsText(step.months)} · ${day(step.at)} ${step.reached ? icon("✅") : icon("⏳")}`)
                         .join("\n") +
-                        "\n-# A insígnia do Discord conta o impulso em qualquer servidor; a Helena só enxerga este."
+                        (boosting.informed
+                            ? "\n-# A data foi informada pela própria pessoa."
+                            : "\n-# A insígnia do Discord conta o impulso em qualquer servidor; a Helena só enxerga este.")
                 );
             }
 
@@ -505,8 +602,18 @@ export function buildUserinfoDetail(kind, user, now = Date.now(), extras = {}) {
             add(fields, icon("📅") + " Conta criada em", dateWithAge(user.createdAt, now));
             add(fields, icon("📥") + " Entrou no servidor em", dateWithAge(user.joinedAt, now));
 
-            if (user.boostingSince) {
-                add(fields, icon("🚀") + " Impulsionando este servidor desde", boostSummary(user, now));
+            if (nitroOrigin(user)) {
+                add(fields, icon("💠") + " Assinante Nitro desde", sinceText(nitroOrigin(user), now));
+            }
+
+            const boosting = boostOrigin(user);
+
+            if (boosting) {
+                add(
+                    fields,
+                    icon("🚀") + (boosting.informed ? " Impulsionando desde" : " Impulsionando este servidor desde"),
+                    sinceText(boosting, now)
+                );
             }
 
             if (Number(user.timeoutUntil) > now) {

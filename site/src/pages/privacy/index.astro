@@ -79,7 +79,7 @@ const toc = [
   eyebrow="Política de privacidade"
   heading="O que a Helena guarda sobre você"
   lede="Quais dados ficam no banco do bot, o que o painel do site registra, por que, por quanto tempo e como você pede para apagar ou corrigir."
-  version="2.1"
+  version="2.2"
   since="25 de outubro de 2026"
   toc={toc}
 >
@@ -115,7 +115,7 @@ const toc = [
           <li>o que você escolheu ou digitou no comando, no botão ou no formulário.</li>
         </ul>
         <p>Nos servidores onde a Helena está, o Discord entrega a ela as mensagens do canal. A Helena só olha o começo do texto, para ver se é um comando com o prefixo <code>h</code>. Se não for, a mensagem é descartada na hora e <strong>não é guardada</strong>.</p>
-        <p>O <code>/userinfo</code> consulta o perfil público de quem você escolher no Discord. Guardamos a contagem de quantas vezes o perfil de cada pessoa foi consultado, ligada ao ID dela, e, <strong>só de quem usa a Helena</strong>, o histórico descrito na seção 4 (nomes, fotos e banners).</p>
+        <p>O <code>/userinfo</code> consulta o perfil público de quem você escolher no Discord. Guardamos a contagem de quantas vezes o perfil de cada pessoa foi consultado, ligada ao ID dela, e, <strong>só de quem usa a Helena</strong>, o histórico descrito na seção 4 (nomes, fotos e banners), e as datas de Nitro e de impulso que a própria pessoa informar.</p>
         <p>Não precisamos de dados pessoais sensíveis (como saúde, religião, orientação sexual, origem racial ou política) e não pedimos nenhum. A bio e o nome são textos livres: não escreva ali dados sensíveis seus nem dados de outras pessoas.</p>
       </section>
 
@@ -137,7 +137,8 @@ const toc = [
         <ul>
           <li>gemas e a hora da última coleta do bônus de gemas;</li>
           <li>o nome de exibição, guardado para os rankings e as menções (até 80 caracteres, atualizado quando você usa um comando). No ranking global, que reúne todos os servidores, o seu nome e o seu progresso aparecem para quem consulta o ranking em qualquer servidor onde a Helena está;</li>
-          <li>o histórico de nomes, fotos e banners do <code>/userinfo</code>: o @usuário, o nome de exibição e o código da foto e do banner que o Discord já mostra para todos, anotados quando mudam. É só de quem já usou a Helena, começa no primeiro uso, guarda no máximo 25 de cada tipo e aparece no menu "Mais informações" de quem consulta o seu <code>/userinfo</code>. Nunca guardamos mensagens, calls nem a lista de servidores de ninguém. Em "Meu histórico", no menu do seu próprio <code>/userinfo</code>, você oculta, mostra de novo ou apaga tudo; quem pediu para ocultar o histórico fica anotado só para a Helena parar de guardar.</li>
+          <li>o histórico de nomes, fotos e banners do <code>/userinfo</code>: o @usuário, o nome de exibição e o código da foto e do banner que o Discord já mostra para todos, anotados quando mudam. É só de quem já usou a Helena, começa no primeiro uso, guarda no máximo 25 de cada tipo e aparece no menu "Mais informações" de quem consulta o seu <code>/userinfo</code>. Nunca guardamos mensagens, calls nem a lista de servidores de ninguém. Em "Meu histórico", no menu do seu próprio <code>/userinfo</code>, você oculta, mostra de novo ou apaga tudo; quem pediu para ocultar o histórico fica anotado só para a Helena parar de guardar;</li>
+          <li>as datas de Nitro e de impulso que você informa em "Meu histórico", no menu do seu próprio <code>/userinfo</code>, se quiser que o seu cartão mostre "Assinante Nitro desde" e as insígnias de Nitro e de impulso. O Discord não entrega essas datas a bots, então só existem se você digitar (a data, e a hora se souber). Guardamos só as duas datas, elas aparecem no seu cartão marcadas como "informado pela própria pessoa" (a Helena não consegue conferir), e você tira uma, limpa as duas ou apaga tudo quando quiser.</li>
         </ul>
         <h3>Histórico e registros</h3>
         <ul>
@@ -203,6 +204,7 @@ const toc = [
               <tr><td>Filhos do casal e bebê esperando nome</td><td data-label="Quanto tempo">Os filhos ficam até o divórcio, que os apaga junto com o casamento, ou até você pedir a exclusão. O bebê sem nome é apagado em poucos minutos.</td></tr>
               <tr><td>Histórico de transferências, de duelos e a contagem do <code>/userinfo</code></td><td data-label="Quanto tempo">Sem prazo automático. Saem quando você pede a exclusão.</td></tr>
               <tr><td>Histórico de nomes, fotos e banners do <code>/userinfo</code></td><td data-label="Quanto tempo">No máximo 25 de cada tipo: os mais antigos saem sozinhos. Você apaga tudo quando quiser em "Meu histórico", e também saem se você pede a exclusão.</td></tr>
+              <tr><td>Datas de Nitro e de impulso que você informa no <code>/userinfo</code></td><td data-label="Quanto tempo">Até você tirar ou limpar em "Meu histórico" (o botão "Apagar tudo" também leva as duas), ou pedir a exclusão.</td></tr>
               <tr><td>Registros de administradores e do dono do bot</td><td data-label="Quanto tempo">Pelo tempo em que forem úteis para resolver disputas.</td></tr>
               <tr><td>Sessão do painel</td><td data-label="Quanto tempo">Até <strong>{sessionHours} horas</strong>. Depois de vencida, é apagada automaticamente em poucos minutos.</td></tr>
               <tr><td>Registro de segurança do painel</td><td data-label="Quanto tempo"><strong>{claimLogDays}</strong> dias. Depois, é apagado automaticamente.</td></tr>

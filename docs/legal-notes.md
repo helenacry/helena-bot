@@ -4,6 +4,10 @@
 
 Revisão técnico-jurídica dos [Termos de uso](../site/src/pages/terms/index.astro) e da [Política de Privacidade](../site/src/pages/privacy/index.astro), feita em 22/10/2026 (versão 2.0 dos dois). **Não é parecer de advogado e não substitui um.** Serve para registrar o que os textos prometem, em que se apoiam e o que ainda precisa de decisão de vocês. Os testes em `tests/site.test.mjs` travam o que está escrito aqui como "o texto diz".
 
+## O que mudou na versão 2.2 da Política de Privacidade (25/10/2026)
+
+- **Datas de Nitro e de impulso informadas pela própria pessoa.** Tabela nova `userinfo_declared`: as duas datas (e se a pessoa deu a hora), só quando ela as digita em "Meu histórico". O Discord não entrega isso a bots, então é dado fornecido pelo titular, mostrado só no cartão dela e marcado como "informado pela própria pessoa". Base: consentimento (ela digita), com saída a qualquer hora (tirar uma, limpar as duas ou "Apagar tudo"). Não há conferência: quem informa uma data falsa só enganaria o próprio cartão.
+
 ## O que mudou na versão 2.1 da Política de Privacidade (25/10/2026)
 
 Só a política subiu para a 2.1; os termos seguem na 2.0.

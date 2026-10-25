@@ -13,13 +13,16 @@ const { ICONS, fallbacksOf } = await import("../config/icons.mjs");
 
 const DAY = 86_400_000;
 
-// O cartão tem uma informação por linha no texto ("🏷️ **Tag:** `maria`"): vira { "🏷️ Tag": "`maria`" }.
+// As informações do cartão por nome: a menção (uma linha da descrição) e os campos, como { "🏷️ Tag": valor }.
 const infoOf = embed => Object.fromEntries(
-    String(embed.description ?? "")
-        .split("\n")
-        .map(line => line.match(/^(\S+) \*\*(.+?):\*\* (.*)$/))
-        .filter(Boolean)
-        .map(match => [`${match[1]} ${match[2]}`, match[3]])
+    [
+        ...String(embed.description ?? "")
+            .split("\n")
+            .map(line => line.match(/^(\S+) \*\*(.+?):\*\* (.*)$/))
+            .filter(Boolean)
+            .map(match => [`${match[1]} ${match[2]}`, match[3]]),
+        ...(embed.fields ?? []).map(field => [field.name, field.value])
+    ]
 );
 
 // ==========================================
@@ -247,8 +250,8 @@ test("o cartão de quem impulsiona mostra desde quando, o nível e o próximo n�
     assert.match(info["🚀 Impulsionando este servidor desde"], /15 de janeiro de 2026/);
 
     // a insígnia de agora e a próxima, uma linha cada (a idade e a contagem em calendário)
-    assert.equal(info["🏅 Insígnia de impulso atual"], "💎 **Nível 4 de 9** | **7 meses 4 dias**");
-    assert.equal(info["▶️ Próxima insígnia de impulso"], "💎 **Nível 5** | em **1 mês 25 dias 12 horas**");
+    assert.equal(info["🏅 Insígnia de impulso atual"], "💎 | **7 meses 4 dias 12 horas**");
+    assert.equal(info["▶️ Próxima insígnia de impulso"], "💎 | em **1 mês 25 dias 12 horas**");
 
     // e ficam juntas, nessa ordem, logo depois do impulso
     const keys = Object.keys(info);
@@ -284,14 +287,14 @@ test("a insígnia de impulso usa a gema do nível quando o desenho existe, e fal
         // nível 4: a gema 4 na de agora e a 5 na próxima
         const four = make(SINCE);
 
-        assert.match(value(four, "🏅 Insígnia de impulso atual"), /^<:h_boost_4:500000000000000003> /);
-        assert.match(value(four, "▶️ Próxima insígnia de impulso"), /^<:h_boost_5:500000000000000004> /);
+        assert.match(value(four, "🏅 Insígnia de impulso atual"), /^<:h_boost_4:500000000000000003> \| \*\*/);
+        assert.match(value(four, "▶️ Próxima insígnia de impulso"), /^<:h_boost_5:500000000000000004> \| em /);
 
         // mais de 24 meses: nível máximo, sem próximo nível
         const top = make(Date.UTC(2024, 5, 1, 21, 28, 0));
 
-        assert.match(value(top, "🏅 Insígnia de impulso atual"), /^<:h_boost_9:500000000000000008> \*\*Nível 9 de 9\*\*/);
-        assert.equal(value(top, "▶️ Próxima insígnia de impulso"), "<:h_boost_9:500000000000000008> **Nível máximo alcançado.**");
+        assert.match(value(top, "🏅 Insígnia de impulso atual"), /^<:h_boost_9:500000000000000008> \| \*\*/);
+        assert.equal(value(top, "▶️ Próxima insígnia de impulso"), "<:h_boost_9:500000000000000008> | **Nível máximo alcançado.**");
 
         // menos de 1 mês: ainda sem insígnia, e a próxima é o nível 1
         // nas insígnias do cartão, quem impulsiona leva a gema do nível dele (e não o foguete)
@@ -301,7 +304,7 @@ test("a insígnia de impulso usa a gema do nível quando o desenho existe, e fal
         const fresh = make(Date.UTC(2026, 7, 10, 0, 0, 0));
 
         assert.match(value(fresh, "🏅 Insígnia de impulso atual"), /^Ainda sem insígnia \| \*\*10 dias\*\*$/);
-        assert.match(value(fresh, "▶️ Próxima insígnia de impulso"), /^<:h_boost_1:500000000000000000> \*\*Nível 1\*\* \| em \*\*21 dias\*\*$/);
+        assert.match(value(fresh, "▶️ Próxima insígnia de impulso"), /^<:h_boost_1:500000000000000000> \| em \*\*21 dias\*\*$/);
 
     } finally {
         setAppEmojis([]);
@@ -320,7 +323,9 @@ test("o cartão e as telas cabem nos limites do embed, mesmo com todas as insíg
     const card = buildUserinfoEmbed({ user });
 
     assert.ok(card.description.length <= 4096, `descrição com ${card.description.length} caracteres`);
-    assert.deepEqual(card.fields ?? [], [], "o cartão é só texto, uma informação por linha");
+    for (const field of card.fields) {
+        assert.ok(field.value.length <= 1024 && field.name.length <= 256, field.name);
+    }
 
     for (const kind of ["badges", "nitro", "dates", "roles"]) {
         const detail = buildUserinfoDetail(kind, user);
@@ -333,5 +338,5 @@ test("o cartão e as telas cabem nos limites do embed, mesmo com todas as insíg
     }
 
     assert.ok(detailOptions(user).length <= 25);
-    assert.equal(infoOf(card)["🔖 Etiqueta de servidor"], "`HLN`");
+    assert.equal(infoOf(card)["🔖 Etiqueta de servidor"], "```\nHLN\n```");
 });

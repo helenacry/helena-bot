@@ -123,6 +123,16 @@ export const ICONS = Object.freeze({
     boost_8: null,
     boost_9: null,
 
+    // os oito níveis da insígnia de Nitro (Bronze, Prata, Ouro, Platina, Diamante, Esmeralda, Rubi e Fogo)
+    nitro_1: null,
+    nitro_2: null,
+    nitro_3: null,
+    nitro_4: null,
+    nitro_5: null,
+    nitro_6: null,
+    nitro_7: null,
+    nitro_8: null,
+
     // telas e botões
     search: ["🔎", "🔍"],
     folder: ["📂", "📁"],
