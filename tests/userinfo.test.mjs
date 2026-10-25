@@ -68,10 +68,19 @@ const UNKNOWN = "Não informado";
 
 const embedOf = r => r.sent[0]?.embeds?.[0];
 
-const fieldsOf = embed => Object.fromEntries(embed.fields.map(f => [f.name, f.value]));
+// O cartão tem uma informação por linha no texto ("🏷️ **Tag:** `maria`"): vira { "🏷️ Tag": "`maria`" }.
+// Os campos de embed (se houver) entram do mesmo jeito.
+const fieldsOf = embed => Object.fromEntries([
+    ...String(embed.description ?? "")
+        .split("\n")
+        .map(line => line.match(/^(\S+) \*\*(.+?):\*\* (.*)$/))
+        .filter(Boolean)
+        .map(match => [`${match[1]} ${match[2]}`, match[3]]),
+    ...(embed.fields ?? []).map(f => [f.name, f.value])
+]);
 
-// o valor do Tag e do ID vem dentro de um bloco de código de uma linha
-const unblock = value => String(value).replace(/^```\n/, "").replace(/\n```$/, "");
+// o valor do Tag e do ID vem entre crases (código de uma linha)
+const unblock = value => String(value).replace(/^`|`$/g, "");
 
 const players = () => db.prepare("SELECT COUNT(*) c FROM players").get().c;
 
@@ -141,7 +150,7 @@ test("bots também têm informações", async () => {
 
     assert.equal(r.body, "Informações de <@200000000000000005>");
     assert.equal(unblock(fieldsOf(embedOf(r))["🏷️ Tag"]), "helena");
-    assert.equal(fieldsOf(embedOf(r))["🏅 Insígnias"], "🤖 Bot");
+    assert.equal(fieldsOf(embedOf(r))["🏅 Insígnias"], "🤖");
 });
 
 // ==========================================
@@ -159,18 +168,15 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
     const avatar = "https://cdn.discordapp.com/avatars/200000000000000001/abc123.png?size=256";
 
     assert.equal(embed.author.name, "mariasilva (Maria Silva)", "usuário primeiro, o nome de exibição entre parênteses");
-    assert.equal(embed.description, "👤 **Menção:** <@200000000000000001>");
+    assert.equal(embed.description.split("\n")[0], "👤 **Menção:** <@200000000000000001>");
     assert.equal(embed.author.iconUrl, avatar);
     assert.equal(embed.thumbnail.url, avatar);
 
     assert.equal(unblock(fields["🏷️ Tag"]), "mariasilva");
     assert.equal(unblock(fields["🪪 ID"]), "200000000000000001");
 
-    // as insígnias públicas, mais o impulso do servidor
-    assert.equal(
-        fields["🏅 Insígnias"],
-        "🦁 HypeSquad Bravery · 🌠 Apoiador inicial · 🧑‍💻 Desenvolvedor de bots verificado pioneiro · 🚀 Impulsiona este servidor"
-    );
+    // as insígnias públicas, só os ícones (os nomes estão em Mais informações), mais a gema do impulso
+    assert.equal(fields["🏅 Insígnias"], "🦁 🌠 🧑‍💻 💎");
 
     // a conta tem a data do ID (a conta mais velha que o bot conhece, de 2016)
     assert.equal(
@@ -187,25 +193,26 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
     assert.match(fields["🏅 Insígnia de impulso atual"], /\*\*Nível \d de 9\*\* \| \*\*.+\*\*$/);
     assert.match(fields["▶️ Próxima insígnia de impulso"], /\*\*Nível \d\*\* \| em \*\*.+\*\*$/);
 
-    // o Nitro: a Maria não tem avatar animado nem banner, então nada o prova
-    assert.equal(fields["💠 Nitro"], "Não detectado");
+    // o Nitro: a Maria não tem avatar animado nem banner, então nada o prova e o cartão não diz nada dele
+    assert.equal(fields["💠 Nitro"], undefined);
 
     // não existe nada de Prisma, Pulse ou tempo de tela no Discord
     assert.ok(!Object.keys(fields).some(name => /Prisma|Pulse|Pulser/.test(name)));
 });
 
-test("quem não tem insígnia, impulso nem castigo fica com o cartão limpo: sem esses campos", async () => {
-    const fields = fieldsOf(embedOf(await run("hui carlos")));
+test("quem não tem insígnia, Nitro, impulso nem castigo fica com o cartão limpo: sem essas linhas (nada de 'nenhuma')", async () => {
+    const embed = embedOf(await run("hui carlos"));
 
-    assert.deepEqual(Object.keys(fields), [
-        "🏷️ Tag", "🪪 ID", "🏅 Insígnias", "💠 Nitro", "📅 Conta criada em", "📥 Entrou no servidor em"
+    assert.deepEqual(Object.keys(fieldsOf(embed)), [
+        "👤 Menção", "🏷️ Tag", "🪪 ID", "📅 Conta criada em", "📥 Entrou no servidor em"
     ]);
 
-    assert.equal(fields["🏅 Insígnias"], "Nenhuma");
+    assert.doesNotMatch(embed.description, /Nenhuma|Não detectado|Insígnias|Nitro/);
+    assert.deepEqual(embed.fields ?? [], [], "uma informação por linha, sem campos");
 });
 
-test("a equipe do Discord ganha a insígnia dela", async () => {
-    assert.equal(fieldsOf(embedOf(await run("hui equipe")))["🏅 Insígnias"], "🔱 Equipe do Discord");
+test("a equipe do Discord ganha a insígnia dela (só o ícone no cartão; o nome fica em Mais informações)", async () => {
+    assert.equal(fieldsOf(embedOf(await run("hui equipe")))["🏅 Insígnias"], "🔱");
 });
 
 test("quem está de castigo vê até quando (e quanto falta)", async () => {
@@ -260,7 +267,7 @@ test("no comando de barra a entrada vem da própria interação, sem chamar a AP
 
     assert.match(fields["📥 Entrou no servidor em"], /3 de março de 2023/);
     assert.match(fields["📅 Conta criada em"], /10 de maio de 2024/);
-    assert.equal(fields["🏅 Insígnias"], "🌠 Apoiador inicial");
+    assert.equal(fields["🏅 Insígnias"], "🌠");
     assert.equal(api.lookups, 0, "a interação já trazia o membro");
 });
 
@@ -361,9 +368,21 @@ test("a idade vem em anos, meses e dias de calendário, sem as unidades zeradas"
     // singular
     assert.equal(formatAge(Date.UTC(2025, 0, 1, 12), Date.UTC(2026, 1, 2, 12)), "1 ano 1 mês 1 dia");
 
-    // só dias, e o mesmo dia
+    // só dias
     assert.equal(formatAge(Date.UTC(2026, 9, 1, 12), Date.UTC(2026, 9, 11, 12)), "10 dias");
-    assert.equal(formatAge(Date.UTC(2026, 9, 17, 8), Date.UTC(2026, 9, 17, 20)), "menos de 1 dia");
+
+    // menos de 24 horas conta o tempo de verdade (entrou há 20 horas não é "1 dia")
+    assert.equal(formatAge(Date.UTC(2026, 9, 17, 8), Date.UTC(2026, 9, 17, 20)), "12 horas");
+    assert.equal(formatAge(Date.UTC(2026, 9, 25, 0, 34), Date.UTC(2026, 9, 25, 21, 8)), "20 horas 34 minutos");
+    assert.equal(formatAge(Date.UTC(2026, 9, 25, 20, 0), Date.UTC(2026, 9, 25, 21, 1)), "1 hora 1 minuto");
+    assert.equal(formatAge(Date.UTC(2026, 9, 25, 20, 0), Date.UTC(2026, 9, 25, 20, 40)), "40 minutos");
+    assert.equal(formatAge(Date.UTC(2026, 9, 25, 20, 0), Date.UTC(2026, 9, 25, 20, 0, 30)), "menos de 1 minuto");
+
+    // 24 horas ou mais volta ao calendário de Brasília
+    assert.equal(formatAge(Date.UTC(2026, 9, 24, 12), Date.UTC(2026, 9, 25, 12)), "1 dia");
+
+    // uma data no futuro (relógio torto) não vira horas negativas
+    assert.equal(formatAge(Date.UTC(2026, 9, 25, 20), Date.UTC(2026, 9, 25, 19)), "menos de 1 dia");
 
     // virada de ano: 31/12 para 1/3 do ano seguinte
     assert.equal(formatAge(Date.UTC(2025, 11, 31, 12), Date.UTC(2026, 2, 1, 12)), "2 meses 1 dia");
@@ -436,7 +455,7 @@ test("sem bits, sem insígnia; bits que o Discord criar depois são ignorados; o
 // O CARTÃO
 // ==========================================
 
-test("Tag e ID vêm em blocos de código; a Menção é a descrição; o rodapé leva o avatar de quem usou", async () => {
+test("Menção, Tag e ID são uma linha cada, entre crases (sem caixas); o rodapé leva o avatar de quem usou", async () => {
     const userinfo = (await carregarComandos()).get("userinfo");
 
     const result = await userinfo.execute({
@@ -449,9 +468,13 @@ test("Tag e ID vêm em blocos de código; a Menção é a descrição; o rodapé
 
     const embed = result.data.embeds[0];
 
-    assert.equal(embed.fields[0].value, "```\nana\n```");
-    assert.equal(embed.fields[1].value, "```\n200000000000000004\n```");
-    assert.equal(embed.description, "👤 **Menção:** <@200000000000000004>");
+    const lines = embed.description.split("\n");
+
+    assert.equal(lines[0], "👤 **Menção:** <@200000000000000004>");
+    assert.equal(lines[1], "🏷️ **Tag:** `ana`");
+    assert.equal(lines[2], "🪪 **ID:** `200000000000000004`");
+    assert.ok(!embed.description.includes("```"), "nada de bloco de código");
+    assert.deepEqual(embed.fields ?? [], [], "a informação toda cabe no texto, uma por linha");
     assert.deepEqual(embed.footer.iconUrl, "https://cdn.exemplo.test/eu.png");
     assert.match(embed.footer.text, /^Comando executado por: Eu Mesmo \| Visualizações: \d+$/);
 });
@@ -467,10 +490,10 @@ test("autor, rodapé e nome saem como texto simples: sem barras do escape de mar
     assert.doesNotMatch(embed.author.name, /\\/);
 });
 
-test("bots mostram 🤖 Bot, e o castigo que já acabou não aparece", () => {
+test("bots mostram o 🤖, e o castigo que já acabou não aparece", () => {
     const bot = fieldsOf(buildUserinfoEmbed({ user: { id: "1", username: "b", bot: true }, now: NOW0 }));
 
-    assert.equal(bot["🏅 Insígnias"], "🤖 Bot");
+    assert.equal(bot["🏅 Insígnias"], "🤖");
 
     const punished = fieldsOf(buildUserinfoEmbed({
         user: { id: "1", username: "b", timeoutUntil: NOW0 + 3_600_000 },

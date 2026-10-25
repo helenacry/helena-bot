@@ -13,6 +13,15 @@ const { ICONS, fallbacksOf } = await import("../config/icons.mjs");
 
 const DAY = 86_400_000;
 
+// O cartão tem uma informação por linha no texto ("🏷️ **Tag:** `maria`"): vira { "🏷️ Tag": "`maria`" }.
+const infoOf = embed => Object.fromEntries(
+    String(embed.description ?? "")
+        .split("\n")
+        .map(line => line.match(/^(\S+) \*\*(.+?):\*\* (.*)$/))
+        .filter(Boolean)
+        .map(match => [`${match[1]} ${match[2]}`, match[3]])
+);
+
 // ==========================================
 // AS FLAGS DO DISCORD (a tabela de flags.lewisakura.moe)
 // ==========================================
@@ -145,15 +154,13 @@ test("Nitro: avatar animado, banner e perfil por servidor são sinais fortes; se
     assert.equal(nitroSigns({ boostingSince: Date.now() }).state, "none");
 });
 
-test("Nitro no cartão: o campo diz 'provável' com os sinais, ou 'não detectado'", () => {
+test("Nitro no cartão: a linha diz 'provável' com os sinais e some quando não há sinal (a API não prova a falta)", () => {
     const base = { id: "1", username: "ana", displayName: "Ana", createdAt: 0 };
 
-    const fields = embed => Object.fromEntries(embed.fields.map(field => [field.name, field.value]));
-
-    assert.equal(fields(buildUserinfoEmbed({ user: base }))["💠 Nitro"], "Não detectado");
+    assert.equal(infoOf(buildUserinfoEmbed({ user: base }))["💠 Nitro"], undefined, "sem sinal, o cartão não afirma nada");
 
     assert.equal(
-        fields(buildUserinfoEmbed({ user: { ...base, avatarHash: "a_1", bannerUrl: "https://x.test/b.png" } }))["💠 Nitro"],
+        infoOf(buildUserinfoEmbed({ user: { ...base, avatarHash: "a_1", bannerUrl: "https://x.test/b.png" } }))["💠 Nitro"],
         "**Provável** (avatar animado, banner no perfil)"
     );
 });
@@ -235,23 +242,20 @@ test("o cartão de quem impulsiona mostra desde quando, o nível e o próximo n�
 
     const card = buildUserinfoEmbed({ user, now });
 
-    const field = name => card.fields.find(item => item.name === name);
+    const info = infoOf(card);
 
-    assert.match(field("🚀 Impulsionando este servidor desde").value, /15 de janeiro de 2026/);
+    assert.match(info["🚀 Impulsionando este servidor desde"], /15 de janeiro de 2026/);
 
-    // a insígnia de agora e a próxima, lado a lado (a idade e a contagem em calendário)
-    const current = field("🏅 Insígnia de impulso atual");
-    const next = field("▶️ Próxima insígnia de impulso");
+    // a insígnia de agora e a próxima, uma linha cada (a idade e a contagem em calendário)
+    assert.equal(info["🏅 Insígnia de impulso atual"], "💎 **Nível 4 de 9** | **7 meses 4 dias**");
+    assert.equal(info["▶️ Próxima insígnia de impulso"], "💎 **Nível 5** | em **1 mês 25 dias 12 horas**");
 
-    assert.equal(current.inline, true);
-    assert.equal(next.inline, true);
-    assert.equal(current.value, "💎 **Nível 4 de 9** | **7 meses 4 dias**");
-    assert.equal(next.value, "💎 **Nível 5** | em **1 mês 25 dias 12 horas**");
+    // e ficam juntas, nessa ordem, logo depois do impulso
+    const keys = Object.keys(info);
 
-    // nenhum campo do cartão passa de 1024 caracteres, e os dois ficam um do lado do outro
-    const names = card.fields.map(item => item.name);
-
-    assert.equal(names.indexOf("▶️ Próxima insígnia de impulso"), names.indexOf("🏅 Insígnia de impulso atual") + 1);
+    assert.deepEqual(keys.slice(keys.indexOf("🚀 Impulsionando este servidor desde")), [
+        "🚀 Impulsionando este servidor desde", "🏅 Insígnia de impulso atual", "▶️ Próxima insígnia de impulso"
+    ]);
 
     const detail = buildUserinfoDetail("nitro", user, now);
 
@@ -275,7 +279,7 @@ test("a insígnia de impulso usa a gema do nível quando o desenho existe, e fal
 
         const make = since => buildUserinfoEmbed({ user: { id: "1", username: "ana", createdAt: 0, boostingSince: since }, now });
 
-        const value = (card, name) => card.fields.find(field => field.name === name).value;
+        const value = (card, name) => infoOf(card)[name];
 
         // nível 4: a gema 4 na de agora e a 5 na próxima
         const four = make(SINCE);
@@ -290,6 +294,10 @@ test("a insígnia de impulso usa a gema do nível quando o desenho existe, e fal
         assert.equal(value(top, "▶️ Próxima insígnia de impulso"), "<:h_boost_9:500000000000000008> **Nível máximo alcançado.**");
 
         // menos de 1 mês: ainda sem insígnia, e a próxima é o nível 1
+        // nas insígnias do cartão, quem impulsiona leva a gema do nível dele (e não o foguete)
+        assert.equal(value(four, "🏅 Insígnias"), "<:h_boost_4:500000000000000003>");
+        assert.equal(value(top, "🏅 Insígnias"), "<:h_boost_9:500000000000000008>");
+
         const fresh = make(Date.UTC(2026, 7, 10, 0, 0, 0));
 
         assert.match(value(fresh, "🏅 Insígnia de impulso atual"), /^Ainda sem insígnia \| \*\*10 dias\*\*$/);
@@ -311,9 +319,8 @@ test("o cartão e as telas cabem nos limites do embed, mesmo com todas as insíg
 
     const card = buildUserinfoEmbed({ user });
 
-    for (const field of card.fields) {
-        assert.ok(field.value.length <= 1024 && field.name.length <= 256, field.name);
-    }
+    assert.ok(card.description.length <= 4096, `descrição com ${card.description.length} caracteres`);
+    assert.deepEqual(card.fields ?? [], [], "o cartão é só texto, uma informação por linha");
 
     for (const kind of ["badges", "nitro", "dates", "roles"]) {
         const detail = buildUserinfoDetail(kind, user);
@@ -326,5 +333,5 @@ test("o cartão e as telas cabem nos limites do embed, mesmo com todas as insíg
     }
 
     assert.ok(detailOptions(user).length <= 25);
-    assert.equal(card.fields.find(field => field.name.includes("Etiqueta")).value, "```\nHLN\n```");
+    assert.equal(infoOf(card)["🔖 Etiqueta de servidor"], "`HLN`");
 });

@@ -103,11 +103,31 @@ function addMonths(day, months) {
     return Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), Math.min(date.getUTCDate(), length));
 }
 
+// Menos de 1 dia de idade: "20 horas 34 minutos" (ou só as horas, ou só os minutos).
+function formatShortAge(elapsed) {
+    const hours = Math.floor(elapsed / 3_600_000);
+    const minutes = Math.floor((elapsed % 3_600_000) / 60_000);
+
+    const parts = [];
+
+    if (hours) parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
+    if (minutes) parts.push(`${minutes} ${minutes === 1 ? "minuto" : "minutos"}`);
+
+    return parts.length ? parts.join(" ") : "menos de 1 minuto";
+}
+
 export function formatAge(from, to = Date.now()) {
     const start = dateFrom(from);
 
     if (!start) {
         return null;
+    }
+
+    // quem entrou há 20 horas não tem "1 dia": abaixo de 24 horas conta o tempo de verdade
+    const elapsed = new Date(to).getTime() - start.getTime();
+
+    if (elapsed >= 0 && elapsed < 86_400_000) {
+        return formatShortAge(elapsed);
     }
 
     const first = calendarDay(start.getTime());
