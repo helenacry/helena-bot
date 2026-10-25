@@ -2,21 +2,17 @@
 // ENDEREÇO DO SITE DA HELENA
 // ==========================================
 
-// O endereço público do site (GitHub Pages). É o único lugar do bot que sabe
-// dele: a central de ajuda (a wiki) e a atividade do bot ("Online | site: ...")
-// leem daqui. Quando o domínio próprio entrar no ar (helena.is-a.bot), troque
-// só esta linha.
+// O endereço público do site. É o único lugar do bot que sabe dele: a central de ajuda (a wiki, os
+// links do menu e o botão do daily) e a atividade do bot ("Online | site: ...") leem daqui.
+//
+// O site é servido pelo próprio bot, no domínio que o Discloud dá ao app (helena.discloud.dev), na
+// raiz: o servidor HTTP do bot entrega a pasta site-dist/ (o site montado, que vai no zip) e fica com a
+// API em /api. Para usar um domínio seu apontado para o Discloud, troque só esta linha (e veja
+// docs/hosting-discloud.md).
 //
 // O site em si (projeto Astro) lê este arquivo no build, em site/astro.config.mjs, e tem os links e
 // as chaves públicas em site/src/config.ts.
-export const SITE_URL = "https://helenacry.github.io/helena-bot/";
-
-// O endereço público da API do bot (Discloud, atrás da Cloudflare). O bot o usa para montar o
-// endereço das imagens que a própria API serve (services/web/avatar-preview.mjs). Dá para trocar
-// por HELENA_API_URL sem mexer no código.
-export const API_URL = String(process.env.HELENA_API_URL || "https://helena.discloud.dev")
-    .trim()
-    .replace(/\/+$/, "");
+export const SITE_URL = "https://helena.discloud.dev/";
 
 // Onde fica a wiki.
 export const WIKI_URL = `${SITE_URL}wiki/`;

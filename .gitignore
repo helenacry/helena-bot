@@ -32,6 +32,7 @@ logs/
 .DS_Store
 # Site (Astro): saída do build, cache do Astro e relatórios de teste
 site/dist/
+site/redirect/
 site/.astro/
 site/test-results/
 site/playwright-report/

@@ -1,6 +1,7 @@
 
 import http from "node:http";
 import { createHash, randomBytes } from "node:crypto";
+import { fileURLToPath } from "node:url";
 
 import { db } from "../../database/connection.mjs";
 
@@ -12,6 +13,7 @@ import { claimDaily, getDailyStatus, calculateReward, DAILY_CONFIG } from "../ec
 import { claimGemBonus, getGemBonusStatus } from "../economy/gem-bonus.mjs";
 import { getPrison } from "../crime/prison.mjs";
 import { knowsGuild } from "../platform/guild-registry.mjs";
+import { createStaticSite } from "./static-site.mjs";
 import { avatarUrl as discordAvatar } from "../discord/normalize.mjs";
 
 // ==========================================
@@ -1035,7 +1037,34 @@ export async function startWebApi(env = process.env, deps = {}) {
 
     const api = createWebApi(config, deps);
 
-    const server = http.createServer((req, res) => {
+    // O site (site-dist/, que vai no zip do Discloud) é servido pelo mesmo servidor, na raiz; a API fica
+    // em /api. Sem a pasta, só a API responde, como antes.
+    const site = await createStaticSite({
+        root: deps.siteDir ?? env.HELENA_SITE_DIR ?? fileURLToPath(new URL("../../site-dist/", import.meta.url))
+    });
+
+    console.log(site.enabled
+        ? `[WEB] Site servido de ${site.root}`
+        : "[WEB] Sem a pasta do site (site-dist): só a API responde.");
+
+    const server = http.createServer(async (req, res) => {
+        try {
+            if (await site.serve(req, res)) {
+                return;
+            }
+
+        } catch (error) {
+            console.error("[WEB] Erro ao servir o site:", error);
+
+            if (!res.headersSent) {
+                res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+            }
+
+            res.end();
+
+            return;
+        }
+
         api.handle(req, res);
     });
 

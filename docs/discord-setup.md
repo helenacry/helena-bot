@@ -24,7 +24,7 @@ Tudo o que é preciso fazer **no Discord** (e nas variáveis do bot e do site) p
 
 Só se o painel da conta (daily e gemas pelo navegador) estiver ligado. Aba **OAuth2**:
 
-1. **Redirects**: adicione `https://helenacry.github.io/helena-bot/account/` (com a barra no fim, escrito igual ao que está em `HELENA_OAUTH_REDIRECTS`). Quando houver domínio próprio, adicione o dele também.
+1. **Redirects**: adicione `https://helena.discloud.dev/account/` (com a barra no fim, escrito igual ao que está em `HELENA_OAUTH_REDIRECTS`). Quando houver domínio próprio, adicione o dele também.
 2. **Client Secret**: *Reset Secret* e copie. Vai em `HELENA_OAUTH_CLIENT_SECRET`, só nas variáveis do bot (nunca no site). Se o aplicativo estiver marcado como **Public Client**, o segredo não é necessário, e o login funciona só com o PKCE.
 3. As outras variáveis do painel estão em [Painel do site (API)](panel-api.md).
 

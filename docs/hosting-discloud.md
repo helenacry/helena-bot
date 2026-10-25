@@ -31,10 +31,30 @@ O projeto traz o `discloud.config` (site, `helena.mjs`, 512 MB, `START=node hele
 
 **Nunca use `--seed-db` em atualizações:** ele sobrescreveria o banco que está no ar com o do dia da migração.
 
-**Variáveis do painel do Discloud:** as do seu `.env` (`DISCORD_BOT_TOKEN`, `HELENA_OWNER_ID`, `HELENA_ADMIN_IDS`...) mais, para o painel do site: `HELENA_WEB_PORT=8080`, `HELENA_WEB_HOST=0.0.0.0`, `HELENA_WEB_TRUST_PROXY=cloudflare`, `HELENA_WEB_ORIGINS=https://helenacry.github.io`, `HELENA_OAUTH_REDIRECTS=https://helenacry.github.io/helena-bot/account/`, `HELENA_OAUTH_CLIENT_ID` e `HELENA_TURNSTILE_SECRET`. O `HELENA_DATABASE_PATH` fica sem definir (o padrão `data/helena.db` já cai em `/home/node/data`, no disco que sobrevive). Em `site/src/config.ts`, `apiUrl` recebe `https://<ID>.discloud.dev`.
+**Variáveis do painel do Discloud:** as do seu `.env` (`DISCORD_BOT_TOKEN`, `HELENA_OWNER_ID`, `HELENA_ADMIN_IDS`...) mais, para o painel do site: `HELENA_WEB_PORT=8080`, `HELENA_WEB_HOST=0.0.0.0`, `HELENA_WEB_TRUST_PROXY=cloudflare`, `HELENA_WEB_ORIGINS=https://helena.discloud.dev`, `HELENA_OAUTH_REDIRECTS=https://helena.discloud.dev/account/`, `HELENA_OAUTH_CLIENT_ID` e `HELENA_TURNSTILE_SECRET`. O `HELENA_DATABASE_PATH` fica sem definir (o padrão `data/helena.db` já cai em `/home/node/data`, no disco que sobrevive). Em `site/src/config.ts`, `apiUrl` recebe `https://<ID>.discloud.dev`.
 
 **Atualizar o bot depois:** `npm run discloud:zip -- --force` e envie na aba Commit. Se mudar só uma variável, salve e faça **Rebuild** (a aba avisa).
 
 **Conferir o IP real:** ligue `HELENA_WEB_DEBUG_IP=1` (e faça Rebuild), abra `https://<ID>.discloud.dev/api/health` e veja no log a linha `IP visto`: deve ser o seu IP, vindo do `CF-Connecting-IP`. Desligue depois.
 
 **Limites conhecidos:** o cartão de perfil só desenha o que o Poppins tem (letras latinas, números e a pontuação comum). Japonês, coreano, árabe, cirílico e símbolos decorativos **não aparecem**: `plain()` (`services/social/profile-card.mjs`) tira esses caracteres, em vez de deixar quadradinhos, e a lista do que vale sai da tabela `cmap` do próprio arquivo da fonte (`services/social/card-glyphs.mjs`). Letras em fonte estilizada (𝓑𝓲𝓸) e de largura total viram letras comuns, e emojis personalizados e menções do Discord (`<:nome:id>`, `<@id>`) somem. Para mostrar japonês seria preciso levar uma fonte CJK no projeto, em `assets/fonts/`. O `.discloud.app` que o painel mostra nos detalhes do app não funciona: vale só o `.discloud.dev`.
+
+## O site no Discloud
+
+O bot serve o site no mesmo endereço da API (`https://helena.discloud.dev/`): o servidor HTTP entrega a pasta `site-dist/` na raiz e responde a API em `/api`. Sem essa pasta (o bot de teste), só a API responde.
+
+**Para publicar uma versão nova** (o site vai dentro do zip, montado):
+
+1. `npm run site:build`: monta `site/dist` (o endereço vem de `config/site.mjs`).
+2. `npm run discloud:zip -- --force --out=<pasta>/helena.zip`: leva o código e o site (`site-dist/`). Sem o site montado o comando recusa (use `--no-site` só para um zip sem ele).
+3. Suba o zip na aba **Commit** do app.
+
+**Uma vez só, ao mudar o endereço do site:**
+
+- No Discord (Portal do Desenvolvedor → o aplicativo → OAuth2 → Redirects): cadastre `https://helena.discloud.dev/account/`, com a barra no fim.
+- No Discloud (Variáveis): `HELENA_WEB_ORIGINS` com `https://helena.discloud.dev` e `HELENA_OAUTH_REDIRECTS` com `https://helena.discloud.dev/account/` (a API recusa chamadas de qualquer outro site, e o login só volta para endereços da lista).
+- No Cloudflare (Turnstile → o widget da Helena): acrescente `helena.discloud.dev` nos **hostnames** permitidos. Sem isso o desafio anti-robô do painel falha.
+
+**Domínio próprio** (por exemplo `helena.seudominio.com`): no painel do Discloud, aba **Domínios**, adicione o domínio e crie no seu DNS os registros **A** `75.2.96.173` e `99.83.186.151` (no Cloudflare, nuvem cinza, "só DNS"), depois faça um **Rebuild**. Aí troque `SITE_URL` em `config/site.mjs`, refaça os três cadastros acima com o endereço novo e monte o site de novo.
+
+O GitHub Pages (`helenacry.github.io/helena-bot/`) fica só com um redirecionamento para o endereço do Discloud, para os links antigos continuarem funcionando.

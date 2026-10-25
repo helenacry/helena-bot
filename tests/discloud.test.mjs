@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { crc32, inflateRawSync } from "node:zlib";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -15,7 +15,7 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
 const SCRIPT = path.join(ROOT, "scripts", "make-discloud-zip.mjs");
 
-const { listFiles, readIgnore, collectEntries, buildZip, validId } = await import("../scripts/make-discloud-zip.mjs");
+const { listFiles, readIgnore, collectEntries, buildZip, validId, siteEntries } = await import("../scripts/make-discloud-zip.mjs");
 
 const text = file => readFileSync(path.join(ROOT, file), "utf8");
 
@@ -220,7 +220,7 @@ test("--first sobe sem reinício automático (o bot cai uma vez sem token, quiet
     // o arquivo do projeto não muda
     assert.match(text("discloud.config"), /^AUTORESTART=true$/m);
 
-    const cli = spawnSync(process.execPath, [SCRIPT, `--out=${path.join(mkdtempSync(path.join(tmpdir(), "helena-first-")), "x.zip")}`, "--first"], { encoding: "utf8" });
+    const cli = spawnSync(process.execPath, [SCRIPT, `--out=${path.join(mkdtempSync(path.join(tmpdir(), "helena-first-")), "x.zip")}`, "--first", "--no-site"], { encoding: "utf8" });
 
     assert.equal(cli.status, 0, cli.stderr);
     assert.match(cli.stdout, /primeira subida: SIM/);
@@ -258,7 +258,7 @@ test("npm run discloud:zip grava o zip, avisa o que levou e não sobrescreve sem
     const dir = mkdtempSync(path.join(tmpdir(), "helena-zip-"));
     const out = path.join(dir, "saida.zip");
 
-    const first = spawnSync(process.execPath, [SCRIPT, `--out=${out}`, "--id=teste-zip"], { encoding: "utf8" });
+    const first = spawnSync(process.execPath, [SCRIPT, `--out=${out}`, "--id=teste-zip", "--no-site"], { encoding: "utf8" });
 
     assert.equal(first.status, 0, first.stderr);
     assert.match(first.stdout, /Zip pronto/);
@@ -272,7 +272,7 @@ test("npm run discloud:zip grava o zip, avisa o que levou e não sobrescreve sem
     assert.equal(again.status, 1);
     assert.match(again.stderr, /já existe/);
 
-    assert.equal(spawnSync(process.execPath, [SCRIPT, `--out=${out}`, "--force"], { encoding: "utf8" }).status, 0);
+    assert.equal(spawnSync(process.execPath, [SCRIPT, `--out=${out}`, "--force", "--no-site"], { encoding: "utf8" }).status, 0);
 
     const unknown = spawnSync(process.execPath, [SCRIPT, "--nada"], { encoding: "utf8" });
 
@@ -284,4 +284,69 @@ test("npm run discloud:zip grava o zip, avisa o que levou e não sobrescreve sem
 
 test("package.json tem o comando discloud:zip", () => {
     assert.equal(JSON.parse(text("package.json")).scripts["discloud:zip"], "node scripts/make-discloud-zip.mjs");
+});
+
+// ==========================================
+// O SITE VAI NO ZIP, MONTADO
+// ==========================================
+
+// Um projeto de mentira só com o que o zip precisa: o config, o ignore de verdade e o site montado.
+function fakeProject({ built = true } = {}) {
+    const dir = mkdtempSync(path.join(tmpdir(), "helena-zip-"));
+
+    writeFileSync(path.join(dir, "discloud.config"), "NAME=Helena\nID=helena\nAUTORESTART=true\n");
+    writeFileSync(path.join(dir, ".discloudignore"), readFileSync(new URL("../.discloudignore", import.meta.url)));
+    writeFileSync(path.join(dir, "helena.mjs"), "console.log(1)");
+
+    mkdirSync(path.join(dir, "site", "src"), { recursive: true });
+    writeFileSync(path.join(dir, "site", "src", "pagina.astro"), "fonte do site, nunca vai");
+
+    if (built) {
+        mkdirSync(path.join(dir, "site", "dist", "wiki"), { recursive: true });
+        mkdirSync(path.join(dir, "site", "dist", "assets"), { recursive: true });
+
+        writeFileSync(path.join(dir, "site", "dist", "index.html"), "<h1>home</h1>");
+        writeFileSync(path.join(dir, "site", "dist", "wiki", "index.html"), "<h1>wiki</h1>");
+        writeFileSync(path.join(dir, "site", "dist", "assets", "app.js"), "export {}");
+    }
+
+    return dir;
+}
+
+test("o site montado (site/dist) vai no zip como site-dist/, e o código-fonte do site não", () => {
+    const names = Object.keys(readZip(buildZip(collectEntries({ root: fakeProject() })))).sort();
+
+    assert.deepEqual(names, [
+        ".discloudignore",
+        "discloud.config",
+        "helena.mjs",
+        "site-dist/assets/app.js",
+        "site-dist/index.html",
+        "site-dist/wiki/index.html"
+    ]);
+
+    assert.ok(!names.some(name => name.startsWith("site/")), "o fonte do site fica de fora");
+});
+
+test("sem o site montado, ou com site: false, o zip sai sem ele", () => {
+    assert.ok(!Object.keys(readZip(buildZip(collectEntries({ root: fakeProject({ built: false }) })))).some(name => name.startsWith("site-dist/")));
+    assert.ok(!Object.keys(readZip(buildZip(collectEntries({ root: fakeProject(), site: false })))).some(name => name.startsWith("site-dist/")));
+
+    assert.equal(siteEntries(fakeProject({ built: false })).length, 0);
+    assert.equal(siteEntries(fakeProject()).length, 3);
+});
+
+test("o comando recusa um zip sem o site montado (o endereço do Discloud ficaria sem página), a menos que seja --no-site", () => {
+    // o projeto de verdade, sem site/dist montado neste teste: roda só se ele não existir
+    if (siteEntries().length) return;
+
+    const out = path.join(mkdtempSync(path.join(tmpdir(), "helena-zip-")), "sem-site.zip");
+
+    const refused = spawnSync(process.execPath, [SCRIPT, `--out=${out}`], { encoding: "utf8" });
+
+    assert.equal(refused.status, 1);
+    assert.match(refused.stderr, /site ainda não foi montado/);
+    assert.match(refused.stderr, /npm run site:build/);
+
+    assert.equal(spawnSync(process.execPath, [SCRIPT, `--out=${out}`, "--no-site"], { encoding: "utf8" }).status, 0);
 });

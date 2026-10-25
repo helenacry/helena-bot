@@ -15,6 +15,7 @@
     "icons": "node scripts/build-icons.mjs",
     "profiles": "node scripts/build-profiles.mjs",
     "bot-images": "node scripts/build-bot-images.mjs",
+    "redirect": "node scripts/build-redirect.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

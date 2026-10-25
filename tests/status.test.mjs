@@ -19,13 +19,13 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 test("o endereço do site vem de um lugar só e tem a forma certa", () => {
     assert.match(SITE_URL, /^https:\/\/[a-z0-9.-]+\/(?:[a-z0-9-]+\/)?$/, "https e com a barra no fim");
     assert.equal(WIKI_URL, `${SITE_URL}wiki/`);
-    assert.equal(SITE_LABEL, "helenacry.github.io/helena-bot", "sem https e sem a barra do fim");
+    assert.equal(SITE_LABEL, "helena.discloud.dev", "sem https e sem a barra do fim");
 
     assert.equal(STATUS_CONFIG.site, SITE_LABEL, "a atividade usa o endereço do site");
     assert.equal(HELP_CONFIG.wikiUrl, WIKI_URL, "a ajuda aponta para a wiki do mesmo site");
 });
 
-test("o site da atividade é o do GitHub Pages que o projeto publica", () => {
+test("o site da atividade é o endereço que o .env.example libera para o painel", () => {
     // o .env.example lista o site como origem permitida do painel
     const example = readFileSync(path.join(ROOT, ".env.example"), "utf8");
 

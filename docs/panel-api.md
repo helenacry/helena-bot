@@ -23,7 +23,7 @@ O painel permite coletar o **daily** e um **bônus de gemas** pelo navegador, en
 
 **Para ligar** (variáveis em `.env.example`):
 
-1. No Portal do Desenvolvedor do Discord, cadastre o endereço de retorno do login, igual ao do site e com a barra final (por exemplo `https://helenacry.github.io/helena-bot/account/`). Para testar no computador, `http://127.0.0.1:PORTA/account/` também vale.
+1. No Portal do Desenvolvedor do Discord, cadastre o endereço de retorno do login, igual ao do site e com a barra final (por exemplo `https://helena.discloud.dev/account/`). Para testar no computador, `http://127.0.0.1:PORTA/account/` também vale.
 2. Preencha `HELENA_WEB_PORT`, `HELENA_WEB_ORIGINS`, `HELENA_OAUTH_REDIRECTS` e `HELENA_OAUTH_CLIENT_ID`. A API escuta só em `127.0.0.1`.
 3. Publique essa porta na internet com HTTPS (Tailscale Funnel, Cloudflare Tunnel, ngrok ou um servidor) e, com a API atrás de um túnel, ponha `HELENA_WEB_TRUST_PROXY=1`. Se o bot ficar desligado, o painel mostra "fora do ar".
 4. Crie uma chave gratuita do [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile): a chave **secreta** vai em `HELENA_TURNSTILE_SECRET` e a chave **do site** em `site/src/config.ts`.

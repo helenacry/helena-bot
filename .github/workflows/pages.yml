@@ -1,12 +1,13 @@
 name: Publicar site
 
-# O site (Astro, na pasta site/) é conferido a cada push na main e na testes, e publicado no
-# GitHub Pages só a partir da main. Também dá para rodar à mão, na aba Actions.
-#
-# A publicação só acontece se passar em tudo: tipos, build, verificação (contraste, links, peso,
-# metadados) e os testes de navegador (acessibilidade com axe, rolagem lateral, pedidos a
-# terceiros e os fluxos principais). Os testes do bot (npm test) rodam num job à parte e não
+# O site (Astro, na pasta site/) é conferido a cada push na main e na testes: tipos, build, verificação
+# (contraste, links, peso, metadados) e os testes de navegador (acessibilidade com axe, rolagem lateral,
+# pedidos a terceiros e os fluxos principais). Os testes do bot (npm test) rodam num job à parte e não
 # seguram o site.
+#
+# O site de verdade é servido pelo próprio bot, no Discloud (config/site.mjs): o zip leva o site montado
+# (npm run site:build e depois npm run discloud:zip). O GitHub Pages ficou só com um redirecionamento do
+# endereço antigo, publicado a partir da main depois que tudo passa. Também dá para rodar à mão, na aba Actions.
 on:
   push:
     branches: [main, testes]
@@ -65,11 +66,17 @@ jobs:
           PLAYWRIGHT_CHANNEL: chromium
         run: npx playwright test
 
+      # O site de verdade é servido pelo próprio bot, no Discloud (o zip leva o site montado). O Pages
+      # só guarda um redirecionamento, para os links antigos (helenacry.github.io/helena-bot/...)
+      # levarem ao endereço novo.
+      - name: Montar o redirecionamento do endereço antigo
+        run: node site/scripts/build-redirect.mjs site/redirect
+
       - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: site/dist
+          path: site/redirect
 
   deploy:
     needs: build

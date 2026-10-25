@@ -7,6 +7,10 @@
 //   npm run discloud:zip -- --first               primeira subida: sem reinício automático (veja adjustConfig)
 //   npm run discloud:zip -- --out=C:/pasta/x.zip  onde gravar (padrão: ao lado da pasta do projeto)
 //   npm run discloud:zip -- --force               sobrescreve um zip que já exista
+//   npm run discloud:zip -- --no-site             zip sem o site (o padrão leva o site montado em site-dist/)
+//
+// O site (o Astro, em site/) é servido pelo próprio bot (services/web/static-site.mjs). Ele não vai
+// como código, vai montado: rode "npm run site:build" antes e o zip leva site/dist como site-dist/.
 //
 // O que entra é tudo menos o que está em .discloudignore (nomes exatos, sem curinga,
 // em qualquer nível), que é a mesma lista que o Discloud usa nos outros tipos de envio.
@@ -93,8 +97,34 @@ function adjustConfig(config, { id, first } = {}) {
 
 const SQLITE_HEADER = "SQLite format 3\0";
 
-// Junta tudo que vai no zip: [{ name, data }].
-export function collectEntries({ root = ROOT, id, seedDb, first = false } = {}) {
+// O site montado (site/dist) como site-dist/…: [{ name, data }], ou [] se ele não foi montado.
+export function siteEntries(root = ROOT) {
+    const dist = path.join(root, "site", "dist");
+
+    if (!existsSync(path.join(dist, "index.html"))) {
+        return [];
+    }
+
+    const names = [];
+
+    const walk = dir => {
+        for (const entry of readdirSync(path.join(dist, dir), { withFileTypes: true })) {
+            const relative = dir ? `${dir}/${entry.name}` : entry.name;
+
+            if (entry.isDirectory()) walk(relative);
+            else if (entry.isFile()) names.push(relative);
+        }
+    };
+
+    walk("");
+
+    return names
+        .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(name => ({ name: `site-dist/${name}`, data: readFileSync(path.join(dist, name)) }));
+}
+
+// Junta tudo que vai no zip: [{ name, data }]. "site: false" deixa o site de fora.
+export function collectEntries({ root = ROOT, id, seedDb, first = false, site = true } = {}) {
     const files = listFiles(root);
 
     if (!files.includes("discloud.config")) {
@@ -107,6 +137,10 @@ export function collectEntries({ root = ROOT, id, seedDb, first = false } = {}) 
             ? Buffer.from(adjustConfig(readFileSync(path.join(root, name), "utf8"), { id, first }), "utf8")
             : readFileSync(path.join(root, name))
     }));
+
+    if (site) {
+        entries.push(...siteEntries(root));
+    }
 
     if (seedDb) {
         if (!existsSync(seedDb)) throw new Error(`não achei o banco ${seedDb}.`);
@@ -209,6 +243,7 @@ function parseArgs(argv) {
     for (const arg of argv) {
         if (arg === "--force") options.force = true;
         else if (arg === "--first") options.first = true;
+        else if (arg === "--no-site") options.noSite = true;
         else if (arg.startsWith("--id=")) options.id = arg.slice(5);
         else if (arg.startsWith("--seed-db=")) options.seedDb = path.resolve(arg.slice(10));
         else if (arg.startsWith("--out=")) options.out = path.resolve(arg.slice(6));
@@ -227,7 +262,12 @@ function main() {
         throw new Error(`${out} já existe. Use --force para sobrescrever ou --out= para outro nome.`);
     }
 
-    const entries = collectEntries({ id: options.id, seedDb: options.seedDb, first: options.first });
+    // O site faz parte do bot (é servido por ele): sem ele montado, o endereço do Discloud ficaria sem página.
+    if (!options.noSite && !siteEntries().length) {
+        throw new Error("o site ainda não foi montado (site/dist). Rode antes: npm run site:build  (ou use --no-site para um zip sem ele).");
+    }
+
+    const entries = collectEntries({ id: options.id, seedDb: options.seedDb, first: options.first, site: !options.noSite });
     const zip = buildZip(entries);
 
     writeFileSync(out, zip);
@@ -236,7 +276,9 @@ function main() {
     const id = /^ID=(.*)$/m.exec(config)?.[1];
 
     console.log(`✅ Zip pronto: ${out}`);
-    console.log(`   ${entries.length} arquivos, ${(zip.length / 1024).toFixed(0)} KB | subdomínio (ID): ${id} | banco de partida: ${options.seedDb ? "SIM (data/helena.db)" : "não"} | primeira subida: ${options.first ? "SIM (sem reinício automático)" : "não"}`);
+    const siteFiles = entries.filter(entry => entry.name.startsWith("site-dist/")).length;
+
+    console.log(`   ${entries.length} arquivos (${siteFiles} do site), ${(zip.length / 1024).toFixed(0)} KB | subdomínio (ID): ${id} | banco de partida: ${options.seedDb ? "SIM (data/helena.db)" : "não"} | primeira subida: ${options.first ? "SIM (sem reinício automático)" : "não"}`);
 
     if (!statSync(out).size) throw new Error("o zip saiu vazio.");
 }

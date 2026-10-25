@@ -4,9 +4,9 @@
 
 <br>
 
-[![Adicionar ao Discord](https://img.shields.io/badge/Adicionar_ao_Discord-5865f2?style=for-the-badge)](https://helenacry.github.io/helena-bot/)
-[![Site](https://img.shields.io/badge/Site-d6455b?style=for-the-badge)](https://helenacry.github.io/helena-bot/)
-[![Wiki](https://img.shields.io/badge/Wiki-2e7d5b?style=for-the-badge)](https://helenacry.github.io/helena-bot/wiki/)
+[![Adicionar ao Discord](https://img.shields.io/badge/Adicionar_ao_Discord-5865f2?style=for-the-badge)](https://helena.discloud.dev/)
+[![Site](https://img.shields.io/badge/Site-d6455b?style=for-the-badge)](https://helena.discloud.dev/)
+[![Wiki](https://img.shields.io/badge/Wiki-2e7d5b?style=for-the-badge)](https://helena.discloud.dev/wiki/)
 [![Favoritar no GitHub](https://img.shields.io/github/stars/helenacry/helena-bot?style=for-the-badge&logo=github&label=Favoritar&color=f5c542&labelColor=1a1326)](https://github.com/helenacry/helena-bot)
 
 </div>
@@ -35,7 +35,7 @@ A **Helena** é um bot de economia e RPG para o [Discord](https://discord.com). 
 2. **Peça ajuda:** digite `/ajuda` para ver as categorias e o que cada comando faz.
 3. **Resgate o primeiro prêmio:** o seu primeiro `/daily` já abre a conta. Não precisa de cadastro.
 
-Os comandos funcionam de duas formas: com a barra (`/saldo`) ou com o prefixo `h` (`hsaldo`). A [wiki](https://helenacry.github.io/helena-bot/wiki/) explica cada sistema, com os números atuais tirados do próprio bot, e o [painel da conta](https://helenacry.github.io/helena-bot/account/) deixa você coletar o daily e as gemas pelo navegador.
+Os comandos funcionam de duas formas: com a barra (`/saldo`) ou com o prefixo `h` (`hsaldo`). A [wiki](https://helena.discloud.dev/wiki/) explica cada sistema, com os números atuais tirados do próprio bot, e o [painel da conta](https://helena.discloud.dev/account/) deixa você coletar o daily e as gemas pelo navegador.
 
 > Gostou? Deixe uma ⭐ no botão **Favoritar** acima: ajuda a Helena a chegar a mais servidores.
 
@@ -73,7 +73,7 @@ npm run site:install && npm run site:dev    # http://127.0.0.1:4321/helena-bot/
 
 ## Termos e privacidade
 
-Leia os [Termos de uso](https://helenacry.github.io/helena-bot/terms/) e a [Política de Privacidade](https://helenacry.github.io/helena-bot/privacy/). A Helena não vende nada, não mostra anúncios e não é para menores de 12 anos.
+Leia os [Termos de uso](https://helena.discloud.dev/terms/) e a [Política de Privacidade](https://helena.discloud.dev/privacy/). A Helena não vende nada, não mostra anúncios e não é para menores de 12 anos.
 
 ## Créditos
 

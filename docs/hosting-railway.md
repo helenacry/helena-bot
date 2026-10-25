@@ -12,7 +12,7 @@ O bot pode rodar no Railway em vez do computador de quem o mantém. A imagem vem
 
 1. **Projeto:** New Project, Deploy from GitHub repo, `helenacry/helena-bot`, branch `main`. Quem é dono da organização precisa autorizar o app do Railway no GitHub. Com um `Dockerfile` no repositório, o Railway o usa sozinho.
 2. **Volume:** no serviço, adicione um volume com ponto de montagem `/data`.
-3. **Variáveis:** copie as do seu `.env` (o "Raw Editor" aceita colar tudo; os segredos você coloca direto lá) e acrescente as da API: `HELENA_WEB_PORT=8080`, `HELENA_WEB_ORIGINS=https://helenacry.github.io`, `HELENA_OAUTH_REDIRECTS=https://helenacry.github.io/helena-bot/account/`, `HELENA_OAUTH_CLIENT_ID`, `HELENA_WEB_TRUST_PROXY=1` e, para o painel, `HELENA_TURNSTILE_SECRET`. A imagem já define `HELENA_DATABASE_PATH`, `HELENA_GENERATED_DIR` e `HELENA_WEB_HOST` para o volume.
+3. **Variáveis:** copie as do seu `.env` (o "Raw Editor" aceita colar tudo; os segredos você coloca direto lá) e acrescente as da API: `HELENA_WEB_PORT=8080`, `HELENA_WEB_ORIGINS=https://helena.discloud.dev`, `HELENA_OAUTH_REDIRECTS=https://helena.discloud.dev/account/`, `HELENA_OAUTH_CLIENT_ID`, `HELENA_WEB_TRUST_PROXY=1` e, para o painel, `HELENA_TURNSTILE_SECRET`. A imagem já define `HELENA_DATABASE_PATH`, `HELENA_GENERATED_DIR` e `HELENA_WEB_HOST` para o volume.
 4. **Endereço:** Settings, Networking, **Generate Domain**, com a porta `8080` (a mesma de `HELENA_WEB_PORT`).
 5. **Site:** em `site/src/config.ts`, `apiUrl` recebe esse endereço (sem barra no fim) e `turnstileSiteKey` a chave pública do Turnstile; publique o site.
 
