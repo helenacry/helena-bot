@@ -2,7 +2,7 @@
 
 [← Voltar ao README](../README.md) · [Índice da documentação](README.md)
 
-Como as respostas da Helena no chat (embeds e o layout V2 do Discord) são desenhadas. É a mesma identidade do site (o livro-caixa): recibo para números, carimbo para estados, a pelúcia para o humor. Quem cria ou muda um comando segue esta página.
+Como as respostas da Helena no chat (embeds e o layout V2 do Discord) são desenhadas. É a identidade do site (o livro-caixa, a pelúcia, a paleta), com as contas em linhas de emoji como as do `/work` da Alfacusa. Quem cria ou muda um comando segue esta página.
 
 ## Anatomia de uma resposta
 
@@ -10,16 +10,14 @@ Como as respostas da Helena no chat (embeds e o layout V2 do Discord) são desen
 [ícone] HELENA · BANCO            <- seção (autor do embed), em maiúsculas
 💰 Título em frase normal         <- um emoji só, no começo; sem "Helena X" nem ponto de exclamação à toa
 Uma frase na voz da Helena.       <- direta, com bom humor e no máximo duas linhas
-┌────────────────────────────┐
-│ Pagamento ······ +R$ 420,00│    <- o recibo: nome e valor ligados por pontilhado
-│ Carteira ····· R$ 1.350,00 │
-└────────────────────────────┘
+💵 | Pagamento: **+R$ 420,00**     <- as contas: emoji, barra, nome e valor em negrito
+👛 | Carteira: **R$ 1.350,00**
 -# O que fazer a seguir.          <- nota pequena (opcional)
 [miniatura]                       <- humor da pelúcia, ou o avatar quando a tela é sobre a pessoa
 [ícone] dica curta do rodapé
 ```
 
-Tudo sai de `createEmbed` e `ledgerEmbed` (`utils/embed.mjs`); o recibo e o carimbo estão em `utils/receipt.mjs`; as cores, o ícone e as imagens em `config/theme.mjs`.
+Tudo sai de `createEmbed` e `ledgerEmbed` (`utils/embed.mjs`); as contas e o carimbo estão em `utils/receipt.mjs`; as cores, o ícone e as imagens em `config/theme.mjs`; os emojis próprios da Helena em `config/icons.mjs`.
 
 ## Cores (a barra do embed)
 
@@ -54,23 +52,28 @@ A miniatura de cada resposta é a pelúcia, com a cor do carimbo correspondente.
 
 Tela sobre a pessoa (saldo, perfil, conquistas) usa o avatar dela no lugar do humor.
 
-## O recibo
+## As contas
 
-`receipt(linhas)` devolve um bloco de código com uma linha por conta:
+`receipt(linhas)` devolve uma linha por conta, no estilo do `/work` da Alfacusa (`💵 | Você trabalhou… **$700.00**`): o emoji do assunto, uma barra, o nome e o valor em negrito.
 
 ```js
 receipt([
-    ["Pagamento", signed(reward, formatMoney(reward))],   // +R$ 420,00
-    ["Experiência", "+25 XP"],
-    null,                                                   // linha fina entre grupos
-    ["Carteira", formatMoney(wallet)]
+    ["Pagamento", signed(reward, formatMoney(reward))],   // 💵 | Pagamento: **+R$ 420,00**
+    ["Experiência", "+25 XP"],                              // ✨ | Experiência: **+25 XP**
+    null,                                                   // uma linha em branco entre grupos
+    ["Carteira", formatMoney(wallet)]                       // 👛 | Carteira: **R$ 1.350,00**
 ])
 ```
 
-- Só número e dado curto. Sem emoji lá dentro (desalinha a coluna) e sem negrito (o bloco de código não aceita).
-- Entrada com sinal `+`, saída com `-` (`signed`). O total fica embaixo, depois da linha fina.
-- Nome de conta curto (até uns 14 caracteres); o recibo cresce sozinho até 38 colunas.
+- O emoji vem do nome da conta (`iconFor`): os nomes comuns têm o seu, o resto cai em palavras-chave e, por fim, num `🔹`. Conta nova com assunto novo? Acrescente o nome na lista de `utils/receipt.mjs`.
+- Entrada com sinal `+`, saída com `-` (`signed`). O total fica embaixo, depois da linha em branco.
+- Listas (empregos, preços da bolsa) seguem a mesma ideia: `💼 **Nome** · R$ 150,00 · nível 1`, uma por linha, com `🔒` no que está bloqueado.
 - O carimbo (`stamp("no lucro")`) é uma pastilha em código; no máximo um por resposta.
+- O site tem o recibo dele (o papel térmico, em `site/src/lib/sim.ts`), que é outro desenho e fica como está.
+
+## Emojis próprios
+
+Os desenhos ficam em `assets/emojis/<nome>.svg` (a pelúcia, tinta escura, lilás e sombra em violeta) e a lista em `config/icons.mjs`. No Discord cada um é um emoji do aplicativo chamado `h_<nome>`, que vale em qualquer servidor. O código escreve o emoji comum e passa por `icon()` (`services/platform/app-emojis.mjs`), que troca pelo da Helena quando ele existe no aplicativo e deixa o comum quando não existe.
 
 ## Texto
 
@@ -86,6 +89,6 @@ receipt([
 ## Ao mexer num texto
 
 1. Mude o comando (ou a tela em `services/`) e rode a prévia.
-2. Atualize o teste do comando: o título, a linha do recibo e o rodapé são o que ele confere (`receiptOf` em `tests/helpers.mjs` lê o recibo de uma resposta).
-3. Se a resposta aparece na conversa de exemplo do site (`/daily`, `/trabalhar`, `/loja`, `/crime`, `/prisao`), atualize `site/src/lib/sim.ts`; `tests/site-sim.test.mjs` avisa quando os dois se afastam.
+2. Atualize o teste do comando: o título, as contas e o rodapé são o que ele confere (`receiptOf` em `tests/helpers.mjs` lê as contas de uma resposta).
+3. Se a resposta aparece na conversa de exemplo do site (`/daily`, `/trabalhar`, `/loja`, `/crime`, `/prisao`), o texto e os números continuam espelhados em `site/src/lib/sim.ts`; só o desenho das contas (o recibo de papel) é do site.
 4. Uma imagem nova (humor ou ícone) entra por `site/scripts/build-bot-images.mjs`, e o **site precisa ser publicado antes do bot**: o Discord só mostra imagem de embed por endereço https.

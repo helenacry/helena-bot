@@ -11,11 +11,28 @@ const escape = text => String(text ?? "")
 // ------------------------------------------------------------ markdown do Discord
 // Negrito, itálico, sublinhado, tachado, spoiler, código, bloco de código, títulos (# a ###),
 // texto pequeno (-#), citação, listas, links, menções e emojis personalizados.
+// O relógio do Discord (<t:quando:R>) como o cliente mostra: "em 2 horas", "há 5 minutos".
+function relativeTime(when, now = Date.now() / 1000) {
+    const diff = Math.round(when - now);
+    const seconds = Math.abs(diff);
+
+    const [amount, unit] =
+        seconds < 60 ? [seconds, "segundo"]
+        : seconds < 3600 ? [Math.round(seconds / 60), "minuto"]
+        : seconds < 86400 ? [Math.round(seconds / 3600), "hora"]
+        : [Math.round(seconds / 86400), "dia"];
+
+    const text = `${amount} ${unit}${amount === 1 ? "" : "s"}`;
+
+    return diff >= 0 ? `em ${text}` : `há ${text}`;
+}
+
 function inline(source, keep) {
     let html = source;
 
     // tokens de menção e de emoji personalizado (antes de escapar o < e o >)
     html = html.replace(/<(a?):([A-Za-z0-9_]+):\d+>/g, (_all, _a, name) => keep(`<span class="emoji">:${escape(name)}:</span>`));
+    html = html.replace(/<t:(-?\d+)(?::[tTdDfFR])?>/g, (_all, when) => keep(`<span class="time">${relativeTime(Number(when))}</span>`));
     html = html.replace(/<@&?[0-9A-Za-z-]+>/g, () => keep('<span class="mention">@alguém</span>'));
     html = html.replace(/<#[0-9A-Za-z-]+>/g, () => keep('<span class="mention">#canal</span>'));
 
@@ -262,6 +279,7 @@ h1.md { font-size: 22px; margin: 8px 0 4px; } h2.md { font-size: 18px; margin: 8
 .gap { height: 8px; }
 a { color: #6cb0ff; }
 .mention { background: #3b3f6b; border-radius: 3px; padding: 0 3px; color: #c9d2ff; }
+.time { background: #3f4147; border-radius: 3px; padding: 0 3px; }
 .emoji { color: #c9b5ff; }
 .spoiler { background: #1d1e22; color: transparent; border-radius: 3px; }
 .v2container { background: #2e3036; border-left: 4px solid var(--bar); border-radius: 6px; padding: 10px 14px; margin-top: 4px; max-width: 540px; }

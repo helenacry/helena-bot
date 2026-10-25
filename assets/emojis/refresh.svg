@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs>
+    <g id="s">
+      <path d="M22 62A42 42 0 0 1 92 30" fill="none" stroke-width="16" stroke-linecap="round"/>
+      <path d="M106 66A42 42 0 0 1 36 98" fill="none" stroke-width="16" stroke-linecap="round"/>
+      <path d="M100 8V46H62Z"/>
+      <path d="M28 120V82H66Z"/>
+    </g>
+  </defs>
+  <use xlink:href="#s" transform="translate(5 5)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="6" stroke-linejoin="round"/>
+  <g fill="none" stroke="#14101c" stroke-width="22" stroke-linecap="round"><path d="M22 62A42 42 0 0 1 92 30"/><path d="M106 66A42 42 0 0 1 36 98"/></g>
+  <g fill="none" stroke="#8555ff" stroke-width="10" stroke-linecap="round"><path d="M22 62A42 42 0 0 1 92 30"/><path d="M106 66A42 42 0 0 1 36 98"/></g>
+  <path d="M100 8V46H62Z" fill="#8555ff" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M28 120V82H66Z" fill="#8555ff" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+</svg>

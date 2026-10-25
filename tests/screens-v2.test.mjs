@@ -392,11 +392,11 @@ test("bolsa no V2: índice, item em alta e preços em blocos, com os botões; o 
 
         // o emoji do título é o da faixa do índice
         assert.match(text, /## (?:📉|➖|📈) Bolsa do servidor/u);
-        assert.match(text, /Índice ·+ \d+ de 90/);
+        assert.match(text, /Índice: \*\*\d+ de 90/);
         assert.match(text, /### 🔥 Item em alta/);
         assert.match(text, /### 🛒 Preços de agora/);
         assert.match(text, /💡 Índice baixo deixa a loja mais barata/);
-        assert.match(text, /Item\s+Compra\s+Venda/, "os preços vão numa tabela");
+        assert.match(text, /\*\*[^*]+\*\*( ▲)? · compra R\$\s[\d.,]+ · venda R\$\s[\d.,]+/, "os preços vão numa lista, um item por linha");
 
         assert.deepEqual(customIds(view.layout), [`loja:home:${OWNER}`, `bolsa:atualizar:${OWNER}`, `bolsa:fechar:${OWNER}`]);
 

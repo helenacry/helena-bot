@@ -27,6 +27,8 @@ import {
     ENERGY_CONFIG
 } from "../../services/economy/energy.mjs";
 
+import { buildJobs } from "../../services/economy/jobs.mjs";
+
 import {
     embedResponse,
     errorEmbed,
@@ -59,7 +61,22 @@ export default {
 
         try {
             // Garante que o jogador exista.
-            getPlayer(guildId, userId);
+            const first = getPlayer(guildId, userId);
+
+            // Sem emprego (quem acabou de chegar) não há o que pagar: primeiro escolhe o cargo no menu.
+            if (!getJob(first.job_id)) {
+                const view = buildJobs({
+                    guildId,
+                    user: interaction.user,
+                    intro: "🧾 Antes de trabalhar, escolha um emprego no menu abaixo."
+                });
+
+                const response = embedResponse(view.embed);
+
+                response.data.components = view.components;
+
+                return response;
+            }
 
             db.exec("BEGIN IMMEDIATE");
 

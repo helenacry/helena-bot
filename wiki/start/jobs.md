@@ -7,8 +7,9 @@ O emprego define quanto o `/trabalhar` paga. São **{{v:jobs.count}} empregos**,
 
 ## Como trocar de emprego
 
-1. Veja a lista com **`/empregos`**. Cada linha mostra se o emprego é o atual (👔), se já está liberado (🔓) ou se ainda está bloqueado (🔒).
-2. Para trocar, use `/empregos` com a opção `cargo` e escolha o emprego.
+1. Veja a lista com **`/empregos`**. Ela separa o que já está **liberado** (✅) do que ainda está **bloqueado** (🔒), com o salário e o nível de cada cargo, e o seu cargo vem com uma ⭐.
+2. Escolha no menu **Escolha uma profissão**, logo abaixo da lista. Só aparecem os cargos que o seu nível já libera.
+3. Se preferir digitar, use `/empregos` com a opção `cargo`.
 
 No prefixo, fica assim:
 
@@ -17,7 +18,7 @@ hempregos cargo:motorista
 ```
 
 > [!WARNING]
-> **O emprego não sobe sozinho.** Você começa como {{v:jobs.first}} e continua nele mesmo depois de passar de nível. Se não trocar, vai ganhar o salário do primeiro emprego pelo resto da vida.
+> **O emprego não sobe sozinho.** Você começa **sem emprego**: o primeiro `/trabalhar` mostra a lista e o menu para escolher o cargo (no nível 1, só o {{v:jobs.first}} está liberado). Depois você continua nele mesmo depois de passar de nível. Se não trocar, vai ganhar o salário do primeiro emprego pelo resto da vida.
 
 A troca é de graça e vale na hora. Você pode voltar para um emprego mais baixo quando quiser.
 

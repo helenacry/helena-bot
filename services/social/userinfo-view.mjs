@@ -3,6 +3,8 @@ import { getUserBadges } from "./userinfo-badges.mjs";
 
 import { PALETTE } from "../../config/theme.mjs";
 
+import { icon } from "../platform/app-emojis.mjs";
+
 import {
     UNKNOWN,
     dateField,
@@ -61,29 +63,29 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
 
     const fields = [];
 
-    add(fields, "🏷️ Tag", block(username), true);
-    add(fields, "🪪 ID", block(String(user.id)), true);
+    add(fields, icon("🏷️") + " Tag", block(username), true);
+    add(fields, icon("🪪") + " ID", block(String(user.id)), true);
 
     add(
         fields,
-        "🏅 Insígnias",
-        [user.bot ? "🤖 Bot" : null, icons || null].filter(Boolean).join(" · ") || "Nenhuma",
+        icon("🏅") + " Insígnias",
+        [user.bot ? icon("🤖") + " Bot" : null, icons || null].filter(Boolean).join(" · ") || "Nenhuma",
         true
     );
 
-    add(fields, "📅 Conta criada em", dateWithAge(user.createdAt, now));
-    add(fields, "📥 Entrou no servidor em", dateWithAge(user.joinedAt, now));
+    add(fields, icon("📅") + " Conta criada em", dateWithAge(user.createdAt, now));
+    add(fields, icon("📥") + " Entrou no servidor em", dateWithAge(user.joinedAt, now));
 
     // Só entra para quem impulsiona: sem impulso, o campo fica de fora em vez de "não informado".
     if (user.boostingSince) {
-        add(fields, "🚀 Impulsiona este servidor desde", dateWithAge(user.boostingSince, now));
+        add(fields, icon("🚀") + " Impulsiona este servidor desde", dateWithAge(user.boostingSince, now));
     }
 
     // De castigo (timeout) só aparece enquanto vale.
     if (Number(user.timeoutUntil) > now) {
         add(
             fields,
-            "⏳ De castigo até",
+            icon("⏳") + " De castigo até",
             `${dateField(user.timeoutUntil)} (em **${formatCountdown(now, user.timeoutUntil)}**)`
         );
     }
@@ -106,7 +108,7 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
             : undefined,
 
         // A menção no embed é só um chip; quem avisa a pessoa é o body da mensagem.
-        description: "👤 **Menção:** <@" + user.id + ">",
+        description: icon("👤") + " **Menção:** <@" + user.id + ">",
 
         fields,
 
@@ -130,15 +132,15 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
 export function detailOptions(user) {
     return [
         ...(user.avatarUrl
-            ? [{ label: "Avatar", value: "avatar", description: "A foto de perfil, em tamanho grande", emoji: "🖼️" }]
+            ? [{ label: "Avatar", value: "avatar", description: "A foto de perfil, em tamanho grande", emoji: icon("🖼️") }]
             : []),
 
-        { label: "Banner", value: "banner", description: "A imagem de capa do perfil", emoji: "🌌" },
-        { label: "Insígnias", value: "badges", description: "O nome de cada insígnia visível", emoji: "🏅" },
-        { label: "Datas e idades", value: "dates", description: "Conta, servidor, impulso e castigo", emoji: "📅" },
+        { label: "Banner", value: "banner", description: "A imagem de capa do perfil", emoji: icon("🌌") },
+        { label: "Insígnias", value: "badges", description: "O nome de cada insígnia visível", emoji: icon("🏅") },
+        { label: "Datas e idades", value: "dates", description: "Conta, servidor, impulso e castigo", emoji: icon("📅") },
 
         ...(Array.isArray(user.roleIds) && user.roleIds.length
-            ? [{ label: "Cargos", value: "roles", description: "Os cargos neste servidor", emoji: "🎭" }]
+            ? [{ label: "Cargos", value: "roles", description: "Os cargos neste servidor", emoji: icon("🎭") }]
             : [])
     ];
 }
@@ -156,7 +158,7 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
             if (!url) {
                 return kind === "banner"
                     ? {
-                        title: "🌌 Banner de " + name,
+                        title: icon("🌌") + " Banner de " + name,
                         description: "Essa pessoa não tem um banner no perfil.",
                         color: USERINFO_COLOR
                     }
@@ -164,7 +166,7 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
             }
 
             return {
-                title: (kind === "avatar" ? "🖼️ Avatar de " : "🌌 Banner de ") + name,
+                title: (kind === "avatar" ? icon("🖼️") + " Avatar de " : icon("🌌") + " Banner de ") + name,
                 description: "[Abrir em tamanho original](" + largeImage(url) + ")",
                 color: USERINFO_COLOR,
                 image: { url: largeImage(url) }
@@ -175,7 +177,7 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
             const badges = getUserBadges(user);
 
             return {
-                title: "🏅 Insígnias de " + name,
+                title: icon("🏅") + " Insígnias de " + name,
 
                 description: badges.length
                     ? badges.map(badge => `${badge.emoji} ${safe(badge.name)}`).join("\n")
@@ -188,23 +190,23 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
         case "dates": {
             const fields = [];
 
-            add(fields, "📅 Conta criada em", dateWithAge(user.createdAt, now));
-            add(fields, "📥 Entrou no servidor em", dateWithAge(user.joinedAt, now));
+            add(fields, icon("📅") + " Conta criada em", dateWithAge(user.createdAt, now));
+            add(fields, icon("📥") + " Entrou no servidor em", dateWithAge(user.joinedAt, now));
 
             if (user.boostingSince) {
-                add(fields, "🚀 Impulsiona este servidor desde", dateWithAge(user.boostingSince, now));
+                add(fields, icon("🚀") + " Impulsiona este servidor desde", dateWithAge(user.boostingSince, now));
             }
 
             if (Number(user.timeoutUntil) > now) {
                 add(
                     fields,
-                    "⏳ De castigo até",
+                    icon("⏳") + " De castigo até",
                     `${dateField(user.timeoutUntil)} (em **${formatCountdown(now, user.timeoutUntil)}**)`
                 );
             }
 
             return {
-                title: "📅 Datas de " + name,
+                title: icon("📅") + " Datas de " + name,
                 color: USERINFO_COLOR,
                 fields
             };
@@ -217,7 +219,7 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
 
             // as menções de cargo no embed são só chips (não notificam)
             return {
-                title: `🎭 Cargos de ${name} (${ids.length})`,
+                title: `${icon("🎭")} Cargos de ${name} (${ids.length})`,
                 description: ids.slice(0, MAX_ROLES).map(id => `<@&${id}>`).join(" ") +
                     (ids.length > MAX_ROLES ? `\n\n…e mais ${ids.length - MAX_ROLES}.` : ""),
                 color: USERINFO_COLOR

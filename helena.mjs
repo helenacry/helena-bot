@@ -11,6 +11,8 @@ import {
     createTransport
 } from "./services/discord/transport.mjs";
 
+import { loadAppEmojis } from "./services/platform/app-emojis.mjs";
+
 import {
     normalizeInteraction,
     normalizeMessage
@@ -420,6 +422,9 @@ try {
 const appId = application.id;
 
 transport = createTransport(api, appId);
+
+// Os emojis da Helena (os desenhos de assets/emojis enviados ao aplicativo). Sem eles, ficam os comuns.
+await loadAppEmojis(api, appId);
 
 // ==========================================
 // MIGRAÇÕES

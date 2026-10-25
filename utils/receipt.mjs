@@ -3,94 +3,108 @@
 // RECIBO E CARIMBO
 // ==========================================
 
-// O recibo do site (papel térmico, nome e valor ligados por pontilhado) em texto para o chat:
-// um bloco de código com uma linha por conta. Serve para o que é número (pagamento, saldo,
-// multa). Sem emoji lá dentro: o emoji não tem a largura de uma letra e desalinha a coluna.
+// As contas de uma resposta em texto para o chat, no estilo do /work da Alfacusa: uma linha por
+// conta, com o emoji do assunto, uma barra e o valor em negrito.
 //
 //   receipt([
 //       ["Pagamento", "+R$ 420,00"],
 //       ["Experiência", "+25 XP"],
-//       null,                                  // uma linha fina separa os grupos
+//       null,                                  // uma linha em branco separa os grupos
 //       ["Carteira", "R$ 1.350,00"]
 //   ])
 //
-//   Pagamento ········ +R$ 420,00
-//   Experiência ············ +25 XP
-//   ──────────────────────────────
-//   Carteira ········· R$ 1.350,00
+//   💵 | Pagamento: **+R$ 420,00**
+//   ✨ | Experiência: **+25 XP**
+//
+//   👛 | Carteira: **R$ 1.350,00**
+//
+// O emoji sai do nome da conta (iconFor): os nomes mais comuns têm o seu, o resto cai numa lista
+// de palavras e, por fim, num marcador comum. O site tem o recibo dele (o papel térmico, em
+// site/src/lib/sim.ts): é outro desenho e fica como está.
 
-const LEADER = "·";
-const RULE = "─";
+import { icon } from "../services/platform/app-emojis.mjs";
 
-// Largura mínima do recibo e a máxima de uma linha antes de passar do que um celular mostra.
-const MIN_WIDTH = 28;
-const MAX_WIDTH = 38;
-
-const size = text => [...String(text)].length;
-
-// "R$ 1.234,56" vem com espaço rígido do pt-BR; no bloco de código um espaço comum basta.
+// "R$ 1.234,56" vem com espaço rígido do pt-BR; no chat um espaço comum basta.
 const tidy = text => String(text ?? "").replace(/ /g, " ").trim();
 
-export function receipt(rows, { width = MIN_WIDTH } = {}) {
-    const lines = (rows ?? [])
-        .filter(row => row === null || (Array.isArray(row) && row.length >= 2 && row[0] !== undefined && row[1] !== undefined))
-        .map(row => (row === null ? null : [tidy(row[0]), tidy(row[1])]));
+const plain = text => tidy(text).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-    // Sem linha de conta, sem recibo.
-    if (!lines.some(Boolean)) {
-        return "";
-    }
+// Os emojis de cada conta, pelo nome sem acento e em minúsculas. Cada grupo é o emoji e os nomes.
+const EXACT = new Map([
+    ["💵", ["pagamento", "salario", "recompensa", "recebeu", "bonus", "retorno", "retorno esperado", "devolve", "levou no total", "pagou", "sacado", "depositado", "enviado", "total arrecadado (sujo)"]],
+    ["👛", ["carteira", "limpo na carteira"]],
+    ["🏦", ["banco"]],
+    ["🏛️", ["patrimonio"]],
+    ["💎", ["gemas"]],
+    ["⚡", ["energia", "regeneracao", "trabalhar custa", "dá para trabalhar", "da para trabalhar"]],
+    ["✨", ["experiencia", "progressao", "proximo ponto"]],
+    ["⭐", ["nivel", "seu nivel"]],
+    ["🔒", ["nivel exigido"]],
+    ["💼", ["cargo", "emprego"]],
+    ["🧾", ["total", "custo", "preco por ponto", "precos", "item", "vaga"]],
+    ["🧼", ["lavanderia", "lavando", "falta de lavagem"]],
+    ["💸", ["dinheiro sujo", "valor sujo", "total sujo"]],
+    ["⏳", ["recarga", "termina em", "tempo restante", "atualiza em", "proxima coleta", "duracao", "faltam", "ainda tem"]],
+    ["⛓️", ["prisao", "pena restante", "pena total", "pena cortada", "pena acrescentada", "preso por mais", "corte por fugas"]],
+    ["🔫", ["arma", "municao", "municao agora", "chance da arma", "dano", "velocidade"]],
+    ["🛡️", ["defesa", "protecao", "protecao contra duelos"]],
+    ["🎒", ["inventario", "quantidade", "vai descartar", "sobrara"]],
+    ["🏆", ["vitorias", "sucessos"]],
+    ["💀", ["derrotas"]],
+    ["🚔", ["capturas"]],
+    ["🦹", ["crimes"]],
+    ["📈", ["indice", "economia"]],
+    ["📝", ["motivo", "tipo", "etapa"]]
+].flatMap(([emoji, names]) => names.map(name => [name, emoji])).map(([name, emoji]) => [plain(name), emoji]));
 
-    const natural = Math.max(...lines.filter(Boolean).map(([label, value]) => size(label) + size(value) + 4));
-    const total = Math.min(Math.max(width, natural), Math.max(MAX_WIDTH, natural));
+// O que não está na lista acima cai nas palavras que o nome tem.
+const KEYWORDS = [
+    [/sujo|lavag|lavand/, "🧼"],
+    [/tempo|restante|falta|termina|recarga|pena|prazo|atualiza|proxim|coleta|duracao/, "⏳"],
+    [/nivel|xp|experiencia|progress/, "✨"],
+    [/dinheiro|valor|pag|salario|recompensa|retorno|devolve|preco|custo|total/, "💵"],
+    [/arma|municao|dano|colete/, "🔫"],
+    [/item|invent|quantidade/, "🎒"]
+];
 
-    const body = lines.map(line => {
-        if (line === null) {
-            return RULE.repeat(total);
+export const BULLET = "🔹";
+/** O emoji de uma conta, pelo nome: iconFor("Pagamento") -> "💵". */
+export function iconFor(label) {
+    const key = plain(label);
+
+    const found = EXACT.get(key) ?? KEYWORDS.find(([pattern]) => pattern.test(key))?.[1] ?? BULLET;
+
+    return icon(found);
+}
+
+export function receipt(rows) {
+    const lines = [];
+
+    for (const row of rows ?? []) {
+        if (row === null) {
+            // um grupo novo: uma linha em branco, mas nunca no começo nem duas seguidas
+            if (lines.length && lines.at(-1) !== "") lines.push("");
+
+            continue;
         }
 
-        const [label, value] = line;
-        const dots = Math.max(2, total - size(label) - size(value) - 2);
+        if (!Array.isArray(row) || row.length < 2 || row[0] === undefined || row[1] === undefined) {
+            continue;
+        }
 
-        return `${label} ${LEADER.repeat(dots)} ${value}`;
-    });
+        const label = tidy(row[0]);
+        const value = tidy(row[1]);
 
-    // Linha fina no começo ou no fim não faz sentido: tira.
-    while (body[0]?.startsWith(RULE)) body.shift();
-    while (body.at(-1)?.startsWith(RULE)) body.pop();
-
-    return "```\n" + body.join("\n") + "\n```";
-}
-
-// Uma tabela alinhada em bloco de código, para listas (empregos, ranking, armas): cada linha é
-// uma lista de colunas e "align" diz como cada coluna se alinha ("l" esquerda, "r" direita; o
-// padrão é esquerda, menos a última coluna, que vai à direita). Sem emoji nas células.
-//
-//   table([["●", "18", "Programador", "R$ 1.000,00"], ...], { align: ["l", "r", "l", "r"] })
-export function table(rows, { align = [] } = {}) {
-    const lines = (rows ?? []).filter(Array.isArray).map(row => row.map(cell => tidy(cell)));
-
-    if (!lines.length) {
-        return "";
+        lines.push(value ? `${iconFor(label)} | ${label}: **${value}**` : `${iconFor(label)} | ${label}`);
     }
 
-    const columns = Math.max(...lines.map(row => row.length));
-    const widths = Array.from({ length: columns }, (_unused, index) => Math.max(...lines.map(row => size(row[index] ?? ""))));
+    // linha em branco no fim não faz sentido: tira
+    while (lines.at(-1) === "") lines.pop();
 
-    const body = lines.map(row => row
-        .map((cell, index) => {
-            const side = align[index] ?? (index === columns - 1 && columns > 1 ? "r" : "l");
-            const gap = widths[index] - size(cell);
-
-            return side === "r" ? " ".repeat(gap) + cell : cell + " ".repeat(gap);
-        })
-        .join("  ")
-        .trimEnd());
-
-    return "```\n" + body.join("\n") + "\n```";
+    return lines.join("\n");
 }
 
-// Dinheiro ou quantidade com sinal, para a coluna do recibo: signed(42000, "R$ 420,00") -> "+R$ 420,00".
+// Dinheiro ou quantidade com sinal, para o valor da conta: signed(42000, "R$ 420,00") -> "+R$ 420,00".
 // "amount" só decide o sinal (positivo, negativo ou zero); o texto já formatado vem de quem chama.
 export function signed(amount, text) {
     const shown = tidy(text).replace(/^[-+−]/, "");

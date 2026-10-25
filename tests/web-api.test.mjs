@@ -1437,7 +1437,7 @@ test("gemas: coletou no site, o comando já mostra a recarga e o /gemas mostra a
         // o /gemas conta a mesma história: o bônus aparece em espera, não liberado
         const view = await run("hgemas");
 
-        assert.match(view.text, /Bônus ·+ em /);
+        assert.match(view.text, /Bônus: \*\*em /);
         assert.doesNotMatch(view.text, /disponível/);
     });
 });
@@ -1449,7 +1449,7 @@ test("gemas: coletou pelo comando, o site já mostra a recarga e não paga de no
         // antes de coletar, o /gemas avisa que o bônus está disponível e diz como coletar
         const before = await run("hgemas");
 
-        assert.match(before.text, /Bônus ·+ disponível/);
+        assert.match(before.text, /Bônus: \*\*disponível\*\*/);
         assert.match(before.text, /\/coletargemas/);
 
         const bot = await run("hcoletargemas");
@@ -1459,7 +1459,7 @@ test("gemas: coletou pelo comando, o site já mostra a recarga e não paga de no
         const earned = gemsOf();
 
         assert.ok(earned >= GEM_BONUS.min && earned <= GEM_BONUS.max, `ganhou ${earned}`);
-        assert.match(bot.text, new RegExp(`Bônus ·+ \\+${earned} gemas`));
+        assert.match(bot.text, new RegExp(`Bônus: \\*\\*\\+${earned} gemas\\*\\*`));
 
         syncClock(ctx);
 

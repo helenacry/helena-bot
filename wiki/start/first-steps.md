@@ -44,7 +44,7 @@ Quantias são sempre em **reais inteiros** (`500`, não `500,50`). Para usar tud
 ## Seus primeiros cinco minutos
 
 1. **`/daily`** para pegar a recompensa do dia ({{v:daily.reward}}).
-2. **`/trabalhar`** para fazer o primeiro turno: o salário de {{v:jobs.firstSalary}}, mais {{v:work.xp}} de XP. Gasta {{v:work.energy}} de energia e só dá para repetir depois de {{v:work.cooldown}}.
+2. **`/trabalhar`**: na primeira vez ele pede para você **escolher um emprego** no menu (no nível 1, o {{v:jobs.first}}). Depois, rode de novo para fazer o primeiro turno: o salário de {{v:jobs.firstSalary}}, mais {{v:work.xp}} de XP. Gasta {{v:work.energy}} de energia e só dá para repetir depois de {{v:work.cooldown}}.
 3. **`/saldo`** para ver o que você tem. Os botões dessa tela depositam, sacam e transferem.
 4. **`/depositar`** para guardar o dinheiro no banco.
 5. **`/perfil`** para ver o seu cartão de perfil.

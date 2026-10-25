@@ -17,7 +17,7 @@ import {
     HELENA_COLORS
 } from "../../utils/embed.mjs";
 
-import { receipt, table } from "../../utils/receipt.mjs";
+import { receipt } from "../../utils/receipt.mjs";
 
 import { formatDuration } from "../../utils/time.mjs";
 
@@ -49,8 +49,8 @@ const buttons = ownerId => row(
     button(`bolsa:fechar:${ownerId}`, "Fechar", "✖️", "danger")
 );
 
-// Uma tabela com um item por linha: preço de compra e de venda de agora. O ▲ marca o item em alta
-// (no bloco de código não cabe emoji).
+// Uma lista com um item por linha, como a da Alfacusa: o emoji, o nome e os preços de compra e de
+// venda de agora. O ▲ marca o item em alta.
 function priceTable(market) {
     const items = sellableItems();
 
@@ -58,14 +58,13 @@ function priceTable(market) {
         return "Nada para vender.";
     }
 
-    return table([
-        ["Item", "Compra", "Venda"],
-        ...items.map(item => [
-            item.name + (isHot(item, market) ? " ▲" : ""),
-            formatMoney(buyPriceOf(item, market)),
-            formatMoney(sellPriceOf(item, market))
-        ])
-    ], { align: ["l", "r", "r"] });
+    return items
+        .map(item =>
+            `${item.emoji} **${item.name}**${isHot(item, market) ? " ▲" : ""} · ` +
+            `compra ${formatMoney(buyPriceOf(item, market))} · ` +
+            `venda ${formatMoney(sellPriceOf(item, market))}`
+        )
+        .join("\n");
 }
 
 const TREND_WORD = { up: "subiu", down: "caiu", flat: "igual" };

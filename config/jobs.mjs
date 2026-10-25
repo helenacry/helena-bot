@@ -30,8 +30,10 @@ export const JOBS = [
     salary: salary * 100 // Armazenamento em centavos
 }));
 
+// O emprego de um id, ou null: quem acabou de chegar não tem emprego (job_id vazio) e escolhe o
+// primeiro no /trabalhar ou no /empregos.
 export function getJob(id) {
-    return JOBS.find(job => job.id === id) ?? JOBS[0];
+    return JOBS.find(job => job.id === id) ?? null;
 }
 
 export function getAvailableJobs(level) {

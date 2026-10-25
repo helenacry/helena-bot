@@ -167,8 +167,8 @@ export function fieldsOf(embed) {
     );
 }
 
-// O recibo de uma resposta (as linhas "nome ···· valor" do bloco de código, veja utils/receipt.mjs)
-// como { nome: valor }. Aceita o texto, o embed ou a resposta inteira do comando.
+// O recibo de uma resposta (as linhas "💵 | nome: **valor**", veja utils/receipt.mjs) como
+// { nome: valor }. Aceita o texto, o embed ou a resposta inteira do comando.
 export function receiptOf(source) {
     const text = typeof source === "string"
         ? source
@@ -176,7 +176,7 @@ export function receiptOf(source) {
 
     const rows = {};
 
-    for (const [, label, value] of text.matchAll(/^(.+?) ·{2,} (.+)$/gm)) {
+    for (const [, label, value] of text.matchAll(/^\S+ \| (.+?): \*\*(.+)\*\*$/gm)) {
         rows[label] = value;
     }
 

@@ -223,8 +223,9 @@ test("a tela nunca monta HTML com texto da API (nada de innerHTML nem dangerousl
 test("nenhum segredo vai para o site: só a chave pública do Turnstile e o ID do aplicativo", () => {
     const config = readFileSync(new URL("../site/src/config.ts", import.meta.url), "utf8");
 
-    // o ID do aplicativo é um número (ou fica vazio até o aplicativo existir): nunca um segredo
-    assert.match(config, /const DISCORD_CLIENT_ID: string = String\(import\.meta\.env\?\.PUBLIC_DISCORD_CLIENT_ID \?\? ""\)/);
+    // o ID do aplicativo é só um número (o Discord o mostra a qualquer um, e o build aceita outro pela
+    // variável de ambiente nos testes): nunca um segredo
+    assert.match(config, /const DISCORD_CLIENT_ID: string = String\(import\.meta\.env\?\.PUBLIC_DISCORD_CLIENT_ID \?\? "\d{17,20}"\)/);
     assert.match(config, /clientId: DISCORD_CLIENT_ID/);
     assert.match(config, /turnstileSiteKey: "0x[A-Za-z0-9_-]+"/, "chave pública do Turnstile (começa com 0x)");
 

@@ -1,4 +1,4 @@
-import { set, getPlayer, createPrefixRunner, receiptOf } from "./helpers.mjs";
+import { set, getPlayer, createPrefixRunner } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -18,6 +18,26 @@ const NOW = 1_800_000_000;
 
 const texts = layout => JSON.stringify(layout);
 
+// "✅ **Trabalhar:** Pronto para uso" -> { Trabalhar: "Pronto para uso" } (o ícone vai junto: ["✅", valor]).
+function linesOf(value) {
+    const lines = {};
+
+    for (const text of value.split("\n")) {
+        const found = text.match(/^(\S+) \*\*(.+):\*\* (.+)$/u);
+
+        assert.ok(found, `linha fora do formato: ${text}`);
+
+        lines[found[2]] = [found[1], found[3]];
+    }
+
+    return lines;
+}
+
+const READY = ["✅", "Pronto para uso"];
+
+// o relógio do Discord: <t:quando:R>, "em 2 horas"
+const waitsUntil = (line, when) => assert.deepEqual(line, ["⏳", `<t:${when}:R>`]);
+
 function reset(user = ME) {
     getPlayer(G, user.id);
     ensureCrimePlayer(G, user.id);
@@ -34,7 +54,7 @@ test.beforeEach(() => reset());
 // OS TEMPOS
 // ==========================================
 
-test("tudo pronto: 'pronto' em todas as linhas, nos dois grupos, sem a cadeia", () => {
+test("tudo pronto: '✅ Pronto para uso' em todas as linhas, nos dois grupos, sem a cadeia", () => {
     const view = buildCooldowns({ guildId: G, user: ME, now: NOW });
 
     const legal = view.embed.fields[0];
@@ -43,17 +63,17 @@ test("tudo pronto: 'pronto' em todas as linhas, nos dois grupos, sem a cadeia", 
     assert.equal(legal.name, "⚖️ Legal");
     assert.equal(illegal.name, "🦹 Ilegal");
 
-    // cada grupo é um recibo (nome ···· pronto), na ordem de sempre
-    assert.deepEqual(Object.entries(receiptOf(legal.value)), [
-        ["Trabalhar", "pronto"],
-        ["Recompensa diária", "pronto"],
-        ["Bônus de gemas", "pronto"]
+    // cada grupo é uma lista (✅ **nome:** Pronto para uso), na ordem de sempre
+    assert.deepEqual(Object.entries(linesOf(legal.value)), [
+        ["Trabalhar", READY],
+        ["Recompensa diária", READY],
+        ["Bônus de gemas", READY]
     ]);
 
-    assert.deepEqual(Object.entries(receiptOf(illegal.value)), [
-        ["Crime", "pronto"],
-        ["Roubar", "pronto"],
-        ["Lavagem", "pronto"]
+    assert.deepEqual(Object.entries(linesOf(illegal.value)), [
+        ["Crime", READY],
+        ["Roubar", READY],
+        ["Lavagem", READY]
     ]);
 
     assert.equal(view.waiting, 0);
@@ -67,25 +87,29 @@ test("em recarga: o tempo que falta de cada atividade", () => {
 
     const view = buildCooldowns({ guildId: G, user: ME, now: NOW });
 
-    const legal = receiptOf(view.embed.fields[0].value);
-    const illegal = receiptOf(view.embed.fields[1].value);
+    const legal = linesOf(view.embed.fields[0].value);
+    const illegal = linesOf(view.embed.fields[1].value);
 
-    // trabalho: 1 hora - 10 minutos; daily: 24 h - 1 h; gemas: 5 h - 3 h
-    assert.equal(legal["Trabalhar"], "em 50m");
-    assert.equal(legal["Recompensa diária"], "em 23h");
-    assert.equal(legal["Bônus de gemas"], "em 2h");
-    assert.match(illegal["Crime"], /^em /);
-    assert.equal(illegal["Roubar"], "pronto");
+    // trabalho: 1 hora - 10 minutos; daily: 24 h - 1 h; gemas: 5 h - 3 h (o relógio do Discord leva a hora em que libera)
+    waitsUntil(legal["Trabalhar"], NOW + 50 * 60);
+    waitsUntil(legal["Recompensa diária"], NOW + 23 * 3_600);
+    waitsUntil(legal["Bônus de gemas"], NOW + 2 * 3_600);
+    assert.equal(illegal["Crime"][0], "⏳");
+    assert.match(illegal["Crime"][1], /^<t:\d+:R>$/);
+    assert.deepEqual(illegal["Roubar"], READY);
 
     assert.equal(view.waiting, 4);
 });
 
-test("preso: a cadeia aparece no grupo ilegal, com o tempo que falta", () => {
+test("preso: a cadeia aparece no grupo ilegal, com o relógio de quando sai", () => {
     imprison(G, ME.id, 1_200, "teste");
 
     const view = buildCooldowns({ guildId: G, user: ME });
 
-    assert.match(receiptOf(view.embed.fields[1].value)["Cadeia"], /^falta /);
+    const jail = linesOf(view.embed.fields[1].value)["Cadeia"];
+
+    assert.equal(jail[0], "🔒");
+    assert.match(jail[1], /^<t:\d+:R>$/);
     assert.match(texts(view.layout), /Cadeia/);
 });
 
@@ -112,7 +136,7 @@ test("o V2: avatar ao lado do título, os dois grupos separados por linhas finas
     assert.equal(inside[0].type, "section");
     assert.equal(inside[0].texts[0], "-# HELENA · RECARGAS");
     assert.equal(inside[0].texts[1], "## ⏱️ Tempos de recarga");
-    assert.match(inside[0].texts[2], new RegExp(`^\\*\\*Eu Mesmo\\*\\* · atualizado às \\d\\d:\\d\\d$`));
+    assert.equal(inside[0].texts[2], `**Eu Mesmo** · atualizado <t:${NOW}:R>`);
     assert.deepEqual(inside[0].accessory, { type: "thumbnail", url: ME.avatarUrl });
 
     const kinds = inside.map(component => component.type);
@@ -220,7 +244,7 @@ test("Gozofone: só quem é casado(a) vê a linha, como a última do grupo Legal
 
     const view = buildCooldowns({ guildId: G, user: ME, now: NOW });
 
-    assert.deepEqual(Object.entries(receiptOf(view.embed.fields[0].value)).at(-1), ["Gozofone", "pronto"]);
+    assert.deepEqual(Object.entries(linesOf(view.embed.fields[0].value)).at(-1), ["Gozofone", READY]);
     assert.equal(view.waiting, 0);
 });
 
@@ -234,11 +258,11 @@ test("Gozofone: a espera de 1 hora aparece com o tempo e conta nos que esperam; 
 
     const view = buildCooldowns({ guildId: G, user: ME, now: NOW });
 
-    assert.equal(receiptOf(view.embed.fields[0].value)["Gozofone"], "em 40m");
+    waitsUntil(linesOf(view.embed.fields[0].value)["Gozofone"], NOW + 40 * 60);
     assert.equal(view.waiting, 1);
 
-    // no V2, o mesmo recibo no bloco Legal
-    assert.match(JSON.stringify(view.layout), /Gozofone ·+ em 40m/);
+    // no V2, a mesma linha no bloco Legal
+    assert.ok(JSON.stringify(view.layout).includes(`⏳ **Gozofone:** <t:${NOW + 40 * 60}:R>`));
 
     // a espera é de quem ligou: o cônjuge está liberado
     assert.equal(callWait(G, OTHER.id, NOW).remaining, 0);
@@ -246,7 +270,7 @@ test("Gozofone: a espera de 1 hora aparece com o tempo e conta nos que esperam; 
     // passada 1 hora, liberado
     const later = buildCooldowns({ guildId: G, user: ME, now: NOW + 40 * 60 });
 
-    assert.equal(receiptOf(later.embed.fields[0].value)["Gozofone"], "pronto");
+    assert.deepEqual(linesOf(later.embed.fields[0].value)["Gozofone"], READY);
     assert.equal(later.waiting, 0);
 
     set("DELETE FROM marriages WHERE guild_id = ?", G);

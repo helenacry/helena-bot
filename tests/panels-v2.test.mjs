@@ -71,9 +71,9 @@ test("saldo no V2: avatar ao lado do título, contas em linhas, patrimônio gran
     const text = allText(view.layout);
 
     // as contas vão num recibo; o patrimônio, em letra grande logo abaixo
-    assert.match(text, /Carteira ·+ R\$ 1\.234,50/);
-    assert.match(text, /Banco ·+ R\$ 5\.000,00/);
-    assert.match(text, /Gemas ·+ 7/);
+    assert.match(text, /Carteira: \*\*R\$ 1\.234,50\*\*/);
+    assert.match(text, /Banco: \*\*R\$ 5\.000,00\*\*/);
+    assert.match(text, /Gemas: \*\*7\*\*/);
     assert.match(text, /-# 💰 Patrimônio total\\n# R\$ 6\.234,50/);
     assert.doesNotMatch(text, /━━/, "o enfeite antigo não existe mais");
     assert.doesNotMatch(text, /Dinheiro sujo/);
@@ -84,7 +84,7 @@ test("saldo no V2: avatar ao lado do título, contas em linhas, patrimônio gran
 test("saldo: dinheiro sujo só aparece para quem tem, e fica fora do patrimônio", () => {
     const view = buildBalance({ player: player({ dirty_money: 90_000 }), controls: [] });
 
-    assert.match(allText(view.layout), /Dinheiro sujo ·+ R\$ 900,00/);
+    assert.match(allText(view.layout), /Dinheiro sujo: \*\*R\$ 900,00\*\*/);
     assert.match(allText(view.layout), /# R\$ 6\.234,50/);
 
     // no clássico também: a linha existe e o patrimônio não a soma

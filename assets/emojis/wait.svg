@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs>
+    <g id="s">
+      <rect x="24" y="8" width="80" height="14" rx="6"/>
+      <rect x="24" y="106" width="80" height="14" rx="6"/>
+      <path d="M32 22H96C96 50 74 56 74 64S96 78 96 106H32C32 78 54 72 54 64S32 50 32 22Z"/>
+    </g>
+  </defs>
+  <use xlink:href="#s" transform="translate(5 5)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M32 22H96C96 50 74 56 74 64S96 78 96 106H32C32 78 54 72 54 64S32 50 32 22Z" fill="#f6f1fd" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M42 26H86C84 40 74 46 64 54 54 46 44 40 42 26Z" fill="#e7b643"/>
+  <path d="M44 102C46 90 54 84 64 82 74 84 82 90 84 102Z" fill="#e7b643"/>
+  <rect x="24" y="8" width="80" height="14" rx="6" fill="#8555ff" stroke="#14101c" stroke-width="5"/>
+  <rect x="24" y="106" width="80" height="14" rx="6" fill="#8555ff" stroke="#14101c" stroke-width="5"/>
+</svg>

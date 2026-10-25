@@ -11,7 +11,7 @@ Quase tudo na Helena tem um tempo de espera. Esta é a lista de todos, com o com
 
 ## Conferir o que está liberado: `/cooldowns`
 
-O `/cooldowns` (atalho `/cd`) mostra o tempo que falta para o **daily**, o **trabalho**, o **bônus de gemas**, o **crime**, o **roubo** e a **lavagem**, separados em **Legal** e **Ilegal**, com ✅ para o que já está liberado e ⏳ com o tempo que falta. Quem é casado(a) vê também o **Gozofone**, e quem está preso vê a **cadeia**. O botão **Atualizar** refaz a lista com a hora de agora.
+O `/cooldowns` (atalho `/cd`) mostra o tempo que falta para o **daily**, o **trabalho**, o **bônus de gemas**, o **crime**, o **roubo** e a **lavagem**, separados em **Legal** e **Ilegal**, com ✅ **Pronto para uso** para o que já está liberado e ⏳ com o relógio do Discord (por exemplo, "em 2 horas") para o que falta. Quem é casado(a) vê também o **Gozofone**, e quem está preso vê a **cadeia**. O botão **Atualizar** refaz a lista com a hora de agora.
 
 > [!NOTE]
 > O `/cooldowns` não mostra tudo desta tabela. Duelos, fugas e o sorteio da bolsa têm a espera tratada em outro lugar: veja a página de cada um.

@@ -30,6 +30,8 @@ import { handleMarketClick } from "./market-panel.mjs";
 
 import { handleCooldownsClick } from "./cooldowns-panel.mjs";
 
+import { handleJobsClick } from "./jobs-panel.mjs";
+
 import { handleFamilyClick, handleFamilyModal } from "./family-panel.mjs";
 
 import { handleRankingClick } from "./ranking-panel.mjs";
@@ -68,6 +70,7 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   bolsa:atualizar|fechar:<dono>            /bolsa       (market-panel.mjs)
 //   ajuda:...                                /ajuda       (help-panel.mjs)
 //   cd:atualizar:<dono>                      /cooldowns   (cooldowns-panel.mjs)
+//   emp:escolher:<dono>                      /empregos    (jobs-panel.mjs, menu; também no 1º /trabalhar)
 //   rank:tipo:<dono>:<tipo>                  /ranking     (ranking-panel.mjs)
 //   miss:resgatar:<dono>:<missão>            /missoes     (missions-panel.mjs)
 //   gf:aceitar|recusar|cancelar:<ligação>    /gozofone    (family-panel.mjs)
@@ -143,6 +146,10 @@ export function handlePanelClick(interaction) {
 
     if (area === "cd") {
         return handleCooldownsClick(interaction);
+    }
+
+    if (area === "emp") {
+        return handleJobsClick(interaction);
     }
 
     // O Gozofone: o cônjuge atende, quem ligou cancela (cada um confere no serviço).

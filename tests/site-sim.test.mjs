@@ -269,31 +269,46 @@ test("os títulos, as linhas do recibo e os rodapés das respostas de exemplo ex
 // O DESENHO É O MESMO DO BOT
 // ==========================================
 
-const { receipt: botReceipt } = await import("../utils/receipt.mjs");
 const { formatDuration } = await import("../utils/time.mjs");
 const { PALETTE, MOODS } = await import("../config/theme.mjs");
 const { HELENA_COLORS } = await import("../utils/embed.mjs");
 const { format } = await import("../site/src/lib/format.ts").then(module => ({ format: module }));
 
-const lines = text => text.replace(/^```\n|\n```$/g, "").split("\n");
+// O recibo do site é o papel térmico (nome e valor ligados por pontilhado, linha fina entre os
+// grupos). O bot deixou esse desenho de lado nas respostas (agora são linhas com emoji, como a
+// Alfacusa); o site fica com o dele.
+test("o recibo do site: largura mínima de 28, pontilhado entre o nome e o valor, linha fina nos null e nunca nas pontas", () => {
+    assert.deepEqual(
+        sim.receipt([["Pagamento", "+R$ 420,00"], ["Experiência", "+25 XP"], null, ["Carteira", "R$ 1.350,00"]]),
+        [
+            `Pagamento ${"·".repeat(7)} +R$ 420,00`,
+            `Experiência ${"·".repeat(9)} +25 XP`,
+            "─".repeat(28),
+            `Carteira ${"·".repeat(7)} R$ 1.350,00`
+        ]
+    );
 
-test("o recibo do site tem a mesma largura, o mesmo pontilhado e as mesmas linhas finas do bot", () => {
-    const cases = [
-        [["Pagamento", "+R$ 420,00"], ["Experiência", "+25 XP"], null, ["Carteira", "R$ 1.350,00"]],
-        [["Total arrecadado (sujo)", "R$ 12.345.678,90"], ["Crimes", "3"]],
-        [null, ["Gemas", "7"], null],
-        [["A", "1"]]
-    ];
+    // um nome comprido alarga o recibo (a coluna nunca fica sem pontinhos)
+    assert.deepEqual(
+        sim.receipt([["Total arrecadado (sujo)", "R$ 12.345.678,90"], ["Crimes", "3"]]),
+        [
+            `Total arrecadado (sujo) ${"·".repeat(2)} R$ 12.345.678,90`,
+            `Crimes ${"·".repeat(34)} 3`
+        ]
+    );
 
-    // e todo recibo que o simulador monta de verdade
+    assert.deepEqual(sim.receipt([null, ["Gemas", "7"], null]), [`Gemas ${"·".repeat(20)} 7`]);
+
+    // todo recibo que o simulador monta de verdade cabe em 38 colunas, ou no que o maior nome exige
     for (const command of sim.COMMANDS) {
         const { reply } = sim.run(sim.initialState(), command, NOW, seq(0.9, 0, 0.5));
 
-        if (reply.embed) cases.push(reply.embed.rows);
-    }
+        if (!reply.embed) continue;
 
-    for (const rowsOfCase of cases) {
-        assert.deepEqual(sim.receipt(rowsOfCase), lines(botReceipt(rowsOfCase)), JSON.stringify(rowsOfCase));
+        const shown = sim.receipt(reply.embed.rows);
+
+        assert.ok(shown.every(line => !line.startsWith("─") || line === shown.find(other => other.startsWith("─"))), command);
+        assert.ok(shown.length === 0 || (!shown[0].startsWith("─") && !shown.at(-1).startsWith("─")), command);
     }
 
     assert.deepEqual(sim.receipt([]), []);

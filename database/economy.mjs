@@ -61,9 +61,10 @@ export function getPlayer(guildId, userId) {
     db.prepare(`
         INSERT OR IGNORE INTO players (
             guild_id,
-            user_id
+            user_id,
+            job_id
         )
-        VALUES (?, ?)
+        VALUES (?, ?, '')
     `).run(
         guildId,
         userId

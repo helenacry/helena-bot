@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs>
+    <g id="s">
+      <path d="M50 92H78L64 120Z"/>
+      <path d="M44 60 22 94 48 88ZM84 60 106 94 80 88Z"/>
+      <path d="M64 8C88 26 92 58 84 90H44C36 58 40 26 64 8Z"/>
+    </g>
+  </defs>
+  <use xlink:href="#s" transform="translate(5 6)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M50 92H78L64 120Z" fill="#ffa746" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M44 60 22 94 48 88ZM84 60 106 94 80 88Z" fill="#ff6367" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M64 8C88 26 92 58 84 90H44C36 58 40 26 64 8Z" fill="#f6f1fd" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="64" cy="48" r="11" fill="#8555ff" stroke="#14101c" stroke-width="5"/>
+  <path d="M46 78H82" stroke="#d3b3ff" stroke-width="5" stroke-linecap="round"/>
+</svg>

@@ -5,12 +5,11 @@
 // config/site.mjs, na raiz do repositório: o bot lê o mesmo arquivo.
 
 // O ID do aplicativo da Helena no Discord (Portal do Desenvolvedor, "Informações gerais",
-// "ID do aplicativo"). É público. Preencha ao criar o aplicativo: sem ele, não há convite
-// nem login no painel.
+// "ID do aplicativo"). É público. Sem ele, não há convite nem login no painel.
 //
-// Para testar o login antes de ter o aplicativo, o build aceita o ID pela variável de ambiente
-// PUBLIC_DISCORD_CLIENT_ID (o npm run site:test usa isso).
-const DISCORD_CLIENT_ID: string = String(import.meta.env?.PUBLIC_DISCORD_CLIENT_ID ?? "");
+// O build aceita outro ID pela variável de ambiente PUBLIC_DISCORD_CLIENT_ID (o npm run
+// site:test usa isso para testar o login com um aplicativo de teste).
+const DISCORD_CLIENT_ID: string = String(import.meta.env?.PUBLIC_DISCORD_CLIENT_ID ?? "1559308576537714710");
 
 export const SITE = {
   name: "Helena",

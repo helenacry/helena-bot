@@ -598,11 +598,14 @@ test("/bolsa mostra o índice, o item em alta e os preços, com os botões do do
     assert.match(hot, /Energético/);
     assert.match(hot, /\+12,5%/);
 
-    // a tabela: o cabeçalho e uma linha por item vendável, dentro do bloco de código
-    const lines = prices.split("\n").slice(1, -1);
+    // a lista: uma linha por item vendável (emoji, nome em negrito, compra e venda de agora)
+    const lines = prices.split("\n");
 
-    assert.match(lines[0], /^Item\s+Compra\s+Venda$/);
-    assert.equal(lines.length - 1, sellable.length, "uma linha por item vendável");
+    for (const line of lines) {
+        assert.match(line, /^\S+ \*\*.+\*\*( ▲)? · compra R\$\s[\d.,]+ · venda R\$\s[\d.,]+$/);
+    }
+
+    assert.equal(lines.length, sellable.length, "uma linha por item vendável");
     assert.equal((prices.match(/▲/g) ?? []).length, 1, "o em alta aparece marcado");
 
     assert.deepEqual(

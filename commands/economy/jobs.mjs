@@ -1,15 +1,9 @@
 
-import { db } from "../../database/connection.mjs";
+import { getPlayer, formatMoney } from "../../database/economy.mjs";
 
-import {
-    getPlayer,
-    formatMoney
-} from "../../database/economy.mjs";
+import { JOBS } from "../../config/jobs.mjs";
 
-import {
-    JOBS,
-    getJob
-} from "../../config/jobs.mjs";
+import { buildJobs, chooseJob } from "../../services/economy/jobs.mjs";
 
 import {
     embedResponse,
@@ -20,7 +14,13 @@ import {
 
 import { plural } from "../../utils/plural.mjs";
 
-import { table } from "../../utils/receipt.mjs";
+// ==========================================
+// COMANDO /EMPREGOS
+// ==========================================
+
+// Sem opção, mostra a lista (liberados, bloqueados e o menu "Escolha uma profissão"); com
+// "cargo", assume o emprego direto. A tela e a troca estão em services/economy/jobs.mjs e o menu
+// em services/panels/jobs-panel.mjs. O primeiro /trabalhar de quem não tem emprego abre a mesma tela.
 
 export default {
     name: "empregos",
@@ -50,7 +50,6 @@ export default {
         }
 
         try {
-            const player = getPlayer(guildId, userId);
             const selected = interaction.data.options?.cargo;
 
             // ==================================
@@ -58,62 +57,32 @@ export default {
             // ==================================
 
             if (!selected) {
-                const currentJob = getJob(player.job_id);
+                const view = buildJobs({ guildId, user: interaction.user });
 
-                // ● o seu cargo, ○ liberado para você, × ainda bloqueado.
-                const mark = job =>
-                    job.id === player.job_id ? "●" : player.level >= job.level ? "○" : "×";
+                const response = embedResponse(view.embed);
 
-                const block = jobs => table(
-                    jobs.map(job => [mark(job), "nv " + job.level, job.name, formatMoney(job.salary)]),
-                    { align: ["l", "r", "l", "r"] }
-                );
+                response.data.components = view.components;
 
-                // Três degraus, cada um num campo (cabe no limite de cada campo do embed).
-                const steps = [
-                    ["🌱 Começo", JOBS.filter(job => job.level <= 11)],
-                    ["💼 Carreira", JOBS.filter(job => job.level > 11 && job.level <= 34)],
-                    ["👑 Topo", JOBS.filter(job => job.level > 34)]
-                ];
-
-                return embedResponse(
-                    ledgerEmbed({
-                        section: "Carreira",
-                        title: "💼 Empregos",
-
-                        say:
-                            "Você é **" + (currentJob?.name || "sem cargo") + "**, nível **" + player.level + "**" +
-                            (currentJob ? ", e cada expediente rende **" + formatMoney(currentJob.salary) + "**." : ".") +
-                            "",
-
-                        note: "`●` seu cargo · `○` liberado · `×` bloqueado",
-
-                        fields: steps.map(([name, jobs]) => ({ name, value: block(jobs), inline: false })),
-
-                        color: HELENA_COLORS.primary,
-                        thumbnail: interaction.user?.avatarUrl,
-                        mood: "feliz",
-
-                        footer: "Para trocar: /empregos cargo:nome"
-                    })
-                );
+                return response;
             }
 
             // ==================================
             // SELECIONAR EMPREGO
             // ==================================
 
-            const job = JOBS.find(
-                item => item.id === selected
-            );
+            const result = chooseJob(guildId, userId, selected);
 
-            if (!job) {
+            if (result.status === "unknown") {
                 return errorEmbed(
                     "O emprego selecionado não foi encontrado."
                 );
             }
 
-            if (player.level < job.level) {
+            const { job } = result;
+
+            if (result.status === "locked") {
+                const player = getPlayer(guildId, userId);
+
                 return embedResponse(
                     ledgerEmbed({
                         section: "Carreira",
@@ -131,7 +100,7 @@ export default {
                 );
             }
 
-            if (player.job_id === job.id) {
+            if (result.status === "same") {
                 return embedResponse(
                     ledgerEmbed({
                         section: "Carreira",
@@ -141,25 +110,6 @@ export default {
                         mood: "alerta",
                         footer: "/empregos mostra os outros cargos"
                     })
-                );
-            }
-
-            const result = db.prepare(`
-                UPDATE players
-                SET job_id = ?
-                WHERE guild_id = ?
-                  AND user_id = ?
-                  AND level >= ?
-            `).run(
-                job.id,
-                guildId,
-                userId,
-                job.level
-            );
-
-            if (result.changes !== 1) {
-                throw new Error(
-                    "Não foi possível atualizar seu emprego."
                 );
             }
 

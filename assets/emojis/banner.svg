@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs>
+    <g id="s"><rect x="8" y="30" width="112" height="68" rx="12"/></g>
+  </defs>
+  <use xlink:href="#s" transform="translate(5 6)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="6" stroke-linejoin="round"/>
+  <use xlink:href="#s" fill="#5a2be2" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M34 44Q34 58 20 58 34 58 34 72 34 58 48 58 34 58 34 44Z" fill="#d3b3ff" stroke="#d3b3ff" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M82 52Q82 70 64 70 82 70 82 88 82 70 100 70 82 70 82 52Z" fill="#e7b643" stroke="#e7b643" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="104" cy="46" r="4" fill="#d3b3ff"/>
+</svg>

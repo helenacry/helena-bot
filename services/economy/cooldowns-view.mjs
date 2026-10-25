@@ -3,10 +3,11 @@ import { getPlayer } from "../../database/economy.mjs";
 
 import { safeText } from "../platform/user-lookup.mjs";
 
+import { icon } from "../platform/app-emojis.mjs";
+
 import {
     COOLDOWNS,
-    getRemaining,
-    formatCooldown
+    getRemaining
 } from "../../config/cooldowns.mjs";
 
 import {
@@ -26,8 +27,6 @@ import { callWait } from "../social/family.mjs";
 
 import { createEmbed, HELENA_COLORS } from "../../utils/embed.mjs";
 
-import { receipt } from "../../utils/receipt.mjs";
-
 import {
     container,
     divider,
@@ -46,20 +45,18 @@ import { button, row } from "../panels/panel-kit.mjs";
 // Uma tela só para o /cooldowns e para o botão "Atualizar": o comando abre, o botão
 // refaz a mesma tela com a hora de agora. Dois grupos, como numa lista de afazeres:
 // o que é legal (trabalho, daily, gemas e, para casados, o Gozofone) e o que é ilegal (crime, roubo, lavagem e, se
-// estiver preso, a cadeia). ✅ pronto, ⏳ com o tempo que falta.
+// estiver preso, a cadeia). Uma linha por atividade: ✅ "Pronto para uso" ou ⏳ com o relógio
+// do próprio Discord (<t:...:R>, "em 2 horas"), que continua contando sozinho e aparece no
+// idioma de quem lê. O "atualizado" do alto usa o mesmo relógio.
 //
 //   cd:atualizar:<dono>      atualiza esta tela
 
-const clock = new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    timeStyle: "short"
-});
+// Uma linha da lista: o nome em negrito e "Pronto para uso" ou quando libera.
+function line(label, remaining, now, mark = "⏳") {
+    if (!(remaining > 0)) return `${icon("✅")} **${label}:** Pronto para uso`;
 
-// Uma conta do recibo: o nome e "pronto" ou o tempo que falta.
-const line = (label, remaining) => [
-    label,
-    remaining > 0 ? `em ${formatCooldown(remaining)}` : "pronto"
-];
+    return `${icon(mark)} **${label}:** <t:${now + Math.ceil(remaining)}:R>`;
+}
 
 // Os tempos de cada atividade do jogador neste servidor. Só leitura (menos o registro
 // do jogador, que o jogo cria na primeira vez de qualquer jeito).
@@ -96,17 +93,19 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
 
     const data = cooldownsOf(guildId, userId, now);
 
-    const legal = data.legal.map(item => line(item.label, item.remaining));
+    const legal = data.legal.map(item => line(item.label, item.remaining, now)).join("\n");
 
-    const illegal = data.illegal.map(item => line(item.label, item.remaining));
+    const illegalLines = data.illegal.map(item => line(item.label, item.remaining, now));
 
     if (data.prison) {
-        illegal.push(["Cadeia", `falta ${formatCooldown(data.prison.remaining)}`]);
+        illegalLines.push(line("Cadeia", data.prison.remaining, now, "🔒"));
     }
+
+    const illegal = illegalLines.join("\n");
 
     const waiting = [...data.legal, ...data.illegal].filter(item => item.remaining > 0).length + (data.prison ? 1 : 0);
 
-    const updated = `atualizado às ${clock.format(new Date(now * 1000))}`;
+    const updated = `atualizado <t:${now}:R>`;
 
     // No embed a menção é só visual; num texto do V2 ela notificaria, então lá vai o nome.
     const meta = `<@${userId}> · ${updated}`;
@@ -117,20 +116,20 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
 
     const color = waiting === 0 ? HELENA_COLORS.success : HELENA_COLORS.wait;
 
-    const refresh = button(`cd:atualizar:${userId}`, "Atualizar", "🔄", "secondary");
+    const refresh = button(`cd:atualizar:${userId}`, "Atualizar", icon("🔄"), "secondary");
 
-    // o clássico: embed com os dois grupos (cada um um recibo) e o botão embaixo
+    // o clássico: embed com os dois grupos (uma lista cada) e o botão embaixo
     const embed = createEmbed({
         section: "Recargas",
-        title: "⏱️ Tempos de recarga",
+        title: icon("⏱️") + " Tempos de recarga",
         description: meta,
         color,
         thumbnail: user.avatarUrl,
         mood: waiting === 0 ? "feliz" : "dormindo",
         timestamp: false,
         fields: [
-            { name: "⚖️ Legal", value: receipt(legal), inline: false },
-            { name: "🦹 Ilegal", value: receipt(illegal), inline: false }
+            { name: icon("⚖️") + " Legal", value: legal, inline: false },
+            { name: icon("🦹") + " Ilegal", value: illegal, inline: false }
         ],
         footer: note
     });
@@ -138,11 +137,11 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
     // o V2: o mesmo conteúdo em blocos, com o avatar ao lado do título
     const layout = [
         container([
-            ...headerBlock(["-# HELENA · RECARGAS", "## ⏱️ Tempos de recarga", metaV2], thumbnail(user.avatarUrl)),
+            ...headerBlock(["-# HELENA · RECARGAS", `## ${icon("⏱️")} Tempos de recarga`, metaV2], thumbnail(user.avatarUrl)),
             divider(),
-            text(`### ⚖️ Legal\n${receipt(legal)}`),
+            text(`### ${icon("⚖️")} Legal\n${legal}`),
             divider(),
-            text(`### 🦹 Ilegal\n${receipt(illegal)}`),
+            text(`### ${icon("🦹")} Ilegal\n${illegal}`),
             divider(),
             subtext(note),
             row(refresh)
