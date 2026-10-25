@@ -13,6 +13,10 @@ import {
 } from "../../services/social/userinfo-view.mjs";
 
 import {
+    withAccount
+} from "../../services/social/userinfo-account.mjs";
+
+import {
     userinfoComponents
 } from "../../services/social/userinfo-components.mjs";
 
@@ -183,8 +187,10 @@ export default {
             // CARTÃO
             // ==================================
 
+            // O perfil completo da conta (banner, flags completas, etiqueta de servidor) para o Nitro e as
+            // insígnias; se a API falhar, o cartão sai com o que já temos.
             const embed = buildUserinfoEmbed({
-                user,
+                user: await withAccount(user),
                 actorName:
                     interaction.user?.displayName ||
                     interaction.user?.username,

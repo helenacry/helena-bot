@@ -59,11 +59,23 @@ export function normalizeUser(raw, member = null) {
         nickname: String(member?.nick ?? ""),
 
         avatarUrl: avatarUrl(raw),
+
+        // o código da foto: começando com "a_", ela é animada (só o Nitro libera)
+        avatarHash: raw.avatar ?? null,
+
         bot: Boolean(raw.bot),
         createdAt: snowflakeTime(raw.id),
 
         // as insígnias públicas da conta (um número em bits; veja userinfo-badges.mjs)
         publicFlags: Number(raw.public_flags ?? 0) || 0,
+
+        // todas as flags, quando a API as traz (tem mais bits que as públicas)
+        flags: Number(raw.flags ?? 0) || 0,
+
+        // a etiqueta de servidor que a pessoa exibe ao lado do nome (GET /users/:id)
+        primaryGuild: raw.primary_guild?.tag
+            ? { tag: String(raw.primary_guild.tag), guildId: String(raw.primary_guild.identity_guild_id ?? "") }
+            : null,
 
         // o banner só vem no perfil completo (GET /users/:id), não no membro
         bannerHash: raw.banner ?? null,
@@ -81,6 +93,10 @@ export function normalizeMember(raw) {
         joinedAt: raw.joined_at ? Date.parse(raw.joined_at) : null,
         roleIds: Array.isArray(raw.roles) ? raw.roles.map(String) : [],
         permissions: raw.permissions !== undefined ? String(raw.permissions) : null,
+
+        // foto e banner próprios deste servidor (o perfil por servidor é recurso do Nitro)
+        guildAvatarHash: raw.avatar ?? null,
+        guildBannerHash: raw.banner ?? null,
 
         // desde quando impulsiona o servidor e até quando está de castigo (timeout)
         boostingSince: raw.premium_since ? Date.parse(raw.premium_since) : null,

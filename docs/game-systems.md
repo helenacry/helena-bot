@@ -32,9 +32,15 @@ O cartão do `/perfil` é uma imagem 1600×1200 (`services/social/profile-card.m
 
 ### Insígnias do /userinfo
 
-O Discord guarda as insígnias públicas de uma conta num número em bits (`public_flags`): cada bit é uma insígnia (equipe do Discord, parceiro, HypeSquad, caçador de bugs, apoiador inicial, desenvolvedor verificado, moderador certificado, desenvolvedor ativo, bot verificado). Quem impulsiona o servidor ganha mais uma, que vem do membro. O catálogo está em `services/social/userinfo-badges.mjs`, na ordem em que aparecem, e `tests/userinfo.test.mjs` confere cada bit.
+O Discord guarda as insígnias públicas de uma conta num número em bits (`public_flags` e `flags`): cada bit é uma insígnia (equipe do Discord, parceiro, HypeSquad, caçador de bugs, apoiador inicial, desenvolvedor verificado, moderador certificado, desenvolvedor ativo, bot verificado) ou um aviso da conta (spam, equipe, quarentena). A tabela de bits segue https://flags.lewisakura.moe e a documentação do Discord; como ela passa do bit 31, a conta é feita com `BigInt`. Quem impulsiona o servidor ganha mais uma, que vem do membro. O catálogo está em `services/social/userinfo-badges.mjs`, na ordem em que aparecem, e `tests/userinfo-flags.test.mjs` confere cada bit.
 
-- **Os ícones são emojis comuns** (🛡️, 🤝, ⭐, 🚀...), que valem em qualquer servidor sem enviar imagem nenhuma. Para trocar por imagens próprias, o lugar é o campo `emoji` de cada linha do catálogo: um emoji personalizado `<:nome:id>` funciona do mesmo jeito (os emojis do aplicativo, que o bot cria pela API e valem em qualquer servidor, são o caminho natural).
+**O que a API não entrega, e como a Helena contorna:**
+
+- **Nitro.** O `premium_type` só vai ao dono da conta (OAuth2). `nitroSigns()` deduz pelos sinais públicos que só o Nitro libera (avatar animado, banner, foto ou banner só do servidor) e diz "provável", "possível" ou "não detectado".
+- **Insígnia de impulso.** O Discord a troca aos 1, 2, 3, 6, 9, 12, 15, 18 e 24 meses de impulso, somando todos os servidores. A Helena só vê o `premium_since` de ESTE servidor, então `boostLadder()` é uma estimativa por aqui (nível, próximo nível e quantos dias faltam).
+- **Perfil completo.** O banner, as flags completas e a etiqueta de servidor só vêm de `GET /users/:id`, que o cartão busca uma vez (guardada por um minuto, em `userinfo-account.mjs`).
+
+- **Cada insígnia tem um desenho próprio** (`assets/emojis/badge_*.svg` e `nitro.svg`). No catálogo ela leva um emoji comum só dela (🔱, 🤝, 🦁...), que o bot troca pelo desenho no envio (veja "Emojis próprios" em `docs/bot-design.md`).
 - **Um bit que o Discord criar depois** é ignorado até entrar no catálogo.
 - **Prisma, Pulse e tempo de tela não existem no Discord**: eram da VSync.
 

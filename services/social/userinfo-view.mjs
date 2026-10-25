@@ -1,5 +1,10 @@
 
-import { getUserBadges } from "./userinfo-badges.mjs";
+import {
+    getUserBadges,
+    getAccountNotes,
+    nitroSigns,
+    boostLadder
+} from "./userinfo-badges.mjs";
 
 import { PALETTE } from "../../config/theme.mjs";
 
@@ -47,6 +52,57 @@ const block = text => "```\n" + text + "\n```";
 export const largeImage = url => String(url ?? "").replace(/size=\d+/, "size=1024");
 
 // ==========================================
+// NITRO E IMPULSO (os textos dos campos)
+// ==========================================
+
+// O horário no formato do Discord: "<t:segundos:D>" aparece como a data, no idioma de quem lê.
+const day = time => `<t:${Math.floor(Number(time) / 1000)}:D>`;
+
+const NITRO_STATE = {
+    likely: "Provável",
+    possible: "Possível",
+    none: "Não detectado"
+};
+
+// O Nitro em uma linha (o cartão) com os sinais que o provam.
+function nitroSummary(nitro) {
+    const state = NITRO_STATE[nitro.state];
+
+    return nitro.signs.length
+        ? `**${state}** (${nitro.signs.join(", ")})`
+        : state;
+}
+
+// O impulso para o cartão: desde quando e em que pé está a insígnia de impulso.
+function boostSummary(user, now) {
+    const ladder = boostLadder(user.boostingSince, now);
+
+    const lines = [dateWithAge(user.boostingSince, now)];
+
+    if (!ladder) {
+        return lines[0];
+    }
+
+    if (ladder.level === 0) {
+        lines.push(`Insígnia de impulso: ainda não · o nível 1 chega em **${plural(ladder.next.days, "dia", "dias")}** (${day(ladder.next.at)})`);
+
+    } else if (!ladder.next) {
+        lines.push(`Insígnia de impulso: **nível ${ladder.level} de ${ladder.levels}** (o máximo)`);
+
+    } else {
+        lines.push(
+            `Insígnia de impulso: **nível ${ladder.level} de ${ladder.levels}** · ` +
+            `o nível ${ladder.next.level} (${ladder.next.months} ${ladder.next.months === 1 ? "mês" : "meses"}) ` +
+            `chega em **${plural(ladder.next.days, "dia", "dias")}** (${day(ladder.next.at)})`
+        );
+    }
+
+    return lines.join("\n");
+}
+
+const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+
+// ==========================================
 // CARTÃO
 // ==========================================
 
@@ -57,28 +113,39 @@ export function buildUserinfoEmbed({ user, actorName, actorAvatar, views = null,
 
     const username = plain(user.username || "desconhecido", 120);
 
-    const icons = getUserBadges(user)
-        .map(badge => badge.emoji)
-        .join(" ");
+    const badges = getUserBadges(user);
+
+    const nitro = nitroSigns(user);
 
     const fields = [];
 
     add(fields, icon("🏷️") + " Tag", block(username), true);
     add(fields, icon("🪪") + " ID", block(String(user.id)), true);
 
+    // As insígnias com o nome de cada uma (é o que a pessoa quer ver), na largura toda.
     add(
         fields,
         icon("🏅") + " Insígnias",
-        [user.bot ? icon("🤖") + " Bot" : null, icons || null].filter(Boolean).join(" · ") || "Nenhuma",
-        true
+        [user.bot ? icon("🤖") + " Bot" : null, ...badges.map(badge => `${badge.emoji} ${safe(badge.name)}`)]
+            .filter(Boolean)
+            .join(" · ") || "Nenhuma",
+        false
     );
+
+    // O Nitro é deduzido (a API não informa a assinatura): o campo diz isso com os sinais.
+    add(fields, icon("💠") + " Nitro", nitroSummary(nitro), true);
+
+    // A etiqueta de servidor que a pessoa exibe ao lado do nome.
+    if (user.primaryGuild?.tag) {
+        add(fields, icon("🔖") + " Etiqueta de servidor", block(plain(user.primaryGuild.tag, 10)), true);
+    }
 
     add(fields, icon("📅") + " Conta criada em", dateWithAge(user.createdAt, now));
     add(fields, icon("📥") + " Entrou no servidor em", dateWithAge(user.joinedAt, now));
 
     // Só entra para quem impulsiona: sem impulso, o campo fica de fora em vez de "não informado".
     if (user.boostingSince) {
-        add(fields, icon("🚀") + " Impulsiona este servidor desde", dateWithAge(user.boostingSince, now));
+        add(fields, icon("🚀") + " Impulsiona este servidor", boostSummary(user, now));
     }
 
     // De castigo (timeout) só aparece enquanto vale.
@@ -136,7 +203,8 @@ export function detailOptions(user) {
             : []),
 
         { label: "Banner", value: "banner", description: "A imagem de capa do perfil", emoji: icon("🌌") },
-        { label: "Insígnias", value: "badges", description: "O nome de cada insígnia visível", emoji: icon("🏅") },
+        { label: "Insígnias", value: "badges", description: "Cada insígnia da conta e o que ela quer dizer", emoji: icon("🏅") },
+        { label: "Nitro e impulso", value: "nitro", description: "Sinais de Nitro e o nível da insígnia de impulso", emoji: icon("💠") },
         { label: "Datas e idades", value: "dates", description: "Conta, servidor, impulso e castigo", emoji: icon("📅") },
 
         ...(Array.isArray(user.roleIds) && user.roleIds.length
@@ -176,14 +244,62 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
         case "badges": {
             const badges = getUserBadges(user);
 
+            const notes = getAccountNotes(user);
+
+            const lines = [
+                ...(user.bot ? [`${icon("🤖")} **Bot**: conta de aplicativo.`] : []),
+                ...badges.map(badge => `${badge.emoji} **${safe(badge.name)}**\n-# ${badge.about}`)
+            ];
+
             return {
                 title: icon("🏅") + " Insígnias de " + name,
 
-                description: badges.length
-                    ? badges.map(badge => `${badge.emoji} ${safe(badge.name)}`).join("\n")
-                    : "Nenhuma insígnia visível.",
+                description: [
+                    lines.length ? lines.join("\n") : "Nenhuma insígnia visível.",
+                    ...(notes.length ? ["", ...notes.map(note => `${icon("ℹ️")} ${note.text}`)] : []),
+                    "",
+                    "-# Vem das flags públicas da conta no Discord. As insígnias de Nitro e de Quests não aparecem aqui: o Discord não as informa a bots."
+                ].join("\n"),
 
                 color: USERINFO_COLOR
+            };
+        }
+
+        case "nitro": {
+            const nitro = nitroSigns(user);
+
+            const ladder = boostLadder(user.boostingSince, now);
+
+            const fields = [];
+
+            add(
+                fields,
+                icon("💠") + " Nitro",
+                nitroSummary(nitro) + "\n-# O Discord só conta a assinatura do Nitro ao próprio dono da conta. " +
+                    "A Helena deduz pelo que o perfil mostra (avatar animado, banner, perfil por servidor); " +
+                    "quem tem Nitro e não usa nada disso aparece como \"não detectado\"."
+            );
+
+            if (!ladder) {
+                add(fields, icon("🚀") + " Impulso", "Não impulsiona este servidor.");
+
+            } else {
+                add(fields, icon("🚀") + " Impulso", boostSummary(user, now));
+
+                add(
+                    fields,
+                    icon("🏅") + " Níveis da insígnia de impulso",
+                    ladder.steps
+                        .map(step => `${step.reached ? icon("✅") : icon("⏳")} **Nível ${step.level}** · ${step.months} ${step.months === 1 ? "mês" : "meses"} · ${day(step.at)}`)
+                        .join("\n") +
+                        "\n-# A insígnia do Discord conta o impulso em qualquer servidor; a Helena só enxerga este."
+                );
+            }
+
+            return {
+                title: icon("💠") + " Nitro e impulso de " + name,
+                color: USERINFO_COLOR,
+                fields
             };
         }
 
@@ -194,7 +310,7 @@ export function buildUserinfoDetail(kind, user, now = Date.now()) {
             add(fields, icon("📥") + " Entrou no servidor em", dateWithAge(user.joinedAt, now));
 
             if (user.boostingSince) {
-                add(fields, icon("🚀") + " Impulsiona este servidor desde", dateWithAge(user.boostingSince, now));
+                add(fields, icon("🚀") + " Impulsiona este servidor", boostSummary(user, now));
             }
 
             if (Number(user.timeoutUntil) > now) {

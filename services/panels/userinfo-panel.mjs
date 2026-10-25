@@ -3,7 +3,7 @@ import { db } from "../../database/connection.mjs";
 
 import { resolveUser } from "../platform/user-lookup.mjs";
 
-import { withBanner } from "../social/userinfo-account.mjs";
+import { withAccount } from "../social/userinfo-account.mjs";
 
 import { SEARCH_VALUE } from "../social/userinfo-components.mjs";
 
@@ -90,8 +90,9 @@ export async function handleUserinfoComponent(interaction, comandos) {
             return warn("Pessoa não encontrada", "Não achei essa pessoa neste servidor agora.");
         }
 
-        // o banner só existe no perfil completo da conta: busca só quando a pessoa o pede
-        const person = choice === "banner" ? await withBanner(found.user) : found.user;
+        // o banner, as flags completas e a etiqueta só existem no perfil completo da conta: busca só
+        // para as telas que precisam deles
+        const person = ["banner", "badges", "nitro"].includes(choice) ? await withAccount(found.user) : found.user;
 
         const embed = buildUserinfoDetail(choice, person);
 

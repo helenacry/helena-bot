@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs><g id="s"><circle cx="62" cy="62" r="50"/></g></defs>
+  <use xlink:href="#s" transform="translate(6 7)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="6"/>
+  <use xlink:href="#s" fill="#fa86b6" stroke="#14101c" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <g transform="translate(-2 -2)"><path d="M64 24Q64 64 24 64 64 64 64 104 64 64 104 64 64 64 64 24Z" fill="#f6f1fd" stroke="#14101c" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></g>
+</svg>

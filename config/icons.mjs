@@ -95,6 +95,22 @@ export const ICONS = Object.freeze({
     factory: "🏭",
     hospital: "🏥",
 
+    // insígnias da conta do Discord (o /userinfo; cada uma leva um emoji comum só dela)
+    badge_staff: "🔱",
+    badge_partner: "🤝",
+    badge_moderator: "🔰",
+    badge_events: "🎪",
+    badge_bravery: "🦁",
+    badge_brilliance: "🦉",
+    badge_balance: "🐬",
+    badge_bug1: "🐛",
+    badge_bug2: "🐞",
+    badge_supporter: "🌠",
+    badge_developer: "🧑‍💻",
+    badge_active: "🧰",
+    badge_verified: "☑️",
+    nitro: "💠",
+
     // telas e botões
     search: ["🔎", "🔍"],
     folder: ["📂", "📁"],

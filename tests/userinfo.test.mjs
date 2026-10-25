@@ -15,6 +15,7 @@ const workDir = mkdtempSync(join(tmpdir(), "helena-userinfo-"));
 process.chdir(workDir);
 
 const { clearUserLookupCache } = await import("../services/platform/user-lookup.mjs");
+const { clearAccountCache } = await import("../services/social/userinfo-account.mjs");
 const { carregarComandos, resolverComando } = await import("../command-registry.mjs");
 const { snowflakeTime } = await import("../services/discord/normalize.mjs");
 
@@ -76,6 +77,7 @@ const players = () => db.prepare("SELECT COUNT(*) c FROM players").get().c;
 
 test.beforeEach(() => {
     clearUserLookupCache();
+    clearAccountCache();
 
     api.down = false;
     api.searches = 0;
@@ -165,7 +167,10 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
     assert.equal(unblock(fields["🪪 ID"]), "200000000000000001");
 
     // as insígnias públicas, mais o impulso do servidor
-    assert.equal(fields["🏅 Insígnias"], "🟣 ⭐ 🧑‍💻 🚀");
+    assert.equal(
+        fields["🏅 Insígnias"],
+        "🦁 HypeSquad Bravery · 🌠 Apoiador inicial · 🧑‍💻 Desenvolvedor de bots verificado pioneiro · 🚀 Impulsiona este servidor"
+    );
 
     // a conta tem a data do ID (a conta mais velha que o bot conhece, de 2016)
     assert.equal(
@@ -177,7 +182,15 @@ test("informações de outra pessoa pelo @usuário: menciona a pessoa e mostra o
     assert.match(fields["📅 Conta criada em"], /\(\*\*.+\*\*\)$/, "com a idade em negrito");
 
     assert.match(fields["📥 Entrou no servidor em"], /20 de janeiro de 2025/);
-    assert.match(fields["🚀 Impulsiona este servidor desde"], /1 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
+    // o impulso: desde quando, e em que pé está a insígnia de impulso (nível e quando chega o próximo)
+    const [boostSince, boostBadge] = fields["🚀 Impulsiona este servidor"].split("\n");
+
+    assert.match(boostSince, /1 de junho de 2025, às 12:30 \(\*\*.+\*\*\)/);
+    assert.match(boostBadge, /^Insígnia de impulso: \*\*nível \d de 9\*\*/);
+    assert.match(boostBadge, /<t:\d+:D>/, "a data do próximo nível, no relógio do Discord");
+
+    // o Nitro: a Maria não tem avatar animado nem banner, então nada o prova
+    assert.equal(fields["💠 Nitro"], "Não detectado");
 
     // não existe nada de Prisma, Pulse ou tempo de tela no Discord
     assert.ok(!Object.keys(fields).some(name => /Prisma|Pulse|Pulser/.test(name)));
@@ -187,14 +200,14 @@ test("quem não tem insígnia, impulso nem castigo fica com o cartão limpo: sem
     const fields = fieldsOf(embedOf(await run("hui carlos")));
 
     assert.deepEqual(Object.keys(fields), [
-        "🏷️ Tag", "🪪 ID", "🏅 Insígnias", "📅 Conta criada em", "📥 Entrou no servidor em"
+        "🏷️ Tag", "🪪 ID", "🏅 Insígnias", "💠 Nitro", "📅 Conta criada em", "📥 Entrou no servidor em"
     ]);
 
     assert.equal(fields["🏅 Insígnias"], "Nenhuma");
 });
 
 test("a equipe do Discord ganha a insígnia dela", async () => {
-    assert.equal(fieldsOf(embedOf(await run("hui equipe")))["🏅 Insígnias"], "🛡️");
+    assert.equal(fieldsOf(embedOf(await run("hui equipe")))["🏅 Insígnias"], "🔱 Equipe do Discord");
 });
 
 test("quem está de castigo vê até quando (e quanto falta)", async () => {
@@ -249,7 +262,7 @@ test("no comando de barra a entrada vem da própria interação, sem chamar a AP
 
     assert.match(fields["📥 Entrou no servidor em"], /3 de março de 2023/);
     assert.match(fields["📅 Conta criada em"], /10 de maio de 2024/);
-    assert.equal(fields["🏅 Insígnias"], "⭐");
+    assert.equal(fields["🏅 Insígnias"], "🌠 Apoiador inicial");
     assert.equal(api.lookups, 0, "a interação já trazia o membro");
 });
 
@@ -496,7 +509,7 @@ test("o cartão traz dois menus: 'Mais informações.' e 'Ver informações de o
 
     assert.equal(more.customId, `userinfo:more:${ME.id}:${MARIA.user.id}`);
     assert.equal(more.placeholder, "Mais informações.");
-    assert.deepEqual(more.options.map(option => option.value), ["avatar", "banner", "badges", "dates", "roles"]);
+    assert.deepEqual(more.options.map(option => option.value), ["avatar", "banner", "badges", "nitro", "dates", "roles"]);
 
     assert.equal(other.customId, `userinfo:other:${ME.id}`);
     assert.equal(other.placeholder, "Ver informações de outros membros no servidor.");
@@ -513,14 +526,14 @@ test("o cartão traz dois menus: 'Mais informações.' e 'Ver informações de o
 test("quem não tem cargos não ganha a opção Cargos, e sem avatar não ganha Avatar", async () => {
     const options = selectsOf(await run("hui carlos"))[0].options.map(option => option.value);
 
-    assert.deepEqual(options, ["avatar", "banner", "badges", "dates"]);
+    assert.deepEqual(options, ["avatar", "banner", "badges", "nitro", "dates"]);
 
     const noAvatar = buildUserinfoEmbed({ user: { id: "1", username: "x", avatarUrl: null } });
 
     assert.equal(noAvatar.thumbnail, undefined);
     assert.equal(buildUserinfoDetail("avatar", { id: "1", username: "x" }), null);
 
-    assert.deepEqual(detailOptions({ id: "1", username: "x" }).map(option => option.value), ["banner", "badges", "dates"]);
+    assert.deepEqual(detailOptions({ id: "1", username: "x" }).map(option => option.value), ["banner", "badges", "nitro", "dates"]);
     assert.ok(detailOptions({ id: "1", username: "x", avatarUrl: "https://a.test/a.png", roleIds: ["r"] }).length <= 25);
 });
 
@@ -549,14 +562,16 @@ test("Mais informações: insígnias, datas e cargos, em mensagem só de quem pe
     const badges = first.data.embeds[0];
 
     assert.match(badges.title, /Insígnias de Maria Silva/);
-    assert.match(badges.description, /🟣 HypeSquad Bravery/);
-    assert.match(badges.description, /⭐ Apoiador inicial/);
-    assert.match(badges.description, /🚀 Impulsiona este servidor/);
+    // cada insígnia com o nome e o que ela quer dizer
+    assert.match(badges.description, /🦁 \*\*HypeSquad Bravery\*\*\n-# Casa Bravery do HypeSquad\./);
+    assert.match(badges.description, /🌠 \*\*Apoiador inicial\*\*/);
+    assert.match(badges.description, /🚀 \*\*Impulsiona este servidor\*\*/);
+    assert.match(badges.description, /não as informa a bots/, "o aviso do que o Discord não entrega");
 
     const dates = (await ask("dates")).data.embeds[0];
 
     assert.deepEqual(dates.fields.map(field => field.name), [
-        "📅 Conta criada em", "📥 Entrou no servidor em", "🚀 Impulsiona este servidor desde"
+        "📅 Conta criada em", "📥 Entrou no servidor em", "🚀 Impulsiona este servidor"
     ]);
 
     // os cargos viram menções de cargo (no embed são só chips, não avisam ninguém)
@@ -607,20 +622,25 @@ test("o avatar abre em embed privado, em tamanho grande, com o link para o origi
     assert.equal(largeImage("https://x.test/a.png?size=256"), "https://x.test/a.png?size=1024");
 });
 
-test("o banner só é buscado quando a pessoa o pede, no perfil completo da conta", async () => {
+test("o banner vem do perfil completo da conta (uma busca, guardada por um minuto)", async () => {
     const comandos = await carregarComandos();
 
     ACCOUNTS[MARIA.user.id] = { id: MARIA.user.id, username: "mariasilva", banner: "bnr456", accent_color: 0x8555ff };
 
-    // abrir o cartão e os outros detalhes não gasta chamada ao perfil da conta
+    // o cartão busca o perfil da conta uma vez (banner, flags completas, etiqueta); as telas seguintes
+    // reaproveitam o que ficou guardado por um minuto, e as de avatar e datas nem precisam dele
     await run("hui mariasilva");
-    await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["badges"]), comandos);
 
-    assert.equal(api.accountCalls, 0);
+    assert.equal(api.accountCalls, 1);
+
+    await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["avatar"]), comandos);
+    await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["dates"]), comandos);
+
+    assert.equal(api.accountCalls, 1);
 
     const result = await handleUserinfoComponent(click(`userinfo:more:${ME.id}:${MARIA.user.id}`, ["banner"]), comandos);
 
-    assert.equal(api.accountCalls, 1);
+    assert.equal(api.accountCalls, 1, "o perfil já estava guardado");
     assert.equal(result.data.embeds[0].title, "🌌 Banner de Maria Silva");
     assert.equal(result.data.embeds[0].image.url, "https://cdn.discordapp.com/banners/200000000000000001/bnr456.png?size=1024");
 });
