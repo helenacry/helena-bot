@@ -19,7 +19,8 @@ services/                Regras do jogo e do bot, uma pasta por assunto
   social/                casamento, família (Gozofone e filhos), cartão de perfil (e as fontes dele), /userinfo
   panels/                painéis com botões e modais (loja, inventário, ajuda, bolsa, uso)
   platform/              o que serve a todos: intervalo entre comandos, prefixo h, V2,
-                         dono e bloqueios, busca de usuário, anexos, contadores do suporte
+                         dono e bloqueios, busca de usuário, anexos, contadores do suporte,
+                         evento repetido descartado (interaction-dedup)
   web/                   a API do painel do site
 database/                Conexão SQLite e migrações (rodam sozinhas ao iniciar)
 config/                  Valores ajustáveis (empregos, itens, crime, cooldowns...) e o tema das

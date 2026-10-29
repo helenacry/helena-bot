@@ -105,7 +105,9 @@ export async function createPrefixRunner({
     author,
     send,
     edit,
-    gate
+    gate,
+    firstTime,
+    messageId
 }) {
     const { carregarComandos } = await import("../command-registry.mjs");
     const { processarPrefixo } = await import("../services/platform/prefix.mjs");
@@ -122,9 +124,11 @@ export async function createPrefixRunner({
     return async function run(body, who = author) {
         const sent = [];
 
+        sequence++;
+
         await processarPrefixo({
             message: {
-                id: "m" + (++sequence),
+                id: messageId ? messageId(sequence) : "m" + sequence,
                 body,
                 guildId,
                 channelId,
@@ -142,7 +146,10 @@ export async function createPrefixRunner({
             edit,
 
             // sem gate, vale o padrão do bot (desligado nos testes)
-            gate
+            gate,
+
+            // sem firstTime, nada é descartado como repetido
+            firstTime
         });
 
         const first = sent[0] ?? {};

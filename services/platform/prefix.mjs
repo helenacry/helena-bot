@@ -85,12 +85,15 @@ function iniciarAoVivo(live, sent, message, edit) {
     }
 }
 
+// "visto" diz se é a primeira vez que esta mensagem chega (services/platform/interaction-dedup.mjs): o
+// bot passa a função de verdade; por padrão nada é descartado.
 export async function processarPrefixo({
     message,
     comandos,
     send,
     edit,
-    gate = commandGate
+    gate = commandGate,
+    firstTime = () => true
 }) {
     const body = String(message.body ?? "").trim();
 
@@ -136,43 +139,49 @@ export async function processarPrefixo({
         return true;
     }
 
+    // Depois de uma reconexão do gateway o Discord pode entregar de novo uma mensagem já tratada: um
+    // "htransferir" rodaria duas vezes. Só comando de verdade chega aqui, então só ele é registrado.
+    if (!firstTime(`m:${message.id}`)) {
+        return true;
+    }
+
     const actorId = String(user.id);
 
-    if (!isOwner(actorId)) {
-        if (maintenance()) {
-            await send(message, notice({
+    // Em manutenção ou na lista de bloqueio (o dono passa): a pessoa recebe o aviso.
+    const parado = !isOwner(actorId) && (maintenance() || blocked(actorId));
+
+    // Intervalo entre comandos. Vem antes de qualquer trabalho (nome no
+    // banco, comando) para o spam sair barato, e só conta comando de verdade:
+    // conversa que começa com "h" nunca chega aqui. Vale também para quem está
+    // parado: sem isso, quem foi bloqueado faria a Helena responder a cada
+    // mensagem, sem parar, e o Discord limitaria o bot.
+    const espera = gate.check(actorId);
+
+    if (!espera.allowed) {
+        // Só o primeiro aviso da janela vira mensagem; as outras tentativas
+        // são ignoradas, senão o próprio aviso seria spam no canal. Quem está
+        // parado já recebeu o aviso dele e não ganha o do intervalo por cima.
+        if (espera.firstWarning && !parado) {
+            await send(message, { body: antiSpamText(espera.remainingMs) });
+        }
+
+        return true;
+    }
+
+    if (parado) {
+        await send(message, maintenance()
+            ? notice({
                 title: "🛠️ Helena está em manutenção",
                 description: "Estou sendo ajustada e volto já, já.",
                 color: HELENA_COLORS.warning,
                 mood: "dormindo"
-            }));
-
-            return true;
-        }
-
-        if (blocked(actorId)) {
-            await send(message, notice({
+            })
+            : notice({
                 title: "🚫 Acesso bloqueado",
                 description: "Seu acesso à Helena foi bloqueado.",
                 color: HELENA_COLORS.error,
                 mood: "triste"
             }));
-
-            return true;
-        }
-    }
-
-    // Intervalo entre comandos. Vem antes de qualquer trabalho (nome no
-    // banco, comando) para o spam sair barato, e só conta comando de verdade:
-    // conversa que começa com "h" nunca chega aqui.
-    const espera = gate.check(actorId);
-
-    if (!espera.allowed) {
-        // Só o primeiro aviso da janela vira mensagem; as outras tentativas
-        // são ignoradas, senão o próprio aviso seria spam no canal.
-        if (espera.firstWarning) {
-            await send(message, { body: antiSpamText(espera.remainingMs) });
-        }
 
         return true;
     }

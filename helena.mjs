@@ -66,6 +66,8 @@ import {
     antiSpamText
 } from "./services/platform/anti-spam.mjs";
 
+import { firstTimeSeen } from "./services/platform/interaction-dedup.mjs";
+
 import {
     startSupportStats,
     stopSupportStats
@@ -732,7 +734,10 @@ async function tratarMensagem(dados) {
 
             send: enviarMensagemCanal,
 
-            edit: editarMensagemCanal
+            edit: editarMensagemCanal,
+
+            // a mesma mensagem não roda duas vezes
+            firstTime: firstTimeSeen
         });
 
     } catch (erro) {
@@ -754,21 +759,19 @@ async function tratarInteracao(interaction) {
     }
 
     // ==================================
+    // A MESMA INTERAÇÃO NÃO RODA DUAS VEZES
+    // ==================================
+
+    // Depois de uma reconexão do gateway o Discord pode entregar de novo uma interação já tratada.
+    if (!firstTimeSeen(interaction.id)) {
+        return;
+    }
+
+    // ==================================
     // IDENTIFICAR USUÁRIO
     // ==================================
 
     const actorId = userId(interaction);
-
-    if (interaction.user?.id) {
-        savePlayerName(
-            interaction.user
-        );
-
-        // o histórico de nomes e ícones de quem usa a Helena (services/social/userinfo-history.mjs)
-        observeUserinfoHistory(
-            interaction.user
-        );
-    }
 
     // ==================================
     // PROTEÇÃO DO DESENVOLVEDOR
@@ -791,6 +794,23 @@ async function tratarInteracao(interaction) {
         );
 
         return;
+    }
+
+    // ==================================
+    // REGISTRAR QUEM USA
+    // ==================================
+
+    // Só depois da proteção acima: quem está bloqueado (ou quando o bot está em manutenção) não tem o
+    // nome nem o histórico de ícones gravados.
+    if (interaction.user?.id) {
+        savePlayerName(
+            interaction.user
+        );
+
+        // o histórico de nomes e ícones de quem usa a Helena (services/social/userinfo-history.mjs)
+        observeUserinfoHistory(
+            interaction.user
+        );
     }
 
     // ==================================

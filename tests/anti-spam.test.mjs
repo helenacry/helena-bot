@@ -409,3 +409,81 @@ test("a interação confere o intervalo antes de executar: botão é ignorado em
     assert.ok(modalGate < runModal, "o intervalo vem antes de rodar o formulário");
     assert.match(source.slice(modalGate, runModal), /mensagemErro\(\s*antiSpamText\(espera\.remainingMs\)\s*\)/);
 });
+
+// ==========================================
+// BLOQUEADO E EM MANUTENÇÃO NÃO FAZEM A HELENA RESPONDER SEM PARAR
+// ==========================================
+
+test("pelo prefixo: quem está bloqueado recebe o aviso uma vez por janela, não a cada mensagem", async () => {
+    const { setBlocked, unblock } = await import("../services/platform/developer.mjs");
+
+    const time = clock();
+    const gate = createAntiSpam({ cooldownMs: 3000, now: time.now });
+    const run = await createPrefixRunner({ guildId: G, author: ANA, gate });
+
+    setBlocked(ANA.id, "teste");
+
+    try {
+        const first = await run("hsaldo");
+
+        assert.equal(first.sent.length, 1);
+        assert.match(JSON.stringify(first.sent[0]), /Acesso bloqueado/);
+
+        // a enxurrada seguinte é ignorada em silêncio, e o aviso de "Devagar" não vem por cima do de bloqueio
+        for (let i = 0; i < 5; i++) {
+            time.advance(300);
+
+            assert.equal((await run("hsaldo")).sent.length, 0, `mensagem ${i + 2}`);
+        }
+
+        // passada a janela, o aviso volta, uma vez só
+        time.advance(3000);
+
+        const later = await run("hperfil");
+
+        assert.equal(later.sent.length, 1);
+        assert.match(JSON.stringify(later.sent[0]), /Acesso bloqueado/);
+
+        assert.equal((await run("hsaldo")).sent.length, 0);
+
+    } finally {
+        unblock(ANA.id);
+    }
+
+    // desbloqueado, volta a funcionar
+    time.advance(3000);
+
+    const back = await run("hsaldo");
+
+    assert.equal(back.sent.length, 1);
+    assert.doesNotMatch(JSON.stringify(back.sent[0]), /Acesso bloqueado/);
+});
+
+test("pelo prefixo: em manutenção também é um aviso por janela, e comando desconhecido não gasta nada", async () => {
+    const { setSetting } = await import("../services/platform/developer.mjs");
+
+    const time = clock();
+    const gate = createAntiSpam({ cooldownMs: 3000, now: time.now });
+    const run = await createPrefixRunner({ guildId: G, author: BIA, gate });
+
+    setSetting("maintenance", "1");
+
+    try {
+        const first = await run("hsaldo");
+
+        assert.equal(first.sent.length, 1);
+        assert.match(JSON.stringify(first.sent[0]), /manutenção/);
+
+        for (let i = 0; i < 4; i++) {
+            time.advance(200);
+
+            assert.equal((await run("hsaldo")).sent.length, 0);
+        }
+
+        // conversa que só começa com "h" nunca chega a responder, nem em manutenção
+        assert.equal((await run("hoje foi um dia legal")).sent.length, 0);
+
+    } finally {
+        setSetting("maintenance", "0");
+    }
+});
