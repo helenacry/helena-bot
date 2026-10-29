@@ -3,7 +3,7 @@ title: Ranking
 description: Os rankings do servidor e o ranking global de todos os servidores, como a posição é calculada e o que significa o número do seu cartão de perfil.
 ---
 
-O `/ranking` (atalho `/top`) mostra os 10 melhores jogadores em três classificações, **neste servidor** ou **no mundo todo** (o ranking global).
+O `/ranking` (atalhos `/top` e `/rank`) mostra os 10 melhores jogadores em três classificações, **neste servidor** ou **no mundo todo** (o ranking global).
 
 ## Os três rankings
 

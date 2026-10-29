@@ -390,7 +390,7 @@ test("as regras do Discord para um comando: nome, descrição, ordem das opçõe
     assert.throws(() => toDiscordCommand("Daily", { description: "x" }), /nome precisa/);
 });
 
-test("os 72 comandos e os 26 aliases do bot cabem nas regras do Discord (e nos 100 comandos)", async () => {
+test("os 73 comandos e os 27 aliases do bot cabem nas regras do Discord (e nos 100 comandos)", async () => {
     const { resolverComando } = await import("../command-registry.mjs");
 
     let total = 0;

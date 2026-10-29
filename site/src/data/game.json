@@ -1,7 +1,7 @@
 {
   "stats": {
     "commands": 56,
-    "aliases": 26,
+    "aliases": 27,
     "jobs": 23,
     "shopItems": 20,
     "weapons": 14,
@@ -99,7 +99,8 @@
         {
           "name": "ranking",
           "aliases": [
-            "top"
+            "top",
+            "rank"
           ],
           "description": "Consulte os melhores jogadores do servidor ou de todos os servidores"
         },

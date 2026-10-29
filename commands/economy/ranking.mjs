@@ -35,7 +35,7 @@ const TYPE_CHOICES = [
 
 export default {
     name: "ranking",
-    aliases: ["top"],
+    aliases: ["top", "rank"],
 
     description:
         "Consulte os melhores jogadores do servidor ou de todos os servidores",
