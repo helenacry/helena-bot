@@ -62,6 +62,7 @@ import {
 
 import {
     commandGate,
+    interactionGate,
     antiSpamText
 } from "./services/platform/anti-spam.mjs";
 
@@ -811,6 +812,24 @@ async function tratarInteracao(interaction) {
     if (
         interaction.type === "component"
     ) {
+        // Clique rápido demais (ou uma enxurrada): ignora em silêncio, sem mexer na mensagem. A fuga da
+        // prisão e o Gozofone são cronometrados e ficam de fora.
+        const cronometrado = /^(fuga|gf):/.test(
+            String(interaction.data?.customId ?? "")
+        );
+
+        if (
+            !cronometrado &&
+            !interactionGate.check(actorId).allowed
+        ) {
+            await responderInteracao(
+                interaction,
+                { type: "defer_update" }
+            );
+
+            return;
+        }
+
         let resultado;
 
         try {
@@ -845,6 +864,21 @@ async function tratarInteracao(interaction) {
     if (
         interaction.type === "modal_submit"
     ) {
+        // Um formulário roda o comando de verdade (transferir, depositar, buscar): vale o mesmo
+        // intervalo curto dos botões, mas aqui a pessoa precisa de uma resposta.
+        const espera = interactionGate.check(actorId);
+
+        if (!espera.allowed) {
+            await responderInteracao(
+                interaction,
+                mensagemErro(
+                    antiSpamText(espera.remainingMs)
+                )
+            );
+
+            return;
+        }
+
         let resultado;
 
         try {

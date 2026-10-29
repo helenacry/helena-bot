@@ -41,9 +41,9 @@ async function open(page: Page, path: string, theme: (typeof themes)[number]) {
     if (!["127.0.0.1", "localhost"].includes(url.hostname) && url.protocol.startsWith("http")) foreign.push(request.url());
   });
 
-  await page.goto(path.slice(1), { waitUntil: "networkidle" });
+  const response = await page.goto(path.slice(1), { waitUntil: "networkidle" });
 
-  return { problems, foreign };
+  return { problems, foreign, status: response?.status() ?? 0 };
 }
 
 // O axe lê as cores no instante da análise; uma animação de entrada pela metade engana a
@@ -56,7 +56,15 @@ test.describe("qualidade das páginas", () => {
       for (const theme of themes) {
         test(`${route.name} · ${viewport.name} · ${theme}`, async ({ page }) => {
           await page.setViewportSize({ width: viewport.width, height: viewport.height });
-          const { problems, foreign } = await open(page, route.path, theme);
+          const { problems: logged, foreign, status } = await open(page, route.path, theme);
+
+          // O servidor do bot responde a página que não existe com o status 404 de verdade (o navegador
+          // anota isso no console); as outras têm de ser 200.
+          expect(status, "status da página").toBe(route.name === "404" ? 404 : 200);
+
+          const problems = route.name === "404"
+            ? logged.filter(text => !/Failed to load resource: the server responded with a status of 404/.test(text))
+            : logged;
 
           // 1. acessibilidade
           const result = await new AxeBuilder({ page })

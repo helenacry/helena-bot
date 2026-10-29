@@ -37,6 +37,8 @@ O projeto traz o `discloud.config` (site, `helena.mjs`, 512 MB, `START=node hele
 
 **Conferir o IP real:** ligue `HELENA_WEB_DEBUG_IP=1` (e faça Rebuild), abra `https://<ID>.discloud.dev/api/health` e veja no log a linha `IP visto`: deve ser o seu IP, vindo do `CF-Connecting-IP`. Desligue depois.
 
+**Conferir o HTTPS:** depois de publicar, `curl -sI http://<ID>.discloud.dev/` deve responder `301` para `https://`, e `curl -sI https://<ID>.discloud.dev/` deve trazer `Strict-Transport-Security` e `Content-Security-Policy`. Se o site entrar em um redirecionamento sem fim, ponha `HELENA_WEB_FORCE_HTTPS=off` e faça Rebuild (e me avise, porque aí o `CF-Visitor` não está chegando como o esperado).
+
 **Limites conhecidos:** o cartão de perfil só desenha o que o Poppins tem (letras latinas, números e a pontuação comum). Japonês, coreano, árabe, cirílico e símbolos decorativos **não aparecem**: `plain()` (`services/social/profile-card.mjs`) tira esses caracteres, em vez de deixar quadradinhos, e a lista do que vale sai da tabela `cmap` do próprio arquivo da fonte (`services/social/card-glyphs.mjs`). Letras em fonte estilizada (𝓑𝓲𝓸) e de largura total viram letras comuns, e emojis personalizados e menções do Discord (`<:nome:id>`, `<@id>`) somem. Para mostrar japonês seria preciso levar uma fonte CJK no projeto, em `assets/fonts/`. O `.discloud.app` que o painel mostra nos detalhes do app não funciona: vale só o `.discloud.dev`.
 
 ## O site no Discloud

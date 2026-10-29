@@ -112,3 +112,17 @@ export function buildCommandGate({
 
 // O intervalo do bot: comandos de barra e prefixo h compartilham o mesmo.
 export const commandGate = buildCommandGate();
+
+// O dos botões, menus e formulários: outro relógio, só deles.
+export function buildInteractionGate({
+    env = process.env,
+    owner = isOwner,
+    exemptOwners = ANTI_SPAM.exemptOwners
+} = {}) {
+    return createAntiSpam({
+        cooldownMs: antiSpamEnabled(env) ? ANTI_SPAM.interactionCooldownSeconds * 1000 : 0,
+        exempt: exemptOwners ? owner : () => false
+    });
+}
+
+export const interactionGate = buildInteractionGate();

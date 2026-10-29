@@ -312,3 +312,125 @@ test("no servidor do bot, o site fica na raiz e a API em /api, no mesmo endereç
         await running.close();
     }
 });
+
+// ==========================================
+// POLÍTICA DE CONTEÚDO (CSP) E REDIRECIONAMENTO SEGURO
+// ==========================================
+
+const { inlineScriptHashes, contentSecurityPolicy } = await import("../services/web/static-site.mjs");
+const { createHash } = await import("node:crypto");
+
+const sha = text => `'sha256-${createHash("sha256").update(text).digest("base64")}'`;
+
+test("só os scripts com código no meio da página viram hashes (os de fora e os de dados, não)", () => {
+    const html = [
+        "<script>window.a = 1;</script>",
+        "<script type=\"module\">import \"/x.js\";</script>",
+        "<script is:inline>(function(){var r=1})()</script>",
+        "<script src=\"/assets/app.js\"></script>",
+        "<script type=\"module\" src=\"/assets/m.js\"></script>",
+        "<script type=\"application/ld+json\">{\"@type\":\"WebSite\"}</script>",
+        "<script>window.a = 1;</script>"
+    ].join("\n");
+
+    assert.deepEqual(inlineScriptHashes(html), [
+        sha("window.a = 1;"),
+        sha("import \"/x.js\";"),
+        sha("(function(){var r=1})()")
+    ], "sem repetir, na ordem da página, e o hash é o do conteúdo exato");
+
+    assert.deepEqual(inlineScriptHashes("<h1>sem script</h1>"), []);
+    assert.deepEqual(inlineScriptHashes(undefined), []);
+});
+
+test("a política: só o site, os scripts da página por hash e o Turnstile; nada de unsafe-inline nem eval nos scripts", () => {
+    const policy = contentSecurityPolicy("<script>window.a = 1;</script>");
+
+    const directive = name => policy.split("; ").find(part => part.startsWith(name + " "));
+
+    assert.equal(directive("default-src"), "default-src 'self'");
+
+    const scripts = directive("script-src");
+
+    assert.ok(scripts.includes(sha("window.a = 1;")));
+    assert.ok(scripts.includes("https://challenges.cloudflare.com"));
+    assert.doesNotMatch(scripts, /'unsafe-inline'|'unsafe-eval'|\*/);
+    assert.match(scripts, /'wasm-unsafe-eval'/, "a busca da wiki roda em WebAssembly");
+
+    assert.equal(directive("frame-src"), "frame-src https://challenges.cloudflare.com");
+    assert.equal(directive("object-src"), "object-src 'none'");
+    assert.equal(directive("base-uri"), "base-uri 'self'");
+    assert.equal(directive("form-action"), "form-action 'self'");
+    assert.equal(directive("frame-ancestors"), "frame-ancestors 'none'");
+    assert.match(directive("img-src"), /https:\/\/cdn\.discordapp\.com/, "foto do perfil e ícone do servidor");
+    assert.doesNotMatch(policy, /script-src[^;]*\bhttps:(?!\/\/)/, "nenhum https: solto");
+});
+
+test("o servidor manda a política de cada página HTML (com os hashes dela), e a do SVG", async () => {
+    const root = fakeSite();
+
+    writeFileSync(path.join(root, "index.html"), "<h1>Helena</h1><script>window.home = 1;</script>");
+    writeFileSync(path.join(root, "wiki", "index.html"), "<h1>Wiki</h1><script>window.wiki = 1;</script>");
+    writeFileSync(path.join(root, "icone.svg"), "<svg xmlns=\"http://www.w3.org/2000/svg\"/>");
+
+    const { base, close } = await listen(root);
+
+    try {
+        const home = await raw(base, "/");
+        const wiki = await raw(base, "/wiki/");
+
+        assert.ok(home.headers["content-security-policy"].includes(sha("window.home = 1;")));
+        assert.ok(!home.headers["content-security-policy"].includes(sha("window.wiki = 1;")), "cada página autoriza só os scripts dela");
+        assert.ok(wiki.headers["content-security-policy"].includes(sha("window.wiki = 1;")));
+
+        // a página que mudou ganha a política nova (o hash não fica preso ao que foi lido antes)
+        writeFileSync(path.join(root, "index.html"), "<h1>Helena</h1><script>window.home = 2;</script>");
+
+        const changed = await raw(base, "/");
+
+        assert.ok(changed.headers["content-security-policy"].includes(sha("window.home = 2;")));
+        assert.ok(!changed.headers["content-security-policy"].includes(sha("window.home = 1;")));
+
+        // 404.html também leva a política
+        const missing = await raw(base, "/nao-existe");
+
+        assert.equal(missing.status, 404);
+        assert.ok(missing.headers["content-security-policy"], "a página 404 também");
+
+        // o SVG aberto direto não roda nada; o resto (JS, fonte) não precisa de política
+        const svg = await raw(base, "/icone.svg");
+
+        assert.equal(svg.headers["content-security-policy"], "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+        assert.equal((await raw(base, "/assets/app.abc123.js")).headers["content-security-policy"], undefined);
+
+        // e todos levam a política de permissões
+        for (const url of ["/", "/assets/app.abc123.js", "/icone.svg", "/nao-existe"]) {
+            assert.match((await raw(base, url)).headers["permissions-policy"], /camera=\(\)/, url);
+        }
+
+    } finally {
+        await close();
+    }
+});
+
+test("o redirecionamento para a barra do fim nunca vira um endereço de outro site", async () => {
+    const { base, close } = await listen(fakeSite());
+
+    try {
+        // "/.//wiki/start" chega ao servidor como "//wiki/start": refeito sem ler o "//" como um servidor
+        for (const request of ["/.//wiki/start", "/./wiki/start", "/wiki//start", "/wiki/./start", "/wiki/start"]) {
+            const result = await raw(base, request);
+
+            assert.equal(result.status, 301, request);
+            assert.equal(result.headers.location, "/wiki/start/", request);
+            assert.doesNotMatch(result.headers.location, /^\/\//, `${request} não pode virar //servidor`);
+        }
+
+        const withQuery = await raw(base, "/.//wiki/start?a=1&b=%2F%2Fevil.example");
+
+        assert.equal(withQuery.headers.location, "/wiki/start/?a=1&b=%2F%2Fevil.example", "a consulta segue intacta");
+
+    } finally {
+        await close();
+    }
+});

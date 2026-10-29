@@ -4,7 +4,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 
-const { createWebApi, loadWebConfig, startWebApi, stopWebApi, trustProxyMode } = await import("../services/web/web-api.mjs");
+// o dono do bot (a regra de bloqueio e manutenção não vale para ele); precisa estar no ambiente antes de o serviço carregar
+const OWNER_ID = "999999999999999999";
+
+process.env.HELENA_OWNER_ID = OWNER_ID;
+
+const { createWebApi, loadWebConfig, startWebApi, stopWebApi, trustProxyMode, visitorScheme } = await import("../services/web/web-api.mjs");
+const { setBlocked, unblock, setSetting } = await import("../services/platform/developer.mjs");
 const { guildIds } = await import("../services/platform/guild-registry.mjs");
 const { imprison } = await import("../services/crime/prison.mjs");
 const { WEB_CONFIG } = await import("../config/web.mjs");
@@ -97,7 +103,7 @@ function makeUpstream() {
 }
 
 // Sobe a API num servidor próprio, numa porta livre, com relógio controlável.
-async function startApi(overrides = {}, { random = () => 0.5, intercept, sleep = async () => {} } = {}) {
+async function startApi(overrides = {}, { random = () => 0.5, intercept, sleep = async () => {}, member = async () => ({}) } = {}) {
     const upstream = makeUpstream();
 
     const state = { now: T0 };
@@ -110,7 +116,7 @@ async function startApi(overrides = {}, { random = () => 0.5, intercept, sleep =
 
     const api = createWebApi(
         { ...BASE_CONFIG, ...overrides },
-        { fetch: fetchImpl, now: () => state.now, random, sleep }
+        { fetch: fetchImpl, now: () => state.now, random, sleep, member }
     );
 
     const server = http.createServer((req, res) => api.handle(req, res));
@@ -1630,4 +1636,309 @@ test("o limitador tem teto de chaves: uma enxurrada de IPs novos não enche a me
     limiter.prune(T0 + 3600, 60);
 
     assert.equal(limiter.hits.size, 0);
+});
+
+// ==========================================
+// BLOQUEIO, MANUTENÇÃO E MEMBRO (revisão de segurança)
+// ==========================================
+
+const asOwner = (url) =>
+    url.endsWith("/users/@me")
+        ? { ok: true, status: 200, json: async () => ({ id: OWNER_ID, username: "dona", global_name: "Dona", avatar: null }) }
+        : undefined;
+
+test("quem está na lista de bloqueio não entra no site: sem sessão, e o histórico registra", async () => {
+    await withApi({}, async ctx => {
+        setBlocked(USER, "teste");
+
+        try {
+            const result = await login(ctx);
+
+            assert.equal(result.status, 403);
+            assert.equal(result.json.error, "blocked");
+            assert.equal(get("SELECT COUNT(*) c FROM web_sessions").c, 0, "nenhuma sessão nasceu");
+            assert.deepEqual(logRows().map(row => [row.kind, row.ok, row.detail]), [["login", 0, "blocked"]]);
+
+        } finally {
+            unblock(USER);
+        }
+
+        assert.equal((await login(ctx)).status, 200, "desbloqueado, entra");
+    });
+});
+
+test("bloqueado depois de entrar: o painel e as duas coletas recusam, e nada é pago", async () => {
+    await withApi({}, async ctx => {
+        const token = await loggedIn(ctx);
+
+        setBlocked(USER, "teste");
+
+        try {
+            for (const [method, path, body] of [
+                ["GET", "/api/me"],
+                ["POST", "/api/claim/daily", { guildId: G1 }],
+                ["POST", "/api/claim/gems", {}]
+            ]) {
+                const result = await call(ctx, method, path, { token, body });
+
+                assert.equal(result.status, 403, path);
+                assert.equal(result.json.error, "blocked", path);
+            }
+
+            assert.equal(get("SELECT COUNT(*) c FROM players").c, 0, "nada foi criado nem pago");
+            assert.equal(get("SELECT COUNT(*) c FROM transactions").c, 0);
+
+            // sair continua valendo: quem foi bloqueado ainda pode apagar a própria sessão
+            assert.equal((await call(ctx, "POST", "/api/auth/logout", { token })).status, 200);
+
+        } finally {
+            unblock(USER);
+        }
+
+        // a recusa de coleta ficou no histórico (o painel, que se repete, não)
+        assert.deepEqual(
+            logRows().filter(row => row.ok === 0).map(row => [row.kind, row.detail]),
+            [["daily", "blocked"], ["gems", "blocked"]]
+        );
+    });
+});
+
+test("em manutenção o site também espera (login, painel e coletas), e o dono passa", async () => {
+    await withApi({}, async ctx => {
+        const token = await loggedIn(ctx);
+
+        setSetting("maintenance", "1");
+
+        try {
+            const login503 = await login(ctx);
+
+            assert.equal(login503.status, 503);
+            assert.equal(login503.json.error, "maintenance");
+
+            for (const [method, path, body] of [
+                ["GET", "/api/me"],
+                ["POST", "/api/claim/daily", { guildId: G1 }],
+                ["POST", "/api/claim/gems", {}]
+            ]) {
+                const result = await call(ctx, method, path, { token, body });
+
+                assert.equal(result.status, 503, path);
+                assert.equal(result.json.error, "maintenance", path);
+            }
+
+            assert.equal(get("SELECT COUNT(*) c FROM players").c, 0);
+
+        } finally {
+            setSetting("maintenance", "0");
+        }
+
+        assert.equal((await call(ctx, "GET", "/api/me", { token })).status, 200, "acabou a manutenção");
+    });
+
+    await withApi({}, async ctx => {
+        setSetting("maintenance", "1");
+        setBlocked(OWNER_ID, "o dono nunca é barrado");
+
+        try {
+            const entered = await call(ctx, "POST", "/api/auth/login", {
+                body: { code: "good-code", codeVerifier: VERIFIER, redirectUri: REDIRECT }
+            });
+
+            assert.equal(entered.status, 200, "o dono entra mesmo em manutenção e na lista");
+
+        } finally {
+            setSetting("maintenance", "0");
+            unblock(OWNER_ID);
+        }
+    }, { intercept: asOwner });
+});
+
+test("quem saiu do servidor desde o login não coleta o daily dele (o Discord diz 404)", async () => {
+    const asked = [];
+
+    await withApi({}, async ctx => {
+        const token = await loggedIn(ctx);
+
+        const result = await call(ctx, "POST", "/api/claim/daily", { token, body: { guildId: G1 } });
+
+        assert.equal(result.status, 403);
+        assert.equal(result.json.error, "guild_not_allowed");
+
+        assert.deepEqual(asked, [[G1, USER]], "perguntou ao Discord pelo servidor e pela pessoa certos");
+        assert.equal(get("SELECT COUNT(*) c FROM players").c, 0, "nada foi pago");
+        assert.equal(logRows().at(-1).detail, "not_member");
+
+    }, {
+        member: async (guildId, userId) => {
+            asked.push([guildId, userId]);
+
+            throw Object.assign(new Error("[DISCORD] HTTP 404 em GET /guilds/x/members/y: Unknown Member"), { status: 404 });
+        }
+    });
+});
+
+test("o Discord fora do ar na conferência do membro não trava a coleta (e o aviso vai para o log)", async () => {
+    const warn = console.warn;
+    const warnings = [];
+
+    console.warn = (...args) => warnings.push(args.join(" "));
+
+    try {
+        for (const failure of [
+            Object.assign(new Error("[DISCORD] HTTP 500"), { status: 500 }),
+            Object.assign(new Error("[DISCORD] HTTP 429"), { status: 429 }),
+            new Error("rede caiu")
+        ]) {
+            await withApi({}, async ctx => {
+                const token = await loggedIn(ctx);
+
+                const result = await call(ctx, "POST", "/api/claim/daily", { token, body: { guildId: G1 } });
+
+                assert.equal(result.status, 200, failure.message);
+            }, { member: async () => { throw failure; } });
+        }
+
+    } finally {
+        console.warn = warn;
+    }
+
+    assert.equal(warnings.filter(line => line.includes("Não consegui conferir")).length, 3);
+});
+
+// ==========================================
+// HTTPS OBRIGATÓRIO E HSTS
+// ==========================================
+
+test("por onde a pessoa chegou: só vale o cabeçalho do proxy em que confiamos", () => {
+    assert.equal(visitorScheme({ "cf-visitor": "{\"scheme\":\"https\"}" }, "cloudflare"), "https");
+    assert.equal(visitorScheme({ "cf-visitor": "{\"scheme\":\"HTTP\"}" }, "cloudflare"), "http");
+    assert.equal(visitorScheme({ "x-forwarded-proto": "http" }, "cloudflare"), null, "no modo cloudflare só o CF-Visitor vale");
+    assert.equal(visitorScheme({ "cf-visitor": "lixo" }, "cloudflare"), null);
+    assert.equal(visitorScheme({ "cf-visitor": "{\"scheme\":\"ftp\"}" }, "cloudflare"), null);
+    assert.equal(visitorScheme({}, "cloudflare"), null);
+
+    assert.equal(visitorScheme({ "x-forwarded-proto": "https" }, true), "https");
+    assert.equal(visitorScheme({ "x-forwarded-proto": "https, http" }, true), "http", "o último é o do proxy mais próximo");
+
+    assert.equal(visitorScheme({ "x-forwarded-proto": "http", "cf-visitor": "{\"scheme\":\"http\"}" }, false), null, "sem proxy confiável, nada vale");
+});
+
+// Pede à API de verdade (startWebApi), escolhendo o Host e os cabeçalhos do proxy.
+async function rawRequest(port, { method = "GET", path = "/", headers = {} } = {}) {
+    return new Promise((resolve, reject) => {
+        const req = http.request({ host: "127.0.0.1", port, method, path, headers }, res => {
+            let body = "";
+
+            res.setEncoding("utf8");
+            res.on("data", chunk => { body += chunk; });
+            res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, body }));
+        });
+
+        req.on("error", reject);
+        req.end();
+    });
+}
+
+async function withServer(env, fn) {
+    const log = console.log;
+    const warn = console.warn;
+
+    console.log = () => {};
+    console.warn = () => {};
+
+    let running;
+
+    try {
+        running = await startWebApi({
+            HELENA_WEB_PORT: "0",
+            HELENA_WEB_ORIGINS: SITE,
+            HELENA_OAUTH_REDIRECTS: REDIRECT,
+            HELENA_OAUTH_CLIENT_ID: "app-id",
+            ...env
+        });
+
+    } finally {
+        console.log = log;
+        console.warn = warn;
+    }
+
+    try {
+        await fn(running.port);
+
+    } finally {
+        await stopWebApi();
+    }
+}
+
+const SITE_HOST = new URL(SITE).host;
+
+test("atrás da Cloudflare: http vai para https, e https ganha HSTS", async () => {
+    await withServer({ HELENA_WEB_TRUST_PROXY: "cloudflare" }, async port => {
+        const plain = await rawRequest(port, {
+            path: "/wiki/start?x=1",
+            headers: { Host: SITE_HOST, "CF-Visitor": "{\"scheme\":\"http\"}" }
+        });
+
+        assert.equal(plain.status, 301);
+        assert.equal(plain.headers.location, `${SITE}/wiki/start?x=1`);
+        assert.equal(plain.headers["strict-transport-security"], undefined, "HSTS só vale em https");
+
+        const secure = await rawRequest(port, {
+            path: "/api/health",
+            headers: { Host: SITE_HOST, "CF-Visitor": "{\"scheme\":\"https\"}", Origin: SITE }
+        });
+
+        assert.equal(secure.status, 200);
+        assert.equal(secure.headers["strict-transport-security"], "max-age=31536000");
+        assert.doesNotMatch(secure.headers["strict-transport-security"], /includeSubDomains|preload/, "vale só para este endereço");
+
+        // o redirecionamento nunca leva para um nome que o Host inventou
+        const forged = await rawRequest(port, {
+            path: "/",
+            headers: { Host: "evil.example", "CF-Visitor": "{\"scheme\":\"http\"}" }
+        });
+
+        assert.notEqual(forged.status, 301, "Host que ninguém cadastrou não vira destino");
+
+        // só é redirecionada a leitura: um POST por http é recusado, sem seguir adiante
+        const post = await rawRequest(port, {
+            method: "POST",
+            path: "/api/auth/login",
+            headers: { Host: SITE_HOST, "CF-Visitor": "{\"scheme\":\"http\"}" }
+        });
+
+        assert.equal(post.status, 403);
+        assert.deepEqual(JSON.parse(post.body), { error: "https_required" });
+
+        // sem o cabeçalho do proxy não há certeza: nada é redirecionado (e nada trava)
+        const unknown = await rawRequest(port, { path: "/api/health", headers: { Host: SITE_HOST, Origin: SITE } });
+
+        assert.equal(unknown.status, 200);
+        assert.equal(unknown.headers["strict-transport-security"], undefined);
+    });
+});
+
+test("sem proxy confiável, ou com HELENA_WEB_FORCE_HTTPS=off, o servidor não redireciona nem manda HSTS", async () => {
+    for (const env of [{}, { HELENA_WEB_TRUST_PROXY: "cloudflare", HELENA_WEB_FORCE_HTTPS: "off" }]) {
+        await withServer(env, async port => {
+            const result = await rawRequest(port, {
+                path: "/api/health",
+                headers: { Host: SITE_HOST, Origin: SITE, "CF-Visitor": "{\"scheme\":\"http\"}" }
+            });
+
+            assert.equal(result.status, 200, JSON.stringify(env));
+            assert.equal(result.headers["strict-transport-security"], undefined);
+        });
+    }
+
+    assert.equal(loadWebConfig({
+        HELENA_WEB_PORT: "3000", HELENA_WEB_ORIGINS: SITE, HELENA_OAUTH_REDIRECTS: REDIRECT, HELENA_OAUTH_CLIENT_ID: "x"
+    }).forceHttps, true, "ligado por padrão");
+
+    for (const off of ["off", "0", "false", "no", "não"]) {
+        assert.equal(loadWebConfig({
+            HELENA_WEB_PORT: "3000", HELENA_WEB_ORIGINS: SITE, HELENA_OAUTH_REDIRECTS: REDIRECT, HELENA_OAUTH_CLIENT_ID: "x",
+            HELENA_WEB_FORCE_HTTPS: off
+        }).forceHttps, false, off);
+    }
 });

@@ -1,7 +1,10 @@
+import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 import path from "node:path";
+
+import { SITE_URL } from "../../config/site.mjs";
 
 // ==========================================
 // O SITE, SERVIDO PELO PRÓPRIO BOT
@@ -45,8 +48,74 @@ const TYPES = Object.freeze({
 const BASE_HEADERS = Object.freeze({
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "X-Frame-Options": "DENY"
+    "X-Frame-Options": "DENY",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
 });
+
+// ==========================================
+// POLÍTICA DE CONTEÚDO (CSP)
+// ==========================================
+
+// O painel guarda o token da sessão no navegador: se algum dia um script de fora entrasse numa página,
+// ele roubaria a sessão. A política fecha essa porta: só rodam os scripts do próprio site, os scripts
+// inline que o Astro gera (autorizados um a um, pelo hash do conteúdo) e o Turnstile da Cloudflare.
+// Nada de 'unsafe-inline' nem 'unsafe-eval' nos scripts. O 'wasm-unsafe-eval' é da busca da wiki
+// (Pagefind roda em WebAssembly) e só libera WebAssembly, não eval de texto.
+//
+// O Turnstile pede script-src e frame-src para https://challenges.cloudflare.com
+// (developers.cloudflare.com/turnstile/reference/content-security-policy).
+const CSP_TURNSTILE = "https://challenges.cloudflare.com";
+
+// As fotos de perfil e os ícones de servidor do painel vêm da CDN do Discord.
+const CSP_IMAGES = "https://cdn.discordapp.com";
+
+// O painel fala com a API do bot (o mesmo endereço do site, config/site.mjs). Em produção ela é a própria
+// origem da página ('self'); listar o endereço também mantém o painel de pé se o site for aberto por
+// outro nome (e deixa os testes de navegador, que servem a página em 127.0.0.1, usarem a API simulada).
+const CSP_API = new URL(SITE_URL).origin;
+
+// Um SVG aberto direto no navegador não roda nada.
+const SVG_CSP = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+
+// Os scripts com código no meio da página (sem src) viram hashes. Os de dados (JSON-LD) não rodam.
+export function inlineScriptHashes(html) {
+    const hashes = new Set();
+
+    for (const match of String(html).matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+        const attributes = match[1];
+
+        if (/\bsrc\s*=/i.test(attributes)) {
+            continue;
+        }
+
+        const type = /\btype\s*=\s*["']?([^"'\s>]+)/i.exec(attributes)?.[1]?.toLowerCase();
+
+        if (type && type !== "module" && !type.includes("javascript")) {
+            continue;
+        }
+
+        hashes.add(`'sha256-${createHash("sha256").update(match[2]).digest("base64")}'`);
+    }
+
+    return [...hashes];
+}
+
+export function contentSecurityPolicy(html) {
+    return [
+        "default-src 'self'",
+        `script-src 'self' 'wasm-unsafe-eval' ${inlineScriptHashes(html).join(" ")} ${CSP_TURNSTILE}`.replace(/ {2,}/g, " "),
+        // os estilos são do próprio site; o Astro põe o CSS pequeno direto na página
+        "style-src 'self' 'unsafe-inline'",
+        `img-src 'self' data: ${CSP_IMAGES}`,
+        "font-src 'self'",
+        `connect-src 'self' ${CSP_API}`,
+        `frame-src ${CSP_TURNSTILE}`,
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'"
+    ].join("; ");
+}
 
 // O que o navegador pode guardar: o HTML sempre confere de novo; os arquivos com código no nome
 // (assets/…) nunca mudam; o resto vale uma hora.
@@ -114,6 +183,27 @@ async function isDirectory(dir) {
 export async function createStaticSite({ root } = {}) {
     const base = root ? path.resolve(root) : null;
 
+    // A política de cada página, guardada até o arquivo mudar (o hash exige ler a página uma vez).
+    const policies = new Map();
+
+    async function policyFor(file, info) {
+        const key = `${file}|${info.size}|${Math.floor(info.mtimeMs)}`;
+
+        let policy = policies.get(key);
+
+        if (policy === undefined) {
+            policy = contentSecurityPolicy(await readFile(file, "utf8"));
+
+            if (policies.size >= 500) {
+                policies.clear();
+            }
+
+            policies.set(key, policy);
+        }
+
+        return policy;
+    }
+
     if (!base || !(await isDirectory(base))) {
         return { enabled: false, root: null, serve: async () => false };
     }
@@ -123,8 +213,18 @@ export async function createStaticSite({ root } = {}) {
 
         const etag = `W/"${info.size.toString(16)}-${Math.floor(info.mtimeMs).toString(16)}"`;
 
+        const extra = {};
+
+        if (type.startsWith("text/html")) {
+            extra["Content-Security-Policy"] = await policyFor(file, info);
+
+        } else if (type === "image/svg+xml") {
+            extra["Content-Security-Policy"] = SVG_CSP;
+        }
+
         const headers = {
             ...BASE_HEADERS,
+            ...extra,
             "Content-Type": type,
             "Cache-Control": status === 404 ? "no-cache" : cacheControl(pathname, type),
             ETag: etag,
@@ -218,7 +318,11 @@ export async function createStaticSite({ root } = {}) {
 
             // 2) uma página sem a barra do fim (/wiki/start): leva para a com barra, como o Astro gera
             if (await statFile(path.join(target, "index.html"))) {
-                res.writeHead(301, { ...BASE_HEADERS, Location: `${url.pathname}/${url.search}`, "Cache-Control": "public, max-age=3600" });
+                // o endereço é refeito a partir do caminho já limpo: um "//" no começo viraria um redirecionamento
+                // para outro site ("//nome/" é um endereço com servidor)
+                const clean = relative.split("/").map(encodeURIComponent).join("/");
+
+                res.writeHead(301, { ...BASE_HEADERS, Location: `/${clean}/${url.search}`, "Cache-Control": "public, max-age=3600" });
                 res.end();
 
                 return true;

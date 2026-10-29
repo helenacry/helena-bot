@@ -290,6 +290,13 @@ test("toda recusa que a API pode mostrar à pessoa tem texto próprio na tela", 
     for (const code of emitted.filter(code => !internal.has(code))) {
         assert.notEqual(lib.errorText(code, { remaining: 60 }), fallback, `"${code}" cai no texto genérico`);
     }
+
+    // estes dois a API devolve por uma variável (a regra do bot: bloqueio e manutenção), então o
+    // levantamento acima não os acha
+    for (const code of ["blocked", "maintenance"]) {
+        assert.ok(api.includes(`"${code}"`), `a API ainda devolve "${code}"`);
+        assert.notEqual(lib.errorText(code), fallback, `"${code}" cai no texto genérico`);
+    }
 });
 
 // ==========================================

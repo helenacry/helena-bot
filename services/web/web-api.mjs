@@ -13,6 +13,8 @@ import { claimDaily, getDailyStatus, calculateReward, DAILY_CONFIG } from "../ec
 import { claimGemBonus, getGemBonusStatus } from "../economy/gem-bonus.mjs";
 import { getPrison } from "../crime/prison.mjs";
 import { knowsGuild } from "../platform/guild-registry.mjs";
+import { blocked, isOwner, maintenance } from "../platform/developer.mjs";
+import { discordApi } from "../discord/api.mjs";
 import { createStaticSite } from "./static-site.mjs";
 import { avatarUrl as discordAvatar } from "../discord/normalize.mjs";
 
@@ -69,6 +71,37 @@ export function trustProxyMode(value) {
     return ["1", "true", "sim"].includes(text);
 }
 
+// Por qual endereço a pessoa chegou, "https" ou "http", segundo o proxy em que confiamos
+// (HELENA_WEB_TRUST_PROXY). Sem proxy confiável, ou sem o cabeçalho esperado, devolve null:
+// sem certeza, nada é redirecionado.
+//   "cloudflare"  só vale o CF-Visitor ({"scheme":"https"}), que a Cloudflare escreve sozinha
+//   "1", "true"   vale o último X-Forwarded-Proto (o do proxy mais próximo)
+export function visitorScheme(headers, trustProxy) {
+    if (!trustProxy) {
+        return null;
+    }
+
+    let scheme = "";
+
+    if (trustProxy === "cloudflare") {
+        try {
+            scheme = String(JSON.parse(String(headers["cf-visitor"] ?? ""))?.scheme ?? "");
+
+        } catch {
+            return null;
+        }
+
+    } else {
+        const hops = String(headers["x-forwarded-proto"] ?? "").split(",");
+
+        scheme = hops[hops.length - 1];
+    }
+
+    scheme = scheme.trim().toLowerCase();
+
+    return scheme === "https" || scheme === "http" ? scheme : null;
+}
+
 // Devolve { enabled: false, reason } ou { enabled: true, ... }.
 export function loadWebConfig(env = process.env) {
     const port = String(env.HELENA_WEB_PORT ?? "").trim();
@@ -105,6 +138,13 @@ export function loadWebConfig(env = process.env) {
         clientSecret: String(env.HELENA_OAUTH_CLIENT_SECRET ?? "").trim() || null,
         turnstileSecret: String(env.HELENA_TURNSTILE_SECRET ?? "").trim() || null,
         trustProxy: trustProxyMode(env.HELENA_WEB_TRUST_PROXY),
+
+        // Atrás de um proxy confiável, quem chega por http vai para https e as respostas https
+        // levam HSTS. HELENA_WEB_FORCE_HTTPS=off desliga (se a hospedagem se confundir).
+        forceHttps: !["off", "0", "false", "no", "nao", "não"].includes(
+            String(env.HELENA_WEB_FORCE_HTTPS ?? "").trim().toLowerCase()
+        ),
+
         debugIp: ["1", "true", "sim"].includes(
             String(env.HELENA_WEB_DEBUG_IP ?? "").trim().toLowerCase()
         )
@@ -188,6 +228,9 @@ export function createWebApi(config, deps = {}) {
     const now = deps.now ?? nowSeconds;
     const random = deps.random ?? Math.random;
     const sleep = deps.sleep ?? (ms => new Promise(resolve => setTimeout(resolve, ms)));
+
+    // Quem a Helena conhece em um servidor (a leitura de um membro, com o token do bot).
+    const memberOf = deps.member ?? ((guildId, userId) => discordApi().member(guildId, userId));
 
     const limiter = new RateLimiter();
     const origins = new Set(config.origins);
@@ -414,6 +457,48 @@ export function createWebApi(config, deps = {}) {
             guilds: JSON.parse(row.guilds_json),
             expiresAt: row.expires_at
         };
+    }
+
+    // A mesma regra do bot (helena.mjs): manutenção e bloqueio valem no site também. O dono passa.
+    // "entry" ({ kind, guildId, req }) registra a recusa no histórico de coletas; sem ele (a leitura
+    // do painel, que se repete) só recusa.
+    function ensureAllowed(userId, entry = null) {
+        if (isOwner(userId)) {
+            return;
+        }
+
+        const reason = maintenance() ? "maintenance" : blocked(userId) ? "blocked" : "";
+
+        if (!reason) {
+            return;
+        }
+
+        if (entry) {
+            logClaim({ userId, kind: entry.kind, guildId: entry.guildId ?? null, ok: false, detail: reason, req: entry.req });
+        }
+
+        throw new HttpError(reason === "maintenance" ? 503 : 403, reason);
+    }
+
+    // A lista de servidores é a do login (vale até a sessão acabar). Quem saiu do servidor, ou foi
+    // expulso, não coleta o daily dele: pergunta ao Discord na hora. Só um "não é membro" claro (404)
+    // recusa; se o Discord não responder, vale o que já se sabia (a coleta tem recarga de 24 h de
+    // qualquer jeito, e uma pane do Discord não deve travar todo mundo).
+    async function stillMember(guildId, userId) {
+        try {
+            await memberOf(guildId, userId);
+
+            return true;
+
+        } catch (error) {
+            if (error?.status === 404) {
+                return false;
+            }
+
+            console.warn(`[WEB] Não consegui conferir se a pessoa ainda está no servidor ${guildId}: ${String(error?.message ?? error).slice(0, 120)}`);
+
+            return true;
+        }
     }
 
     function publicUser(session) {
@@ -652,6 +737,9 @@ export function createWebApi(config, deps = {}) {
             throw new HttpError(401, "login_failed", { detail: "conta:sem_id" });
         }
 
+        // Bloqueado (ou em manutenção) nem entra: não cria sessão.
+        ensureAllowed(userId, { kind: "login", req });
+
         // Só os servidores em que a Helena também está.
         const mutual = guilds
             .filter(guild => guild && guild.id !== undefined && knowsGuild(guild.id))
@@ -737,6 +825,8 @@ export function createWebApi(config, deps = {}) {
     function me(req) {
         const session = sessionFrom(req);
 
+        ensureAllowed(session.userId);
+
         limit("user:read:" + session.userId, WEB_CONFIG.limits.read);
 
         const time = now();
@@ -803,6 +893,9 @@ export function createWebApi(config, deps = {}) {
         limit("ip:claim:" + clientIp(req), WEB_CONFIG.limits.claim);
         limit("user:claim:" + session.userId, WEB_CONFIG.limits.claim);
 
+        // depois dos limites: quem insiste bloqueado não enche o histórico
+        ensureAllowed(session.userId, { kind: "daily", req });
+
         const body = await readJson(req);
 
         const guildId = typeof body.guildId === "string" ? body.guildId : "";
@@ -813,6 +906,13 @@ export function createWebApi(config, deps = {}) {
         }
 
         await checkCaptcha(body, req);
+
+        // A lista de servidores é a do login: quem saiu (ou foi expulso) desde então não coleta.
+        if (!(await stillMember(guildId, session.userId))) {
+            logClaim({ userId: session.userId, kind: "daily", guildId, ok: false, detail: "not_member", req });
+
+            throw new HttpError(403, "guild_not_allowed");
+        }
 
         const time = now();
 
@@ -874,6 +974,8 @@ export function createWebApi(config, deps = {}) {
 
         limit("ip:claim:" + clientIp(req), WEB_CONFIG.limits.claim);
         limit("user:claim:" + session.userId, WEB_CONFIG.limits.claim);
+
+        ensureAllowed(session.userId, { kind: "gems", req });
 
         const body = await readJson(req);
 
@@ -1014,6 +1116,57 @@ export function createWebApi(config, deps = {}) {
 }
 
 // ==========================================
+// HTTPS OBRIGATÓRIO
+// ==========================================
+
+// Um ano. Sem includeSubDomains nem preload: vale só para este endereço.
+export const HSTS = "max-age=31536000";
+
+// Atrás de um proxy confiável: a resposta por https leva HSTS (o navegador passa a ir direto por https) e
+// quem chega por http é mandado para https. Devolve true se já respondeu.
+//
+// O destino do redirecionamento só pode ser um nome que o dono cadastrou em HELENA_WEB_ORIGINS: o Host
+// vem do visitante e nunca vira endereço sem conferir.
+export function enforceHttps(req, res, config) {
+    if (!config.forceHttps) {
+        return false;
+    }
+
+    const scheme = visitorScheme(req.headers, config.trustProxy);
+
+    if (scheme === "https") {
+        res.setHeader("Strict-Transport-Security", HSTS);
+
+        return false;
+    }
+
+    if (scheme !== "http") {
+        return false;
+    }
+
+    const host = String(req.headers.host ?? "").trim().toLowerCase();
+
+    if (!config.origins.some(origin => origin.toLowerCase() === `https://${host}`)) {
+        return false;
+    }
+
+    // Quem manda dados por http já os expôs: não adianta redirecionar o pedido, só recusar.
+    if (req.method !== "GET" && req.method !== "HEAD") {
+        res.writeHead(403, JSON_HEADERS);
+        res.end(JSON.stringify({ error: "https_required" }));
+
+        return true;
+    }
+
+    const target = String(req.url ?? "").startsWith("/") ? req.url : "/";
+
+    res.writeHead(301, { Location: `https://${host}${target}`, "Cache-Control": "public, max-age=3600" });
+    res.end();
+
+    return true;
+}
+
+// ==========================================
 // SERVIDOR HTTP
 // ==========================================
 
@@ -1048,6 +1201,10 @@ export async function startWebApi(env = process.env, deps = {}) {
         : "[WEB] Sem a pasta do site (site-dist): só a API responde.");
 
     const server = http.createServer(async (req, res) => {
+        if (enforceHttps(req, res, config)) {
+            return;
+        }
+
         try {
             if (await site.serve(req, res)) {
                 return;

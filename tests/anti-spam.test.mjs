@@ -4,6 +4,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
+const anti = await import("../services/platform/anti-spam.mjs");
+
 const { createAntiSpam, buildCommandGate, antiSpamEnabled, antiSpamText, commandGate } =
     await import("../services/platform/anti-spam.mjs");
 
@@ -339,4 +341,71 @@ test("a barra usa o mesmo intervalo, depois de achar o comando e antes da prisã
 
     assert.match(block, /mensagemErro\(\s*antiSpamText\(espera\.remainingMs\)\s*\)/);
     assert.match(block, /responderInteracao/);
+});
+
+// ==========================================
+// BOTÕES, MENUS E FORMULÁRIOS
+// ==========================================
+
+test("botões, menus e formulários têm o próprio intervalo: curto e separado do dos comandos", () => {
+    const { buildInteractionGate, interactionGate } = anti;
+
+    assert.equal(ANTI_SPAM.interactionCooldownSeconds, 1);
+    assert.ok(ANTI_SPAM.interactionCooldownSeconds < ANTI_SPAM.commandCooldownSeconds, "navegar não pode ser mais lento que comandar");
+
+    const gate = buildInteractionGate({ env: {}, owner: () => false });
+
+    assert.equal(gate.check("ana").allowed, true);
+
+    const blocked = gate.check("ana");
+
+    assert.equal(blocked.allowed, false);
+    assert.ok(blocked.remainingMs > 0 && blocked.remainingMs <= 1000);
+
+    assert.equal(gate.check("bia").allowed, true, "cada pessoa tem o seu");
+
+    // o relógio é outro: gastar o intervalo dos comandos não barra o clique logo depois
+    assert.notEqual(interactionGate, commandGate);
+
+    const who = "pessoa-do-relogio-separado";
+
+    assert.equal(commandGate.check(who).allowed, true);
+    assert.equal(interactionGate.check(who).allowed, true);
+
+    // HELENA_ANTI_SPAM=off desliga os dois
+    const off = buildInteractionGate({ env: { HELENA_ANTI_SPAM: "off" }, owner: () => false });
+
+    for (let i = 0; i < 4; i++) assert.equal(off.check("ana").allowed, true);
+});
+
+test("a interação confere o intervalo antes de executar: botão é ignorado em silêncio, formulário recebe aviso", () => {
+    const source = readFileSync(new URL("../helena.mjs", import.meta.url), "utf8");
+
+    const find = (text, from = 0) => {
+        const at = source.indexOf(text, from);
+
+        assert.ok(at >= 0, `não achei «${text}» em helena.mjs`);
+
+        return at;
+    };
+
+    // botões e menus
+    const component = find("interaction.type === \"component\"");
+    const componentGate = find("interactionGate.check(actorId)", component);
+    const runComponent = find("executarComponente(", componentGate);
+
+    assert.ok(componentGate < runComponent, "o intervalo vem antes de rodar o componente");
+
+    const silent = source.slice(componentGate, runComponent);
+
+    assert.ok(silent.includes("defer_update"), "ignora em silêncio, sem mexer na mensagem");
+    assert.ok(source.slice(component, componentGate).includes("(fuga|gf):"), "a fuga e o Gozofone, que são cronometrados, ficam de fora");
+
+    // formulários
+    const modal = find("interaction.type === \"modal_submit\"");
+    const modalGate = find("interactionGate.check(actorId)", modal);
+    const runModal = find("executarModal(", modalGate);
+
+    assert.ok(modalGate < runModal, "o intervalo vem antes de rodar o formulário");
+    assert.match(source.slice(modalGate, runModal), /mensagemErro\(\s*antiSpamText\(espera\.remainingMs\)\s*\)/);
 });

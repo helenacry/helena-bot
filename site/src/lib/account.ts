@@ -225,7 +225,9 @@ export function errorText(code: string | undefined, extra: { remaining?: number;
     unauthorized: "Sua sessão acabou. Entre de novo.",
     login_failed: `Não deu para entrar. Tente de novo.${detail}`,
     invalid_redirect: "Este endereço não está autorizado a fazer login. Avise a equipe da Helena.",
-    discord_unavailable: "O Discord não respondeu agora. Tente de novo em instantes."
+    discord_unavailable: "O Discord não respondeu agora. Tente de novo em instantes.",
+    blocked: "Seu acesso à Helena foi bloqueado.",
+    maintenance: "A Helena está em manutenção. Volte daqui a pouco."
   };
 
   return (code && texts[code]) || "Algo deu errado. Tente de novo.";

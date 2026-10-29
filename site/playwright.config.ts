@@ -1,6 +1,7 @@
 // Testes de navegador do site: acessibilidade (axe), sem rolagem lateral, sem
-// requisições a terceiros e os fluxos principais. Rodam contra o build (dist/),
-// servido por `astro preview`, e usam o Edge instalado (sem baixar navegador):
+// requisições a terceiros, a política de conteúdo (CSP) e os fluxos principais. Rodam contra o
+// build (dist/), servido pelo MESMO servidor de arquivos do bot (scripts/serve-dist.mjs), e usam o
+// Edge instalado (sem baixar navegador):
 //
 //   npm --prefix site run build && npm --prefix site run test:e2e
 //
@@ -27,7 +28,8 @@ export default defineConfig({
     locale: "pt-BR"
   },
   webServer: {
-    command: `npx astro preview --port ${port} --host 127.0.0.1`,
+    // o servidor de arquivos do bot (com a CSP), não o `astro preview`: veja scripts/serve-dist.mjs
+    command: `node scripts/serve-dist.mjs ${port}`,
     url: `http://127.0.0.1:${port}${base}/`,
     reuseExistingServer: true,
     timeout: 60_000
