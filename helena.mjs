@@ -13,6 +13,8 @@ import {
 
 import { loadAppEmojis } from "./services/platform/app-emojis.mjs";
 
+import { siteOnly } from "./services/platform/site-only.mjs";
+
 import {
     normalizeInteraction,
     normalizeMessage
@@ -172,7 +174,21 @@ import {
 
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-if (!TOKEN) {
+// Só a API e o site, sem entrar no Discord (app de teste; veja services/platform/site-only.mjs).
+const SITE_ONLY = siteOnly();
+
+if (SITE_ONLY) {
+    if (!process.env.HELENA_WEB_PORT) {
+        throw new Error(
+            "HELENA_WEB_ONLY=on precisa de HELENA_WEB_PORT: sem a API não há o que subir."
+        );
+    }
+
+    console.warn(
+        "[SISTEMA] Modo só-site (HELENA_WEB_ONLY=on): a Helena NÃO entra no Discord e não responde a ninguém."
+    );
+
+} else if (!TOKEN) {
     throw new Error(
         "DISCORD_BOT_TOKEN não configurado."
     );
@@ -419,23 +435,27 @@ async function executarPerfil(
 
 // O Discord diz quem é o aplicativo deste token. Se o token estiver errado, o erro
 // aparece já aqui, com o motivo, em vez de o bot subir mudo.
-let application;
+let application = null;
 
-try {
-    application = await api.application();
+if (!SITE_ONLY) {
+    try {
+        application = await api.application();
 
-} catch (erro) {
-    throw new Error(
-        `Erro de autenticação: ${erro.message}`
-    );
+    } catch (erro) {
+        throw new Error(
+            `Erro de autenticação: ${erro.message}`
+        );
+    }
 }
 
-const appId = application.id;
+const appId = application?.id ?? null;
 
-transport = createTransport(api, appId);
+if (!SITE_ONLY) {
+    transport = createTransport(api, appId);
 
-// Os emojis da Helena (os desenhos de assets/emojis enviados ao aplicativo). Sem eles, ficam os comuns.
-await loadAppEmojis(api, appId);
+    // Os emojis da Helena (os desenhos de assets/emojis enviados ao aplicativo). Sem eles, ficam os comuns.
+    await loadAppEmojis(api, appId);
+}
 
 // ==========================================
 // MIGRAÇÕES
@@ -471,10 +491,12 @@ runUserinfoHistoryMigrations();
 
 const comandos = await carregarComandos();
 
-await registrarComandos(
-    appId,
-    comandos
-);
+if (!SITE_ONLY) {
+    await registrarComandos(
+        appId,
+        comandos
+    );
+}
 
 console.log(
     `[COMANDOS] ${comandos.size} comandos carregados.`
@@ -512,13 +534,15 @@ emojiDrawingWorks()
 
 // Credita as lavagens concluídas e avisa o canal onde
 // foram iniciadas.
-startLaunderingSweeper(
-    ({ guildId, channelId, body }) =>
-        enviarMensagemCanal(
-            { guildId, channelId },
-            { body }
-        )
-);
+if (!SITE_ONLY) {
+    startLaunderingSweeper(
+        ({ guildId, channelId, body }) =>
+            enviarMensagemCanal(
+                { guildId, channelId },
+                { body }
+            )
+    );
+}
 
 // API do painel do site (daily e gemas pelo navegador). Só liga se
 // HELENA_WEB_PORT estiver definida; sem ela, o bot funciona como sempre.
@@ -1223,4 +1247,6 @@ process.once(
 // INICIAR HELENA
 // ==========================================
 
-conectarGateway();
+if (!SITE_ONLY) {
+    conectarGateway();
+}
