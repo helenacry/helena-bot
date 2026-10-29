@@ -164,7 +164,10 @@ const PAIRS = [
 // O recibo é claro nos dois temas.
 const FIXED = [
   ["receipt-ink", "receipt", TEXT, "texto do recibo"],
-  ["receipt-ink-soft", "receipt", TEXT, "apoio do recibo"]
+  ["receipt-ink-soft", "receipt", TEXT, "apoio do recibo"],
+  ["receipt-plus", "receipt", TEXT, "valor positivo e carimbo no recibo"],
+  ["receipt-minus", "receipt", TEXT, "valor negativo no recibo"],
+  ["receipt-focus", "receipt", LARGE, "anel de foco no recibo"]
 ];
 
 // ------------------------------------------------------------ relatório

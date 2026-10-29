@@ -314,9 +314,74 @@ test.describe("painel da conta", () => {
     await expect(page.locator(".acc-tally")).toContainText("1 liberado");
     await expect(page.locator(".acc-row.jail")).toContainText("Preso não coleta o daily");
 
+    await expect(page.locator(".acc-slip")).toHaveCount(0);
+
     await page.getByRole("button", { name: /Resgatar R\$\s*600,00/ }).click();
-    await expect(page.locator(".acc-say")).toContainText("Daily resgatado em Servidor A");
+
+    // o recibo sai logo embaixo do servidor coletado: título, carimbo, total e a sequência no rodapé
+    const slip = page.locator(".acc-slip");
+
+    await expect(slip).toContainText("Daily · Servidor A");
+    await expect(page.locator(".acc-row", { hasText: "Servidor A" }).locator("xpath=following-sibling::li[1]")).toHaveClass(/acc-slip-item/);
+    await expect(slip.locator(".stamp-mark")).toHaveText("Resgatado");
+    await expect(slip.locator(".leader.total")).toContainText(/Total\s*\+R\$\s*600,00/);
+    await expect(slip.locator(".acc-slip-foot")).toContainText("Sequência de 3 dias");
     expect(claimed).toEqual({ guildId: "1" });
+
+    // quem usa leitor de tela ouve o resultado (o recibo em si é só papel)
+    await expect(page.getByRole("status").filter({ hasText: "Daily · Servidor A" })).toContainText("Total +R$ 600,00");
+
+    const axe = await new AxeBuilder({ page }).include(".acc-slip").withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+    expect(axe.violations.map(item => `${item.id}: ${item.nodes[0]?.target.join(" ")}`)).toEqual([]);
+
+    // fica até alguém fechar, e o foco volta para o título (quem usa teclado não se perde)
+    await slip.getByRole("button", { name: "Fechar o recibo" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".acc-slip")).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+  });
+
+  test("o recibo mostra a recusa da API e o Esc fecha", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("helena.session", JSON.stringify({ token: "t", expiresAt: Math.floor(Date.now() / 1000) + 3600 }));
+    });
+
+    await page.route(`${API}/api/me`, route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(me) }));
+    await page.route(`${API}/api/claim/daily`, route => route.fulfill({ status: 429, contentType: "application/json", body: JSON.stringify({ error: "cooldown", remaining: 3600 }) }));
+
+    await page.goto("account/", { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: /Resgatar R\$\s*600,00/ }).click();
+
+    const slip = page.locator(".acc-slip.bad");
+
+    await expect(slip).toContainText("Não deu certo");
+    await expect(slip.locator(".acc-slip-error")).toHaveText("Ainda não liberou. Falta 1h 0m 0s.");
+    await expect(slip.locator(".stamp-mark")).toHaveCount(0);
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".acc-slip")).toHaveCount(0);
+  });
+
+  test("o recibo das gemas sai embaixo da carteira de gemas", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("helena.session", JSON.stringify({ token: "t", expiresAt: Math.floor(Date.now() / 1000) + 3600 }));
+    });
+
+    await page.route(`${API}/api/me`, route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(me) }));
+    await page.route(`${API}/api/claim/gems`, route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "claimed", amount: 4, balance: 16, remaining: 18_000 }) }));
+
+    await page.goto("account/", { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "Pegar gemas" }).click();
+
+    const slip = page.locator(".acc-slip-item.top .acc-slip");
+
+    await expect(slip).toContainText("Bônus de gemas");
+    await expect(slip.locator(".stamp-mark")).toHaveText("Coletado");
+    await expect(slip.locator(".leader.total")).toContainText(/Gemas\s*\+4/);
+    await expect(slip.locator(".acc-slip-foot")).toContainText("Próxima coleta em 5h 0m 0s");
+
+    await slip.getByRole("button", { name: "Fechar o recibo" }).click();
+    await expect(page.locator(".acc-slip")).toHaveCount(0);
   });
 
   test("sessão vencida volta para a entrada com aviso", async ({ page }) => {

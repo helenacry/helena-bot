@@ -232,3 +232,119 @@ export function errorText(code: string | undefined, extra: { remaining?: number;
 }
 
 export const OFFLINE = "A Helena está fora do ar agora. Tente de novo mais tarde.";
+
+// ---------------------------------------------------------------- recibo de resultado
+
+/** Uma linha do recibo: [nome, valor, tom]; `null` é o tracejado entre os grupos. */
+export type SlipRow = readonly [label: string, value: string, tone?: "plus"] | null;
+
+/** O recibo que aparece depois de uma coleta: o que entrou, em linhas de papel térmico. */
+export interface Slip {
+  /** O carimbo: RESGATADO, COLETADO. */
+  stamp: string;
+  /** "Daily · Helena Lab" */
+  title: string;
+  /** O dia e a hora da coleta: "25/10 · 18:40". */
+  when: string;
+  rows: SlipRow[];
+  /** A letra pequena de baixo, uma linha por item. */
+  foot: string[];
+}
+
+const plural = (count: number, one: string, many: string): string => `${count} ${count === 1 ? one : many}`;
+
+/** Um número finito, ou null (a API pode deixar campos de fora). */
+const finite = (value: unknown): number | null => (value !== undefined && value !== null && Number.isFinite(Number(value)) ? Number(value) : null);
+
+/** "25/10 · 18:40", no relógio de quem está olhando. */
+export function slipTime(date: Date): string {
+  const day = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  const hour = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+  return `${day} · ${hour}`;
+}
+
+// as linhas sem null no começo, no fim nem dois seguidos
+function tidy(rows: SlipRow[]): SlipRow[] {
+  const out: SlipRow[] = [];
+
+  for (const row of rows) {
+    if (row === null && (out.length === 0 || out[out.length - 1] === null)) continue;
+    out.push(row);
+  }
+
+  while (out.length && out[out.length - 1] === null) out.pop();
+
+  return out;
+}
+
+/** O recibo do daily de um servidor, com o que a API devolveu (campos que faltam ficam de fora). */
+export function dailySlip(serverName: string, data: Record<string, any>, now: Date = new Date()): Slip {
+  const reward: Record<string, unknown> = data?.reward ?? {};
+
+  const base = finite(reward.base);
+  const progressive = finite(reward.progressiveBonus);
+  const weekly = finite(reward.weeklyBonus);
+  const total = finite(reward.total);
+  const wallet = finite(data?.wallet);
+
+  const plus = (cents: number): string => `+${formatMoney(cents)}`;
+
+  const rows: SlipRow[] = [];
+
+  if (base !== null && base > 0) rows.push(["Recompensa base", plus(base)]);
+  if (progressive !== null && progressive > 0) rows.push(["Bônus de sequência", plus(progressive)]);
+  if (weekly !== null && weekly > 0) rows.push(["Bônus de 7 dias", plus(weekly)]);
+
+  rows.push(null);
+
+  if (total !== null) rows.push(["Total", plus(total), "plus"]);
+  if (wallet !== null) rows.push(["Carteira", formatMoney(wallet)]);
+
+  const streak = finite(data?.streak);
+  const best = finite(data?.bestStreak);
+  const remaining = finite(data?.daily?.remaining);
+
+  const foot: string[] = [];
+
+  if (streak !== null) {
+    foot.push(`Sequência de ${plural(streak, "dia", "dias")}${best !== null && best > streak ? ` · recorde de ${plural(best, "dia", "dias")}` : ""}`);
+  }
+
+  if (remaining !== null && remaining > 0) foot.push(`Próximo resgate neste servidor em ${formatDuration(remaining)}`);
+
+  return {
+    stamp: "Resgatado",
+    title: `Daily · ${serverName || "servidor"}`,
+    when: slipTime(now),
+    rows: tidy(rows),
+    foot
+  };
+}
+
+/** O recibo do bônus de gemas. */
+export function gemsSlip(data: Record<string, any>, now: Date = new Date()): Slip {
+  const amount = finite(data?.amount);
+  const balance = finite(data?.balance);
+  const remaining = finite(data?.remaining);
+
+  const rows: SlipRow[] = [];
+
+  if (amount !== null) rows.push(["Gemas", `+${amount.toLocaleString("pt-BR")}`, "plus"]);
+  if (balance !== null) rows.push(["Saldo", balance.toLocaleString("pt-BR")]);
+
+  return {
+    stamp: "Coletado",
+    title: "Bônus de gemas",
+    when: slipTime(now),
+    rows,
+    foot: remaining !== null && remaining > 0 ? [`Próxima coleta em ${formatDuration(remaining)}`] : []
+  };
+}
+
+/** O recibo em frases, para o leitor de tela: o título, cada linha e o rodapé. */
+export function slipText(slip: Slip): string {
+  const lines = slip.rows.flatMap(row => (row === null ? [] : [`${row[0]} ${row[1]}`]));
+
+  return [slip.title, ...lines, ...slip.foot].map(line => `${line}.`).join(" ");
+}

@@ -45,14 +45,14 @@
   .lab-sums dt { flex: 1 1 auto; display: flex; align-items: baseline; gap: 0.5rem; font-weight: 500; }
   .lab-sums dt::after { content: ""; flex: 1; min-inline-size: 1rem; border-block-end: 2px dotted var(--receipt-line); transform: translateY(-0.25em); }
   .lab-sums dd { margin: 0; font-weight: 700; text-align: end; white-space: nowrap; }
-  .lab-sums .plus { color: oklch(40% 0.12 158); }
-  .lab-sums .minus { color: oklch(46% 0.19 25); }
+  .lab-sums .plus { color: var(--receipt-plus); }
+  .lab-sums .minus { color: var(--receipt-minus); }
   .lab-sums .after-rule { margin-block-start: 0.35rem; padding-block-start: 0.6rem; border-block-start: 2px dashed var(--receipt-line); }
 
   .lab-verdict { text-align: center; margin: var(--space-4) 0 0; }
   .lab-verdict .stamp-mark { font-size: 1rem; background: var(--receipt); }
-  .lab-receipt .stamp-mark.ok { color: oklch(40% 0.13 158); }
-  .lab-receipt .stamp-mark.bad { color: oklch(46% 0.2 25); }
+  .lab-receipt .stamp-mark.ok { color: var(--receipt-plus); }
+  .lab-receipt .stamp-mark.bad { color: var(--receipt-minus); }
 
   .lab-avg { font-size: 0.95rem; color: var(--ink-soft); }
   .lab-avg b { color: var(--ink); }

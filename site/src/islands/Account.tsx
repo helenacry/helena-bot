@@ -1,4 +1,5 @@
 /** Painel da conta: entrar com o Discord, ver os servidores em comum e coletar o daily e as gemas. */
+import { Fragment } from "preact";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 
 import {
@@ -6,21 +7,25 @@ import {
   SAMPLE_LADDER,
   buildAuthorizeUrl,
   errorText,
+  dailySlip,
   formatDuration,
   formatMoney,
+  gemsSlip,
   parseCallback,
   pkce,
   randomState,
   redirectUri,
   safeImage,
   shortMoney,
+  slipText,
   sortGuilds,
   tally,
   waitProgress,
   weekPips,
   type Guild,
   type Me,
-  type Session
+  type Session,
+  type Slip
 } from "../lib/account.ts";
 
 import "./account.css";
@@ -44,10 +49,11 @@ interface Result {
   data: Record<string, any>;
 }
 
-interface Say {
-  text: string;
-  kind: "ok" | "bad";
-}
+/** O que o recibo de resultado mostra: o que entrou (ok) ou por que não deu (bad). */
+type Say = { id: number } & ({ kind: "ok"; slip: Slip } | { kind: "bad"; text: string });
+
+/** Onde cada recibo aparece: embaixo do servidor coletado, embaixo das gemas ou, sem dono, no topo da lista. */
+type Slips = Record<string, Say>;
 
 declare global {
   interface Window {
@@ -234,14 +240,77 @@ function Sample() {
 
 // ---------------------------------------------------------------- ilha
 
+/** O resultado de uma coleta, em papel térmico: o que entrou, o carimbo e a hora. Fica até alguém fechar. */
+function SlipCard({ say, onClose }: { say: Say; onClose: () => void }) {
+  const box = useRef<HTMLDivElement>(null);
+
+  const ok = say.kind === "ok";
+  const slip = say.kind === "ok" ? say.slip : null;
+
+  // Coletou lá embaixo na lista: o recibo entra na tela junto.
+  useEffect(() => {
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    box.current?.scrollIntoView({ block: "nearest", behavior: calm ? "auto" : "smooth" });
+  }, []);
+
+  return (
+    <div class="receipt-wrap acc-slip-wrap" ref={box}>
+      <div class={`receipt acc-slip ${ok ? "ok" : "bad"}`}>
+        <div class="acc-slip-head">
+          <div class="acc-slip-id">
+            <p class="acc-slip-title">{slip ? slip.title : "Não deu certo"}</p>
+            {slip && <p class="acc-slip-when tabular">{slip.when}</p>}
+          </div>
+          <button type="button" class="acc-slip-close" onClick={onClose} aria-label="Fechar o recibo">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+
+        <hr class="receipt-rule" />
+
+        {slip ? (
+          <>
+            <ul class="acc-slip-rows">
+              {slip.rows.map((row, index) =>
+                row === null ? (
+                  <li key={index} class="acc-slip-gap" aria-hidden="true" />
+                ) : (
+                  <li key={index} class={`leader${row[2] ? " total" : ""}`}>
+                    <span>{row[0]}</span>
+                    <i aria-hidden="true" />
+                    <b class={row[2]}>{row[1]}</b>
+                  </li>
+                )
+              )}
+            </ul>
+
+            <p class="acc-slip-seal"><span class="stamp-mark ok">{slip.stamp}</span></p>
+
+            {slip.foot.length > 0 && (
+              <p class="acc-slip-foot">
+                {slip.foot.map(line => <span key={line}>{line}</span>)}
+              </p>
+            )}
+          </>
+        ) : (
+          <p class="acc-slip-error">{say.kind === "bad" ? say.text : ""}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountProps) {
   const api = apiUrl.replace(/\/+$/, "");
 
   const [view, setView] = useState<View>({ kind: "boot" });
   const [me, setMe] = useState<Me | null>(null);
-  const [say, setSay] = useState<Say | null>(null);
+  const [slips, setSlips] = useState<Slips>({});
+  const [spoken, setSpoken] = useState({ id: 0, text: "" });
   const [claiming, setClaiming] = useState("");
 
+  const sayCount = useRef(0);
   const session = useRef<Session | null>(null);
   const captchaToken = useRef("");
   const captchaWidget = useRef<string | null>(null);
@@ -273,6 +342,27 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
   const textFor = (result: Result): string =>
     result.data.error === "offline" ? OFFLINE : errorText(result.data.error, result.data);
 
+  // O número muda a cada recibo: o papel "imprime" de novo e o leitor de tela fala de novo, mesmo com o mesmo texto.
+  const speak = useCallback((key: string, next: { kind: "ok"; slip: Slip } | { kind: "bad"; text: string }) => {
+    sayCount.current += 1;
+
+    setSlips(all => ({ ...all, [key]: { ...next, id: sayCount.current } }));
+    setSpoken({ id: sayCount.current, text: next.kind === "ok" ? slipText(next.slip) : next.text });
+  }, []);
+
+  // Quem fecha pelo teclado não fica sem foco: ele volta para o título da tela.
+  const closeSlip = useCallback((key?: string) => {
+    if (document.activeElement?.closest(".acc-slip")) heading.current?.focus({ preventScroll: true });
+
+    setSlips(all => {
+      if (key === undefined) return {};
+
+      const { [key]: _gone, ...rest } = all;
+
+      return rest;
+    });
+  }, []);
+
   const loginScreen = useCallback((message?: string) => {
     setMe(null);
     setView({ kind: "login", message });
@@ -292,7 +382,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
 
     if (result.status !== 200) {
       if (quiet) {
-        setSay({ text: textFor(result), kind: "bad" });
+        speak("page", { kind: "bad", text: textFor(result) });
         return;
       }
 
@@ -302,13 +392,13 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
 
     setMe(result.data as Me);
     setView({ kind: "dashboard" });
-  }, [call, loginScreen]);
+  }, [call, loginScreen, speak]);
 
   const signOut = useCallback((message?: string) => {
     if (session.current) void call("/api/auth/logout", { method: "POST" });
 
     session.current = null;
-    setSay(null);
+    setSlips({});
     writeJson(window.localStorage, STORAGE_KEY, null);
     loginScreen(message);
   }, [call, loginScreen]);
@@ -340,7 +430,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
     if (result.status === 200 && result.data.token) {
       session.current = { token: result.data.token, expiresAt: result.data.expiresAt };
       writeJson(window.localStorage, STORAGE_KEY, session.current);
-      setSay(null);
+      setSlips({});
       void load(false);
       return;
     }
@@ -372,6 +462,21 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
   useEffect(() => {
     if (view.kind !== "boot") heading.current?.focus({ preventScroll: true });
   }, [view.kind]);
+
+  // Esc fecha os recibos.
+  const hasSlips = Object.keys(slips).length > 0;
+
+  useEffect(() => {
+    if (!hasSlips) return;
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeSlip();
+    };
+
+    document.addEventListener("keydown", onKey);
+
+    return () => document.removeEventListener("keydown", onKey);
+  }, [hasSlips, closeSlip]);
 
   // ---------- anti-robô (Turnstile): carregado só quando a API pede ----------
   useEffect(() => {
@@ -412,11 +517,11 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
     window.location.assign(buildAuthorizeUrl({ clientId, redirectUri: redirectUri(window.location), state: token, challenge: codes.challenge }));
   }
 
-  /** Coleta (daily ou gemas): confere o anti-robô, chama a API e atualiza. */
-  async function collect(key: string, path: string, body: Record<string, unknown>, okText: (data: any) => string) {
+  /** Coleta (daily ou gemas): confere o anti-robô, chama a API, mostra o recibo e atualiza. */
+  async function collect(key: string, path: string, body: Record<string, unknown>, receipt: (data: any) => Slip) {
     if (me?.captcha) {
       if (!captchaToken.current) {
-        setSay({ text: errorText("captcha_required"), kind: "bad" });
+        speak(key, { kind: "bad", text: errorText("captcha_required") });
         return;
       }
 
@@ -436,7 +541,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
       return;
     }
 
-    setSay(result.status === 200 ? { text: okText(result.data), kind: "ok" } : { text: textFor(result), kind: "bad" });
+    speak(key, result.status === 200 ? { kind: "ok", slip: receipt(result.data) } : { kind: "bad", text: textFor(result) });
     void load(true);
   }
 
@@ -512,6 +617,12 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
   const totals = tally(guilds);
   const gems = data.gems;
 
+  const slipAt = (key: string) => {
+    const say = slips[key];
+
+    return say ? <SlipCard key={say.id} say={say} onClose={() => closeSlip(key)} /> : null;
+  };
+
   return (
     <>
       {captchaBox}
@@ -540,7 +651,7 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
               class="btn btn-primary acc-go"
               disabled={claiming === "gems"}
               aria-busy={claiming === "gems" ? "true" : undefined}
-              onClick={() => collect("gems", "/api/claim/gems", {}, d => `+${d.amount} ${d.amount === 1 ? "gema" : "gemas"}. Saldo: ${d.balance}.`)}
+              onClick={() => collect("gems", "/api/claim/gems", {}, d => gemsSlip(d))}
             >
               Pegar gemas
             </button>
@@ -552,7 +663,12 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
         </section>
       </section>
 
-      <p class={`acc-say ${say?.kind ?? ""}`} role="status" aria-live="polite">{say?.text ?? ""}</p>
+      {/* Os recibos são papel na tela; quem ouve o resultado é esta região, que fala de novo a cada coleta. */}
+      <div class="sr-only" role="status" aria-live="polite">
+        <span key={spoken.id}>{spoken.text}</span>
+      </div>
+
+      {["gems", "page"].map(key => slips[key] && <div class="acc-slip-item top" key={key}>{slipAt(key)}</div>)}
 
       <section class="acc-servers">
         <div class="acc-servers-head">
@@ -579,14 +695,17 @@ export default function Account({ apiUrl, clientId, turnstileSiteKey }: AccountP
         {guilds.length > 0 ? (
           <ol class="acc-list">
             {guilds.map(guild => (
-              <ServerRow
-                key={guild.id}
-                guild={guild}
-                me={data}
-                busy={claiming === guild.id}
-                onRefresh={refreshQuietly}
-                onClaim={target => collect(target.id, "/api/claim/daily", { guildId: target.id }, d => `Daily resgatado em ${target.name || "o servidor"}: ${formatMoney(d.reward.total)}. Sequência: ${d.streak}.`)}
-              />
+              <Fragment key={guild.id}>
+                <ServerRow
+                  guild={guild}
+                  me={data}
+                  busy={claiming === guild.id}
+                  onRefresh={refreshQuietly}
+                  onClaim={target => collect(target.id, "/api/claim/daily", { guildId: target.id }, d => dailySlip(target.name, d))}
+                />
+
+                {slips[guild.id] && <li class="acc-slip-item">{slipAt(guild.id)}</li>}
+              </Fragment>
             ))}
           </ol>
         ) : (

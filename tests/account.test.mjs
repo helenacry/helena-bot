@@ -125,6 +125,90 @@ test("waitProgress: quanto da espera já passou, sempre de 0 a 1", () => {
 });
 
 // ==========================================
+// RECIBO DE RESULTADO (o que aparece depois de coletar)
+// ==========================================
+
+const NOON = new Date(2026, 9, 25, 18, 40);
+
+// o espaço do "R$ 500,00" é inseparável; o teste não depende dele
+const flat = value => JSON.parse(JSON.stringify(value).replace(/\u00a0/g, " "));
+
+test("recibo do daily: linhas só do que veio, total em destaque, sequência e próxima coleta no rodapé", () => {
+    const slip = flat(lib.dailySlip("Helena Lab", {
+        reward: { base: 50_000, progressiveBonus: 5_000, weeklyBonus: 0, total: 55_000 },
+        streak: 2,
+        bestStreak: 4,
+        wallet: 125_000,
+        daily: { remaining: 86_400 }
+    }, NOON));
+
+    assert.equal(slip.title, "Daily · Helena Lab");
+    assert.equal(slip.stamp, "Resgatado");
+    assert.equal(slip.when, "25/10 · 18:40");
+
+    assert.deepEqual(slip.rows, [
+        ["Recompensa base", "+R$ 500,00"],
+        ["Bônus de sequência", "+R$ 50,00"],
+        null,
+        ["Total", "+R$ 550,00", "plus"],
+        ["Carteira", "R$ 1.250,00"]
+    ], "bônus zerado não vira linha");
+
+    assert.deepEqual(slip.foot, [
+        "Sequência de 2 dias · recorde de 4 dias",
+        "Próximo resgate neste servidor em 24h 0m 0s"
+    ]);
+});
+
+test("recibo do daily: o bônus de 7 dias aparece e o singular vale para 1 dia", () => {
+    const slip = flat(lib.dailySlip("A", {
+        reward: { base: 50_000, progressiveBonus: 30_000, weeklyBonus: 100_000, total: 180_000 },
+        streak: 1,
+        bestStreak: 1
+    }, NOON));
+
+    assert.ok(slip.rows.some(row => row && row[0] === "Bônus de 7 dias" && row[1] === "+R$ 1.000,00"));
+    assert.deepEqual(slip.foot, ["Sequência de 1 dia"], "sem recorde repetido e sem próxima coleta desconhecida");
+});
+
+test("recibo do daily: resposta enxuta não quebra e não deixa tracejado solto", () => {
+    const slip = flat(lib.dailySlip("", { reward: { total: 60_000 }, streak: 3 }, NOON));
+
+    assert.equal(slip.title, "Daily · servidor", "servidor sem nome");
+    assert.deepEqual(slip.rows, [["Total", "+R$ 600,00", "plus"]], "o tracejado do começo some");
+
+    const empty = lib.dailySlip("A", {}, NOON);
+
+    assert.deepEqual(empty.rows, [], "sem nada para mostrar, sem linhas");
+    assert.deepEqual(empty.foot, []);
+
+    assert.doesNotThrow(() => lib.dailySlip("A", undefined, NOON));
+    assert.doesNotThrow(() => lib.dailySlip("A", { reward: null, streak: "x", wallet: null }, NOON));
+});
+
+test("recibo das gemas: quanto veio, o saldo e a próxima coleta", () => {
+    const slip = lib.gemsSlip({ amount: 3, balance: 1042, remaining: 7200 }, NOON);
+
+    assert.equal(slip.title, "Bônus de gemas");
+    assert.equal(slip.stamp, "Coletado");
+    assert.deepEqual(slip.rows, [["Gemas", "+3", "plus"], ["Saldo", "1.042"]]);
+    assert.deepEqual(slip.foot, ["Próxima coleta em 2h 0m 0s"]);
+
+    assert.deepEqual(lib.gemsSlip({ amount: 1, balance: 8 }, NOON).foot, [], "sem tempo, sem rodapé");
+    assert.doesNotThrow(() => lib.gemsSlip(undefined, NOON));
+});
+
+test("o recibo lido em voz alta: título, linhas e rodapé em frases, sem o tracejado", () => {
+    const text = flat(lib.slipText(lib.dailySlip("Helena Lab", {
+        reward: { base: 50_000, total: 50_000 },
+        streak: 1,
+        wallet: 51_000
+    }, NOON)));
+
+    assert.equal(text, "Daily · Helena Lab. Recompensa base +R$ 500,00. Total +R$ 500,00. Carteira R$ 510,00. Sequência de 1 dia.");
+});
+
+// ==========================================
 // ORDEM E RESUMO DOS SERVIDORES
 // ==========================================
 

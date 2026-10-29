@@ -114,8 +114,8 @@
   .leader { display: flex; align-items: baseline; gap: 0.5rem; }
   .leader > i { flex: 1; min-inline-size: 1rem; border-block-end: 2px dotted var(--receipt-line); transform: translateY(-0.25em); }
   .leader > b { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .leader .plus { color: oklch(40% 0.12 158); }
-  .leader .minus { color: oklch(46% 0.19 25); }
+  .leader .plus { color: var(--receipt-plus); }
+  .leader .minus { color: var(--receipt-minus); }
 
   /* ------------------------------------------------------------ carimbo */
   .stamp-mark {

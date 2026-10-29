@@ -85,9 +85,78 @@
   .acc-purse-num { font-family: var(--font-mono); font-size: var(--step-4); font-weight: 800; letter-spacing: -0.06em; line-height: 1; color: var(--money); }
   .acc-purse-note { font-size: 0.9rem; color: var(--ink-soft); }
 
-  .acc-say { min-block-size: 1.5rem; margin-block: var(--space-3); font-weight: 600; }
-  .acc-say.ok { color: var(--positive); }
-  .acc-say.bad { color: var(--danger); }
+  /* ------------------------------------------------ recibo de resultado
+     O papel sai embaixo de onde a pessoa tocou: do servidor coletado ou das gemas.
+     No celular ocupa a largura da lista; na tela grande fica sob a coluna do botão. */
+  .acc-slip-item { display: grid; justify-items: center; margin: 0; padding: 0; list-style: none; }
+  .acc-slip-item.top { margin-block-end: var(--space-4); }
+
+  @media (min-width: 48rem) {
+    .acc-slip-item.top { justify-items: end; }
+  }
+
+  @container (min-width: 46rem) {
+    .acc-list > .acc-slip-item { justify-items: end; }
+  }
+
+  .acc-slip-wrap { inline-size: min(100%, 21rem); scroll-margin-block: 5rem var(--space-4); }
+
+  .receipt.acc-slip {
+    --tooth: 0.5rem;
+    padding: calc(var(--space-4) + var(--tooth)) var(--space-4);
+    font-size: 0.78rem;
+    overflow-wrap: break-word;
+  }
+
+  /* O papel é claro nos dois temas, então o anel de foco também não pode ser o do tema escuro. */
+  .acc-slip :focus-visible { outline-color: var(--receipt-focus); }
+
+  .acc-slip-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+  .acc-slip-id { display: grid; gap: 0.15rem; min-inline-size: 0; padding-block-start: 0.2rem; }
+
+  .acc-slip-title {
+    font-weight: 800;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    line-height: 1.35;
+    text-transform: uppercase;
+  }
+
+  .acc-slip-when { color: var(--receipt-ink-soft); font-size: 0.74rem; letter-spacing: 0.04em; }
+
+  .acc-slip-close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: var(--hit);
+    block-size: var(--hit);
+    margin: -0.45rem -0.55rem -0.45rem 0;
+    border-radius: var(--radius-ctl);
+    color: var(--receipt-ink);
+    font: 700 1.6rem/1 var(--font-mono);
+  }
+  .acc-slip-close:hover { background: color-mix(in oklch, var(--receipt-line) 45%, transparent); }
+
+  .acc-slip-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+  .acc-slip-rows .leader.total { font-size: 0.95rem; }
+  .acc-slip-gap { border-block-start: 2px dashed var(--receipt-line); margin-block: 0.2rem; }
+
+  .acc-slip-seal { margin: var(--space-3) 0 0; text-align: center; }
+  .acc-slip .stamp-mark { background: var(--receipt); font-size: 0.9rem; }
+  .acc-slip .stamp-mark.ok { color: var(--receipt-plus); }
+
+  .acc-slip-foot { margin: var(--space-3) 0 0; display: grid; gap: 0.15rem; color: var(--receipt-ink-soft); font-size: 0.72rem; line-height: 1.45; text-align: center; text-wrap: balance; }
+
+  .acc-slip-error { margin: 0; color: var(--receipt-minus); font-weight: 700; line-height: 1.5; text-wrap: pretty; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* O recibo "imprime": desce de dentro da impressora e fica parado. */
+    .acc-slip-wrap { animation: acc-print 420ms var(--ease-out) backwards; }
+    @keyframes acc-print {
+      from { clip-path: inset(0 0 100% 0); transform: translateY(-0.6rem); }
+      to { clip-path: inset(-3rem); transform: none; }
+    }
+  }
 
   .acc-servers { display: grid; gap: var(--space-3); }
   .acc-servers-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); }

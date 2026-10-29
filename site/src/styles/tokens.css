@@ -33,6 +33,9 @@
     --receipt-ink: oklch(24% 0.035 80);
     --receipt-ink-soft: oklch(42% 0.035 80);
     --receipt-line: oklch(74% 0.04 85);
+    --receipt-plus: oklch(40% 0.12 158);
+    --receipt-minus: oklch(46% 0.19 25);
+    --receipt-focus: oklch(47% 0.25 289);
 
     /* ---- tinta ---- */
     --ink: light-dark(oklch(21% 0.045 292), oklch(95.5% 0.014 300));
