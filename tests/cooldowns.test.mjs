@@ -35,6 +35,9 @@ function linesOf(value) {
 
 const READY = ["✅", "Pronto para uso"];
 
+// o Gozofone de quem não é casado(a): a linha existe, mas não está pronta nem esperando
+const LOCKED = ["💍", "Só para casais"];
+
 // o relógio do Discord: <t:quando:R>, "em 2 horas"
 const waitsUntil = (line, when) => assert.deepEqual(line, ["⏳", `<t:${when}:R>`]);
 
@@ -67,7 +70,8 @@ test("tudo pronto: '✅ Pronto para uso' em todas as linhas, nos dois grupos, se
     assert.deepEqual(Object.entries(linesOf(legal.value)), [
         ["Trabalhar", READY],
         ["Recompensa diária", READY],
-        ["Bônus de gemas", READY]
+        ["Bônus de gemas", READY],
+        ["Gozofone", LOCKED]
     ]);
 
     assert.deepEqual(Object.entries(linesOf(illegal.value)), [
@@ -116,7 +120,7 @@ test("preso: a cadeia aparece no grupo ilegal, com o relógio de quando sai", ()
 test("as atividades vêm das mesmas fontes do jogo (daily e gemas pelo serviço, não por coluna solta)", () => {
     const data = cooldownsOf(G, ME.id, NOW);
 
-    assert.deepEqual(data.legal.map(item => item.label), ["Trabalhar", "Recompensa diária", "Bônus de gemas"]);
+    assert.deepEqual(data.legal.map(item => item.label), ["Trabalhar", "Recompensa diária", "Bônus de gemas", "Gozofone"]);
     assert.deepEqual(data.illegal.map(item => item.label), ["Crime", "Roubar", "Lavagem"]);
     assert.equal(data.prison, null);
 });
@@ -233,12 +237,18 @@ function marry() {
     }
 }
 
-test("Gozofone: só quem é casado(a) vê a linha, como a última do grupo Legal", () => {
+test("Gozofone: a linha é a última do grupo Legal para todos; sem casamento diz 'Só para casais'", () => {
     set("DELETE FROM marriages WHERE guild_id = ?", G);
 
     assert.deepEqual(callWait(G, ME.id, NOW), { married: false, remaining: 0 });
-    assert.ok(!cooldownsOf(G, ME.id, NOW).legal.some(item => item.label === "Gozofone"));
-    assert.doesNotMatch(buildCooldowns({ guildId: G, user: ME, now: NOW }).embed.fields[0].value, /Gozofone/);
+    assert.ok(cooldownsOf(G, ME.id, NOW).legal.some(item => item.label === "Gozofone"));
+
+    const single = buildCooldowns({ guildId: G, user: ME, now: NOW });
+
+    // nem pronto (o comando recusaria) nem esperando (não entra na conta dos que esperam)
+    assert.deepEqual(Object.entries(linesOf(single.embed.fields[0].value)).at(-1), ["Gozofone", LOCKED]);
+    assert.ok(JSON.stringify(single.layout).includes("💍 **Gozofone:** Só para casais"));
+    assert.equal(single.waiting, 0);
 
     marry();
 

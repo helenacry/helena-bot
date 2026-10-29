@@ -44,7 +44,7 @@ import { button, row } from "../panels/panel-kit.mjs";
 
 // Uma tela só para o /cooldowns e para o botão "Atualizar": o comando abre, o botão
 // refaz a mesma tela com a hora de agora. Dois grupos, como numa lista de afazeres:
-// o que é legal (trabalho, daily, gemas e, para casados, o Gozofone) e o que é ilegal (crime, roubo, lavagem e, se
+// o que é legal (trabalho, daily, gemas e o Gozofone) e o que é ilegal (crime, roubo, lavagem e, se
 // estiver preso, a cadeia). Uma linha por atividade: ✅ "Pronto para uso" ou ⏳ com o relógio
 // do próprio Discord (<t:...:R>, "em 2 horas"), que continua contando sozinho e aparece no
 // idioma de quem lê. O "atualizado" do alto usa o mesmo relógio.
@@ -58,6 +58,14 @@ function line(label, remaining, now, mark = "⏳") {
     return `${icon(mark)} **${label}:** <t:${now + Math.ceil(remaining)}:R>`;
 }
 
+// A linha de quem ainda não pode usar a atividade: não está pronta nem esperando, então não
+// ganha o ✅ (o comando recusaria) nem conta entre os que esperam.
+function lockedLine(item) {
+    return `${icon("💍")} **${item.label}:** ${item.locked}`;
+}
+
+const showLine = (item, now) => item.locked ? lockedLine(item) : line(item.label, item.remaining, now);
+
 // Os tempos de cada atividade do jogador neste servidor. Só leitura (menos o registro
 // do jogador, que o jogo cria na primeira vez de qualquer jeito).
 export function cooldownsOf(guildId, userId, now = Math.floor(Date.now() / 1000)) {
@@ -67,7 +75,8 @@ export function cooldownsOf(guildId, userId, now = Math.floor(Date.now() / 1000)
 
     const prison = getPrison(guildId, userId, now);
 
-    // O Gozofone só existe para quem é casado(a): sem casamento a linha nem aparece.
+    // O Gozofone é para quem é casado(a), mas a linha aparece para todos: sem casamento ela
+    // diz isso, em vez de sumir e deixar a pessoa sem saber onde foi parar.
     const call = callWait(guildId, userId, now);
 
     return {
@@ -75,7 +84,9 @@ export function cooldownsOf(guildId, userId, now = Math.floor(Date.now() / 1000)
             { label: "Trabalhar", remaining: getRemaining(player[COOLDOWNS.work.column], COOLDOWNS.work.duration, now) },
             { label: "Recompensa diária", remaining: getDailyStatus(guildId, userId, now).remaining },
             { label: "Bônus de gemas", remaining: getGemBonusStatus(userId, now).remaining },
-            ...(call.married ? [{ label: "Gozofone", remaining: call.remaining }] : [])
+            call.married
+                ? { label: "Gozofone", remaining: call.remaining }
+                : { label: "Gozofone", remaining: 0, locked: "Só para casais" }
         ],
 
         illegal: [
@@ -93,9 +104,9 @@ export function buildCooldowns({ guildId, user, now = Math.floor(Date.now() / 10
 
     const data = cooldownsOf(guildId, userId, now);
 
-    const legal = data.legal.map(item => line(item.label, item.remaining, now)).join("\n");
+    const legal = data.legal.map(item => showLine(item, now)).join("\n");
 
-    const illegalLines = data.illegal.map(item => line(item.label, item.remaining, now));
+    const illegalLines = data.illegal.map(item => showLine(item, now));
 
     if (data.prison) {
         illegalLines.push(line("Cadeia", data.prison.remaining, now, "🔒"));
