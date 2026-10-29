@@ -13,6 +13,8 @@ import { fileURLToPath } from "node:url";
 
 import { SITE_URL } from "../../config/site.mjs";
 
+import { SITE, OG_IMAGE_VERSION } from "../src/config.ts";
+
 // O caminho antigo do Pages, que sai do endereço novo.
 const OLD_BASE = "/helena-bot";
 
@@ -33,6 +35,14 @@ export function redirectPage() {
   <title>A Helena mudou de endereço</title>
   <meta name="robots" content="noindex">
   <link rel="canonical" href="${SITE_URL}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="${SITE.name} | Bot de economia e RPG para o Discord">
+  <meta property="og:description" content="${SITE.description}">
+  <meta property="og:url" content="${SITE_URL}">
+  <meta property="og:image" content="${SITE_URL}og-default.png?v=${OG_IMAGE_VERSION}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <meta http-equiv="refresh" content="0; url=${SITE_URL}">
   <script>${script}
   </script>

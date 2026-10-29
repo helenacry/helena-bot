@@ -11,6 +11,11 @@
 // site:test usa isso para testar o login com um aplicativo de teste).
 const DISCORD_CLIENT_ID: string = String(import.meta.env?.PUBLIC_DISCORD_CLIENT_ID ?? "1559308576537714710");
 
+// Sobe quando a imagem de compartilhamento (public/og-default.png) muda: o Discord e as redes guardam a
+// prévia de um link pelo endereço da imagem, então sem isso a arte antiga continua aparecendo por dias.
+// Vale para o site e para a página de redirecionamento do endereço antigo (scripts/build-redirect.mjs).
+export const OG_IMAGE_VERSION = 2;
+
 export const SITE = {
   name: "Helena",
   description:
