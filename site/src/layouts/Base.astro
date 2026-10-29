@@ -44,7 +44,11 @@ const {
 
 const fullTitle = home ? `${title} | Bot de economia e RPG para o Discord` : `${title} | ${SITE.name}`;
 const canonical = absolute(path, Astro.site);
-const imageUrl = absolute(image, Astro.site);
+// O ?v= sobe quando a imagem de compartilhamento muda: o Discord e as redes guardam a prévia de um link
+// pelo endereço da imagem, então sem isso a arte antiga continua aparecendo por dias.
+const OG_VERSION = 2;
+
+const imageUrl = absolute(image, Astro.site) + `?v=${OG_VERSION}`;
 
 // Pinta o tema e marca "tem JS" antes da primeira pintura, para não piscar.
 const bootstrap = `(function(){var r=document.documentElement;r.classList.add("js");var t=null;try{t=localStorage.getItem("helena-theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}r.dataset.theme=t;})();`;
