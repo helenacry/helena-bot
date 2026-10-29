@@ -15,6 +15,7 @@ import { getPrison } from "../crime/prison.mjs";
 import { knowsGuild } from "../platform/guild-registry.mjs";
 import { blocked, isOwner, maintenance } from "../platform/developer.mjs";
 import { discordApi } from "../discord/api.mjs";
+import { createCloudflareMatcher, isLoopback, parseExtraRanges } from "./cloudflare.mjs";
 import { createStaticSite } from "./static-site.mjs";
 import { avatarUrl as discordAvatar } from "../discord/normalize.mjs";
 
@@ -118,6 +119,8 @@ export function loadWebConfig(env = process.env) {
     const redirects = list(env.HELENA_OAUTH_REDIRECTS);
     const clientId = String(env.HELENA_OAUTH_CLIENT_ID ?? "").trim();
 
+    const extraRanges = parseExtraRanges(env.HELENA_WEB_CLOUDFLARE_IPS);
+
     const missing = [];
 
     if (!origins.length) missing.push("HELENA_WEB_ORIGINS");
@@ -138,6 +141,15 @@ export function loadWebConfig(env = process.env) {
         clientSecret: String(env.HELENA_OAUTH_CLIENT_SECRET ?? "").trim() || null,
         turnstileSecret: String(env.HELENA_TURNSTILE_SECRET ?? "").trim() || null,
         trustProxy: trustProxyMode(env.HELENA_WEB_TRUST_PROXY),
+
+        // No modo cloudflare, o CF-Connecting-IP só vale se o pedido veio de um endereço da Cloudflare
+        // (config/cloudflare-ips.mjs). HELENA_WEB_CLOUDFLARE_IPS acrescenta faixas (separadas por vírgula,
+        // como 203.0.113.0/24); HELENA_WEB_VERIFY_CLOUDFLARE=off desliga a conferência.
+        verifyCloudflare: !["off", "0", "false", "no", "nao", "não"].includes(
+            String(env.HELENA_WEB_VERIFY_CLOUDFLARE ?? "").trim().toLowerCase()
+        ),
+        cloudflareRanges: extraRanges.ranges,
+        cloudflareInvalid: extraRanges.invalid,
 
         // Atrás de um proxy confiável, quem chega por http vai para https e as respostas https
         // levam HSTS. HELENA_WEB_FORCE_HTTPS=off desliga (se a hospedagem se confundir).
@@ -236,32 +248,99 @@ export function createWebApi(config, deps = {}) {
     const origins = new Set(config.origins);
     const redirects = new Set(config.redirects);
 
+    // O endereço que o pedido diz ter vindo da Cloudflare só vale se ela mesma o entregou (veja clientIp).
+    const verifyCloudflare = config.verifyCloudflare !== false;
+    const isCloudflare = createCloudflareMatcher(config.cloudflareRanges ?? []);
+
     // ----------------------------------
     // utilidades
     // ----------------------------------
 
     // O IP do visitante, conforme HELENA_WEB_TRUST_PROXY (veja trustProxyMode):
     //
-    // "cloudflare": vale CF-Connecting-IP. Conferido no Discloud, que fica atrás da
-    // Cloudflare: o X-Forwarded-For e o X-Real-IP chegam sobrescritos com o IP da
-    // BORDA da Cloudflare (todos os visitantes pareceriam o mesmo), e forjar o
-    // CF-Connecting-IP é barrado pela própria Cloudflare (403). Só use este modo se
-    // o app só for alcançável por ela: fora dela, qualquer um escreveria esse cabeçalho.
+    // "cloudflare": vale CF-Connecting-IP, MAS só se o pedido veio mesmo da Cloudflare. Conferido no
+    // Discloud, que fica atrás dela: o X-Forwarded-For e o X-Real-IP chegam sobrescritos com o IP da
+    // BORDA da Cloudflare (todos os visitantes pareceriam o mesmo), e forjar o CF-Connecting-IP é
+    // barrado pela própria Cloudflare (403). Mas quem alcançasse o app por outro caminho, sem passar
+    // por ela, escreveria o que quisesse nesse cabeçalho e trocaria de "IP" a cada pedido, escapando
+    // dos limites. Por isso o cabeçalho só é lido quando QUEM FALOU COM O PROXY está nas faixas da
+    // Cloudflare (config/cloudflare-ips.mjs): esse endereço o proxy da hospedagem escreve, o visitante
+    // não. Veja cameThroughCloudflare.
     //
     // 1: o IP é o ÚLTIMO valor de X-Forwarded-For, o endereço que o proxy mais
     // próximo viu. O primeiro valor quem manda é o próprio visitante (com um IP novo
     // a cada pedido ele nunca chegaria ao limite).
     //
     // Sem o cabeçalho esperado, vale o endereço da conexão.
+
+    // Quem falou com o proxy da hospedagem: o último valor do X-Forwarded-For (que o proxy
+    // escreve) ou, sem ele, o endereço da própria conexão.
+    function peerOf(req) {
+        const hops = String(req.headers["x-forwarded-for"] ?? "").split(",").map(hop => hop.trim()).filter(Boolean);
+
+        return hops.length
+            ? { ip: hops[hops.length - 1].slice(0, 64), viaProxy: true }
+            : { ip: req.socket.remoteAddress ?? "", viaProxy: false };
+    }
+
+    // O pedido passou pela Cloudflare? Sim se quem chegou ao proxy está nas faixas dela. Sem proxy
+    // nenhum no meio, falando pelo próprio computador (o túnel do cloudflared), também: só algo
+    // instalado na máquina chega por ali.
+    function cameThroughCloudflare(req) {
+        if (!verifyCloudflare) {
+            return true;
+        }
+
+        const peer = peerOf(req);
+
+        return isCloudflare(peer.ip) || (!peer.viaProxy && isLoopback(peer.ip));
+    }
+
+    // O aviso de um CF-Connecting-IP que não veio da Cloudflare: uma vez por endereço (no máximo 20),
+    // para uma enxurrada não encher o log. Se for a própria Cloudflare com uma faixa nova, o aviso diz
+    // onde cadastrar.
+    const distrusted = new Set();
+
+    function warnDistrusted(peerIp) {
+        if (distrusted.has(peerIp) || distrusted.size >= 20) {
+            return;
+        }
+
+        distrusted.add(peerIp);
+
+        console.warn(
+            `[WEB] CF-Connecting-IP ignorado: o pedido veio de ${peerIp || "?"}, que não está nas faixas da Cloudflare. ` +
+            "Valeu o endereço de quem chegou. Se for a própria Cloudflare (faixa nova), acrescente a faixa em HELENA_WEB_CLOUDFLARE_IPS."
+        );
+    }
+
     function clientIp(req) {
         let ip = req.socket.remoteAddress ?? "";
+
+        let attested = null;
 
         if (config.trustProxy === "cloudflare") {
             const real = String(req.headers["cf-connecting-ip"] ?? "").trim();
 
-            // só algo com cara de IP (v4 ou v6)
-            if (/^[0-9a-fA-F:.]{3,45}$/.test(real)) {
-                ip = real;
+            attested = cameThroughCloudflare(req);
+
+            if (attested) {
+                // só algo com cara de IP (v4 ou v6)
+                if (/^[0-9a-fA-F:.]{3,45}$/.test(real)) {
+                    ip = real;
+                }
+
+            } else {
+                // não veio da Cloudflare: o cabeçalho é de quem quiser, e vale quem chegou ao proxy
+                const peer = peerOf(req);
+
+                if (peer.ip) {
+                    ip = peer.ip;
+                }
+
+                if (real) {
+                    warnDistrusted(peer.ip);
+                }
             }
 
         } else if (config.trustProxy) {
@@ -273,7 +352,7 @@ export function createWebApi(config, deps = {}) {
             }
         }
 
-        debugIpOnce(req, ip);
+        debugIpOnce(req, ip, attested);
 
         return ip;
     }
@@ -282,7 +361,7 @@ export function createWebApi(config, deps = {}) {
     // API enxergou: serve para conferir, na hospedagem, se o IP real está chegando.
     const seenIps = new Set();
 
-    function debugIpOnce(req, ip) {
+    function debugIpOnce(req, ip, attested = null) {
         if (!config.debugIp || seenIps.has(ip) || seenIps.size >= 20) {
             return;
         }
@@ -292,7 +371,8 @@ export function createWebApi(config, deps = {}) {
         console.log(
             `[WEB] IP visto: ${ip} | conexão=${req.socket.remoteAddress ?? ""} | ` +
             `x-forwarded-for="${String(req.headers["x-forwarded-for"] ?? "").slice(0, 120)}" | ` +
-            `x-real-ip="${String(req.headers["x-real-ip"] ?? "").slice(0, 64)}"`
+            `x-real-ip="${String(req.headers["x-real-ip"] ?? "").slice(0, 64)}"` +
+            (attested === null ? "" : ` | veio-da-cloudflare=${attested ? "sim" : "nao"}`)
         );
     }
 
@@ -1185,6 +1265,19 @@ export async function startWebApi(env = process.env, deps = {}) {
     if (!config.turnstileSecret) {
         console.warn(
             "[WEB] Sem HELENA_TURNSTILE_SECRET: as coletas ficam SEM verificação anti-robô."
+        );
+    }
+
+    if (config.cloudflareInvalid.length) {
+        console.warn(
+            `[WEB] HELENA_WEB_CLOUDFLARE_IPS: ignorei o que não é uma faixa válida (use algo como 203.0.113.0/24): ${config.cloudflareInvalid.join(", ")}`
+        );
+    }
+
+    if (config.trustProxy === "cloudflare" && !config.verifyCloudflare) {
+        console.warn(
+            "[WEB] HELENA_WEB_VERIFY_CLOUDFLARE=off: o CF-Connecting-IP vale sem conferir de onde o pedido veio. " +
+            "Só é seguro se o app for alcançável SOMENTE pela Cloudflare."
         );
     }
 

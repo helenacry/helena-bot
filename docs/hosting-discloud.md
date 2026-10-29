@@ -13,7 +13,7 @@ O bot e a API do painel rodam **juntos** num app `TYPE=site` do Discloud (plano 
 | Gateway | a conexão WebSocket com `wss://gateway.discord.gg` abre (o `hello` chega em menos de 0,4 s) |
 | Variáveis | as da aba Variáveis do painel viram variáveis de ambiente de verdade, mas só valem depois de um **rebuild ou deploy** |
 | Endereço | `https://<ID>.discloud.dev`, com HTTPS válido (a documentação cita `.discloud.app`, que **não resolve**); o app escuta na **porta 8080, em 0.0.0.0** |
-| IP do visitante | o Discloud fica atrás da Cloudflare: `X-Forwarded-For` e `X-Real-IP` chegam com o IP da **borda**, e o IP real vem em `CF-Connecting-IP` (forjar esse é barrado com 403). Use `HELENA_WEB_TRUST_PROXY=cloudflare` |
+| IP do visitante | o Discloud fica atrás da Cloudflare: `X-Forwarded-For` e `X-Real-IP` chegam com o IP da **borda**, e o IP real vem em `CF-Connecting-IP` (forjar esse é barrado com 403). Use `HELENA_WEB_TRUST_PROXY=cloudflare`. A API só confia nesse cabeçalho quando o último valor do `X-Forwarded-For` (o endereço que o proxy do Discloud viu) está nas faixas da Cloudflare (`config/cloudflare-ips.mjs`); pedido que chegasse ao app sem passar por ela vale pelo endereço de quem chegou, e não pelo que escreveu no cabeçalho |
 | Fontes do cartão | o Poppins vai no projeto (`assets/fonts/`) e o cartão o usa; os emojis comuns de nome, bio e cônjuge são desenhados como imagem (Twemoji); **japonês e coreano** continuam virando quadradinhos (as fontes do sistema são só as do contêiner, DejaVu) |
 | Backups | no plano Diamond há backup automático diário de cada app, guardado por uns 7 dias |
 
@@ -35,7 +35,7 @@ O projeto traz o `discloud.config` (site, `helena.mjs`, 512 MB, `START=node hele
 
 **Atualizar o bot depois:** `npm run discloud:zip -- --force` e envie na aba Commit. Se mudar só uma variável, salve e faça **Rebuild** (a aba avisa).
 
-**Conferir o IP real:** ligue `HELENA_WEB_DEBUG_IP=1` (e faça Rebuild), abra `https://<ID>.discloud.dev/api/health` e veja no log a linha `IP visto`: deve ser o seu IP, vindo do `CF-Connecting-IP`. Desligue depois.
+**Conferir o IP real:** ligue `HELENA_WEB_DEBUG_IP=1` (e faça Rebuild), abra `https://<ID>.discloud.dev/api/me` e veja no log a linha `IP visto`: deve ser o seu IP, vindo do `CF-Connecting-IP`, e terminar em `veio-da-cloudflare=sim`. Se terminar em `nao`, o log traz também o aviso `CF-Connecting-IP ignorado: o pedido veio de <endereço>`: aquele endereço é o que o proxy do Discloud entregou. Se for uma faixa da Cloudflare que a lista não tem, acrescente-a em `HELENA_WEB_CLOUDFLARE_IPS` (e faça Rebuild); se não for da Cloudflare, o Discloud não está entregando o que esperamos e vale parar e me avisar (`HELENA_WEB_VERIFY_CLOUDFLARE=off` volta ao comportamento antigo). Desligue o `HELENA_WEB_DEBUG_IP` depois.
 
 **Conferir o HTTPS:** depois de publicar, `curl -sI http://<ID>.discloud.dev/` deve responder `301` para `https://`, e `curl -sI https://<ID>.discloud.dev/` deve trazer `Strict-Transport-Security` e `Content-Security-Policy`. Se o site entrar em um redirecionamento sem fim, ponha `HELENA_WEB_FORCE_HTTPS=off` e faça Rebuild (e me avise, porque aí o `CF-Visitor` não está chegando como o esperado).
 

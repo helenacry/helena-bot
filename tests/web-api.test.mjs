@@ -803,14 +803,14 @@ test("modo cloudflare: cada visitante (CF-Connecting-IP) tem o seu limite, mesmo
     });
 });
 
-test("modo cloudflare: sem o cabeçalho, ou com lixo nele, vale o endereço da conexão (e o X-Forwarded-For não entra)", async () => {
+test("modo cloudflare: sem o cabeçalho, ou com lixo nele, vale o endereço da conexão", async () => {
     await withApi({ trustProxy: "cloudflare" }, async ctx => {
-        // sem CF-Connecting-IP e com o X-Forwarded-For mudando: todos caem na conexão e batem no mesmo limite
+        // sem CF-Connecting-IP (e sem proxy no meio, como num túnel na própria máquina): vale a conexão
         for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
-            await badLogin(ctx, { "X-Forwarded-For": `198.51.100.${i + 1}` });
+            await badLogin(ctx, {});
         }
 
-        assert.equal((await badLogin(ctx, { "X-Forwarded-For": "198.51.100.200" })).status, 429);
+        assert.equal((await badLogin(ctx, {})).status, 429);
 
         // algo que não é IP no cabeçalho também não vale
         assert.equal((await badLogin(ctx, { "CF-Connecting-IP": "isto-nao-e-ip; drop table" })).status, 429, "caiu na conexão, que já estourou o limite");
@@ -1941,4 +1941,244 @@ test("sem proxy confiável, ou com HELENA_WEB_FORCE_HTTPS=off, o servidor não r
             HELENA_WEB_FORCE_HTTPS: off
         }).forceHttps, false, off);
     }
+});
+
+// ==========================================
+// CLOUDFLARE: O CF-Connecting-IP SÓ VALE SE O PEDIDO VEIO DELA
+// ==========================================
+
+const { CLOUDFLARE_RANGES } = await import("../config/cloudflare-ips.mjs");
+const { createCloudflareMatcher, isLoopback, parseRange, parseExtraRanges } = await import("../services/web/cloudflare.mjs");
+
+// Quem chegou ao proxy da hospedagem (que escreve o X-Forwarded-For) e o que a Cloudflare disse do visitante.
+const edge = (peer, visitor) => ({ "X-Forwarded-For": peer, ...(visitor ? { "CF-Connecting-IP": visitor } : {}) });
+
+// pega os avisos do log enquanto roda
+async function withWarnings(fn) {
+    const warn = console.warn;
+    const lines = [];
+
+    console.warn = (...args) => { lines.push(args.join(" ")); };
+
+    try {
+        await fn(lines);
+    } finally {
+        console.warn = warn;
+    }
+}
+
+test("faixas da Cloudflare: a lista é válida e reconhece as bordas reais do Discloud, não os visitantes", () => {
+    assert.ok(CLOUDFLARE_RANGES.length >= 20);
+
+    for (const range of CLOUDFLARE_RANGES) {
+        assert.notEqual(parseRange(range), null, `faixa inválida: ${range}`);
+    }
+
+    const isCloudflare = createCloudflareMatcher();
+
+    // as bordas que o Discloud entregou no X-Forwarded-For (amostras reais dos testes de hospedagem)
+    for (const edgeIp of ["172.69.138.56", "172.71.234.8", "104.16.0.1", "2606:4700::1", "2a06:98c1:3120::1"]) {
+        assert.equal(isCloudflare(edgeIp), true, edgeIp);
+    }
+
+    // IPv4 "mapeado" em IPv6, com colchetes e com zona: vale o que está dentro
+    assert.equal(isCloudflare("::ffff:172.69.138.56"), true);
+    assert.equal(isCloudflare("[2606:4700::1]"), true);
+    assert.equal(isCloudflare("2606:4700::1%eth0"), true);
+
+    // visitantes (o IPv6 é o de um visitante real) e lixo
+    for (const other of ["203.0.113.9", "198.51.100.7", "2804:16d8:a9be:100:546b:325b:2fa0:5f54", "127.0.0.1", "10.0.0.1", "172.63.255.255", "172.72.0.0", "", undefined, null, "lixo", "1.2.3", "999.1.1.1"]) {
+        assert.equal(isCloudflare(other), false, String(other));
+    }
+
+    // faixas a mais (HELENA_WEB_CLOUDFLARE_IPS)
+    const withExtra = createCloudflareMatcher(["198.51.100.0/24", "lixo", "1.2.3.4/99"]);
+
+    assert.equal(withExtra("198.51.100.7"), true);
+    assert.equal(withExtra("198.51.101.7"), false);
+    assert.equal(withExtra("172.69.138.56"), true, "as da lista oficial continuam");
+});
+
+test("faixas escritas pela pessoa: o que não é faixa válida é separado, e o loopback é só da própria máquina", () => {
+    assert.deepEqual(parseExtraRanges(" 198.51.100.0/24 , 2001:db8::/32,,lixo, 1.2.3.4/33,1.2.3.4, 10.0.0.0/8/8 "), {
+        ranges: ["198.51.100.0/24", "2001:db8::/32"],
+        invalid: ["lixo", "1.2.3.4/33", "1.2.3.4", "10.0.0.0/8/8"]
+    });
+
+    assert.deepEqual(parseExtraRanges(undefined), { ranges: [], invalid: [] });
+
+    assert.equal(parseRange("1.2.3.4/32").prefix, 32);
+    assert.equal(parseRange("::/0").family, "ipv6");
+    assert.equal(parseRange("::1/129"), null);
+
+    for (const local of ["127.0.0.1", "127.9.9.9", "::1", "::ffff:127.0.0.1", "[::1]"]) {
+        assert.equal(isLoopback(local), true, local);
+    }
+
+    for (const other of ["10.0.0.1", "172.17.0.2", "192.168.1.1", "203.0.113.9", "::2", "lixo", "", undefined]) {
+        assert.equal(isLoopback(other), false, String(other));
+    }
+});
+
+test("pedido que não veio da Cloudflare não escolhe o próprio IP: o CF-Connecting-IP forjado é ignorado", async () => {
+    await withWarnings(async warnings => {
+        await withApi({ trustProxy: "cloudflare" }, async ctx => {
+            // alguém chegou ao proxy da hospedagem sem passar pela Cloudflare (198.51.100.7) e troca de "IP" a cada pedido
+            for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
+                const result = await badLogin(ctx, edge("198.51.100.7", `203.0.113.${i + 1}`));
+
+                assert.equal(result.status, 401, "ainda dentro do limite");
+            }
+
+            assert.equal((await badLogin(ctx, edge("198.51.100.7", "203.0.113.200"))).status, 429, "o IP de verdade é que conta");
+
+            // um primeiro valor "da Cloudflare" escrito pelo visitante também não ajuda: o proxy acrescenta o dele no fim
+            assert.equal((await badLogin(ctx, edge("172.69.138.56, 198.51.100.7", "203.0.113.201"))).status, 429);
+
+            // sem CF-Connecting-IP (a Cloudflare sempre põe) também conta pelo endereço de quem chegou
+            assert.equal((await badLogin(ctx, edge("198.51.100.7"))).status, 429);
+
+            // outra pessoa, de outro endereço, não é afetada
+            assert.equal((await badLogin(ctx, edge("198.51.100.8", "203.0.113.1"))).status, 401);
+
+            // o visitante que veio mesmo pela Cloudflare (borda 172.69.138.56) segue valendo pelo CF-Connecting-IP
+            assert.equal((await badLogin(ctx, edge("172.69.138.56", "203.0.113.50"))).status, 401);
+            assert.equal((await badLogin(ctx, edge("172.69.138.56", "203.0.113.51"))).status, 401, "cada visitante tem o seu limite");
+        });
+
+        // um aviso por endereço, e o texto diz onde cadastrar uma faixa nova
+        const ignored = warnings.filter(line => line.includes("CF-Connecting-IP ignorado"));
+
+        assert.equal(ignored.filter(line => line.includes("198.51.100.7")).length, 1, "uma vez só, não a cada pedido");
+        assert.equal(ignored.filter(line => line.includes("198.51.100.8")).length, 1);
+        assert.match(ignored[0], /HELENA_WEB_CLOUDFLARE_IPS/);
+        assert.equal(ignored.some(line => line.includes("172.69.138.56")), false, "a borda de verdade não gera aviso");
+    });
+});
+
+test("sem proxy no meio: o túnel na própria máquina vale; o loopback com um X-Forwarded-For de fora, não", async () => {
+    await withApi({ trustProxy: "cloudflare" }, async ctx => {
+        // o cloudflared fala pela própria máquina e escreve o CF-Connecting-IP: vale
+        for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
+            assert.equal((await badLogin(ctx, { "CF-Connecting-IP": "203.0.113.9" })).status, 401);
+        }
+
+        assert.equal((await badLogin(ctx, { "CF-Connecting-IP": "203.0.113.9" })).status, 429);
+        assert.equal((await badLogin(ctx, { "CF-Connecting-IP": "203.0.113.10" })).status, 401, "outro visitante, outro limite");
+    });
+
+    await withWarnings(async () => {
+        await withApi({ trustProxy: "cloudflare" }, async ctx => {
+            // o mesmo loopback, mas com um proxy dizendo que o pedido veio de fora da Cloudflare: o cabeçalho não vale
+            for (let i = 0; i < WEB_CONFIG.limits.login.max; i++) {
+                await badLogin(ctx, edge("198.51.100.7", `203.0.113.${i + 1}`));
+            }
+
+            assert.equal((await badLogin(ctx, edge("198.51.100.7", "203.0.113.99"))).status, 429);
+        });
+    });
+});
+
+test("HELENA_WEB_VERIFY_CLOUDFLARE=off devolve o comportamento antigo, e faixas a mais passam a valer", async () => {
+    await withWarnings(async warnings => {
+        // sem conferir: o CF-Connecting-IP vale de qualquer origem (só é seguro se o app só for alcançável pela Cloudflare)
+        await withApi({ trustProxy: "cloudflare", verifyCloudflare: false }, async ctx => {
+            for (let i = 0; i < WEB_CONFIG.limits.login.max + 3; i++) {
+                assert.equal((await badLogin(ctx, edge("198.51.100.7", `203.0.113.${i + 1}`))).status, 401);
+            }
+        });
+
+        // uma faixa nova cadastrada por quem opera: o pedido dela é atestado
+        await withApi({ trustProxy: "cloudflare", cloudflareRanges: ["198.51.100.0/24"] }, async ctx => {
+            for (let i = 0; i < WEB_CONFIG.limits.login.max + 3; i++) {
+                assert.equal((await badLogin(ctx, edge("198.51.100.7", `203.0.113.${i + 1}`))).status, 401, "cada visitante tem o seu limite");
+            }
+        });
+
+        assert.equal(warnings.some(line => line.includes("CF-Connecting-IP ignorado")), false);
+    });
+});
+
+test("o diagnóstico (HELENA_WEB_DEBUG_IP) diz se o pedido veio da Cloudflare", async () => {
+    const lines = [];
+    const original = console.log;
+    const warn = console.warn;
+
+    console.log = (...args) => { lines.push(args.join(" ")); };
+    console.warn = () => {};
+
+    try {
+        await withApi({ trustProxy: "cloudflare", debugIp: true }, async ctx => {
+            await badLogin(ctx, edge("172.69.138.56", "203.0.113.50"));
+            await badLogin(ctx, edge("198.51.100.7", "203.0.113.51"));
+        });
+
+        await withApi({ trustProxy: true, debugIp: true }, async ctx => {
+            await badLogin(ctx, { "X-Forwarded-For": "203.0.113.60" });
+        });
+
+    } finally {
+        console.log = original;
+        console.warn = warn;
+    }
+
+    const seen = lines.filter(line => line.includes("[WEB] IP visto"));
+
+    assert.equal(seen.length, 3);
+    assert.match(seen[0], /IP visto: 203\.0\.113\.50 .*veio-da-cloudflare=sim/);
+    assert.match(seen[1], /IP visto: 198\.51\.100\.7 .*veio-da-cloudflare=nao/);
+    assert.doesNotMatch(seen[2], /veio-da-cloudflare/, "fora do modo cloudflare não há o que conferir");
+});
+
+test("configuração: a conferência da Cloudflare vem ligada, aceita faixas a mais e avisa das inválidas", () => {
+    const base = {
+        HELENA_WEB_PORT: "3000", HELENA_WEB_ORIGINS: SITE, HELENA_OAUTH_REDIRECTS: REDIRECT, HELENA_OAUTH_CLIENT_ID: "x",
+        HELENA_WEB_TRUST_PROXY: "cloudflare"
+    };
+
+    const config = loadWebConfig(base);
+
+    assert.equal(config.verifyCloudflare, true);
+    assert.deepEqual(config.cloudflareRanges, []);
+    assert.deepEqual(config.cloudflareInvalid, []);
+
+    const custom = loadWebConfig({ ...base, HELENA_WEB_CLOUDFLARE_IPS: "198.51.100.0/24, lixo", HELENA_WEB_VERIFY_CLOUDFLARE: "OFF" });
+
+    assert.equal(custom.verifyCloudflare, false);
+    assert.deepEqual(custom.cloudflareRanges, ["198.51.100.0/24"]);
+    assert.deepEqual(custom.cloudflareInvalid, ["lixo"]);
+
+    for (const off of ["off", "0", "false", "no", "não"]) {
+        assert.equal(loadWebConfig({ ...base, HELENA_WEB_VERIFY_CLOUDFLARE: off }).verifyCloudflare, false, off);
+    }
+});
+
+test("ao ligar a API, o log avisa de faixa inválida e de conferência desligada", async () => {
+    const warnings = [];
+    const log = console.log;
+    const warn = console.warn;
+
+    console.log = () => {};
+    console.warn = (...args) => { warnings.push(args.join(" ")); };
+
+    try {
+        await startWebApi({
+            HELENA_WEB_PORT: "0",
+            HELENA_WEB_ORIGINS: SITE,
+            HELENA_OAUTH_REDIRECTS: REDIRECT,
+            HELENA_OAUTH_CLIENT_ID: "app-id",
+            HELENA_WEB_TRUST_PROXY: "cloudflare",
+            HELENA_WEB_CLOUDFLARE_IPS: "198.51.100.0/24, lixo",
+            HELENA_WEB_VERIFY_CLOUDFLARE: "off"
+        });
+
+    } finally {
+        console.log = log;
+        console.warn = warn;
+
+        await stopWebApi();
+    }
+
+    assert.ok(warnings.some(line => line.includes("HELENA_WEB_CLOUDFLARE_IPS") && line.includes("lixo") && !line.includes("198.51.100.0/24")));
+    assert.ok(warnings.some(line => line.includes("HELENA_WEB_VERIFY_CLOUDFLARE=off")));
 });
