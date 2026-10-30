@@ -1,0 +1,11 @@
+# As actions do workflow ficam fixadas por SHA (o comentário "# v7" ao lado diz a versão). O Dependabot
+# abre um pull request quando sai versão nova, já com o SHA novo, para a fixação não ficar parada.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
