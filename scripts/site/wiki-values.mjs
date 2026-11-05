@@ -210,8 +210,10 @@ export async function collectWikiBot() {
             capMax: reais(ROBBERY_CONFIG.capMax),
             clean: percent(ROBBERY_CONFIG.cleanShare),
             dirty: percent(1 - ROBBERY_CONFIG.cleanShare),
-            retaliation: percent(ROBBERY_CONFIG.retaliationChance),
-            retaliationHp: range(ROBBERY_CONFIG.retaliationHp.min, ROBBERY_CONFIG.retaliationHp.max),
+            reactionWindow: duration(ROBBERY_CONFIG.reaction.windowSeconds),
+            reactionInjury: ROBBERY_CONFIG.reaction.injury,
+            reactionHp: String(ROBBERY_CONFIG.injuryLevels.find(level => level.name === ROBBERY_CONFIG.reaction.injury).hp),
+            defaultReaction: String(crime.REACTION_DEFAULT_CHANCE),
             escapeInjury: percent(ROBBERY_CONFIG.escapeInjuryChance),
             defaultChance: String(crime.ROBBERY_DEFAULT_CHANCE),
             injuries: ROBBERY_CONFIG.injuryLevels
@@ -336,6 +338,23 @@ export async function collectWikiBot() {
             String(item.damage || DUEL_RULES.defaultWeaponDamage),
             reais(item.buyPrice),
             `${crime.ROBBERY_WEAPON_CHANCE[item.id] ?? crime.ROBBERY_DEFAULT_CHANCE}%`
+        ])
+    );
+
+    tables["shelf-life"] = table(
+        ["Item", "Vence"],
+        ITEMS.filter(item => item.shelfLife).map(item => [
+            `${item.emoji} ${item.name}`,
+            `${duration(item.shelfLife)} depois da compra`
+        ])
+    );
+
+    tables["robbery-reaction"] = table(
+        ["Arma", "Tipo", "Chance de acertar ao reagir"],
+        weapons.map(item => [
+            `${item.emoji} ${item.name} ${code(item.id)}`,
+            item.weaponType === "firearm" ? "Fogo (gasta 1 bala)" : "Branca",
+            `${crime.REACTION_WEAPON_CHANCE[item.id] ?? crime.REACTION_DEFAULT_CHANCE}%`
         ])
     );
 

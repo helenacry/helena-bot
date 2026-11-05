@@ -10,6 +10,8 @@ import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
 import { getInventory } from "../economy/inventory.mjs";
 
+import { shelfLifeNote } from "../economy/food.mjs";
+
 import {
     getMarket,
     buyPriceOf,
@@ -300,6 +302,7 @@ function shelfLayout({
 
                 [
                     item.description,
+                    ...(shelfLifeNote(item) ? [shelfLifeNote(item)] : []),
                     ...(weapon ? [weapon] : []),
                     `${status[index].text} · 🎒 ${have}${stack}${sell}`
                 ].join("\n")
@@ -472,6 +475,13 @@ export function buildShopView({
             `**${formatMoney(item.buyPrice)}** · venda ${sell}`,
             item.description
         ];
+
+        // comida: o prazo vale a partir da compra, e a pessoa vê isso antes de pagar
+        const shelf = shelfLifeNote(item);
+
+        if (shelf) {
+            lines.push(shelf);
+        }
 
         const weapon = weaponInfo(item).trim();
 

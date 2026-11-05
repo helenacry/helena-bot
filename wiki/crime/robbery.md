@@ -45,16 +45,28 @@ Depois de um roubo bem-sucedido ainda existe a chance de **{{v:robbery.escapeInj
 ## Se der errado
 
 - Você **não vai preso**. Perde a energia e a espera, e a tentativa entra na sua ficha criminal.
-- Se o alvo estava **armado** (e, com arma de fogo, tinha munição), existe **{{v:robbery.retaliation}} de chance de revide**: você perde de {{v:robbery.retaliationHp}} de vida.
 - Se a carteira do alvo tinha **{{v:robbery.minTarget}} ou menos**, o roubo **sempre falha**. Não vale tentar.
 
 > [!WARNING]
 > Toda tentativa de roubo, dando certo ou não, soma um registro na ficha criminal e coloca você em `/procurados`.
 
+## O alvo pode reagir
+
+Não existe mais revide automático. Quem foi alvo de uma tentativa de roubo, **dando certo ou não**, e está armado recebe, na própria resposta do `/roubar`, uma menção e o botão **Reagir**.
+
+- Só o alvo vê a opção funcionar: o botão vale por **{{v:robbery.reactionWindow}}** e dá **uma chance** por roubo.
+- Para receber o botão, o alvo precisa de uma **arma equipada** e, com arma de fogo, de **pelo menos 1 bala**. Quem está preso não reage.
+- O tiro gasta **1 bala**, acertando ou não. Arma branca não gasta nada.
+- A chance de acertar depende da arma do alvo. Arma que não está na tabela usa **{{v:robbery.defaultReaction}}%**.
+- Se acerta, o ladrão leva um ferimento **{{v:robbery.reactionInjury}}** ({{v:robbery.reactionHp}} de vida) e precisa do `/curar`. O dinheiro roubado **não volta**.
+- Um ladrão que já está com menos de **{{v:robbery.minHp}} de vida** não leva o tiro, e a bala do alvo é poupada.
+
+{{table:robbery-reaction}}
+
 ## Como não ser roubado
 
 - **Deposite** o que não vai usar agora. O banco não pode ser roubado.
-- Ter uma arma equipada e com munição dá ao ladrão frustrado o risco do revide.
+- Tenha uma **arma equipada** e munição: quem rouba você arrisca levar um tiro, e a chance depende da arma que você carrega.
 
 ## Próximo passo
 

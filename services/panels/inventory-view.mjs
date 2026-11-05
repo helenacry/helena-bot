@@ -14,6 +14,12 @@ import {
 import { getEquippedWeapon } from "../combat/equipment.mjs";
 
 import {
+    expiredNotice,
+    foodStatus,
+    remainingText
+} from "../economy/food.mjs";
+
+import {
     getMarket,
     sellPriceOf,
     isHot
@@ -82,6 +88,9 @@ export function buildInventoryView({
     category = ALL_SHELVES,
     page = 1
 }) {
+    // Comida vencida sai da mochila antes de a lista ser lida; o aviso aparece no topo.
+    const food = foodStatus(guildId, userId);
+
     const inventory = getInventory(guildId, userId);
 
     const stats = getInventoryStats(guildId, userId);
@@ -154,7 +163,12 @@ export function buildInventoryView({
                 (isHot(entry.item, market) ? " 🔥" : "")
             : "";
 
-        const line = `${mark}${entry.emoji} **${entry.name}** ×${entry.quantity}${sells}`;
+        // Comida: quanto falta para a unidade mais antiga vencer.
+        const deadline = food.deadlines[entry.item_id];
+
+        const due = deadline ? ` · ⏳ ${remainingText(deadline.remaining)}` : "";
+
+        const line = `${mark}${entry.emoji} **${entry.name}** ×${entry.quantity}${sells}${due}`;
 
         lines.push(line);
 
@@ -168,7 +182,8 @@ export function buildInventoryView({
     const summary =
         `📂 **${label}** · **${plural(stats.uniqueItems, "item diferente", "itens diferentes")}** · ` +
         `**${stats.totalQuantity}** no total` +
-        (equipped ? "\n🟢 arma equipada" : "");
+        (equipped ? "\n🟢 arma equipada" : "") +
+        (food.expired.length ? "\n" + expiredNotice(food.expired) : "");
 
     const embed = ledgerEmbed({
         section: "Inventário",

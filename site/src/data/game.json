@@ -376,7 +376,7 @@
         {
           "name": "ping",
           "aliases": [],
-          "description": "Verifica se o bot está funcionando"
+          "description": "Mostra se o bot está no ar e se a lentidão é da Helena ou do Discord"
         }
       ]
     }

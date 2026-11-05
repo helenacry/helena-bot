@@ -170,32 +170,174 @@ test("alvo sem registro não é criado nem alterado", () => {
     assert.equal(get("SELECT COUNT(*) c FROM players WHERE guild_id=? AND user_id=?", G, "fantasma").c, 0);
 });
 
-test("revide: alvo armado fere o ladrão quando o roubo falha", () => {
+test("não há revide automático: o roubo que falha não fere o ladrão, mesmo com o alvo armado", () => {
     reset();
     arm(THIEF, "revolver");
     arm(VICTIM, "pistol", 3);
 
-    // falha (0.99); revide (0.1 < 50%); dano 30 + floor(0*21) = 30
-    const result = attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99, 0.1, 0) });
+    const result = attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99) });
 
-    assert.equal(result.retaliated, true);
-    assert.equal(result.hpLost, 30);
-    assert.equal(hp(THIEF), 70);
-    assert.equal(gear(VICTIM).ammo, 3, "o revide não gasta a munição do alvo");
+    assert.equal(result.success, false);
+    assert.equal("retaliated" in result, false);
+    assert.equal(hp(THIEF), 100, "quem reage é o alvo, pelo botão");
+    assert.equal(gear(VICTIM).ammo, 3, "e nada foi gasto da munição dele");
 });
 
-test("sem revide quando o alvo não tem munição ou não tem arma", () => {
+test("o alvo armado recebe a oferta de reagir, tendo dado certo ou errado", () => {
+    reset();
+    arm(THIEF, "revolver");
+    arm(VICTIM, "pistol", 3);
+
+    const failed = attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99) });
+
+    assert.deepEqual(failed.reaction, {
+        weapon: { id: "pistol", name: getItem("pistol").name, emoji: getItem("pistol").emoji },
+        chance: 40
+    });
+
+    reset();
+    arm(THIEF, "revolver", 5);
+    arm(VICTIM, "shotgun", 1);
+    set("UPDATE crime_players SET last_rob = 0 WHERE guild_id = ?", G);
+
+    const won = attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: WIN(0) });
+
+    assert.equal(won.success, true);
+    assert.equal(won.reaction.chance, 55, "a chance é da arma do alvo (a espingarda), não da do ladrão");
+});
+
+test("sem oferta de reação: alvo sem arma, arma de fogo descarregada ou preso; arma branca reage sem bala", () => {
+    reset();
+    arm(THIEF, "revolver");
+
+    assert.equal(attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99) }).reaction, null, "sem arma");
+
     reset();
     arm(THIEF, "revolver");
     arm(VICTIM, "pistol", 0);
 
-    const noAmmo = attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99, 0.1, 0) });
-    assert.equal(noAmmo.retaliated, false);
+    assert.equal(attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99) }).reaction, null, "sem munição");
 
     reset();
     arm(THIEF, "revolver");
-    const unarmed = attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99, 0.1, 0) });
-    assert.equal(unarmed.retaliated, false);
+    arm(VICTIM, "pistol", 3);
+    imprison(G, VICTIM, 1800, "teste", T0);
+
+    assert.equal(attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99) }).reaction, null, "preso");
+
+    reset();
+    arm(THIEF, "revolver");
+    arm(VICTIM, "pocket_knife", 0);
+
+    assert.equal(attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: seq(0.99) }).reaction.chance, 12, "arma branca não precisa de bala");
+});
+
+test("a tabela de chances da reação cobre todas as armas do roubo, entre 1 e 100", async () => {
+    const { REACTION_WEAPON_CHANCE, ROBBERY_WEAPON_CHANCE, REACTION_DEFAULT_CHANCE } = await import("../config/crime.mjs");
+
+    assert.deepEqual(Object.keys(REACTION_WEAPON_CHANCE).sort(), Object.keys(ROBBERY_WEAPON_CHANCE).sort());
+
+    for (const [id, chance] of Object.entries(REACTION_WEAPON_CHANCE)) {
+        assert.ok(chance >= 1 && chance <= 100, id);
+    }
+
+    assert.equal(REACTION_DEFAULT_CHANCE, 10);
+});
+
+// ==========================================
+// O TIRO DE QUEM REAGE (reactToRobbery)
+// ==========================================
+
+const { reactToRobbery } = await import("../services/crime/robbery.mjs");
+
+test("reagir: acertar fere o ladrão com o nível grave, gasta 1 bala e não devolve o dinheiro", () => {
+    reset();
+    arm(THIEF, "revolver", 5);
+    arm(VICTIM, "pistol", 3);
+
+    const robbed = attemptRobbery(G, THIEF, VICTIM, { now: T0, rng: WIN(0) });
+    const stolen = robbed.amount;
+    const walletAfter = wallet(VICTIM);
+
+    // pistola: 40%. Sorteio 0.1 acerta
+    const shot = reactToRobbery(G, VICTIM, THIEF, { now: T0, rng: seq(0.1) });
+
+    assert.equal(shot.outcome, "hit");
+    assert.equal(shot.chance, 40);
+    assert.equal(shot.injury, "grave");
+    assert.equal(shot.hpLost, 45);
+    assert.equal(shot.spentAmmo, true);
+    assert.equal(shot.hp, hp(THIEF));
+    assert.equal(hp(THIEF), 100 - 45 - 0, "o ladrão não se feriu na fuga (sorteio 0.9)");
+    assert.equal(gear(VICTIM).ammo, 2);
+    assert.equal(wallet(VICTIM), walletAfter, "o dinheiro roubado não volta");
+    assert.ok(stolen > 0);
+});
+
+test("reagir: errar também gasta a bala, e só a arma de fogo gasta", () => {
+    reset();
+    arm(THIEF, "revolver");
+    arm(VICTIM, "pistol", 3);
+
+    const miss = reactToRobbery(G, VICTIM, THIEF, { now: T0, rng: seq(0.99) });
+
+    assert.equal(miss.outcome, "miss");
+    assert.equal(miss.hpLost, 0);
+    assert.equal(hp(THIEF), 100);
+    assert.equal(gear(VICTIM).ammo, 2, "errou, mas gastou");
+
+    reset();
+    arm(THIEF, "revolver");
+    arm(VICTIM, "pocket_knife", 7);
+
+    const blade = reactToRobbery(G, VICTIM, THIEF, { now: T0, rng: seq(0.05) });
+
+    assert.equal(blade.outcome, "hit");
+    assert.equal(blade.spentAmmo, false);
+    assert.equal(gear(VICTIM).ammo, 7, "arma branca não gasta munição");
+});
+
+test("reagir: ladrão já ferido demais (abaixo da vida mínima do roubo) não leva tiro e a bala é poupada", () => {
+    reset();
+    arm(THIEF, "revolver");
+    arm(VICTIM, "pistol", 3);
+    set("UPDATE combat_players SET hp = ? WHERE guild_id = ? AND user_id = ?", ROBBERY_CONFIG.minHp - 1, G, THIEF);
+
+    const shot = reactToRobbery(G, VICTIM, THIEF, { now: T0, rng: seq(0) });
+
+    assert.equal(shot.outcome, "down");
+    assert.equal(shot.spentAmmo, false);
+    assert.equal(gear(VICTIM).ammo, 3);
+    assert.equal(hp(THIEF), ROBBERY_CONFIG.minHp - 1);
+});
+
+test("reagir: o ferimento nunca passa da vida que o ladrão tem", () => {
+    reset();
+    arm(THIEF, "revolver");
+    arm(VICTIM, "assault_rifle", 3);
+    set("UPDATE combat_players SET hp = ? WHERE guild_id = ? AND user_id = ?", ROBBERY_CONFIG.minHp, G, THIEF);
+
+    const shot = reactToRobbery(G, VICTIM, THIEF, { now: T0, rng: seq(0) });
+
+    assert.equal(shot.hpLost, ROBBERY_CONFIG.minHp);
+    assert.equal(hp(THIEF), 0);
+});
+
+test("reagir: sem arma, sem munição ou preso, o tiro é recusado e nada se gasta", async () => {
+    reset();
+    arm(THIEF, "revolver");
+
+    assert.equal(await blockedTitle(() => reactToRobbery(G, VICTIM, THIEF, { now: T0 })), "Sem arma");
+
+    arm(VICTIM, "pistol", 0);
+
+    assert.equal(await blockedTitle(() => reactToRobbery(G, VICTIM, THIEF, { now: T0 })), "Sem munição");
+
+    set("UPDATE combat_gear SET ammo = 3 WHERE guild_id = ? AND user_id = ?", G, VICTIM);
+    imprison(G, VICTIM, 1800, "teste", T0);
+
+    assert.equal(await blockedTitle(() => reactToRobbery(G, VICTIM, THIEF, { now: T0 })), "Você está preso");
+    assert.equal(gear(VICTIM).ammo, 3);
     assert.equal(hp(THIEF), 100);
 });
 

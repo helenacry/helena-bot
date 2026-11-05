@@ -48,6 +48,10 @@ import {
 } from "./database/streak-migrations.mjs";
 
 import {
+    runFoodMigrations
+} from "./database/food-migrations.mjs";
+
+import {
     runDeveloperMigrations
 } from "./database/developer-migrations.mjs";
 
@@ -113,6 +117,12 @@ import {
 } from "./services/social/userinfo-views.mjs";
 
 import { guildIds } from "./services/platform/guild-registry.mjs";
+
+import {
+    forgetGatewayLatency,
+    recordGatewayLatency,
+    setApiProbe
+} from "./services/platform/discord-health.mjs";
 
 import {
     startWebApi,
@@ -453,6 +463,9 @@ const appId = application?.id ?? null;
 if (!SITE_ONLY) {
     transport = createTransport(api, appId);
 
+    // O /ping mede a API do Discord com uma chamada leve (a mesma que confirma quem é o bot).
+    setApiProbe(() => api.me());
+
     // Os emojis da Helena (os desenhos de assets/emojis enviados ao aplicativo). Sem eles, ficam os comuns.
     await loadAppEmojis(api, appId);
 }
@@ -472,6 +485,7 @@ runWebMigrations();
 runMarketMigrations();
 runFamilyMigrations();
 runUserinfoHistoryMigrations();
+runFoodMigrations();
 
 // Traz o contador antigo do /userinfo (JSON) para o banco, uma vez.
 // O arquivo vira views.json.imported; sem ele, não faz nada.
@@ -1162,6 +1176,9 @@ function conectarGateway() {
 
         onDispatch: tratarEvento,
 
+        // Tempo de ida e volta de cada batimento: é a "conexão" que o /ping mostra.
+        onLatency: recordGatewayLatency,
+
         // A sessão voltou sem READY (o caso normal depois de uma queda curta): a rotação e os
         // contadores, parados no onClose, recomeçam. A lista de servidores nunca foi apagada.
         onResumed: () => {
@@ -1180,6 +1197,9 @@ function conectarGateway() {
         onClose: () => {
             stopStatusRotation();
             stopSupportStats();
+
+            // a medida de antes da queda não vale mais
+            forgetGatewayLatency();
         },
 
         // Token errado ou intenção não liberada: reconectar não adianta. O bot continua de pé

@@ -18,6 +18,12 @@ import {
 } from "../economy/use-item.mjs";
 
 import {
+    expiredNotice,
+    foodStatus,
+    remainingText
+} from "../economy/food.mjs";
+
+import {
     button,
     row,
     findByText,
@@ -70,7 +76,19 @@ const energyBar = (energy, max) => {
 // TELA
 // ==========================================
 
-export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
+export function buildUseView({ ownerId, guildId, userId, notice: result = "" }) {
+    // Comida vencida sai da mochila antes de a lista ser montada, e o aviso entra no topo.
+    const food = foodStatus(guildId, userId);
+
+    const notice = [result, expiredNotice(food.expired)].filter(Boolean).join("\n");
+
+    // quando a unidade mais antiga da comida vence: " · ⏳ vence em 3h 20min"
+    const due = item => {
+        const deadline = food.deadlines[item.id];
+
+        return deadline ? ` · ⏳ ${remainingText(deadline.remaining)}` : "";
+    };
+
     const usable = usableItems(guildId, userId);
 
     const energy = getEnergy(guildId, userId);
@@ -79,7 +97,7 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
         use.kind === "equip"
             ? `${item.emoji} **${item.name}** — ${use.verb}`
             : `${item.emoji} **${item.name}** ×${quantity} — ` +
-              `${use.verb} (+${use.energy} de energia)`
+              `${use.verb} (+${use.energy} de energia)${due(item)}`
     );
 
     const embed = createEmbed({
@@ -166,7 +184,7 @@ export function buildUseView({ ownerId, guildId, userId, notice = "" }) {
 
                         use.kind === "equip"
                             ? `${use.verb} a arma`
-                            : `${use.verb} · +${use.energy} de energia`
+                            : `${use.verb} · +${use.energy} de energia${due(item)}`
                     ],
                     button(`uso:item:${ownerId}:${item.id}`, use.verb, item.emoji, "success")
                 ))

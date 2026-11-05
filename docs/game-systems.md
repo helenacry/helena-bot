@@ -9,7 +9,7 @@ Como cada parte do bot funciona por dentro: crime, perfil, painéis, layout V2, 
 | Comando | O que faz |
 |---|---|
 | `/crime` | Arrisca um crime: 50% de chance, rende dinheiro sujo e XP. Falhar custa multa, prisão e, às vezes, vida. |
-| `/roubar` | Rouba a carteira de outro jogador (nome, @menção ou ID). Precisa de arma equipada; a chance depende da arma. Leva de 10% a 25% da carteira, com teto: metade vem limpa e metade como dinheiro sujo. Alvo armado pode revidar. |
+| `/roubar` | Rouba a carteira de outro jogador (nome, @menção ou ID). Precisa de arma equipada; a chance depende da arma. Leva de 10% a 25% da carteira, com teto: metade vem limpa e metade como dinheiro sujo. Não há revide automático: quem foi alvo e está armado (arma equipada e, de fogo, com bala) recebe na própria resposta uma menção e o botão **Reagir** (`rob:rea:<oferta>`, 30 s, uma chance, só o alvo; o tiro gasta 1 bala e acerta conforme a arma; acertar fere o ladrão com o nível grave). |
 | `/lavagem` | Converte dinheiro sujo em limpo. Lavanderia **pública** (35% a 55%, uma por vez no servidor) ou **privada** (75% a 85%, exige gemas uma vez). |
 | `/lavageminfo` | Tempo restante da lavagem em andamento. |
 | `/procurados` | Quem tem ficha criminal no servidor, 8 por página. |
@@ -58,7 +58,8 @@ Alguns comandos mostram botões que abrem formulários (modais) do Discord:
 | `/ajuda` (aliases `help`, `comandos`) | no V2, uma seção por categoria com **Abrir** e, dentro dela, um **Ver** ao lado de cada comando; no clássico, menus de categorias e de comandos. Nos dois: **Anterior**/**Próxima**, **Buscar**, **Início**, **Fechar** | busca: uma palavra (nome, atalho ou o que o comando faz, sem acento). Também `/ajuda categoria:combate` e `/ajuda comando:daily` |
 | `/inventario` | menu de prateleiras, 12 itens por página (Anterior/Próxima/Atualizar), **Descartar** | item e quantidade (número, `metade` ou `tudo`); depois uma tela de confirmação com botão. 🟢 marca a arma equipada. No V2, um bloco por prateleira |
 | `/descartar` (alias `dropitem`) | **Confirmar descarte** | mesma confirmação do inventário; destrói o item, sem reembolso |
-| `/usaritem` (alias `usar`) | no V2, um botão **Usar** (ou **Equipar**) ao lado de cada item; no clássico, um menu. Nos dois: **Usar vários**, **Atualizar** | item (por nome, sem acento) e quantidade (número ou `max`, que usa até a energia encher) |
+| `/usaritem` (alias `usar`) | no V2, um botão **Usar** (ou **Equipar**) ao lado de cada item; no clássico, um menu. Nos dois: **Usar vários**, **Atualizar**. **Privado**: o painel e cada resultado só aparecem para quem usou (pelo prefixo `h` sai no canal). Comida que vence mostra o prazo embaixo (`services/economy/food.mjs`) | item (por nome, sem acento) e quantidade (número ou `max`, que usa até a energia encher) |
+| `/ping` | **Atualizar** (qualquer pessoa) e um botão de link para o status do Discord | sem formulário: mede a conexão, a API, a chegada do comando, o banco e a fila de tarefas e diz de quem é a lentidão (`HELENA_DISCORD_STATUS=off` desliga a leitura do status público) |
 | `/missoes` (alias `missao`) | **Resgatar** em cada missão pronta | sem formulário; o resgate paga na hora e atualiza a lista. Também `/missoes resgatar:<missão>` |
 | `/ranking` (alias `top`) | **Patrimônio**, **Nível**, **Gemas** | sem formulário: troca a classificação na mesma mensagem (só para quem abriu) |
 | `/cooldowns` (alias `cd`) | **Atualizar** | sem formulário: lista Legal (trabalho, daily, gemas) e Ilegal (crime, roubo, lavagem, cadeia) com ✅ ou ⏳ |

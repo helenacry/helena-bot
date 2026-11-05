@@ -54,6 +54,10 @@ Os botões e menus das mensagens não contam, e o aviso aparece só uma vez por 
 
 Use **`/ping`** (ou `hping`): se o bot estiver funcionando, ele responde na hora. Se nem o `/ping` responde, o bot está fora do ar ou reiniciando, e não há nada a fazer do seu lado além de tentar de novo mais tarde.
 
+### O bot está lento. A culpa é da Helena ou do Discord?
+
+O **`/ping`** mede a conexão com o Discord, a API dele, a chegada do seu comando, o banco de dados e a fila de tarefas da Helena, e lê o **status público do Discord** (discordstatus.com). No topo ele diz de quem é a lentidão: da **Helena**, do **Discord**, dos dois ou de ninguém, e as medidas lentas aparecem marcadas com "(lento)". O botão **Atualizar** mede de novo, e o botão **Status do Discord** abre a página deles.
+
 ### Qual a diferença entre `/daily` e `hdaily`?
 
 Nenhuma. O comando de barra e o do prefixo `h` têm as mesmas regras. Veja [Comandos](wiki:help/commands).

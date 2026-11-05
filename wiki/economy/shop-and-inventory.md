@@ -41,12 +41,26 @@ O `/inventario` (atalho `/inv`) lista o que você tem por prateleira, **12 itens
 
 - **Descartar** destrói itens, **sem reembolso**, depois de uma tela de confirmação com o botão **Confirmar descarte**. Também existe o comando **`/descartar`**.
 - **Atualizar** recarrega a tela.
+- Ao lado de cada comida que vence, o inventário mostra **quanto falta para a unidade mais antiga vencer**. Comida vencida aparece no aviso "Comida vencida" e sai da mochila.
+
+## Comida que vence
+
+Parte da comida e da bebida **vence**: depois do prazo, a unidade se perde. O prazo conta a partir da compra, e a loja avisa antes de você pagar ("Vence 12h depois da compra").
+
+{{table:shelf-life}}
+
+- O que **não** está na tabela, como o energético, não vence.
+- O inventário e o painel do `/usaritem` mostram quanto falta para a unidade **mais antiga** de cada comida vencer.
+- Ao comer, o bot gasta **primeiro a que vence antes**.
+- Comida que você já tinha antes dessa regra, ou que chegou por outro caminho, ganha o prazo **completo** na primeira vez que você abre o inventário ou o `/usaritem`.
+- Vender e descartar também tiram primeiro a mais antiga.
 
 ## Usar itens: `/usaritem`
 
-O `/usaritem` (atalho `/usar`) abre um menu com o que dá para usar. Sem opções, ele mostra o painel; com `item` e `quantidade`, usa direto.
+O `/usaritem` (atalho `/usar`) abre um menu com o que dá para usar. Sem opções, ele mostra o painel; com `item` e `quantidade`, usa direto. **Tudo é privado**: o painel e o resultado de cada uso só aparecem para você. Pelo prefixo `h` a resposta sai no canal, porque o Discord não tem mensagem privada nesse caso.
 
 - **Comida e bebida** repõem energia, um item por vez. Veja os valores em [Energia](wiki:character/energy).
+- **Comida vencida** não dá para usar: ela sai da mochila antes de qualquer uso.
 - Com a **energia cheia**, o uso é recusado e o item **não é gasto**. O que passaria de {{v:energy.max}} se perderia.
 - **Armas** são equipadas, e equipar não gasta o item.
 - **`max`** usa quantos itens forem preciso para a energia encher.

@@ -23,6 +23,9 @@ export const WEAPON_TYPES = Object.freeze({
     melee: "Armas brancas"
 });
 
+// Itens com "shelfLife" (em segundos) vencem esse tempo depois da compra: quem não usa a tempo
+// perde a unidade (services/economy/food.mjs). Sem "shelfLife", o item não vence (como o energético,
+// que é lacrado).
 export const ITEMS = Object.freeze([
     {
         id: "apple",
@@ -31,6 +34,7 @@ export const ITEMS = Object.freeze([
         category: "consumable",
         description: "Uma maçã fresquinha. Repõe 10 de energia.",
         use: { verb: "Comer", energy: 10 },
+        shelfLife: 24 * 60 * 60,
         maxStack: 99,
         buyPrice: 300,
         sellable: true,
@@ -43,6 +47,7 @@ export const ITEMS = Object.freeze([
         category: "consumable",
         description: "Um café para começar o expediente. Repõe 25 de energia.",
         use: { verb: "Beber", energy: 25 },
+        shelfLife: 12 * 60 * 60,
         maxStack: 99,
         buyPrice: 700,
         sellable: true,

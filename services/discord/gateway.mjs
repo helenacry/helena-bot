@@ -59,6 +59,7 @@ export function createGateway({
     presence = () => null,
     onReady = () => {},
     onResumed = () => {},
+    onLatency = () => {},
     onDispatch = () => {},
     onClose = () => {},
     onFatal = () => {},
@@ -83,8 +84,9 @@ export function createGateway({
     let resumeUrl = null;
     let sequence = null;
 
-    // true entre o envio de um batimento e a resposta dele
+    // true entre o envio de um batimento e a resposta dele; beatSentAt é a hora do envio, para medir a ida e volta
     let ackPending = false;
+    let beatSentAt = 0;
 
     const open = () => socket !== null && socket.readyState === WebSocketImpl.OPEN;
 
@@ -119,6 +121,7 @@ export function createGateway({
         }
 
         ackPending = true;
+        beatSentAt = performance.now();
 
         send({ op: OP.HEARTBEAT, d: sequence }).catch(error => log.error("[HEARTBEAT]", error));
     }
@@ -188,6 +191,11 @@ export function createGateway({
                 return;
 
             case OP.HEARTBEAT_ACK:
+                // só o batimento que a Helena enviou mede a conexão (o pedido do Discord não passa por aqui)
+                if (ackPending && beatSentAt > 0) {
+                    onLatency(Math.round(performance.now() - beatSentAt));
+                }
+
                 ackPending = false;
 
                 return;

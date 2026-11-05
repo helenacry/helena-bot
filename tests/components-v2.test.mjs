@@ -456,7 +456,9 @@ test("pelo prefixo: com o V2 ligado o embed sai como layout; desligado, como sem
     const off = await withMode(undefined, () => run("hping"));
 
     assert.ok(off.sent[0].embeds?.length === 1, "clássico");
-    assert.ok(!off.sent[0].components);
+
+    // só a fileira de botões do /ping (Atualizar e Status do Discord), nunca um container V2
+    assert.ok(off.sent[0].components.every(component => component.type === "row"), "só botões, sem container");
 
     const on = await withMode("on", () => run("hping"));
 

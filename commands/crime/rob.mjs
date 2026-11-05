@@ -4,6 +4,11 @@ import { formatMoney } from "../../database/economy.mjs";
 import { attemptRobbery } from "../../services/crime/robbery.mjs";
 
 import {
+    offerReaction,
+    reactionNotice
+} from "../../services/panels/rob-panel.mjs";
+
+import {
     resolveUser,
     lookupProblem,
     safeText,
@@ -78,22 +83,13 @@ function failureResponse(result, targetName) {
         ["Energia", signed(-ROBBERY_CONFIG.energyCost, ROBBERY_CONFIG.energyCost + " (" + result.energy + "/" + result.energyMax + ")")]
     ];
 
-    if (result.retaliated) {
-        rows.push(["Revide", signed(-result.hpLost, result.hpLost + " HP (restam " + result.hp + ")")]);
-    }
-
     const say = result.poor
         ? "**" + targetName + "** tem pouco dinheiro na carteira " +
           "(" + formatMoney(ROBBERY_CONFIG.minTargetWallet) +
           " ou menos). Não valia o risco, e a tentativa ainda " +
           "gastou sua energia."
         : "Você não conseguiu pegar o dinheiro de **" + targetName +
-          "**." +
-          (
-              result.retaliated
-                  ? "\n> 💥 **" + targetName + "** estava armado e revidou!"
-                  : ""
-          );
+          "**.";
 
     return embedResponse(
         ledgerEmbed({
@@ -176,9 +172,27 @@ export default {
                 found.user.id
             );
 
-            return result.success
+            const response = result.success
                 ? successResponse(result, targetName)
                 : failureResponse(result, targetName);
+
+            // Quem foi alvo e está armado pode reagir: o botão vai na própria resposta do roubo,
+            // com uma menção para a pessoa ficar sabendo (services/panels/rob-panel.mjs).
+            if (result.reaction) {
+                const offer = offerReaction({
+                    guildId,
+                    thiefId: userId,
+                    victimId: found.user.id,
+                    thiefName: safeText(shownName(interaction.user)),
+                    victimName: targetName,
+                    embeds: response.data.embeds
+                });
+
+                response.data.body = reactionNotice(found.user.id);
+                response.data.components = offer.components;
+            }
+
+            return response;
 
         } catch (error) {
             if (error instanceof GameBlocked) {

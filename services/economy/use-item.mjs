@@ -16,6 +16,8 @@ import {
 
 import { restoreEnergy } from "./energy.mjs";
 
+import { expiredNotice, reconcileFood } from "./food.mjs";
+
 import { tx, now as clock } from "../combat/combat.mjs";
 
 import { GameBlocked } from "../../utils/game-error.mjs";
@@ -110,6 +112,10 @@ export function useItem(
     // REPOR ENERGIA
     // ==================================
 
+    // Comida vencida sai antes de qualquer conta: não dá para comer o que já passou do prazo. Fica
+    // fora da transação do uso de propósito: mesmo que o uso seja recusado, o que venceu já saiu.
+    const { expired } = reconcileFood(guildId, userId, { now });
+
     return tx(() => {
         const owned = getItemQuantity(guildId, userId, itemId);
 
@@ -176,7 +182,8 @@ export function useItem(
             wasted,
             energy: last.energy,
             max: last.max,
-            remaining: owned - used
+            remaining: owned - used,
+            expired
         };
     });
 }
@@ -198,6 +205,7 @@ export function describeUse(result) {
                 ? ` Parei em ${result.used}: a energia encheu.`
                 : ""
         ) +
-        ` Restam ${result.remaining}.`
+        ` Restam ${result.remaining}.` +
+        (result.expired?.length ? "\n" + expiredNotice(result.expired) : "")
     );
 }

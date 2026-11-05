@@ -28,6 +28,10 @@ process.env.HELENA_MARKET = "off";
 // o seu próprio com relógio controlado (createPrefixRunner aceita { gate }).
 process.env.HELENA_ANTI_SPAM = "off";
 
+// O /ping lê o status público do Discord pela internet. Os testes não saem da máquina:
+// tests/ping.test.mjs liga a leitura e injeta a resposta.
+process.env.HELENA_DISCORD_STATUS = "off";
+
 // Sem os contadores do servidor de suporte nem edição ao vivo rápida
 // demais: os testes controlam o tempo por conta própria.
 delete process.env.HELENA_SUPPORT_GUILD_ID;
@@ -43,7 +47,8 @@ const migrations = [
     ["../database/web-migrations.mjs", "runWebMigrations"],
     ["../database/market-migrations.mjs", "runMarketMigrations"],
     ["../database/family-migrations.mjs", "runFamilyMigrations"],
-    ["../database/userinfo-history-migrations.mjs", "runUserinfoHistoryMigrations"]
+    ["../database/userinfo-history-migrations.mjs", "runUserinfoHistoryMigrations"],
+    ["../database/food-migrations.mjs", "runFoodMigrations"]
 ];
 
 // Silencia o log das migrações.

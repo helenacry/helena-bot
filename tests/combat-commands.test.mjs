@@ -420,13 +420,13 @@ test("/recarregar mostra o estoque da arma de fogo, e explica quando não dá", 
 // PING
 // ==========================================
 
-test("/ping responde com o tempo no ar e a contagem de comandos", async () => {
+test("/ping mostra as medidas, o tempo no ar e de quem é a lentidão (o painel completo está em ping.test.mjs)", async () => {
     const response = await run("ping", guild());
 
     assert.match(embedOf(response).title, /Pong/);
-    assert.match(embedOf(response).description, /^Estou aqui e funcionando\./);
+    assert.match(embedOf(response).description, /^Está tudo normal/);
     assert.match(receiptOf(response)["No ar há"], /\d+s/);
-    assert.match(receiptOf(response)["Comandos"], /^\d+$/);
+    assert.match(receiptOf(response)["Banco de dados"], /ms/);
 });
 
 // ==========================================

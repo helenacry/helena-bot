@@ -173,10 +173,14 @@ export const ROBBERY_CONFIG = Object.freeze({
     // resto vira dinheiro sujo (que precisa ser lavado).
     cleanShare: 0.5,
 
-    // Revide: se a tentativa falha e o alvo está armado (e, com arma
-    // de fogo, tem munição), existe esta chance de ferir o ladrão.
-    retaliationChance: 0.5,
-    retaliationHp: Object.freeze({ min: 30, max: 50 }),
+    // Reagir: depois de toda tentativa de roubo, quem foi alvo e está armado (arma equipada e,
+    // com arma de fogo, munição) ganha o botão Reagir por este tempo, com UMA chance. A chance
+    // do tiro vem de REACTION_WEAPON_CHANCE; acertar deixa o ladrão com um ferimento do nível
+    // "injury" (de injuryLevels, abaixo). O dinheiro roubado não volta.
+    reaction: Object.freeze({
+        windowSeconds: 30,
+        injury: "grave"
+    }),
 
     // Ferimento na fuga depois de um roubo bem-sucedido.
     escapeInjuryChance: 0.18,
@@ -211,6 +215,30 @@ export const ROBBERY_WEAPON_CHANCE = Object.freeze({
 });
 
 export const ROBBERY_DEFAULT_CHANCE = 10;
+
+// Chance (em %) de o tiro de quem reage acertar o ladrão, conforme a arma equipada de quem
+// foi roubado. Arma de fogo gasta 1 bala por tiro, acertando ou não; arma branca não gasta
+// nada. Arma desconhecida usa REACTION_DEFAULT_CHANCE.
+export const REACTION_WEAPON_CHANCE = Object.freeze({
+    wooden_sword: 10,
+    iron_sword: 15,
+    steel_sword: 20,
+
+    pocket_knife: 12,
+    combat_knife: 18,
+    machete: 22,
+    katana: 30,
+    legendary_blade: 40,
+
+    revolver: 30,
+    sniper_rifle: 35,
+    pistol: 40,
+    smg: 50,
+    shotgun: 55,
+    assault_rifle: 60
+});
+
+export const REACTION_DEFAULT_CHANCE = 10;
 
 // ==========================================
 // PROCURADOS

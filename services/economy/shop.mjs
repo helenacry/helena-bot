@@ -22,6 +22,8 @@ import {
     isHot
 } from "./market.mjs";
 
+import { recordPurchase } from "./food.mjs";
+
 const MAX_CENTS = 100_000_000_000_000;
 const MAX_QUANTITY = 99;
 
@@ -197,6 +199,15 @@ export function buyItem(
             userId,
             itemId,
             quantity
+        );
+
+        // Comida vence: o lote guarda a hora desta compra (services/economy/food.mjs).
+        recordPurchase(
+            guildId,
+            userId,
+            itemId,
+            quantity,
+            now === undefined ? {} : { now: Math.floor(now) }
         );
 
         record(

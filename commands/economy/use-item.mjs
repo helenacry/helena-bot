@@ -16,7 +16,8 @@ import {
 } from "../../services/platform/user-lookup.mjs";
 
 import {
-    parseQuantity
+    parseQuantity,
+    priv
 } from "../../services/panels/panel-kit.mjs";
 
 import { GameBlocked } from "../../utils/game-error.mjs";
@@ -37,8 +38,12 @@ import {
 // equipar). Com item (e quantidade) usa direto. Comida repõe
 // energia e gasta uma unidade por uso; energia cheia recusa sem
 // gastar; equipar não gasta nada.
+//
+// Tudo é privado: o painel e o resultado de cada uso só aparecem para quem usou (o canal não
+// vira uma fila de "comeu uma maçã"). Pelo prefixo h o Discord não tem mensagem privada, então
+// lá a resposta continua no canal.
 
-export default {
+const usaritem = {
     name: "usaritem",
     aliases: ["usar"],
     description: "Use itens: coma, beba ou equipe uma arma",
@@ -162,5 +167,13 @@ export default {
                 "Não foi possível usar o item: " + error.message
             );
         }
+    }
+};
+
+export default {
+    ...usaritem,
+
+    async execute(interaction) {
+        return priv(await usaritem.execute(interaction));
     }
 };

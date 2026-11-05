@@ -1,52 +1,18 @@
 
-import {
-    embedResponse,
-    HELENA_COLORS,
-    ledgerEmbed
-} from "../../utils/embed.mjs";
-
-import { guildIds } from "../../services/platform/guild-registry.mjs";
-
-import { getCatalog } from "../../services/platform/command-catalog.mjs";
-
-import { formatDuration } from "../../utils/time.mjs";
+import { pingResponse } from "../../services/panels/ping-panel.mjs";
 
 // ==========================================
 // COMANDO /PING
 // ==========================================
 
-// Responder já é a prova de que o bot está no ar. Mostra também há quanto
-// tempo ele está ligado, em quantos servidores está e quantos comandos tem.
+// Responder já é a prova de que o bot está no ar. O painel (services/panels/ping-panel.mjs) vai
+// além e mostra de quem é a lentidão: da Helena, do Discord ou de ninguém.
 
 export default {
     name: "ping",
-    description: "Verifica se o bot está funcionando",
+    description: "Mostra se o bot está no ar e se a lentidão é da Helena ou do Discord",
 
-    async execute() {
-        const rows = [["No ar há", formatDuration(process.uptime())]];
-
-        if (guildIds.size > 0) {
-            rows.push(["Servidores", String(guildIds.size)]);
-        }
-
-        const catalog = getCatalog();
-
-        if (catalog) {
-            rows.push(["Comandos", String(catalog.total)]);
-        }
-
-        return embedResponse(ledgerEmbed({
-            section: "Status",
-            title: "🏓 Pong!",
-
-            say: "Estou aqui e funcionando.",
-
-            rows,
-
-            color: HELENA_COLORS.success,
-            mood: "feliz",
-
-            footer: "/ajuda mostra o que eu faço"
-        }));
+    async execute(interaction) {
+        return pingResponse(interaction);
     }
 };

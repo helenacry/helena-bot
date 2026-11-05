@@ -17,15 +17,16 @@ import { getPrison } from "./prison.mjs";
 
 import {
     ensureCrimePlayer,
-    defaultRng,
-    rollBetween
+    defaultRng
 } from "./crime-player.mjs";
 
 import {
     CRIME_CONFIG,
     ROBBERY_CONFIG,
     ROBBERY_WEAPON_CHANCE,
-    ROBBERY_DEFAULT_CHANCE
+    ROBBERY_DEFAULT_CHANCE,
+    REACTION_WEAPON_CHANCE,
+    REACTION_DEFAULT_CHANCE
 } from "../../config/crime.mjs";
 
 import { GameBlocked } from "../../utils/game-error.mjs";
@@ -248,9 +249,154 @@ export function attemptRobbery(
             energy
         };
 
-        return success
+        const outcome = success
             ? resolveSuccess(context)
             : resolveFailure(context);
+
+        // Quem foi alvo, estando armado, ganha o botão Reagir (veja reactToRobbery).
+        return {
+            ...outcome,
+            reaction: reactionOffer(guildId, victimId, now)
+        };
+    });
+}
+
+// ==========================================
+// REAGIR
+// ==========================================
+
+// Chance (em %) de o tiro de quem reage acertar, conforme a arma dele.
+export function reactionChance(weapon) {
+    return REACTION_WEAPON_CHANCE[weapon.id] ?? REACTION_DEFAULT_CHANCE;
+}
+
+// Quem pode reagir: está solto, tem uma arma equipada e, sendo de fogo, ao menos 1 bala.
+// Devolve { weapon, chance } ou null. Lê só; não gasta nada.
+export function reactionOffer(guildId, victimId, now = clock()) {
+    if (getPrison(guildId, victimId, now)) {
+        return null;
+    }
+
+    const weapon = getEquippedWeapon(guildId, victimId);
+
+    if (!weapon) {
+        return null;
+    }
+
+    if (weapon.weaponType === "firearm") {
+        const gear = db.prepare(`
+            SELECT ammo
+            FROM combat_gear
+            WHERE guild_id = ?
+              AND user_id = ?
+        `).get(guildId, victimId);
+
+        if ((gear?.ammo ?? 0) < 1) {
+            return null;
+        }
+    }
+
+    return {
+        weapon: { id: weapon.id, name: weapon.name, emoji: weapon.emoji || "🔫" },
+        chance: reactionChance(weapon)
+    };
+}
+
+// O tiro de quem foi roubado, no botão Reagir (quem confere o prazo e quem clicou é o painel).
+// Arma de fogo gasta 1 bala, acertando ou não. Acertando, o ladrão fica com o ferimento de
+// ROBBERY_CONFIG.reaction.injury e precisa do hospital; o dinheiro roubado não volta. Um ladrão
+// que já está ferido demais para roubar (menos de minHp de vida) não leva tiro, e a bala é poupada.
+//
+// Devolve { outcome: "hit" | "miss" | "down", chance, weapon, spentAmmo, hpLost, hp, injury }.
+export function reactToRobbery(
+    guildId,
+    victimId,
+    thiefId,
+    {
+        now = clock(),
+        rng = defaultRng
+    } = {}
+) {
+    return tx(() => {
+        if (getPrison(guildId, victimId, now)) {
+            throw new GameBlocked(
+                "Você está preso",
+                "Quem está atrás das grades não consegue reagir."
+            );
+        }
+
+        const weapon = getEquippedWeapon(guildId, victimId);
+
+        if (!weapon) {
+            throw new GameBlocked(
+                "Sem arma",
+                "Você não tem mais uma arma equipada para reagir."
+            );
+        }
+
+        const firearm = weapon.weaponType === "firearm";
+
+        const gear = db.prepare(`
+            SELECT ammo
+            FROM combat_gear
+            WHERE guild_id = ?
+              AND user_id = ?
+        `).get(guildId, victimId);
+
+        if (firearm && (gear?.ammo ?? 0) < 1) {
+            throw new GameBlocked(
+                "Sem munição",
+                "Sua arma de fogo está descarregada."
+            );
+        }
+
+        const chance = reactionChance(weapon);
+
+        const thief = combatStatus(guildId, thiefId);
+
+        const base = {
+            chance,
+            weapon: { name: weapon.name, emoji: weapon.emoji || "🔫" }
+        };
+
+        // já está no hospital, no sentido de que nem roubar consegue: o tiro nem sai
+        if (thief.hp < ROBBERY_CONFIG.minHp) {
+            return { ...base, outcome: "down", spentAmmo: false, hpLost: 0, hp: thief.hp, injury: null };
+        }
+
+        if (firearm) {
+            db.prepare(`
+                UPDATE combat_gear
+                SET ammo = ammo - 1
+                WHERE guild_id = ?
+                  AND user_id = ?
+                  AND ammo >= 1
+            `).run(guildId, victimId);
+        }
+
+        if (!(rng() * 100 < chance)) {
+            return { ...base, outcome: "miss", spentAmmo: firearm, hpLost: 0, hp: thief.hp, injury: null };
+        }
+
+        const injury = ROBBERY_CONFIG.injuryLevels.find(level => level.name === ROBBERY_CONFIG.reaction.injury);
+
+        const hpLost = Math.min(thief.hp, injury.hp);
+
+        db.prepare(`
+            UPDATE combat_players
+            SET hp = hp - ?
+            WHERE guild_id = ?
+              AND user_id = ?
+        `).run(hpLost, guildId, thiefId);
+
+        return {
+            ...base,
+            outcome: "hit",
+            spentAmmo: firearm,
+            hpLost,
+            hp: thief.hp - hpLost,
+            injury: injury.name
+        };
     });
 }
 
@@ -385,65 +531,22 @@ function resolveSuccess({
 // ==========================================
 
 function resolveFailure({
-    guildId,
     thiefId,
-    victimId,
+    guildId,
     now,
-    rng,
     combat,
     chance,
     poor,
     energy
 }) {
-    // Revide: o alvo armado (e com munição, se for arma de fogo)
-    // pode ferir o ladrão. Não gasta munição do alvo.
-    let retaliated = false;
-    let hpLost = 0;
-
-    const defender = getEquippedWeapon(guildId, victimId);
-
-    if (defender) {
-        const gear = db.prepare(`
-            SELECT ammo
-            FROM combat_gear
-            WHERE guild_id = ?
-              AND user_id = ?
-        `).get(guildId, victimId);
-
-        const armed =
-            defender.weaponType !== "firearm" ||
-            (gear?.ammo ?? 0) >= 1;
-
-        if (armed && rng() < ROBBERY_CONFIG.retaliationChance) {
-            retaliated = true;
-
-            hpLost = Math.min(
-                combat.hp,
-                rollBetween(
-                    rng,
-                    ROBBERY_CONFIG.retaliationHp.min,
-                    ROBBERY_CONFIG.retaliationHp.max
-                )
-            );
-
-            db.prepare(`
-                UPDATE combat_players
-                SET hp = hp - ?
-                WHERE guild_id = ?
-                  AND user_id = ?
-            `).run(hpLost, guildId, thiefId);
-        }
-    }
-
+    // Sem revide automático: quem foi alvo reage pelo botão (veja reactToRobbery).
     registerAttempt(guildId, thiefId, now);
 
     return {
         success: false,
         poor,
         chance,
-        retaliated,
-        hpLost,
-        hp: combat.hp - hpLost,
+        hp: combat.hp,
         energy: energy.energy,
         energyMax: energy.max
     };

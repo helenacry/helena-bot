@@ -3,7 +3,7 @@ title: Vida, colete e munição
 description: Como a vida funciona, quanto custa se curar no hospital, o que é a proteção contra duelos e como cuidar do equipamento.
 ---
 
-Duelar, errar um crime ou levar um revide custa vida. Esta página mostra como recuperar e como se equipar.
+Duelar, errar um crime ou levar um tiro de quem você tentou roubar custa vida. Esta página mostra como recuperar e como se equipar.
 
 ## Vida
 
@@ -11,7 +11,7 @@ A vida vai até **{{v:hospital.maxHp}}**. Você perde vida quando:
 
 - **duela**;
 - **erra um crime** e a história termina em ferimento;
-- **leva revide** de um alvo armado num roubo que falhou, ou se **fere na fuga** de um roubo bem-sucedido.
+- **leva um tiro** de um alvo armado que reagiu ao seu roubo (veja [Roubar jogadores](wiki:crime/robbery)), ou se **fere na fuga** de um roubo bem-sucedido.
 
 Algumas coisas exigem vida mínima: o **crime** ({{v:crime.minHp}}), o **roubo** ({{v:robbery.minHp}}) e o **duelo** ({{v:duel.minHp}}).
 

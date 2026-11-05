@@ -493,3 +493,23 @@ test("alias usar; preso é bloqueado pelo comando", async () => {
 
     assert.match((await run("husaritem apple")).title, /Você está preso/);
 });
+
+// ==========================================
+// PRIVACIDADE
+// ==========================================
+
+test("o /usaritem, o resultado de cada uso e os avisos são privados (só quem usou vê)", async () => {
+    reset({ energy: 10 });
+
+    tx(() => addItem(G, ME, "apple", 2));
+
+    const command = comandos.get("usaritem");
+
+    const call = options => silently(() => command.execute({
+        guildId: G, channelId: "c1", user: user(ME), data: { options }
+    }));
+
+    assert.equal((await call({})).data.ephemeral, true, "o painel");
+    assert.equal((await call({ item: "apple" })).data.ephemeral, true, "o uso direto");
+    assert.equal((await call({ item: "xyz" })).data.ephemeral, true, "o aviso de item que não existe");
+});

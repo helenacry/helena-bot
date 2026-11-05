@@ -4,6 +4,10 @@
 
 Revisão técnico-jurídica dos [Termos de uso](../site/src/pages/terms/index.astro) e da [Política de Privacidade](../site/src/pages/privacy/index.astro), feita em 22/10/2026 (versão 2.0 dos dois). **Não é parecer de advogado e não substitui um.** Serve para registrar o que os textos prometem, em que se apoiam e o que ainda precisa de decisão de vocês. Os testes em `tests/site.test.mjs` travam o que está escrito aqui como "o texto diz".
 
+## O que mudou na versão 2.4 da Política de Privacidade (04/11/2026)
+
+- **Comida que vence.** Tabela nova, `food_batches`: para cada compra de comida que vence (maçã e café), a Helena guarda o servidor, o ID, o item, a hora da compra e a quantidade, só para saber quando cada unidade passa do prazo (24 h e 12 h). Some quando a comida é usada, vendida, descartada ou vence. A política descreve isso na seção 4, junto do inventário. Base: execução do jogo, com o mínimo de dados.
+
 ## O que mudou na versão 2.3 da Política de Privacidade (25/10/2026)
 
 - **Retirada das datas informadas.** A 2.2 (publicada horas antes) descrevia datas de Nitro e de impulso que a própria pessoa digitava. A função saiu, a tabela `userinfo_declared` é apagada na migração e o texto também: o que o cartão mostra de impulso vem de uma leitura na hora do membro nos servidores onde a Helena está (`userinfo-boost.mjs`), que não guarda nada. A política passou a dizer isso na seção 3.
