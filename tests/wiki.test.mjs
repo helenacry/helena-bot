@@ -12,7 +12,7 @@ const {
 
 const { reais, percent, duration, range, table } = await import("../scripts/site/wiki-values.mjs");
 const { generateWiki, WIKI_OUTPUT } = await import("../scripts/site/wiki-generate.mjs");
-const { SITE_PAGES } = await import("../scripts/site/wiki-pages.mjs");
+const { SITE_PAGES, buildWiki } = await import("../scripts/site/wiki-pages.mjs");
 const { NAV } = await import("../wiki/nav.mjs");
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
@@ -195,12 +195,13 @@ test("o menu, os arquivos de wiki/ e as páginas geradas contam a mesma históri
 
     assert.deepEqual(sources.sort(), ["index", ...order].sort());
 
-    // slugs em inglês, em kebab-case (veja a memória "nomes em inglês")
+    // slugs em inglês, em kebab-case (veja a memória "nomes em inglês"); números só valem no meio
+    // e no fim, como em v1-0
     for (const section of NAV) {
         assert.match(section.id, /^[a-z]+(-[a-z]+)*$/);
 
         for (const page of section.pages) {
-            assert.match(page, /^[a-z]+(-[a-z]+)*$/, `${section.id}/${page}`);
+            assert.match(page, /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/, `${section.id}/${page}`);
         }
     }
 
@@ -335,6 +336,57 @@ test("anterior e próxima seguem a ordem do menu; a inicial não tem nenhuma das
 
     assert.equal(home.previous, null);
     assert.equal(home.section, null);
+});
+
+test("{{cards: seção/*}} lista a seção inteira, na ordem do menu, e erra se a seção não existe", () => {
+    const nav = [{ id: "news", title: "Novidades", pages: ["b", "a"] }];
+
+    const page = (title, body = "texto\n") => `---\ntitle: ${title}\ndescription: Descrição de ${title}.\n---\n${body}`;
+
+    const build = home => buildWiki({
+        nav,
+        sources: { home: page("Início", home), "news/a": page("A"), "news/b": page("B") },
+        bot: { tables: {}, values: {} }
+    });
+
+    const { html } = build("{{cards: news/*}}\n").find(entry => entry.id === "index");
+
+    assert.deepEqual([...html.matchAll(/<b>([^<]+)<\/b>/g)].map(match => match[1]), ["B", "A"]);
+
+    assert.throws(() => build("{{cards: nada/*}}\n"), /a seção "nada" do cartão nada\/\* não está em wiki\/nav\.mjs/);
+});
+
+test("atualizações: da mais nova para a mais antiga, uma página por versão, e a inicial lista todas", () => {
+    const updates = NAV.find(section => section.id === "updates");
+
+    assert.ok(updates && updates.pages.length >= 1, "a seção de atualizações existe e tem a primeira");
+
+    // v1-10 vem antes de v1-9: a ordem é numérica, não alfabética
+    const version = name => name.slice(1).split("-").map(Number);
+
+    const sorted = [...updates.pages].sort((a, b) => {
+        const [aMajor, aMinor] = version(a);
+        const [bMajor, bMinor] = version(b);
+
+        return bMajor - aMajor || bMinor - aMinor;
+    });
+
+    assert.deepEqual(updates.pages, sorted);
+
+    for (const name of updates.pages) {
+        assert.match(name, /^v\d+-\d+$/, `updates/${name}: o arquivo se chama v<versão>, como v1-1`);
+
+        const page = byId.get(`updates/${name}`);
+
+        // o título diz a mesma versão do nome do arquivo: v1-1 é "Atualização 1.1..."
+        assert.match(page.title, new RegExp(`^Atualização ${name.slice(1).replace("-", "\\.")}(?::| )`), `${name}: o título cita a versão`);
+    }
+
+    const home = byId.get("index").html;
+
+    for (const name of updates.pages) {
+        assert.ok(home.includes(`href="/wiki/updates/${name}/"`), `a página inicial não lista updates/${name}`);
+    }
 });
 
 test("tabelas largas da wiki são regiões focáveis com nome (o teclado alcança a rolagem)", () => {

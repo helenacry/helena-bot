@@ -4,6 +4,21 @@
 //
 // Depois de criar ou mudar páginas, rode:  npm run wiki:build
 
+import { readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+// Atualizações do bot: cada arquivo de wiki/updates/ é uma página, da mais nova para a mais antiga
+// (v1-10 vem antes de v1-9). Publicar uma atualização é criar o arquivo e rodar npm run wiki:build:
+// o menu e o cartão da página inicial ({{cards: updates/*}}) se montam sozinhos.
+function updatePages() {
+    const dir = fileURLToPath(new URL("./updates/", import.meta.url));
+
+    return readdirSync(dir)
+        .filter(file => file.endsWith(".md"))
+        .map(file => file.slice(0, -".md".length))
+        .sort((a, b) => b.localeCompare(a, "en", { numeric: true }));
+}
+
 export const NAV = [
     {
         id: "start",
@@ -34,5 +49,10 @@ export const NAV = [
         id: "help",
         title: "Ajuda e referência",
         pages: ["faq", "commands", "cooldowns"]
+    },
+    {
+        id: "updates",
+        title: "Atualizações",
+        pages: updatePages()
     }
 ];

@@ -106,8 +106,23 @@ export function buildWiki({ nav, sources, bot, siteHas = target => SITE_PAGES.in
             throw new Error(`${where}: link "${target}" inválido (use wiki:, site:, https:// ou #).`);
         };
 
+        // "seção/*" vale por todas as páginas da seção, na ordem do menu
+        const expand = slug => {
+            if (!slug.endsWith("/*")) {
+                return [slug];
+            }
+
+            const section = nav.find(entry => entry.id === slug.slice(0, -2));
+
+            if (!section) {
+                throw new Error(`${where}: a seção "${slug.slice(0, -2)}" do cartão ${slug} não está em wiki/nav.mjs.`);
+            }
+
+            return section.pages.map(name => `${section.id}/${name}`);
+        };
+
         const cards = list => {
-            const items = list.map(slug => {
+            const items = list.flatMap(expand).map(slug => {
                 const found = pages.get(slug);
 
                 if (!found) {

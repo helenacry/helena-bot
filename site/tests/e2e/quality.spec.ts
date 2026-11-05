@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { wiki } from "../../src/lib/wiki.ts";
 
-const WIKI_SAMPLE = ["", "crime/robbery/", "economy/market/", "help/commands/", "character/profile/"];
+const WIKI_SAMPLE = ["", "crime/robbery/", "economy/market/", "help/commands/", "character/profile/", "updates/v1-0/"];
 
 const routes: { name: string; path: string }[] = [
   { name: "início", path: "/" },

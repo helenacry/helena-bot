@@ -42,6 +42,12 @@ Dinheiro rápido, risco alto. Aqui está o que dá certo, o que dá cadeia e com
 
 {{cards: help/faq, help/commands, help/cooldowns}}
 
+## Atualizações
+
+O que mudou em cada versão da Helena, da mais nova para a mais antiga.
+
+{{cards: updates/*}}
+
 ## Como achar o que você procura
 
 - Use a busca no topo do menu (no teclado, aperte `/`).
