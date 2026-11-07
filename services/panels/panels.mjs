@@ -42,6 +42,8 @@ import { handlePingClick } from "./ping-panel.mjs";
 
 import { handleRobClick } from "./rob-panel.mjs";
 
+import { handleConfigClick } from "./config-panel.mjs";
+
 import {
     handleHelpClick,
     handleHelpModal
@@ -79,6 +81,7 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   miss:resgatar:<dono>:<missão>            /missoes     (missions-panel.mjs)
 //   ping:ref                                 /ping        (ping-panel.mjs, Atualizar: qualquer pessoa)
 //   rob:rea:<oferta>                         /roubar      (rob-panel.mjs, Reagir: só quem foi alvo)
+//   cfg:set:<dono>:<idioma>                  /config      (config-panel.mjs, o idioma de cada pessoa)
 //   gf:aceitar|recusar|cancelar:<ligação>    /gozofone    (family-panel.mjs)
 //   gf:nome:<nascimento>                     registrar o filho (formulário)
 //   userinfo:more|other:<dono>[:<alvo>]      /userinfo    (userinfo-panel.mjs, menus)
@@ -178,6 +181,10 @@ export function handlePanelClick(interaction) {
 
     if (area === "rob") {
         return handleRobClick(interaction);
+    }
+
+    if (area === "cfg") {
+        return handleConfigClick(interaction);
     }
 
     const userId = interaction.user?.id;

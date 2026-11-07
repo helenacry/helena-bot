@@ -4,28 +4,67 @@ import { resolve } from "node:path";
 
 import { discordApi } from "../discord/api.mjs";
 
+import { guildIds } from "./guild-registry.mjs";
+
+import { shardSummary } from "./shard-registry.mjs";
+
+import {
+    formatMoneyCompact,
+    formatXP,
+    getTopMoney,
+    getTopXP
+} from "./status-data.mjs";
+
 // ==========================================
-// CONFIGURAÇÕES
+// CONTADORES NOS CANAIS DE VOZ
 // ==========================================
 
+// Cada contador é um canal de voz do servidor de suporte que a Helena renomeia: o nome É o número.
+// Os canais são criados por você, no Discord; aqui só se diz o ID de cada um nas variáveis, e o bot
+// precisa de "Ver canal" e "Gerenciar canais" neles:
+//
+//   HELENA_USERS_CHANNEL_ID      👥 Usuários: 1.234           quem já usou a Helena (todos os servidores)
+//   HELENA_SERVERS_CHANNEL_ID    🌐 Servidores: 12            em quantos servidores ela está
+//   HELENA_SHARDS_CHANNEL_ID     🛰️ Shards: 1/1              conexões com o Discord (também vale o antigo
+//                                                              HELENA_CLUSTERS_CHANNEL_ID)
+//   HELENA_TOPXP_CHANNEL_ID      🏆 Top XP: Nome (12,3k)      o 1º do ranking global de XP
+//   HELENA_TOPCOINS_CHANNEL_ID   💰 Top Coins: Nome (R$ 1,2M) o 1º do ranking global de dinheiro
+//
+// Canal sem ID fica de fora; basta um para o contador ligar.
+
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+// chave do contador -> variáveis que dizem o ID do canal (a primeira que existir vale)
+export const CHANNEL_VARIABLES = Object.freeze({
+    users: ["HELENA_USERS_CHANNEL_ID"],
+    servers: ["HELENA_SERVERS_CHANNEL_ID"],
+    shards: ["HELENA_SHARDS_CHANNEL_ID", "HELENA_CLUSTERS_CHANNEL_ID"],
+    topXp: ["HELENA_TOPXP_CHANNEL_ID"],
+    topCoins: ["HELENA_TOPCOINS_CHANNEL_ID"]
+});
+
+// Os canais com ID: { users: "123", ... } (só os que estão nas variáveis).
+export function channelsFromEnv(env = process.env) {
+    const channels = {};
+
+    for (const [key, variables] of Object.entries(CHANNEL_VARIABLES)) {
+        const id = variables.map(name => String(env[name] ?? "").trim()).find(Boolean);
+
+        if (id) {
+            channels[key] = id;
+        }
+    }
+
+    return channels;
+}
 
 const CONFIG = {
     guildId: process.env.HELENA_SUPPORT_GUILD_ID,
 
-    usersChannelId:
-        process.env.HELENA_USERS_CHANNEL_ID,
-
-    clustersChannelId:
-        process.env.HELENA_CLUSTERS_CHANNEL_ID,
+    channels: channelsFromEnv(),
 
     databasePath:
         process.env.HELENA_DATABASE_PATH,
-
-    clusterTotal: Math.max(
-        1,
-        Number(process.env.HELENA_CLUSTER_TOTAL) || 1
-    ),
 
     // O Discord só deixa renomear um mesmo canal 2 vezes a cada 10 minutos: por isso o
     // intervalo nunca é menor que 5 minutos (e o nome só é enviado quando muda).
@@ -43,8 +82,6 @@ let timer = null;
 
 let running = false;
 
-let online = false;
-
 let stopped = true;
 
 let generation = 0;
@@ -59,9 +96,8 @@ function configured() {
     return Boolean(
         TOKEN &&
         CONFIG.guildId &&
-        CONFIG.usersChannelId &&
-        CONFIG.clustersChannelId &&
-        CONFIG.databasePath
+        CONFIG.databasePath &&
+        Object.keys(CONFIG.channels).length > 0
     );
 }
 
@@ -134,28 +170,55 @@ export function countUniquePlayers() {
 }
 
 // ==========================================
-// FORMATAR NÚMEROS
-// ==========================================
-
-function formatNumber(value) {
-    return new Intl.NumberFormat("pt-BR").format(value);
-}
-
-// ==========================================
 // MONTAR NOMES DOS CANAIS
 // ==========================================
 
-function buildChannelNames() {
-    const users = countUniquePlayers();
+const formatNumber = value => new Intl.NumberFormat("pt-BR").format(value);
 
-    const activeClusters = online ? 1 : 0;
+// O nome de uma pessoa entra no nome de um canal: tira o que não é texto (controle, direção do
+// texto, invisíveis), junta os espaços e corta em 40 letras.
+export function channelSafeName(name) {
+    const cleaned = String(name ?? "")
+        .replace(/[\p{C}\p{Zl}\p{Zp}]/gu, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
+    const letters = Array.from(cleaned);
+
+    return (letters.length > 40 ? letters.slice(0, 39).join("") + "…" : cleaned) || "?";
+}
+
+// Os nomes de cada contador, prontos para o Discord (até 100 caracteres).
+//   users, servers   números
+//   shards           { ready, total }
+//   topXp            { name, xp } ou null
+//   topMoney         { name, money } (centavos) ou null
+export function buildChannelNames({ users = 0, servers = 0, shards = { ready: 0, total: 1 }, topXp = null, topMoney = null } = {}) {
     return {
-        users:
-            `👥 Usuários: ${formatNumber(users)}`,
+        users: `👥 Usuários: ${formatNumber(users)}`,
 
-        clusters:
-            `🛰️ Clusters: ${activeClusters}/${CONFIG.clusterTotal}`
+        servers: `🌐 Servidores: ${formatNumber(servers)}`,
+
+        shards: `🛰️ Shards: ${shards.ready}/${shards.total}`,
+
+        topXp: topXp
+            ? `🏆 Top XP: ${channelSafeName(topXp.name)} (${formatXP(topXp.xp)})`
+            : "🏆 Top XP: sem dados",
+
+        topCoins: topMoney
+            ? `💰 Top Coins: ${channelSafeName(topMoney.name)} (${formatMoneyCompact(topMoney.money)})`
+            : "💰 Top Coins: sem dados"
+    };
+}
+
+// Lê o que cada contador mostra (só o que algum canal usa, para não consultar à toa).
+function collectData(channels) {
+    return {
+        users: channels.users ? countUniquePlayers() : 0,
+        servers: guildIds.size,
+        shards: shardSummary(),
+        topXp: channels.topXp ? getTopXP() : null,
+        topMoney: channels.topCoins ? getTopMoney() : null
     };
 }
 
@@ -222,21 +285,13 @@ export async function updateSupportStats() {
     const currentGeneration = generation;
 
     try {
-        const names = buildChannelNames();
+        const names = buildChannelNames(collectData(CONFIG.channels));
 
-        const results = await Promise.allSettled([
-            updateChannel(
-                CONFIG.usersChannelId,
-                names.users,
-                currentGeneration
-            ),
-
-            updateChannel(
-                CONFIG.clustersChannelId,
-                names.clusters,
-                currentGeneration
+        const results = await Promise.allSettled(
+            Object.entries(CONFIG.channels).map(([key, channelId]) =>
+                updateChannel(channelId, names[key], currentGeneration)
             )
-        ]);
+        );
 
         for (const result of results) {
             if (result.status === "rejected") {
@@ -266,10 +321,9 @@ export function startSupportStats() {
     if (!configured()) {
         console.warn(
             "[SUPPORT STATS] Configuração incompleta. " +
-            "Verifique as variáveis HELENA_SUPPORT_GUILD_ID, " +
-            "HELENA_USERS_CHANNEL_ID, " +
-            "HELENA_CLUSTERS_CHANNEL_ID e " +
-            "HELENA_DATABASE_PATH."
+            "Verifique HELENA_SUPPORT_GUILD_ID, HELENA_DATABASE_PATH e ao menos um canal: " +
+            Object.values(CHANNEL_VARIABLES).map(variables => variables[0]).join(", ") +
+            "."
         );
 
         return;
@@ -284,8 +338,6 @@ export function startSupportStats() {
     generation++;
 
     stopped = false;
-
-    online = true;
 
     // Limpa o cache após reconexão para
     // sincronizar novamente os nomes reais.
@@ -303,7 +355,8 @@ export function startSupportStats() {
     );
 
     console.log(
-        "[SUPPORT STATS] Contadores iniciados."
+        "[SUPPORT STATS] Contadores iniciados " +
+        `(${Object.keys(CONFIG.channels).length} canal(is)).`
     );
 
     console.log(
@@ -319,8 +372,6 @@ export function stopSupportStats() {
     generation++;
 
     stopped = true;
-
-    online = false;
 
     if (timer !== null) {
         clearInterval(timer);

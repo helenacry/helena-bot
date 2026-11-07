@@ -5,11 +5,13 @@ import {
     PING_LIMITS,
     databaseLatency,
     diagnose,
-    gatewayLatency,
     loopLag,
     probeApi,
+    slowestGatewayLatency,
     snowflakeAge
 } from "../platform/discord-health.mjs";
+
+import { shardSummary } from "../platform/shard-registry.mjs";
 
 import { STATUS_URL, discordStatus } from "../platform/discord-status.mjs";
 
@@ -83,7 +85,8 @@ export async function buildPingView(interaction, { force = false } = {}) {
     ]);
 
     const measures = {
-        gateway: gatewayLatency(),
+        // com vários fragmentos, o mais lento decide
+        gateway: slowestGatewayLatency(),
         api,
         trip: snowflakeAge(interaction?.id),
         database: databaseLatency(),
@@ -105,6 +108,13 @@ export async function buildPingView(interaction, { force = false } = {}) {
 
     if (guildIds.size > 0) {
         rows.push(["Servidores", String(guildIds.size)]);
+    }
+
+    // só aparece quando o bot usa mais de uma conexão com o Discord
+    const shards = shardSummary();
+
+    if (shards.total > 1) {
+        rows.push(["Fragmentos (shards)", `${shards.ready}/${shards.total} conectados`]);
     }
 
     const incident = status && status.indicator !== "none" ? status.incidents[0] : null;

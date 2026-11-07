@@ -38,10 +38,19 @@ Para montar o ambiente de testes:
 
 1. Crie um segundo aplicativo de bot no portal do Discord e adicione-o a um servidor seu de teste.
 2. Copie `.env.test.example` para `.env.test` e preencha com o token do bot de testes e o seu ID.
-3. **Deixe vazios** `HELENA_SUPPORT_GUILD_ID`, `HELENA_USERS_CHANNEL_ID` e `HELENA_CLUSTERS_CHANNEL_ID`. Se preenchidos, o bot de testes sobrescreve os contadores do servidor de suporte da produção.
+3. **Deixe vazios** `HELENA_SUPPORT_GUILD_ID` e todos os `HELENA_*_CHANNEL_ID` dos contadores. Se preenchidos, o bot de testes sobrescreve os contadores do servidor de suporte da produção.
 4. `npm run start:test`.
 
 > O Discord limita as conexões de gateway por bot (2). Ao reiniciar, encerre o processo anterior; se instâncias antigas ficarem rodando, a nova é recusada com `Muitas sessões`.
+
+## Idiomas (traduções)
+
+O bot escreve tudo em português; quem escolhe o inglês em `/config` recebe as respostas traduzidas **na hora de enviar**, pelo transporte (`services/discord/transport.mjs` chama `services/platform/i18n.mjs`). Nenhum comando precisa saber disso.
+
+- O dicionário do inglês está em `config/locales/en-US.mjs`: `EXACT` (o texto, ou uma linha dele, e a tradução; também vale para os nomes das contas do recibo) e `PATTERNS` (linhas com números ou nomes, como `[regex, função]`).
+- O que não está no dicionário sai em português. Com `HELENA_I18N_LOG=on`, o log mostra uma vez cada texto sem tradução (`[I18N] sem tradução (en-US): "..."`): copie para `EXACT` com a tradução ao lado.
+- Para um idioma novo: crie `config/locales/<idioma>.mjs`, registre em `LOCALES` (`services/platform/i18n.mjs`) e em `LANGUAGES` (`config/i18n.mjs`) e libere o código na tabela `user_settings` (`database/settings-migrations.mjs`).
+- Os nomes dos comandos (`/saldo`, `/loja`...) e os ícones não são traduzidos.
 
 ## Variáveis de ambiente
 
@@ -53,8 +62,10 @@ Para montar o ambiente de testes:
 | `HELENA_MARKET` | `off` (ou `0`, `false`, `no`) desliga a bolsa e deixa todos os preços na tabela. Padrão: ligada. |
 | `HELENA_ANTI_SPAM` | `off` (ou `0`, `false`, `no`) desliga o intervalo de 3 segundos entre comandos. Padrão: ligado. |
 | `HELENA_DATABASE_PATH` | Caminho do banco SQLite. Padrão: `./data/helena.db`. |
-| `HELENA_SUPPORT_GUILD_ID`, `HELENA_USERS_CHANNEL_ID`, `HELENA_CLUSTERS_CHANNEL_ID` | Contadores do servidor de suporte. Se algum estiver vazio, ficam desligados. |
-| `HELENA_CLUSTER_TOTAL`, `HELENA_STATS_INTERVAL` | Total de clusters e intervalo de atualização (ms) dos contadores. |
+| `HELENA_SUPPORT_GUILD_ID` e os canais `HELENA_USERS_CHANNEL_ID`, `HELENA_SERVERS_CHANNEL_ID`, `HELENA_SHARDS_CHANNEL_ID`, `HELENA_TOPXP_CHANNEL_ID`, `HELENA_TOPCOINS_CHANNEL_ID` | Contadores do servidor de suporte: canais de voz renomeados com usuários, servidores, shards, Top XP e Top Coins (globais). Canal sem ID fica de fora; basta um. |
+| `HELENA_STATS_INTERVAL` | Intervalo de atualização (ms) dos contadores. Mínimo 300000. |
+| `HELENA_I18N_LOG` | `on` lista no log, uma vez cada, os textos sem tradução para quem usa o inglês (veja Idiomas, acima). |
+| `HELENA_SHARDS` | Fragmentos (shards) do gateway: vazio ou `auto` segue o Discord (1 até 2500 servidores); um número força o total. |
 | `HELENA_V2` | Layout V2 do Discord no lugar dos embeds: `off` (padrão), `owner` (só nas respostas do dono, para testar em produção) ou `on` (todos). Veja [Componentes V2](game-systems.md#componentes-v2). |
 | `HELENA_LIVE_INTERVAL_MS` | Intervalo das contagens ao vivo, como o tempo da prisão. Padrão 10000, mínimo 2000. |
 

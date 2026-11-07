@@ -36,7 +36,6 @@ function progressBar(progress) {
 
 export default {
     name: "lavageminfo",
-    aliases: ["lavstatus"],
     description: "Veja o tempo da lavagem de dinheiro em andamento",
 
     async execute(interaction) {

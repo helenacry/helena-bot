@@ -1,7 +1,8 @@
 
 import {
-    createGateway
-} from "./services/discord/gateway.mjs";
+    createShardManager,
+    resolveShardCount
+} from "./services/discord/shards.mjs";
 
 import {
     discordApi
@@ -50,6 +51,10 @@ import {
 import {
     runFoodMigrations
 } from "./database/food-migrations.mjs";
+
+import {
+    runSettingsMigrations
+} from "./database/settings-migrations.mjs";
 
 import {
     runDeveloperMigrations
@@ -116,13 +121,20 @@ import {
     importLegacyViews
 } from "./services/social/userinfo-views.mjs";
 
-import { guildIds } from "./services/platform/guild-registry.mjs";
+import {
+    addShardGuild,
+    guildIds,
+    removeShardGuild,
+    replaceShardGuilds
+} from "./services/platform/guild-registry.mjs";
 
 import {
     forgetGatewayLatency,
     recordGatewayLatency,
     setApiProbe
 } from "./services/platform/discord-health.mjs";
+
+import { setShardSummary } from "./services/platform/shard-registry.mjs";
 
 import {
     startWebApi,
@@ -486,6 +498,7 @@ runMarketMigrations();
 runFamilyMigrations();
 runUserinfoHistoryMigrations();
 runFoodMigrations();
+runSettingsMigrations();
 
 // Traz o contador antigo do /userinfo (JSON) para o banco, uma vez.
 // O arquivo vira views.json.imported; sem ele, não faz nada.
@@ -636,15 +649,25 @@ async function executarModal(interaction) {
 // ESTADO DO GATEWAY
 // ==========================================
 
-let gateway = null;
+// O gerente das conexões com o Discord: uma por fragmento (shard), uma só enquanto o Discord não
+// exigir mais (services/discord/shards.mjs).
+let shardManager = null;
 
 let shuttingDown = false;
+
+// A rotação de status e os contadores de suporte rodam enquanto algum fragmento estiver conectado.
+let rotacaoAtiva = false;
 
 // ==========================================
 // ESTADO DOS SERVIDORES
 // ==========================================
 
-// O conjunto vive em services/platform/guild-registry.mjs, compartilhado com a API do site.
+// O conjunto vive em services/platform/guild-registry.mjs, compartilhado com a API do site. Cada
+// fragmento recebe os servidores dele: o registro guarda quais são de quem, para o READY de um
+// fragmento refazer só os dele sem apagar os dos outros.
+
+// fragmentos que já receberam o READY ao menos uma vez
+const readyShards = new Set();
 
 let guildCountComplete = false;
 
@@ -654,21 +677,26 @@ let guildCountComplete = false;
 
 // No READY o Discord manda a lista dos servidores do bot (cada um como { id, unavailable }) e
 // completa cada um com um GUILD_CREATE logo depois. Os IDs já vêm todos no READY.
-function processarReadyGuilds(data) {
+function processarReadyGuilds(data, shardId = 0) {
     const guilds = Array.isArray(data?.guilds) ? data.guilds : [];
 
-    guildIds.clear();
+    // um READY novo refaz só os servidores deste fragmento
+    const own = replaceShardGuilds(
+        shardId,
+        guilds
+            .filter(guild => guild?.id !== undefined && guild?.id !== null)
+            .map(guild => guild.id)
+    );
 
-    for (const guild of guilds) {
-        if (guild?.id !== undefined && guild?.id !== null) {
-            guildIds.add(String(guild.id));
-        }
-    }
+    readyShards.add(shardId);
 
-    guildCountComplete = true;
+    // a contagem só é completa quando todos os fragmentos já mandaram o seu
+    guildCountComplete = readyShards.size >= (shardManager?.total ?? 1);
 
     console.log(
-        `[GUILDS] ${guildIds.size} servidores recebidos no READY.`
+        `[GUILDS] ${own} servidores recebidos no READY` +
+        (shardManager && shardManager.total > 1 ? ` do fragmento ${shardId}/${shardManager.total}` : "") +
+        `: ${guildIds.size} no total.`
     );
 }
 
@@ -676,7 +704,7 @@ function processarReadyGuilds(data) {
 // EVENTOS DE SERVIDORES
 // ==========================================
 
-function processarEventoGuild(nome, dados) {
+function processarEventoGuild(nome, dados, shardId = 0) {
     const guildId = dados?.id !== undefined && dados?.id !== null
         ? String(dados.id)
         : null;
@@ -690,12 +718,12 @@ function processarEventoGuild(nome, dados) {
     }
 
     if (nome === "GUILD_CREATE") {
-        guildIds.add(guildId);
+        addShardGuild(shardId, guildId);
     }
 
     // unavailable: true é uma queda do Discord naquele servidor, e o bot continua nele.
     if (nome === "GUILD_DELETE" && !dados.unavailable) {
-        guildIds.delete(guildId);
+        removeShardGuild(shardId, guildId);
     }
 
     console.log(
@@ -711,7 +739,11 @@ function obterMensagensStatus() {
     return getStatusMessages({
         guildCount: guildIds.size,
 
-        guildCountComplete
+        guildCountComplete,
+
+        shards: shardManager
+            ? { ready: shardManager.readyCount(), total: shardManager.total }
+            : null
     });
 }
 
@@ -730,13 +762,14 @@ async function atualizarPresenca(message) {
         );
     }
 
-    if (!gateway?.connected) {
+    if (!shardManager?.isConnected()) {
         throw new Error(
             "Gateway não está conectado."
         );
     }
 
-    await gateway.setPresence(message);
+    // a atividade vai para todos os fragmentos conectados
+    await shardManager.setPresence(message);
 }
 
 // ==========================================
@@ -1113,9 +1146,9 @@ async function tratarInteracao(interaction) {
 // EVENTOS DO GATEWAY
 // ==========================================
 
-async function tratarEvento(nome, dados) {
+async function tratarEvento(nome, dados, shardId = 0) {
     if (nome === "GUILD_CREATE" || nome === "GUILD_DELETE") {
-        processarEventoGuild(nome, dados);
+        processarEventoGuild(nome, dados, shardId);
 
         return;
     }
@@ -1137,24 +1170,67 @@ async function tratarEvento(nome, dados) {
 // CONECTAR AO GATEWAY
 // ==========================================
 
+// O Discord manda um GUILD_CREATE por servidor e um READY por fragmento. Uma conexão só aguenta
+// 2500 servidores: o número de fragmentos vem de GET /gateway/bot (ou de HELENA_SHARDS), e cada um
+// é um gateway com o seu [id, total] (services/discord/shards.mjs).
 function conectarGateway() {
-    gateway = createGateway({
-        token: TOKEN,
+    ligarGateway().catch(erro => {
+        console.error("[GATEWAY] Falha ao conectar:", erro);
+    });
+}
 
-        onReady: dados => {
-            console.log(
-                `Online como ${
-                    dados.user?.global_name ||
-                    dados.user?.username ||
-                    "Helena"
-                }`
-            );
+async function ligarGateway() {
+    let info = null;
 
-            console.log(
-                `Comandos carregados: ${comandos.size}`
-            );
+    try {
+        info = await api.gateway();
 
-            processarReadyGuilds(dados);
+    } catch (erro) {
+        console.warn(
+            `[FRAGMENTOS] Não consegui perguntar ao Discord quantos fragmentos usar (${erro.message}). Sigo com um só.`
+        );
+    }
+
+    const decisao = resolveShardCount({ recommended: info?.shards });
+
+    if (decisao.invalid) {
+        console.warn(
+            `[FRAGMENTOS] HELENA_SHARDS="${decisao.invalid}" não é um número de 1 a 1024: uso o que o Discord recomenda.`
+        );
+    }
+
+    if (decisao.belowRecommended) {
+        console.warn(
+            `[FRAGMENTOS] HELENA_SHARDS=${decisao.count} é menos que os ${info?.shards} que o Discord recomenda: ` +
+            "uma conexão com mais de 2500 servidores é fechada pelo Discord."
+        );
+    }
+
+    const limite = info?.session_start_limit;
+
+    console.log(
+        `[FRAGMENTOS] ${decisao.count} fragmento(s)` +
+        (decisao.source === "env" ? " (HELENA_SHARDS)" : " (recomendado pelo Discord)") +
+        (limite ? `; identificações restantes hoje: ${limite.remaining}/${limite.total}.` : ".")
+    );
+
+    if (limite && Number.isInteger(limite.remaining) && limite.remaining < decisao.count) {
+        console.warn(
+            `[FRAGMENTOS] Só restam ${limite.remaining} identificações hoje e eu preciso de ${decisao.count}. ` +
+            "Espere o limite do Discord reiniciar."
+        );
+    }
+
+    setShardSummary({ total: decisao.count, ready: 0 });
+
+    // o resumo e a rotação seguem o que está conectado de verdade
+    const sincronizar = () => {
+        const prontos = shardManager?.readyCount() ?? 0;
+
+        setShardSummary({ total: decisao.count, ready: prontos });
+
+        if (prontos > 0 && !rotacaoAtiva) {
+            rotacaoAtiva = true;
 
             // Rotação de presença.
             startStatusRotation(
@@ -1168,6 +1244,42 @@ function conectarGateway() {
             console.log(
                 "[STATUS] Rotação com dados reais iniciada."
             );
+        }
+
+        // Sem nenhum fragmento conectado, a rotação e os contadores ficam parados (e recomeçam no
+        // READY ou no RESUMED do primeiro que voltar).
+        if (prontos === 0 && rotacaoAtiva) {
+            rotacaoAtiva = false;
+
+            stopStatusRotation();
+            stopSupportStats();
+        }
+    };
+
+    shardManager = createShardManager({
+        token: TOKEN,
+        total: decisao.count,
+        maxConcurrency: info?.session_start_limit?.max_concurrency ?? 1,
+        url: typeof info?.url === "string" && info.url.startsWith("wss://") ? info.url : undefined,
+
+        onShardReady: (id, dados) => {
+            if (readyShards.size === 0) {
+                console.log(
+                    `Online como ${
+                        dados.user?.global_name ||
+                        dados.user?.username ||
+                        "Helena"
+                    }`
+                );
+
+                console.log(
+                    `Comandos carregados: ${comandos.size}`
+                );
+            }
+
+            processarReadyGuilds(dados, id);
+
+            sincronizar();
 
             console.log(
                 "[PREFIXO] Aguardando comandos iniciados com h."
@@ -1177,41 +1289,36 @@ function conectarGateway() {
         onDispatch: tratarEvento,
 
         // Tempo de ida e volta de cada batimento: é a "conexão" que o /ping mostra.
-        onLatency: recordGatewayLatency,
+        onLatency: (id, ms) => recordGatewayLatency(ms, id),
 
         // A sessão voltou sem READY (o caso normal depois de uma queda curta): a rotação e os
-        // contadores, parados no onClose, recomeçam. A lista de servidores nunca foi apagada.
-        onResumed: () => {
-            startStatusRotation(
-                atualizarPresenca,
-                obterMensagensStatus
-            );
+        // contadores, parados quando o último fragmento caiu, recomeçam. A lista de servidores
+        // nunca foi apagada.
+        onShardResumed: () => sincronizar(),
 
-            startSupportStats();
-        },
-
-        // Enquanto o gateway estiver desconectado, a rotação e os contadores ficam parados (e
-        // recomeçam no READY ou no RESUMED). A lista de servidores NÃO é apagada: numa sessão
-        // retomada o Discord não manda os servidores de novo, e a API do site (o daily por
-        // servidor) depende dela. O READY de uma sessão nova a refaz do zero.
-        onClose: () => {
-            stopStatusRotation();
-            stopSupportStats();
-
+        // A lista de servidores NÃO é apagada: numa sessão retomada o Discord não manda os
+        // servidores de novo, e a API do site (o daily por servidor) depende dela. O READY de uma
+        // sessão nova refaz só os do fragmento.
+        onShardClose: id => {
             // a medida de antes da queda não vale mais
-            forgetGatewayLatency();
+            forgetGatewayLatency(id);
+
+            sincronizar();
         },
 
-        // Token errado ou intenção não liberada: reconectar não adianta. O bot continua de pé
-        // (a API do site segue no ar) e o motivo já está no log.
-        onFatal: ({ message }) => {
+        // Token errado, intenção não liberada ou fragmento inválido: reconectar não adianta. O bot
+        // continua de pé (a API do site segue no ar) e o motivo já está no log.
+        onShardFatal: (id, { message }) => {
             console.error(
-                `[GATEWAY] O bot fica desconectado até isto ser corrigido e o app reiniciado: ${message}`
+                `[GATEWAY] O fragmento ${id} fica desconectado até isto ser corrigido e o app reiniciado: ${message}`
             );
         }
     });
 
-    gateway.connect();
+    // as ondas esperam entre si: não segura o resto do bot
+    shardManager.start().catch(erro => {
+        console.error("[FRAGMENTOS] Falha ao ligar os fragmentos:", erro);
+    });
 }
 
 // ==========================================
@@ -1246,9 +1353,9 @@ function encerrar(signal) {
     // Encerra as tentativas de fuga em andamento.
     clearEscapeSessions();
 
-    gateway?.close();
+    shardManager?.close();
 
-    gateway = null;
+    shardManager = null;
 
     process.exitCode = 0;
 }

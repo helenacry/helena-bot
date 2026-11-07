@@ -1,7 +1,7 @@
 {
   "stats": {
-    "commands": 56,
-    "aliases": 27,
+    "commands": 57,
+    "aliases": 26,
     "jobs": 23,
     "shopItems": 20,
     "weapons": 14,
@@ -165,9 +165,7 @@
         },
         {
           "name": "lavageminfo",
-          "aliases": [
-            "lavstatus"
-          ],
+          "aliases": [],
           "description": "Veja o tempo da lavagem de dinheiro em andamento"
         },
         {
@@ -372,6 +370,11 @@
             "comandos"
           ],
           "description": "Consulte os comandos e sistemas da Helena"
+        },
+        {
+          "name": "config",
+          "aliases": [],
+          "description": "Mostra o painel de configurações: o idioma da Helena para você"
         },
         {
           "name": "ping",

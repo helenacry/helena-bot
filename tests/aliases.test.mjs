@@ -30,7 +30,7 @@ test("os aliases apontam para o comando certo", () => {
         work: "trabalhar", top: "ranking", diario: "daily",
         missao: "missoes", profile: "perfil", pagar: "transferir", ui: "userinfo",
         cd: "cooldowns", help: "ajuda", comandos: "ajuda", lav: "lavagem",
-        lavar: "lavagem", lavstatus: "lavageminfo", cadeia: "prisao",
+        lavar: "lavagem", cadeia: "prisao",
         assaltar: "roubar", wanted: "procurados", gf: "gozofone"
     };
 
@@ -48,8 +48,7 @@ test("pelo prefixo, o alias responde igual ao comando", async () => {
         ["hcooldowns", "hcd"],
         ["hajuda", "hhelp"],
         ["hprisao", "hcadeia"],
-        ["hlavagem", "hlav"],
-        ["hlavageminfo", "hlavstatus"]
+        ["hlavagem", "hlav"]
     ];
 
     for (const [command, alias] of pairs) {

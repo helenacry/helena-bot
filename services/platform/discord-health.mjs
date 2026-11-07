@@ -10,20 +10,46 @@ import { db } from "../../database/connection.mjs";
 // ida e volta do último batimento) e uma chamada leve à API. Sem elas (o bot de teste, o modo
 // só-site) o /ping mostra o que consegue e diz que falta a medida.
 
-let gatewayLatencyMs = null;
+// uma medida por fragmento (a Helena usa um só até o Discord pedir mais)
+const gatewayLatencies = new Map();
+
 let apiProbe = null;
 
 // O gateway chama isto a cada batimento respondido.
-export function recordGatewayLatency(ms) {
-    gatewayLatencyMs = Number.isFinite(ms) ? ms : null;
+export function recordGatewayLatency(ms, shardId = 0) {
+    if (Number.isFinite(ms)) {
+        gatewayLatencies.set(shardId, ms);
+
+    } else {
+        gatewayLatencies.delete(shardId);
+    }
 }
 
-// Quando o gateway cai, a medida antiga não vale mais.
-export function forgetGatewayLatency() {
-    gatewayLatencyMs = null;
+// Quando um fragmento cai, a medida antiga dele não vale mais (sem número: esquece todas).
+export function forgetGatewayLatency(shardId) {
+    if (shardId === undefined) {
+        gatewayLatencies.clear();
+
+    } else {
+        gatewayLatencies.delete(shardId);
+    }
 }
 
-export const gatewayLatency = () => gatewayLatencyMs;
+// A média das medidas conhecidas, ou null se ainda não há nenhuma.
+export function gatewayLatency() {
+    const known = [...gatewayLatencies.values()];
+
+    return known.length
+        ? Math.round(known.reduce((sum, value) => sum + value, 0) / known.length)
+        : null;
+}
+
+// A pior medida (o fragmento mais lento): é ela que decide se a conexão está lenta.
+export function slowestGatewayLatency() {
+    const known = [...gatewayLatencies.values()];
+
+    return known.length ? Math.max(...known) : null;
+}
 
 // fn: () => Promise, uma chamada barata e autenticada à API (GET /users/@me).
 export function setApiProbe(fn) {

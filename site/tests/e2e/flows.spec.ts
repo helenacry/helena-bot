@@ -125,7 +125,7 @@ test.describe("página inicial", () => {
     await expect(page.locator(hydrated("#ex-q"))).toBeAttached();
     await search.fill("saldo");
 
-    await expect(page.getByText(/^\d+ de 56 comandos$/)).toBeVisible();
+    await expect(page.getByText(/^\d+ de 57 comandos$/)).toBeVisible();
     await expect(page.locator(".ex-name", { hasText: "/saldo" })).toBeVisible();
 
     await search.fill("zzzzzz");

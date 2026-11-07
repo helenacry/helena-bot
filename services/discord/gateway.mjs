@@ -66,10 +66,26 @@ export function createGateway({
     log = console,
     WebSocketImpl = WebSocket,
     url = GATEWAY_URL,
-    reconnectDelay = backoff
+    reconnectDelay = backoff,
+
+    // [id, total]: esta conexão é o fragmento (shard) "id" de "total". Sem isso, uma conexão só
+    // (que o Discord aceita até 2500 servidores). Quem monta os fragmentos é services/discord/shards.mjs.
+    shard = null
 } = {}) {
     if (!token) {
         throw new Error("DISCORD_BOT_TOKEN não configurado.");
+    }
+
+    if (shard !== null && !(
+        Array.isArray(shard) &&
+        shard.length === 2 &&
+        Number.isInteger(shard[0]) &&
+        Number.isInteger(shard[1]) &&
+        shard[1] >= 1 &&
+        shard[0] >= 0 &&
+        shard[0] < shard[1]
+    )) {
+        throw new Error("O fragmento precisa ser [id, total], com 0 <= id < total.");
     }
 
     let socket = null;
@@ -150,6 +166,7 @@ export function createGateway({
                 token,
                 intents,
                 properties: { os: process.platform, browser: "helena", device: "helena" },
+                ...(shard ? { shard } : {}),
                 ...(presence() ? { presence: presence() } : {})
             }
         });

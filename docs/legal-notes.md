@@ -4,6 +4,10 @@
 
 Revisão técnico-jurídica dos [Termos de uso](../site/src/pages/terms/index.astro) e da [Política de Privacidade](../site/src/pages/privacy/index.astro), feita em 22/10/2026 (versão 2.0 dos dois). **Não é parecer de advogado e não substitui um.** Serve para registrar o que os textos prometem, em que se apoiam e o que ainda precisa de decisão de vocês. Os testes em `tests/site.test.mjs` travam o que está escrito aqui como "o texto diz".
 
+## O que mudou na versão 2.5 da Política de Privacidade (07/11/2026)
+
+- **Idioma.** Tabela nova, `user_settings`: o ID da pessoa e o idioma que ela escolheu em `/config` (português ou inglês), mais a hora da última troca. Vale para a conta (todos os servidores) e só serve para a Helena responder no idioma escolhido. A política descreve isso na seção 4, em "Para toda a conta". Base: execução do jogo, com o mínimo de dados.
+
 ## O que mudou na versão 2.4 da Política de Privacidade (04/11/2026)
 
 - **Comida que vence.** Tabela nova, `food_batches`: para cada compra de comida que vence (maçã e café), a Helena guarda o servidor, o ID, o item, a hora da compra e a quantidade, só para saber quando cada unidade passa do prazo (24 h e 12 h). Some quando a comida é usada, vendida, descartada ou vence. A política descreve isso na seção 4, junto do inventário. Base: execução do jogo, com o mínimo de dados.

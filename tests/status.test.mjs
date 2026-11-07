@@ -39,7 +39,8 @@ test("uma das atividades mostra o site, e todas cabem no limite", () => {
     for (const input of [{}, { guildCount: 3 }, { guildCount: 1200, guildCountComplete: true }]) {
         const messages = getStatusMessages(input);
 
-        assert.equal(messages.length, 5);
+        // as cinco de sempre e o Top Coins (os fragmentos só aparecem quando o bot informa; veja top-global.test.mjs)
+        assert.equal(messages.length, 6);
 
         for (const message of messages) {
             assert.ok(message.length > 0 && message.length <= STATUS_CONFIG.maxActivityLength, `"${message}" (${message.length})`);
