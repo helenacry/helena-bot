@@ -220,7 +220,11 @@ test("precisa de pelo menos 20 de vida, nos dois lados", () => {
     assert.equal(challenge(g, A, B), true);
 });
 
-test("espera de 5 minutos entre duelos", () => {
+test("espera de 5 minutos entre duelos", t => {
+    // O relógio parado: o teste mede a fronteira de 299 e 300 segundos, e se o segundo virasse entre o
+    // duelo e a checagem (aconteceu no CI) os 299 viravam 300 e a espera "sumia".
+    t.mock.method(Date, "now", () => 1_900_000_000_000);
+
     const g = guild();
 
     player(g, A);
