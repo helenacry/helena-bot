@@ -47,7 +47,7 @@ O site monta esse mesmo link sozinho quando o `DISCORD_CLIENT_ID` está preenchi
 | `DISCORD_BOT_TOKEN` | o token da aba Bot (obrigatória) |
 | `HELENA_OWNER_ID` | o seu ID de usuário no Discord (ligue o **Modo desenvolvedor** em Configurações → Avançado, clique no seu perfil e em *Copiar ID do usuário*). Vários, separados por vírgula |
 | `HELENA_ADMIN_IDS` | quem usa os comandos `/admin*` |
-| `HELENA_SUPPORT_GUILD_ID` e `HELENA_USERS_CHANNEL_ID`, `HELENA_SERVERS_CHANNEL_ID`, `HELENA_SHARDS_CHANNEL_ID`, `HELENA_TOPXP_CHANNEL_ID`, `HELENA_TOPCOINS_CHANNEL_ID` | os contadores do servidor de suporte: crie um **canal de voz** para cada um e cole o ID. A Helena precisa de **Ver canal** e **Gerenciar canais** neles, e o Discord só deixa renomear um canal 2 vezes a cada 10 minutos (por isso o intervalo mínimo é de 5) |
+| `HELENA_SUPPORT_GUILD_ID` e `HELENA_USERS_CHANNEL_ID`, `HELENA_SERVERS_CHANNEL_ID`, `HELENA_SHARDS_CHANNEL_ID`, `HELENA_TOPXP_CHANNEL_ID`, `HELENA_TOPLEVEL_CHANNEL_ID`, `HELENA_TOPCOINS_CHANNEL_ID` | os contadores do servidor de suporte: crie um **canal de voz** para cada um e cole o ID. A Helena precisa de **Ver canal** e **Gerenciar canais** neles, e o Discord só deixa renomear um canal 2 vezes a cada 10 minutos (por isso o intervalo mínimo é de 5) |
 | `HELENA_SHARDS` | os fragmentos (shards) do gateway. Vazio ou `auto` segue a recomendação do Discord, que é 1 até o bot passar de 2500 servidores |
 | `HELENA_DATABASE_PATH` | o banco. **Comece de um arquivo novo** (veja abaixo) |
 

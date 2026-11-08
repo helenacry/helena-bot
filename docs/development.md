@@ -62,7 +62,7 @@ O bot escreve tudo em português; quem escolhe o inglês em `/config` recebe as 
 | `HELENA_MARKET` | `off` (ou `0`, `false`, `no`) desliga a bolsa e deixa todos os preços na tabela. Padrão: ligada. |
 | `HELENA_ANTI_SPAM` | `off` (ou `0`, `false`, `no`) desliga o intervalo de 3 segundos entre comandos. Padrão: ligado. |
 | `HELENA_DATABASE_PATH` | Caminho do banco SQLite. Padrão: `./data/helena.db`. |
-| `HELENA_SUPPORT_GUILD_ID` e os canais `HELENA_USERS_CHANNEL_ID`, `HELENA_SERVERS_CHANNEL_ID`, `HELENA_SHARDS_CHANNEL_ID`, `HELENA_TOPXP_CHANNEL_ID`, `HELENA_TOPCOINS_CHANNEL_ID` | Contadores do servidor de suporte: canais de voz renomeados com usuários, servidores, shards, Top XP e Top Coins (globais). Canal sem ID fica de fora; basta um. |
+| `HELENA_SUPPORT_GUILD_ID` e os canais `HELENA_USERS_CHANNEL_ID`, `HELENA_SERVERS_CHANNEL_ID`, `HELENA_SHARDS_CHANNEL_ID`, `HELENA_TOPXP_CHANNEL_ID`, `HELENA_TOPLEVEL_CHANNEL_ID`, `HELENA_TOPCOINS_CHANNEL_ID` | Contadores do servidor de suporte: canais de voz renomeados com usuários, servidores, shards, Top XP, Top Level e Top Coins (globais). Canal sem ID fica de fora; basta um. |
 | `HELENA_STATS_INTERVAL` | Intervalo de atualização (ms) dos contadores. Mínimo 300000. |
 | `HELENA_I18N_LOG` | `on` lista no log, uma vez cada, os textos sem tradução para quem usa o inglês (veja Idiomas, acima). |
 | `HELENA_SHARDS` | Fragmentos (shards) do gateway: vazio ou `auto` segue o Discord (1 até 2500 servidores); um número força o total. |

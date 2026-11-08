@@ -5,6 +5,8 @@ import {
     STATUS_CONFIG
 } from "../../config/status.mjs";
 
+import { calculateLevel } from "../progress/experience.mjs";
+
 // ==========================================
 // FORMATAÇÃO
 // ==========================================
@@ -123,6 +125,28 @@ export function getTopXP() {
             `Jogador ${String(row.user_id).slice(-6)}`,
 
         xp: Number(row.total_xp || 0)
+    };
+}
+
+// ==========================================
+// TOP LEVEL GLOBAL
+// ==========================================
+
+// O nível de quem lidera o ranking global: o mesmo cálculo que o ranking global mostra ("XP • nível N",
+// com o nível tirado do XP somado entre os servidores). Por isso é a mesma pessoa do Top XP, só que
+// contada em nível. Só lê.
+
+export function getTopLevel() {
+    const top = getTopXP();
+
+    if (!top) {
+        return null;
+    }
+
+    return {
+        ...top,
+
+        level: calculateLevel(Math.max(0, Math.trunc(top.xp)))
     };
 }
 

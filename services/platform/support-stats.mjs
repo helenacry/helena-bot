@@ -11,6 +11,7 @@ import { shardSummary } from "./shard-registry.mjs";
 import {
     formatMoneyCompact,
     formatXP,
+    getTopLevel,
     getTopMoney,
     getTopXP
 } from "./status-data.mjs";
@@ -28,6 +29,7 @@ import {
 //   HELENA_SHARDS_CHANNEL_ID     🛰️ Shards: 1/1              conexões com o Discord (também vale o antigo
 //                                                              HELENA_CLUSTERS_CHANNEL_ID)
 //   HELENA_TOPXP_CHANNEL_ID      🏆 Top XP: Nome (12,3k)      o 1º do ranking global de XP
+//   HELENA_TOPLEVEL_CHANNEL_ID   ⭐ Top Level: Nome (Nv. 12)  o nível do 1º do ranking global
 //   HELENA_TOPCOINS_CHANNEL_ID   💰 Top Coins: Nome (R$ 1,2M) o 1º do ranking global de dinheiro
 //
 // Canal sem ID fica de fora; basta um para o contador ligar.
@@ -40,6 +42,7 @@ export const CHANNEL_VARIABLES = Object.freeze({
     servers: ["HELENA_SERVERS_CHANNEL_ID"],
     shards: ["HELENA_SHARDS_CHANNEL_ID", "HELENA_CLUSTERS_CHANNEL_ID"],
     topXp: ["HELENA_TOPXP_CHANNEL_ID"],
+    topLevel: ["HELENA_TOPLEVEL_CHANNEL_ID"],
     topCoins: ["HELENA_TOPCOINS_CHANNEL_ID"]
 });
 
@@ -192,8 +195,9 @@ export function channelSafeName(name) {
 //   users, servers   números
 //   shards           { ready, total }
 //   topXp            { name, xp } ou null
+//   topLevel         { name, level } ou null
 //   topMoney         { name, money } (centavos) ou null
-export function buildChannelNames({ users = 0, servers = 0, shards = { ready: 0, total: 1 }, topXp = null, topMoney = null } = {}) {
+export function buildChannelNames({ users = 0, servers = 0, shards = { ready: 0, total: 1 }, topXp = null, topLevel = null, topMoney = null } = {}) {
     return {
         users: `👥 Usuários: ${formatNumber(users)}`,
 
@@ -204,6 +208,10 @@ export function buildChannelNames({ users = 0, servers = 0, shards = { ready: 0,
         topXp: topXp
             ? `🏆 Top XP: ${channelSafeName(topXp.name)} (${formatXP(topXp.xp)})`
             : "🏆 Top XP: sem dados",
+
+        topLevel: topLevel
+            ? `⭐ Top Level: ${channelSafeName(topLevel.name)} (Nv. ${formatNumber(topLevel.level)})`
+            : "⭐ Top Level: sem dados",
 
         topCoins: topMoney
             ? `💰 Top Coins: ${channelSafeName(topMoney.name)} (${formatMoneyCompact(topMoney.money)})`
@@ -218,6 +226,7 @@ function collectData(channels) {
         servers: guildIds.size,
         shards: shardSummary(),
         topXp: channels.topXp ? getTopXP() : null,
+        topLevel: channels.topLevel ? getTopLevel() : null,
         topMoney: channels.topCoins ? getTopMoney() : null
     };
 }

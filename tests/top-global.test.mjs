@@ -11,6 +11,7 @@ const stats = await import("../services/platform/support-stats.mjs");
 const { globalRanking } = await import("../services/economy/global-ranking.mjs");
 const { savePlayerName } = await import("../services/platform/player-names.mjs");
 const { STATUS_CONFIG } = await import("../config/status.mjs");
+const { calculateLevel } = await import("../services/progress/experience.mjs");
 
 const ANA = "100000000000000001";
 const BETO = "100000000000000002";
@@ -114,6 +115,49 @@ test("sem nome salvo, o nome é 'Jogador' e os seis últimos dígitos; sem jogad
 });
 
 // ==========================================
+// O TOP LEVEL GLOBAL
+// ==========================================
+
+test("getTopLevel: o nível de quem lidera o ranking global (o XP somado entre os servidores)", () => {
+    seed();
+
+    const top = data.getTopLevel();
+
+    // Caio: 99.900 de XP -> nível 45 (o nível 46 pede 103.500)
+    assert.equal(top.userId, CAIO);
+    assert.equal(top.name, "Caio");
+    assert.equal(top.xp, 99_900);
+    assert.equal(top.level, 45);
+    assert.equal(top.level, calculateLevel(top.xp));
+});
+
+test("getTopLevel soma o XP dos servidores antes de achar o nível e é o primeiro do ranking global", () => {
+    seed();
+
+    // Beto: 200 + 300 = 500 de XP somados (nível 3); passa o Caio só quando o XP dele é maior
+    set("UPDATE players SET xp=? WHERE user_id=?", 10, CAIO);
+
+    const top = data.getTopLevel();
+
+    assert.equal(top.userId, BETO);
+    assert.equal(top.xp, 500);
+    assert.equal(top.level, calculateLevel(500));
+    assert.equal(top.userId, globalRanking("xp")[0].user_id);
+});
+
+test("getTopLevel: sem jogadores é null; sem nome salvo é 'Jogador' e os seis últimos dígitos", () => {
+    seed();
+
+    db.exec("DELETE FROM player_names");
+
+    assert.equal(data.getTopLevel().name, "Jogador 000003");
+
+    db.exec("DELETE FROM players");
+
+    assert.equal(data.getTopLevel(), null);
+});
+
+// ==========================================
 // O STATUS DO BOT
 // ==========================================
 
@@ -165,8 +209,9 @@ test("channelsFromEnv: só os canais com ID, com espaços cortados, e o antigo c
         HELENA_SERVERS_CHANNEL_ID: "222",
         HELENA_CLUSTERS_CHANNEL_ID: "333",
         HELENA_TOPXP_CHANNEL_ID: "",
+        HELENA_TOPLEVEL_CHANNEL_ID: " 555 ",
         HELENA_TOPCOINS_CHANNEL_ID: "   "
-    }), { users: "111", servers: "222", shards: "333" });
+    }), { users: "111", servers: "222", shards: "333", topLevel: "555" });
 
     // o nome novo vence o antigo
     assert.equal(stats.channelsFromEnv({
@@ -174,15 +219,16 @@ test("channelsFromEnv: só os canais com ID, com espaços cortados, e o antigo c
         HELENA_CLUSTERS_CHANNEL_ID: "333"
     }).shards, "444");
 
-    assert.deepEqual(Object.keys(stats.CHANNEL_VARIABLES), ["users", "servers", "shards", "topXp", "topCoins"]);
+    assert.deepEqual(Object.keys(stats.CHANNEL_VARIABLES), ["users", "servers", "shards", "topXp", "topLevel", "topCoins"]);
 });
 
-test("os nomes dos canais: usuários, servidores, shards, Top XP e Top Coins", () => {
+test("os nomes dos canais: usuários, servidores, shards, Top XP, Top Level e Top Coins", () => {
     const names = stats.buildChannelNames({
         users: 1234,
         servers: 12,
         shards: { ready: 2, total: 3 },
         topXp: { name: "Caio", xp: 99_900 },
+        topLevel: { name: "Caio", level: 45 },
         topMoney: { name: "Beto", money: reais(1_500_000) }
     });
 
@@ -191,14 +237,16 @@ test("os nomes dos canais: usuários, servidores, shards, Top XP e Top Coins", (
         servers: "🌐 Servidores: 12",
         shards: "🛰️ Shards: 2/3",
         topXp: "🏆 Top XP: Caio (99,9k)",
+        topLevel: "⭐ Top Level: Caio (Nv. 45)",
         topCoins: "💰 Top Coins: Beto (R$ 1,5M)"
     });
 });
 
-test("sem ninguém no ranking, os dois canais dizem 'sem dados'; os padrões são zero e 0/1", () => {
+test("sem ninguém no ranking, os três canais dizem 'sem dados'; os padrões são zero e 0/1", () => {
     const names = stats.buildChannelNames({});
 
     assert.equal(names.topXp, "🏆 Top XP: sem dados");
+    assert.equal(names.topLevel, "⭐ Top Level: sem dados");
     assert.equal(names.topCoins, "💰 Top Coins: sem dados");
     assert.equal(names.users, "👥 Usuários: 0");
     assert.equal(names.servers, "🌐 Servidores: 0");
@@ -221,6 +269,7 @@ test("todos os nomes cabem nos 100 caracteres de um canal, mesmo com nome e núm
         servers: 999_999,
         shards: { ready: 1024, total: 1024 },
         topXp: { name: "N".repeat(200), xp: 9_999_999_999 },
+        topLevel: { name: "L".repeat(200), level: 100 },
         topMoney: { name: "M".repeat(200), money: reais(9_999_999_999) }
     });
 

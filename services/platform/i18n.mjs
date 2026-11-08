@@ -331,4 +331,6 @@ export function localizeResponse(response, lang) {
 }
 
 // O idioma de quem fez a interação (comando, botão, formulário) ou mandou a mensagem.
-export const langOf = interaction => getLang(interaction?.user?.id);
+// Quem fala: a interação (comando de barra, botão, menu) traz a pessoa em "user"; a mensagem do prefixo h
+// (hwork, hsaldo...) traz em "author". Sem os dois, fica o português.
+export const langOf = target => getLang(target?.user?.id ?? target?.author?.id);

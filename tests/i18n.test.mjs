@@ -545,6 +545,63 @@ test("o transporte traduz também a edição da resposta e a mensagem ao canal, 
     assert.deepEqual(titles, ["🎁 Daily bonus", "🎁 Daily bonus", "🎁 Bônus diário", "🎁 Daily bonus"]);
 });
 
+// O prefixo h entrega a mensagem do canal: a pessoa vem em "author" (não em "user", como na interação).
+// O idioma só valia para a interação, e hwork, hsaldo... saíam sempre em português.
+test("langOf acha a pessoa na interação (user) e na mensagem do prefixo (author)", () => {
+    reset();
+
+    setLang(ANA, "en-US");
+
+    assert.equal(i18n.langOf({ user: { id: ANA } }), "en-US");
+    assert.equal(i18n.langOf({ author: { id: ANA } }), "en-US");
+    assert.equal(i18n.langOf({ author: { id: BETO } }), "pt-BR");
+    assert.equal(i18n.langOf({ channelId: "c1" }), "pt-BR", "sem pessoa: português");
+    assert.equal(i18n.langOf(null), "pt-BR");
+});
+
+test("o comando pelo prefixo h (mensagem do canal) responde no idioma de quem escreveu", async () => {
+    reset();
+
+    setLang(ANA, "en-US");
+
+    const api = fakeApi();
+
+    const transport = createTransport(api, "app");
+
+    const raw = id => ({
+        id,
+        guild_id: "g1",
+        channel_id: "c1",
+        content: "hconfig",
+        author: { id: ANA, username: "ana", global_name: "Ana" }
+    });
+
+    const { normalizeMessage } = await import("../services/discord/normalize.mjs");
+    const { processarPrefixo } = await import("../services/platform/prefix.mjs");
+
+    const rodar = async mensagem => processarPrefixo({
+        message: mensagem,
+        comandos,
+        send: (alvo, dados) => transport.send(alvo, dados),
+        edit: (alvo, id, dados) => transport.editMessage(alvo, id, dados),
+        gate: { check: () => ({ allowed: true }) }
+    });
+
+    assert.equal(await rodar(normalizeMessage(raw("m1"))), true);
+
+    // quem nunca escolheu o inglês continua em português
+    const outra = raw("m2");
+    outra.author = { id: BETO, username: "beto", global_name: "Beto" };
+
+    assert.equal(await rodar(normalizeMessage(outra)), true);
+
+    const titles = api.calls.filter(call => call[0] === "send").map(call => call[2].embeds[0].title);
+
+    assert.equal(titles.length, 2);
+    assert.match(titles[0], /Settings/, titles[0]);
+    assert.match(titles[1], /Configurações/, titles[1]);
+});
+
 test("a resposta original do comando não muda depois de enviada em inglês", async () => {
     reset();
 
