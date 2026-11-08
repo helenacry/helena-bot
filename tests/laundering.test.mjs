@@ -135,6 +135,7 @@ test("o sweeper credita o que venceu e avisa o canal", async () => {
 
     assert.equal(notices.length, 1);
     assert.equal(notices[0].channelId, "c9");
+    assert.equal(notices[0].userId, B, "o aviso sabe de quem é, para sair no idioma dele");
     assert.match(notices[0].body, new RegExp(`<@${B}>`));
     assert.match(notices[0].body, /800,00/);
     assert.equal(wallet(B), 80000);

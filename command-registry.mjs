@@ -5,7 +5,9 @@ import { discordApi } from "./services/discord/api.mjs";
 
 import { toDiscordCommand } from "./services/discord/format.mjs";
 
-import { slashDescription } from "./config/command-categories.mjs";
+import { slashDescription, HIDDEN_FOLDERS } from "./config/command-categories.mjs";
+
+import { EXACT as EN_US_EXACT } from "./config/locales/en-US.mjs";
 
 const COMMANDS_DIR = new URL("./commands/", import.meta.url);
 
@@ -167,20 +169,85 @@ export async function carregarComandos() {
     return comandos;
 }
 
+// ==========================================
+// DESCRIÇÕES EM OUTROS IDIOMAS NA LISTA DO DISCORD
+// ==========================================
+
+// Quem usa o Discord em inglês vê a lista de comandos em inglês, se o registro levar a descrição nesse idioma
+// (description_localizations). É o idioma do aplicativo do Discord de cada pessoa, não o que ela escolheu em
+// /config: um é a lista de comandos, o outro as respostas da Helena. Os textos vêm do dicionário de inglês
+// (config/locales/en-US-catalog.mjs); o que não tem tradução fica de fora e o Discord mostra o português.
+
+// os idiomas do Discord que recebem o dicionário de inglês
+const IDIOMAS_INGLES = ["en-US", "en-GB"];
+
+const emIngles = texto => EN_US_EXACT[String(texto ?? "")];
+
+const paraIdiomas = texto => (texto ? Object.fromEntries(IDIOMAS_INGLES.map(idioma => [idioma, texto])) : undefined);
+
+// { descriptionLocalizations, options } do comando, só com o que tem tradução
+function localizarComando(comando, pasta) {
+    const descricao = emIngles(comando.description);
+
+    // o comando do dono (admin e dev) fica só em português: ninguém mais o vê
+    if (!descricao || HIDDEN_FOLDERS.has(pasta)) {
+        return {};
+    }
+
+    const traduzirEtiqueta = rotulo => emIngles(rotulo) ?? rotulo;
+
+    const options = (comando.options ?? []).map(opcao => {
+        const texto = emIngles(opcao.description);
+
+        return {
+            ...opcao,
+
+            ...(texto ? { descriptionLocalizations: paraIdiomas(texto) } : {}),
+
+            ...(Array.isArray(opcao.choices) ? {
+                choices: opcao.choices.map(escolha => {
+                    const nome = typeof escolha === "object" ? emIngles(escolha.name) : undefined;
+
+                    return nome && nome !== escolha.name
+                        ? { ...escolha, nameLocalizations: paraIdiomas(nome) }
+                        : escolha;
+                })
+            } : {})
+        };
+    });
+
+    return {
+        descriptionLocalizations: paraIdiomas(
+            slashDescription(comando.name, pasta, descricao, traduzirEtiqueta)
+        ),
+
+        ...(options.length ? { options } : {})
+    };
+}
+
 export async function registrarComandos(appId, comandos) {
     const aliases = aliasesPorComandos.get(comandos) ?? new Map();
 
     // A pasta de cada comando (de onde sai a categoria da etiqueta "[💰 Economia]" da descrição).
     const origem = ultimaCarga?.comandos === comandos ? ultimaCarga.origem : new Map();
 
-    const paraDiscord = (nome, comando) => toDiscordCommand(nome, {
-        ...comando,
-        description: slashDescription(
-            comando.name,
-            String(origem.get(comando.name) ?? "").split("/")[0],
-            comando.description
-        )
-    });
+    const paraDiscord = (nome, comando) => {
+        const pasta = String(origem.get(comando.name) ?? "").split("/")[0];
+
+        const traduzida = localizarComando(comando, pasta);
+
+        return toDiscordCommand(nome, {
+            ...comando,
+
+            description: slashDescription(
+                comando.name,
+                pasta,
+                comando.description
+            ),
+
+            ...traduzida
+        });
+    };
 
     // Cada comando seguido dos seus aliases, que repetem a
     // descrição e as opções do comando original. toDiscordCommand confere as regras do

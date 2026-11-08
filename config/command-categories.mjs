@@ -78,20 +78,23 @@ const OWNER_TAGS = Object.freeze({
 // O limite do Discord para a descrição de um comando de barra.
 const MAX_DESCRIPTION = 100;
 
-/** A etiqueta de um comando, "[💰 Economia] ", dado o nome e a pasta onde ele mora. */
-export function slashTag(commandName, folder) {
+/**
+ * A etiqueta de um comando, "[💰 Economia] ", dado o nome e a pasta onde ele mora. "translateLabel" traduz o
+ * nome da categoria para outro idioma ("Economia" -> "Economy"), para a descrição localizada.
+ */
+export function slashTag(commandName, folder, translateLabel = label => label) {
     const tag = OWNER_TAGS[folder]
         ?? COMMAND_CATEGORIES.find(category => category.id === categoryOf(commandName, folder));
 
-    return `[${tag.emoji} ${tag.label}] `;
+    return `[${tag.emoji} ${translateLabel(tag.label)}] `;
 }
 
 /**
  * A descrição que vai ao Discord: a etiqueta mais a descrição do comando, cortada com "…" para caber
  * nos 100 caracteres (conta em unidades UTF-16, o que é seguro para o emoji de dois pedaços).
  */
-export function slashDescription(commandName, folder, description) {
-    const tag = slashTag(commandName, folder);
+export function slashDescription(commandName, folder, description, translateLabel) {
+    const tag = slashTag(commandName, folder, translateLabel);
 
     const text = String(description ?? "").trim();
 

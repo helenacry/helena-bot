@@ -47,8 +47,15 @@ Para montar o ambiente de testes:
 
 O bot escreve tudo em português; quem escolhe o inglês em `/config` recebe as respostas traduzidas **na hora de enviar**, pelo transporte (`services/discord/transport.mjs` chama `services/platform/i18n.mjs`). Nenhum comando precisa saber disso.
 
-- O dicionário do inglês está em `config/locales/en-US.mjs`: `EXACT` (o texto, ou uma linha dele, e a tradução; também vale para os nomes das contas do recibo) e `PATTERNS` (linhas com números ou nomes, como `[regex, função]`).
-- O que não está no dicionário sai em português. Com `HELENA_I18N_LOG=on`, o log mostra uma vez cada texto sem tradução (`[I18N] sem tradução (en-US): "..."`): copie para `EXACT` com a tradução ao lado.
+- O dicionário do inglês é um conjunto de arquivos em `config/locales/`, que `en-US.mjs` junta:
+  - `en-US-catalog.mjs`: o que vem dos catálogos (itens, empregos, missões, conquistas, histórias do crime, descrições dos comandos e das opções), **ligado por id**. Item, emprego, missão, conquista ou comando novo sem tradução faz o teste `tests/i18n-coverage.test.mjs` falhar e dizer qual.
+  - `en-US-responses.mjs`: o que cada comando escreve. `RESPONSES_EXACT` é o texto inteiro; `RESPONSES_PATTERNS` são as frases com partes que mudam, escritas com `tpl("Você comprou **{n}** munição.", "You bought **{n}** ammo.")` (`config/locales/template.mjs`). Os marcadores têm tipo: `{n}` número, `{u}` menção, `{m}` dinheiro e o resto qualquer texto; `{x:t}` na tradução traduz também o que foi capturado, e a tradução pode ser uma função (plural).
+  - `en-US-userinfo.mjs`: o `/userinfo` (as insígnias vêm da tabela do comando, por id).
+  - `en-US.mjs`: o básico (seções, contas do recibo, botões) e `SAME`, os textos iguais nos dois idiomas ("Katana", "Legal").
+- O tradutor (`services/platform/i18n.mjs`) tenta, nesta ordem: o texto inteiro, os padrões, o nome da conta do recibo (e traduz o valor), o texto dentro de negrito ou depois de um emoji, os nomes de itens/empregos numa linha só de nomes e preços, e por fim **decompõe** a linha: tira a contagem "(15)" e divide por ` · `, ` • `, ` — ` e ` | `, traduzindo pedaço por pedaço. O que só tem comandos (`/saldo`), código entre crases, menções, endereços, números e XP não é texto: passa sem aviso.
+- O que não está no dicionário sai em português. Com `HELENA_I18N_LOG=on`, o log mostra uma vez cada texto sem tradução (`[I18N] sem tradução (en-US): "..."`).
+- **Achar o que falta sem esperar alguém reclamar:** `node --disable-warning=ExperimentalWarning scripts/dev/i18n-scan.mjs` roda os comandos dos jogadores em inglês, num banco de teste, clica nos botões e preenche os formulários, e lista (1) cada texto sem tradução e (2) cada linha com português no meio do inglês. `SCAN_ROUNDS=20` faz mais sorteios, `--only=trabalhar,crime` roda só alguns e `--seed=7` repete os mesmos sorteios. O teste de cobertura roda a mesma coisa com semente fixa.
+- A lista de comandos que o Discord mostra ao digitar `/` também sai em inglês para quem usa o Discord em inglês (`description_localizations`, montado em `command-registry.mjs` com este mesmo dicionário). É o idioma do aplicativo do Discord da pessoa; o `/config` escolhe o idioma das respostas.
 - Para um idioma novo: crie `config/locales/<idioma>.mjs`, registre em `LOCALES` (`services/platform/i18n.mjs`) e em `LANGUAGES` (`config/i18n.mjs`) e libere o código na tabela `user_settings` (`database/settings-migrations.mjs`).
 - Os nomes dos comandos (`/saldo`, `/loja`...) e os ícones não são traduzidos.
 

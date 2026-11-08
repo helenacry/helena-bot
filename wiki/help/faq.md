@@ -56,7 +56,7 @@ Use **`/ping`** (ou `hping`): se o bot estiver funcionando, ele responde na hora
 
 ### Como troco o idioma da Helena?
 
-Use **`/config`** (ou `hconfig`) e toque em **Português (Brasil)** ou **English (US)**. A escolha vale só para você, em todos os servidores, e a resposta ao toque já sai no idioma novo. Pelo `/config` o painel é privado: só você o vê. O que ainda não foi traduzido para o inglês aparece em português.
+Use **`/config`** (ou `hconfig`) e toque em **Português (Brasil)** ou **English (US)**. A escolha vale só para você, em todos os servidores, e a resposta ao toque já sai no idioma novo. Pelo `/config` o painel é privado: só você o vê. As respostas dos comandos, os botões e os avisos saem em inglês; o cartão do `/perfil` (uma imagem) e os nomes dos comandos (`/saldo`, `/loja`...) continuam como são. Se algo ainda aparecer em português, avise no servidor de suporte.
 
 ### O bot está lento. A culpa é da Helena ou do Discord?
 

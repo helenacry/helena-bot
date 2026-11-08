@@ -437,10 +437,17 @@ export function toDiscordOption(option) {
         type,
         name: option.name,
         description: option.description,
+        ...(option.descriptionLocalizations ? { description_localizations: option.descriptionLocalizations } : {}),
         ...(option.required ? { required: true } : {}),
         ...(option.choices ? {
             choices: option.choices.map(choice =>
-                typeof choice === "object" ? { name: choice.name, value: choice.value } : { name: String(choice), value: choice }
+                typeof choice === "object"
+                    ? {
+                        name: choice.name,
+                        ...(choice.nameLocalizations ? { name_localizations: choice.nameLocalizations } : {}),
+                        value: choice.value
+                    }
+                    : { name: String(choice), value: choice }
             )
         } : {}),
         ...(option.minValue !== undefined ? { min_value: option.minValue } : {}),
@@ -520,6 +527,10 @@ export function toDiscordCommand(name, command) {
         type: 1,
         name,
         description: command.description,
+
+        // a descrição em outros idiomas, { "en-US": "..." }: o Discord mostra a do idioma do app de quem
+        // digita "/" (command-registry.mjs monta, a partir do dicionário de cada idioma)
+        ...(command.descriptionLocalizations ? { description_localizations: command.descriptionLocalizations } : {}),
         ...(command.options?.length ? { options: command.options.map(toDiscordOption) } : {}),
         contexts: [0],
         integration_types: [0]

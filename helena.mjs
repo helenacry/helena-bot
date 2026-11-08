@@ -576,9 +576,10 @@ emojiDrawingWorks()
 // foram iniciadas.
 if (!SITE_ONLY) {
     startLaunderingSweeper(
-        ({ guildId, channelId, body }) =>
+        ({ guildId, channelId, userId, body }) =>
             enviarMensagemCanal(
-                { guildId, channelId },
+                // o aviso é da pessoa que lavou: sai no idioma que ela escolheu
+                { guildId, channelId, user: { id: userId } },
                 { body }
             )
     );

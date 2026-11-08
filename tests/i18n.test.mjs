@@ -2,6 +2,7 @@ import { db } from "./helpers.mjs";
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 // Idiomas: a preferência de cada pessoa, a tradução das respostas na hora de enviar, o painel /config
 // e a ligação com o transporte (services/platform/i18n.mjs, services/panels/config-panel.mjs).
@@ -602,6 +603,32 @@ test("o comando pelo prefixo h (mensagem do canal) responde no idioma de quem es
     assert.match(titles[1], /Configurações/, titles[1]);
 });
 
+// O aviso de que a lavagem terminou não responde a um comando: o bot o manda ao canal, e só sabe o idioma se
+// o alvo do envio levar a pessoa (helena.mjs passa { user: { id } }).
+test("o aviso da lavagem concluída sai no idioma da pessoa que lavou", async () => {
+    reset();
+
+    setLang(ANA, "en-US");
+
+    const api = fakeApi();
+
+    const transport = createTransport(api, "app");
+
+    const body = `💸 <@${ANA}> sua lavagem terminou! **+R$ 800,00** já estão na sua carteira.`;
+
+    await transport.send({ guildId: "g1", channelId: "c9", user: { id: ANA } }, { body });
+    await transport.send({ guildId: "g1", channelId: "c9", user: { id: BETO } }, { body });
+
+    assert.equal(api.calls[0][2].content, `💸 <@${ANA}>, your laundering is done! **+R$ 800,00** is already in your wallet.`);
+    assert.equal(api.calls[1][2].content, body, "quem não escolheu o inglês continua em português");
+});
+
+test("o helena.mjs manda o aviso da lavagem com a pessoa no alvo do envio", () => {
+    const source = readFileSync(new URL("../helena.mjs", import.meta.url), "utf8");
+
+    assert.match(source, /\{ guildId, channelId, user: \{ id: userId \} \}/);
+});
+
 test("a resposta original do comando não muda depois de enviada em inglês", async () => {
     reset();
 
@@ -615,4 +642,135 @@ test("a resposta original do comando não muda depois de enviada em inglês", as
 
     assert.equal(sent.ok, true, "uma resposta congelada também passa");
     assert.equal(original.data.embeds[0].title, "🎁 Bônus diário");
+});
+
+// ==========================================
+// FRASES COM PARTES QUE MUDAM, NOMES E LINHAS COMPOSTAS
+// ==========================================
+
+const { tpl, nameOf } = await import("../config/locales/template.mjs");
+
+test("tpl: {n} só casa número, {u} só menção e {m} só dinheiro; o resto da frase tem de bater inteiro", () => {
+    const [number] = tpl("Faltam {n} dias", "x");
+    const [mention] = tpl("Oi {u}!", "x");
+    const [money] = tpl("Custa {m}", "x");
+
+    assert.ok(number.test("Faltam 12 dias"));
+    assert.ok(!number.test("Faltam muitos dias"));
+    assert.ok(mention.test("Oi <@123456789012345678>!"));
+    assert.ok(mention.test("Oi <@!123456789012345678>!"));
+    assert.ok(!mention.test("Oi Ana!"));
+    assert.ok(money.test("Custa R$ 1.234,50"));
+    assert.ok(money.test("Custa R$ 12,3k"));
+    assert.ok(!money.test("Custa muito"));
+});
+
+test("uma frase de poucas palavras não engole outra maior que começa igual (o 'Você pagou' que traduzia pela metade)", () => {
+    reset();
+
+    // a frase certa
+    assert.equal(en("Você pagou <@123456789012345678>."), "You paid <@123456789012345678>.");
+
+    // outra que começa igual: tem a sua própria tradução, inteira
+    assert.equal(
+        en("Você pagou **10 gemas** e agora pode usar a lavanderia privada neste servidor."),
+        "You paid **10 gems** and can now use the private laundromat in this server."
+    );
+
+    // e uma frase que ninguém traduziu nunca sai meio inglês, meio português
+    assert.equal(en("Você pagou uma coisa qualquer que não existe."), "Você pagou uma coisa qualquer que não existe.");
+    assert.deepEqual(i18n.missingTranslations(), ["en-US\u0000Você pagou uma coisa qualquer que não existe."]);
+});
+
+test("tpl: {x:t} traduz a parte capturada com o dicionário todo, e a parte desconhecida vira pendência", () => {
+    reset();
+
+    assert.equal(en("✅ **Lavagem:** Pronto para uso"), "✅ **Laundering:** Ready to use");
+
+    assert.equal(en("⏳ **Rótulo que ninguém traduziu:** 5m 0s"), "⏳ **Rótulo que ninguém traduziu:** 5m 0s");
+
+    assert.ok(i18n.missingTranslations().includes("en-US\u0000Rótulo que ninguém traduziu"), "só o rótulo é pendência");
+});
+
+test("tpl: a tradução pode ser uma função (plural) e os nomes de itens entram traduzidos", () => {
+    assert.equal(en("1 item"), "1 item");
+    assert.equal(en("20 itens"), "20 items");
+    assert.equal(en("1 unidade"), "1 unit");
+    assert.equal(en("3 unidades"), "3 units");
+    assert.equal(en("1 nível"), "1 level");
+    assert.equal(en("10 níveis"), "10 levels");
+
+    assert.equal(nameOf("Maçã"), "Apple");
+    assert.equal(nameOf("🍎 Maçã"), "🍎 Apple");
+    assert.equal(nameOf("Ninguém"), "Ninguém");
+
+    assert.equal(en("☕ **Café** já está no seu inventário."), "☕ **Coffee** is already in your inventory.");
+});
+
+test("a linha com pedaços: nomes e preços, contagem entre parênteses e separadores traduzem pedaço por pedaço", () => {
+    reset();
+
+    assert.equal(en("**☕ Café** · **R$ 7,00**"), "**☕ Coffee** · **R$ 7,00**");
+    assert.equal(en("⚔️ Armas (14)"), "⚔️ Weapons (14)");
+    assert.equal(en("20 itens · página 1/4"), "20 items · page 1/4");
+    assert.equal(en("🥇 **Ana** · Você — Nível 11 • 6045 XP"), "🥇 **Ana** · You — Level 11 • 6045 XP");
+
+    assert.deepEqual(i18n.missingTranslations().filter(entry => !/Ana/.test(entry)), [], "nada ficou pendente");
+});
+
+test("na linha composta, só o pedaço sem tradução vira pendência, e o resto sai traduzido", () => {
+    reset();
+
+    assert.equal(
+        en("20 itens · uma frase nunca vista · página 1/4"),
+        "20 items · uma frase nunca vista · page 1/4"
+    );
+
+    assert.deepEqual(i18n.missingTranslations(), ["en-US\u0000uma frase nunca vista"]);
+});
+
+test("o que não é texto passa em branco: comandos, código, menções, endereços, XP e números", () => {
+    reset();
+
+    for (const neutral of [
+        "/saldo",
+        "**/aceitarcasamento** (/help, /comandos)",
+        "`first_steps`",
+        "<@123456789012345678>",
+        "<t:1794145856:R>",
+        "https://helena.discloud.dev/wiki/",
+        "12.140 XP",
+        "id `apple`",
+        "R$ 1.200,00/min",
+        "123 456",
+        "🥇"
+    ]) {
+        assert.equal(en(neutral), neutral);
+    }
+
+    assert.deepEqual(i18n.missingTranslations(), []);
+});
+
+test("as palavras iguais nos dois idiomas não são pendência, nem como conta do recibo", () => {
+    reset();
+
+    assert.equal(en("Legal"), "Legal");
+    assert.equal(en("🦹 | Crimes: **1**"), "🦹 | Crimes: **1**");
+    assert.equal(en("⚖️ Legal"), "⚖️ Legal");
+
+    assert.deepEqual(i18n.missingTranslations(), []);
+});
+
+test("o valor do recibo também traduz: durações, unidades e padrões", () => {
+    reset();
+
+    assert.equal(en("⚡ | Regeneração: **+1 a cada 5m 0s**"), "⚡ | Regeneration: **+1 every 5m 0s**");
+    assert.equal(en("🛡️ | Defesa: **10 pontos**"), "🛡️ | Defense: **10 points**");
+    assert.equal(en("💎 | Bônus: **+1 gemas**"), "💎 | Bonus: **+1 gems**");
+
+    // a conta que ninguém traduziu vira pendência (uma só, não uma por valor)
+    en("🔹 | Conta inventada: **R$ 1,00**");
+    en("🔹 | Conta inventada: **R$ 2,00**");
+
+    assert.deepEqual(i18n.missingTranslations(), ["en-US\u0000Conta inventada"]);
 });

@@ -23,14 +23,25 @@ import * as enUS from "../../config/locales/en-US.mjs";
 
 const fold = text => text.normalize("NFC").toLowerCase();
 
-function buildLocale({ EXACT, PATTERNS }) {
+const escapeRegExp = text => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function buildLocale({ EXACT, PATTERNS, NAMES = new Map(), SAME = [] }) {
     return {
         exact: new Map(Object.entries(EXACT)),
+
+        // textos que valem nos dois idiomas, sem mudar (marcas, palavras iguais)
+        same: new Set(SAME),
 
         // sem diferença de maiúsculas: "HELENA · BANCO" acha "Banco"
         folded: new Map(Object.entries(EXACT).map(([from, to]) => [fold(from), to])),
 
-        patterns: PATTERNS
+        patterns: PATTERNS,
+
+        // nomes de itens, empregos... (português -> inglês), do maior para o menor: "Espada de ferro" vem
+        // antes de "Espada". Só casam como palavra inteira.
+        names: [...NAMES.entries()]
+            .sort((a, b) => b[0].length - a[0].length)
+            .map(([from, to]) => [new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(from)}(?![\\p{L}\\p{N}])`, "gu"), to])
     };
 }
 
@@ -125,12 +136,139 @@ function noteMissing(lang, text) {
 const MARKER = /^(\s*(?:#{1,6} |-# |> |[-*•] ))/;
 
 // 💵 | Pagamento: **+R$ 420,00**  (uma linha do recibo: emoji, barra, conta, valor)
-const RECEIPT = /^(.*?\| )([^:|\n]{1,60}): ([\s\S]+)$/;
+// (o que vem antes da barra é só emoji: um texto ali, como "Comando executado por: Ana | ...", é outra coisa)
+// (os emojis do app, <:h_wallet:123…>, também valem, apesar das letras)
+const RECEIPT = /^((?:[^\p{L}\p{N}]|\p{Extended_Pictographic}|<a?:\w+:\d+>)*\| )([^:|\n]{1,60}): ([\s\S]+)$/u;
 
 // HELENA · BANCO  (o nome da seção em cima da resposta)
 const SECTION = /^(HELENA · )(.+)$/;
 
 const hasWords = text => /\p{L}{2,}/u.test(text);
+
+// O que nunca se traduz: código entre crases, menções e horários do Discord, endereços, comandos de barra
+// (/saldo) e números. Uma linha que só tem isso (e emoji, pontuação) passa sem ser pendência.
+function stripNeutral(text) {
+    return text
+        .replace(/`[^`]*`/g, " ")
+        .replace(/<[@#&!:][^>]*>/g, " ")
+        .replace(/\]\(https?:[^)]*\)/g, "] ")
+        .replace(/https?:\/\/\S+/g, " ")
+        .replace(/(^|[\s*_(])\/[a-z][a-z0-9_-]*/g, "$1 ")
+        .replace(/\b(XP|HP|ID|PvP|OK|ms)\b/gi, " ")
+        .replace(/\/(min|h|s)\b/g, " ");
+}
+
+// "**Café**" e "🇧🇷 Português (Brasil)": o texto conhecido por dentro do negrito ou depois do emoji. A
+// formatação e o emoji ficam, a tradução vai no meio.
+function peel(core, lang, locale) {
+    const bold = /^\*\*([\s\S]+?)\*\*$/.exec(core);
+
+    if (bold) {
+        const hit = lookup(bold[1], lang, locale);
+
+        if (hit !== undefined) {
+            return `**${hit}**`;
+        }
+    }
+
+    // o emoji na frente; alguns (ℹ️, por exemplo) são "letras" para o Unicode, por isso o \p{Extended_Pictographic}
+    const lead = /^((?:[^\p{L}\p{N}`*_<[(]|\p{Extended_Pictographic})+)([\s\S]+)$/u.exec(core);
+
+    if (lead) {
+        const hit = lookup(lead[2], lang, locale);
+
+        if (hit !== undefined) {
+            return lead[1] + hit;
+        }
+    }
+
+    return undefined;
+}
+
+const readable = text => hasWords(stripNeutral(text));
+
+const STASH = /\u0001(\d+)\u0002/g;
+
+// A linha que é só nomes conhecidos (itens, empregos...) mais números, preços e emoji: troca os nomes.
+// "**☕ Café** · **R$ 7,00**" -> "**☕ Coffee** · **R$ 7,00**". Se sobra qualquer outra palavra, não vale.
+function substituteNames(core, locale) {
+    if (!locale.names.length) {
+        return undefined;
+    }
+
+    const stash = [];
+
+    let text = core;
+
+    for (const [pattern, to] of locale.names) {
+        text = text.replace(pattern, () => {
+            stash.push(to);
+
+            return `\u0001${stash.length - 1}\u0002`;
+        });
+    }
+
+    if (!stash.length || readable(text.replace(STASH, " "))) {
+        return undefined;
+    }
+
+    return text.replace(STASH, (_, index) => stash[Number(index)]);
+}
+
+// Separadores de uma linha com vários pedaços, do mais forte para o mais fraco.
+const SEPARATORS = [" · ", " • ", " — ", " | "];
+
+// "Combate (15)", "Página 1/4 (3)": o nome e a contagem entre parênteses
+const COUNTED = /^(.+?) \((\d+(?:\/\d+)?)\)$/;
+
+// A tradução de um texto (a linha inteira ou um pedaço dela), ou undefined se nenhuma regra o conhece.
+// O que só tem números, emoji, código e comandos volta igual.
+function resolve(core, lang, locale) {
+    if (!core || !readable(core)) {
+        return core;
+    }
+
+    const hit = lookup(core, lang, locale);
+
+    return hit !== undefined ? hit : decompose(core, lang, locale);
+}
+
+// Uma linha feita de pedaços conhecidos: "Nome (3)" e "A · B • C". O que não é reconhecido vira pendência
+// SÓ do pedaço (não da linha inteira), e a linha sai com os pedaços que foram traduzidos.
+function decompose(core, lang, locale) {
+    const counted = COUNTED.exec(core);
+
+    if (counted) {
+        const head = resolve(counted[1], lang, locale);
+
+        return head === undefined ? undefined : `${head} (${counted[2]})`;
+    }
+
+    for (const separator of SEPARATORS) {
+        if (!core.includes(separator)) {
+            continue;
+        }
+
+        const parts = core.split(separator);
+
+        const done = parts.map(part => resolve(part.trim(), lang, locale));
+
+        // nada reconhecido: a linha inteira é a pendência
+        if (done.every(part => part === undefined)) {
+            return undefined;
+        }
+
+        parts.forEach((part, index) => {
+            if (done[index] === undefined && readable(part)) {
+                noteMissing(lang, part.trim());
+            }
+        });
+
+        return parts.map((part, index) => done[index] ?? part).join(separator);
+    }
+
+    return undefined;
+}
 
 function lookup(core, lang, locale) {
     const exact = locale.exact.get(core);
@@ -139,11 +277,26 @@ function lookup(core, lang, locale) {
         return exact;
     }
 
+    // o que é igual nos dois idiomas ("Legal", "Katana")
+    if (locale.same.has(core)) {
+        return core;
+    }
+
     for (const [pattern, build] of locale.patterns) {
         const match = pattern.exec(core);
 
         if (match) {
-            return build(match);
+            // o segundo argumento traduz uma parte da frase (o {valor:t} dos padrões); a parte que ninguém
+            // conhece fica como está e vira pendência
+            return build(match, piece => {
+                const done = resolve(piece, lang, locale);
+
+                if (done === undefined && readable(piece)) {
+                    noteMissing(lang, piece);
+                }
+
+                return done ?? piece;
+            });
         }
     }
 
@@ -160,21 +313,31 @@ function lookup(core, lang, locale) {
     const receipt = RECEIPT.exec(core);
 
     if (receipt) {
-        const label = locale.exact.get(receipt[2]);
+        const label = locale.exact.get(receipt[2]) ?? (locale.same.has(receipt[2]) ? receipt[2] : undefined);
 
-        if (label !== undefined) {
-            // o valor também, quando é um texto conhecido e vem em negrito ("**Tudo operacional**")
-            const bold = /^\*\*(.+)\*\*$/.exec(receipt[3]);
-
-            const value = bold
-                ? `**${locale.exact.get(bold[1]) ?? bold[1]}**`
-                : (locale.exact.get(receipt[3]) ?? receipt[3]);
-
-            return `${receipt[1]}${label}: ${value}`;
+        // o nome da conta sem tradução é pendência (um por conta, não um por valor)
+        if (label === undefined && readable(receipt[2])) {
+            noteMissing(lang, receipt[2]);
         }
+
+        // o valor também, quando é um texto conhecido e vem em negrito ("**Tudo operacional**")
+        const bold = /^\*\*(.+)\*\*$/.exec(receipt[3]);
+
+        const inner = bold ? bold[1] : receipt[3];
+
+        const known = resolve(inner, lang, locale);
+
+        // um valor com palavras que ninguém traduziu vira pendência (um número, preço ou nome não)
+        if (known === undefined && readable(inner)) {
+            noteMissing(lang, inner);
+        }
+
+        const value = bold ? `**${known ?? inner}**` : (known ?? inner);
+
+        return `${receipt[1]}${label ?? receipt[2]}: ${value}`;
     }
 
-    return undefined;
+    return peel(core, lang, locale) ?? substituteNames(core, locale);
 }
 
 function translateLine(line, lang, locale) {
@@ -186,11 +349,11 @@ function translateLine(line, lang, locale) {
 
     const [, lead, core, tail] = /^(\s*)([\s\S]*?)(\s*)$/.exec(line);
 
-    if (!core || !hasWords(core)) {
+    if (!core || !readable(core)) {
         return line;
     }
 
-    const hit = lookup(core, lang, locale);
+    const hit = resolve(core, lang, locale);
 
     if (hit === undefined) {
         noteMissing(lang, core);

@@ -488,6 +488,9 @@ export function startLaunderingSweeper(
                 await notify({
                     guildId: job.guild_id,
                     channelId: job.channel_id,
+
+                    // de quem é: o aviso sai no idioma da pessoa
+                    userId: job.user_id,
                     body:
                         "💸 <@" + job.user_id + "> sua lavagem " +
                         "terminou! **+" + formatMoney(job.payout) +

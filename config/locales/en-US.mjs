@@ -12,7 +12,15 @@
 //
 // Para acrescentar: ponha a frase em português igual ao que o código escreve, e a tradução ao lado.
 
-export const EXACT = Object.freeze({
+import { CATALOG_EXACT } from "./en-US-catalog.mjs";
+
+import { knownNames } from "./template.mjs";
+
+import { RESPONSES_EXACT, RESPONSES_PATTERNS } from "./en-US-responses.mjs";
+
+import { USERINFO_EXACT, USERINFO_PATTERNS, USERINFO_SAME } from "./en-US-userinfo.mjs";
+
+const BASE_EXACT = Object.freeze({
     // ---------- seções (o nome em cima de cada resposta) ----------
     "Admin": "Admin",
     "Ajuda": "Help",
@@ -438,8 +446,8 @@ const NOUNS = Object.freeze({
 const days = text => String(text).replace(/ dias$/, " days").replace(/ dia$/, " day");
 
 // [regex, função(match) => tradução]. O primeiro que casar vale. O texto já veio sem espaços nas pontas.
-export const PATTERNS = Object.freeze([
-    [/^Próximo (crime|roubo|expediente) em (.+)$/, m => `Next ${NOUNS[m[1]]} in ${m[2]}`],
+const BASE_PATTERNS = Object.freeze([
+    [/^Próximo (crime|roubo|expediente) em (.+)$/, (m, translate) => `Next ${NOUNS[m[1]]} in ${translate(m[2])}`],
 
     [/^Você já trabalha como \*\*(.+)\*\*\.?$/, m => `You already work as **${m[1]}**.`],
 
@@ -494,4 +502,54 @@ export const PATTERNS = Object.freeze([
     [/^🎒 Inventário de (.+)$/, m => `🎒 ${m[1]}'s inventory`],
 
     [/^Idioma da Helena para você: (.+)$/, m => `Helena's language for you: ${m[1]}`]
+]);
+
+// ---------- o dicionário inteiro: o básico, os catálogos e as respostas dos comandos ----------
+
+export const EXACT = Object.freeze({
+    ...BASE_EXACT,
+    ...CATALOG_EXACT,
+    ...USERINFO_EXACT,
+    ...RESPONSES_EXACT
+});
+
+// A ordem importa (vale o primeiro que casar): o último padrão das respostas, o mais genérico, fica por último.
+export const PATTERNS = Object.freeze([
+    ...BASE_PATTERNS,
+    ...USERINFO_PATTERNS,
+    ...RESPONSES_PATTERNS
+]);
+
+// os nomes de itens, empregos... (português -> inglês) que as tabelas do catálogo registraram: o tradutor
+// troca só os nomes nas linhas que são nomes e números (services/platform/i18n.mjs)
+export const NAMES = knownNames();
+
+// Textos que são iguais em português e em inglês (marcas, palavras iguais): o tradutor os deixa como estão e
+// não os conta como pendência.
+export const SAME = Object.freeze([
+    "Legal",
+    "Katana",
+    "Admin",
+    "Crime",
+    "Daily",
+    "Ranking",
+    "Status",
+    "Hospital",
+    "Gozofone",
+    "Arsenal",
+    "Total",
+    "Crimes",
+    "Supervisor",
+    "Global",
+    "Social",
+    "Website",
+    "Nitro",
+    "Avatar",
+    "Banner",
+    "Tag",
+    "Ping",
+    "Pong",
+
+    // as insígnias do Discord que se chamam igual nos dois idiomas
+    ...USERINFO_SAME
 ]);
