@@ -356,6 +356,12 @@ export function toDiscordMessage(data = {}, { update = false } = {}) {
         json.attachments = files.map((file, id) => ({ id, filename: file.name }));
     }
 
+    // "replyTo": o ID da mensagem a que esta responde (a resposta aparece ligada a ela). Se a mensagem
+    // sumiu, o Discord manda assim mesmo.
+    if (data.replyTo && !update) {
+        json.message_reference = { message_id: String(data.replyTo), fail_if_not_exists: false };
+    }
+
     json.allowed_mentions = ALLOWED_MENTIONS;
 
     return { json, files };

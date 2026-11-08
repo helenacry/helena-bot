@@ -16,7 +16,8 @@ Tudo o que é preciso fazer **no Discord** (e nas variáveis do bot e do site) p
 
 1. Aba **Bot**. Clique em **Reset Token** e copie o token **uma vez**. Ele vai em `DISCORD_BOT_TOKEN` (no `.env` e nas variáveis do Discloud). **Nunca** cole o token em chat, issue, commit ou captura de tela: quem o tem controla o bot. Se vazar, redefina na mesma tela.
 2. Em **Privileged Gateway Intents**, ligue só a **Message Content Intent**. É ela que deixa a Helena ler o texto dos comandos de prefixo (`hdaily`, `hperfil`...). Sem ela o Discord fecha a conexão com o código 4014, e o log do bot diz exatamente isso.
-   - Deixe **desligadas** a *Server Members Intent* e a *Presence Intent*: a Helena não usa (a busca de pessoas usa a rota de pesquisa do Discord, que não precisa delas).
+   - Deixe **desligada** a *Presence Intent*: a Helena não usa (a busca de pessoas usa a rota de pesquisa do Discord, que não precisa dela).
+   - A *Server Members Intent* também fica **desligada**, a menos que você queira as boas-vindas aos criadores quando eles entram em um servidor com a Helena (veja `HELENA_MEMBERS_INTENT` na tabela abaixo). Ligue a intent no portal **antes** de pôr a variável em `on`: com a variável ligada e a intent desligada, o Discord fecha a conexão (4014).
    - Até **100 servidores** a Message Content Intent é só um botão. Passando disso, o Discord pede a verificação do bot e a aprovação dessa intenção.
 3. Marque **Public Bot** se qualquer pessoa puder adicionar a Helena.
 
@@ -48,6 +49,7 @@ O site monta esse mesmo link sozinho quando o `DISCORD_CLIENT_ID` está preenchi
 | `HELENA_OWNER_ID` | o seu ID de usuário no Discord (ligue o **Modo desenvolvedor** em Configurações → Avançado, clique no seu perfil e em *Copiar ID do usuário*). Vários, separados por vírgula |
 | `HELENA_ADMIN_IDS` | quem usa os comandos `/admin*` |
 | `HELENA_SUPPORT_GUILD_ID` e `HELENA_USERS_CHANNEL_ID`, `HELENA_SERVERS_CHANNEL_ID`, `HELENA_SHARDS_CHANNEL_ID`, `HELENA_TOPXP_CHANNEL_ID`, `HELENA_TOPLEVEL_CHANNEL_ID`, `HELENA_TOPCOINS_CHANNEL_ID` | os contadores do servidor de suporte: crie um **canal de voz** para cada um e cole o ID. A Helena precisa de **Ver canal** e **Gerenciar canais** neles, e o Discord só deixa renomear um canal 2 vezes a cada 10 minutos (por isso o intervalo mínimo é de 5) |
+| `HELENA_MEMBERS_INTENT` | `on` pede a *Server Members Intent*, que traz a entrada de membros: a Helena dá boas-vindas, no chat, aos criadores (os IDs de `HELENA_OWNER_ID`) quando entram em um servidor com ela, e a mais ninguém. Padrão `off`. Precisa da intent ligada no portal (seção 2). A resposta fofa quando os criadores mencionam a Helena **não** precisa disso |
 | `HELENA_SHARDS` | os fragmentos (shards) do gateway. Vazio ou `auto` segue a recomendação do Discord, que é 1 até o bot passar de 2500 servidores |
 | `HELENA_DATABASE_PATH` | o banco. **Comece de um arquivo novo** (veja abaixo) |
 

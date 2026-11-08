@@ -64,6 +64,7 @@ O bot escreve tudo em português; quem escolhe o inglês em `/config` recebe as 
 | `HELENA_DATABASE_PATH` | Caminho do banco SQLite. Padrão: `./data/helena.db`. |
 | `HELENA_SUPPORT_GUILD_ID` e os canais `HELENA_USERS_CHANNEL_ID`, `HELENA_SERVERS_CHANNEL_ID`, `HELENA_SHARDS_CHANNEL_ID`, `HELENA_TOPXP_CHANNEL_ID`, `HELENA_TOPLEVEL_CHANNEL_ID`, `HELENA_TOPCOINS_CHANNEL_ID` | Contadores do servidor de suporte: canais de voz renomeados com usuários, servidores, shards, Top XP, Top Level e Top Coins (globais). Canal sem ID fica de fora; basta um. |
 | `HELENA_STATS_INTERVAL` | Intervalo de atualização (ms) dos contadores. Mínimo 300000. |
+| `HELENA_MEMBERS_INTENT` | `on` pede a Server Members Intent (ligada antes no portal) para a Helena dar boas-vindas, no chat, aos criadores (`HELENA_OWNER_ID`) quando entram em um servidor com ela. Padrão `off`; com `on` e a intent desligada o Discord derruba a conexão (4014). A resposta às menções dos criadores não depende disso. |
 | `HELENA_I18N_LOG` | `on` lista no log, uma vez cada, os textos sem tradução para quem usa o inglês (veja Idiomas, acima). |
 | `HELENA_SHARDS` | Fragmentos (shards) do gateway: vazio ou `auto` segue o Discord (1 até 2500 servidores); um número força o total. |
 | `HELENA_V2` | Layout V2 do Discord no lugar dos embeds: `off` (padrão), `owner` (só nas respostas do dono, para testar em produção) ou `on` (todos). Veja [Componentes V2](game-systems.md#componentes-v2). |

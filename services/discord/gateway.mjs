@@ -16,11 +16,22 @@ export const GATEWAY_URL = "wss://gateway.discord.gg";
 // estar ligada no Portal do Desenvolvedor (aba Bot); sem ela o Discord fecha a conexão (4014).
 export const INTENTS = Object.freeze({
     GUILDS: 1 << 0,
+    GUILD_MEMBERS: 1 << 1,
     GUILD_MESSAGES: 1 << 9,
     MESSAGE_CONTENT: 1 << 15
 });
 
 export const DEFAULT_INTENTS = INTENTS.GUILDS | INTENTS.GUILD_MESSAGES | INTENTS.MESSAGE_CONTENT;
+
+// Server Members também é privilegiada: é ela que traz o GUILD_MEMBER_ADD (as boas-vindas aos criadores
+// quando entram em um servidor). Fica DESLIGADA por padrão, porque pedir uma intenção que não está ligada
+// no Portal do Desenvolvedor derruba a conexão inteira (4014). Só HELENA_MEMBERS_INTENT=on a pede, depois
+// de ligar a Server Members Intent no portal (aba Bot).
+export function intentsFromEnv(env = process.env) {
+    const on = /^(on|1|true|sim)$/i.test(String(env.HELENA_MEMBERS_INTENT ?? "").trim());
+
+    return on ? DEFAULT_INTENTS | INTENTS.GUILD_MEMBERS : DEFAULT_INTENTS;
+}
 
 const OP = Object.freeze({
     DISPATCH: 0,
@@ -41,7 +52,7 @@ export const FATAL_CLOSE = Object.freeze({
     4011: "O bot precisa de fragmentos (shards): passou do limite de servidores de uma conexão.",
     4012: "Versão do gateway inválida.",
     4013: "Intenções inválidas.",
-    4014: "Intenção privilegiada não liberada: ligue a Message Content Intent no Portal do Desenvolvedor do Discord (aplicativo, aba Bot)."
+    4014: "Intenção privilegiada não liberada: ligue a Message Content Intent (e a Server Members Intent, se HELENA_MEMBERS_INTENT=on) no Portal do Desenvolvedor do Discord (aplicativo, aba Bot)."
 });
 
 // Nestes a sessão acabou: precisa identificar de novo, não dá para retomar.

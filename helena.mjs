@@ -8,6 +8,19 @@ import {
     discordApi
 } from "./services/discord/api.mjs";
 
+import { intentsFromEnv } from "./services/discord/gateway.mjs";
+
+import {
+    greetMention,
+    welcomeCreator
+} from "./services/platform/creators.mjs";
+
+import {
+    forgetGuildChannels,
+    rememberGuildChannels,
+    welcomeChannelsOf
+} from "./services/platform/guild-channels.mjs";
+
 import {
     createTransport
 } from "./services/discord/transport.mjs";
@@ -655,6 +668,10 @@ let shardManager = null;
 
 let shuttingDown = false;
 
+// O ID do próprio bot (o READY informa): é a menção dele que reconhecemos no texto. Antes do READY, o
+// ID do aplicativo, que para um bot é o mesmo.
+let botUserId = appId;
+
 // A rotação de status e os contadores de suporte rodam enquanto algum fragmento estiver conectado.
 let rotacaoAtiva = false;
 
@@ -719,11 +736,16 @@ function processarEventoGuild(nome, dados, shardId = 0) {
 
     if (nome === "GUILD_CREATE") {
         addShardGuild(shardId, guildId);
+
+        // onde falar neste servidor (as boas-vindas aos criadores)
+        rememberGuildChannels(dados);
     }
 
     // unavailable: true é uma queda do Discord naquele servidor, e o bot continua nele.
     if (nome === "GUILD_DELETE" && !dados.unavailable) {
         removeShardGuild(shardId, guildId);
+
+        forgetGuildChannels(guildId);
     }
 
     console.log(
@@ -797,8 +819,10 @@ async function tratarMensagem(dados) {
         return;
     }
 
+    let eraComando = false;
+
     try {
-        await processarPrefixo({
+        eraComando = await processarPrefixo({
             message,
 
             comandos,
@@ -814,6 +838,47 @@ async function tratarMensagem(dados) {
     } catch (erro) {
         console.error(
             "[ERRO PREFIXO]",
+            erro
+        );
+    }
+
+    // Quem me criou me mencionou (e não era um comando): uma resposta fofa, só para os criadores.
+    if (!eraComando) {
+        await greetMention({
+            message,
+
+            botId: botUserId,
+
+            send: enviarMensagemCanal
+        });
+    }
+}
+
+// ==========================================
+// OS CRIADORES ENTRAM EM UM SERVIDOR
+// ==========================================
+
+// GUILD_MEMBER_ADD só chega com HELENA_MEMBERS_INTENT=on (a Server Members Intent ligada no portal).
+// Só os criadores recebem boas-vindas; quem entra e não é criador não gera nada.
+async function tratarEntradaDeMembro(dados) {
+    try {
+        const canal = await welcomeCreator({
+            event: dados,
+
+            channelsOf: welcomeChannelsOf,
+
+            send: (alvo, mensagem) => transport.send(alvo, mensagem)
+        });
+
+        if (canal) {
+            console.log(
+                `[CRIADORES] Boas-vindas no servidor ${dados.guild_id} (canal ${canal}).`
+            );
+        }
+
+    } catch (erro) {
+        console.error(
+            "[CRIADORES]",
             erro
         );
     }
@@ -1159,6 +1224,12 @@ async function tratarEvento(nome, dados, shardId = 0) {
         return;
     }
 
+    if (nome === "GUILD_MEMBER_ADD") {
+        await tratarEntradaDeMembro(dados);
+
+        return;
+    }
+
     if (nome === "INTERACTION_CREATE") {
         await tratarInteracao(
             normalizeInteraction(dados)
@@ -1262,7 +1333,14 @@ async function ligarGateway() {
         maxConcurrency: info?.session_start_limit?.max_concurrency ?? 1,
         url: typeof info?.url === "string" && info.url.startsWith("wss://") ? info.url : undefined,
 
+        // as intenções: as de sempre, mais a Server Members só com HELENA_MEMBERS_INTENT=on
+        intents: intentsFromEnv(process.env),
+
         onShardReady: (id, dados) => {
+            if (dados.user?.id) {
+                botUserId = String(dados.user.id);
+            }
+
             if (readyShards.size === 0) {
                 console.log(
                     `Online como ${
