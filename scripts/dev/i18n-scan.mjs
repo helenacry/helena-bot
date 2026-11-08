@@ -479,6 +479,22 @@ export async function scan({ rounds = Number(process.env.SCAN_ROUNDS ?? 4), only
 }
 
 async function run_scan({ rounds, only }) {
+    // Como em produção: os emojis do aplicativo carregados, então icon() escreve "<:h_nome:id>" no texto (nos
+    // testes comuns ele escreve o emoji comum, e o tradutor nunca via o código do emoji).
+    const { setAppEmojis } = await import("../../services/platform/app-emojis.mjs");
+    const { ICONS } = await import("../../config/icons.mjs");
+
+    setAppEmojis(Object.keys(ICONS).map((name, index) => ({ id: String(700000000000000000 + index), name: `h_${name}`, animated: false })));
+
+    try {
+        return await scanAll({ rounds, only });
+
+    } finally {
+        setAppEmojis([]);
+    }
+}
+
+async function scanAll({ rounds, only }) {
     const quiet = console.log;
 
     console.log = () => {};

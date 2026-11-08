@@ -5,6 +5,8 @@ import { DEFAULT_LANG, isLang } from "../../config/i18n.mjs";
 
 import * as enUS from "../../config/locales/en-US.mjs";
 
+import { plainEmojis } from "./app-emojis.mjs";
+
 // ==========================================
 // IDIOMA DE CADA PESSOA E TRADUÇÃO DAS RESPOSTAS
 // ==========================================
@@ -25,9 +27,29 @@ const fold = text => text.normalize("NFC").toLowerCase();
 
 const escapeRegExp = text => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// o emoji na frente de um texto (o comum ou o do app) e o resto
+const LEAD_EMOJI = /^((?:[^\p{L}\p{N}`*_<[(]|\p{Extended_Pictographic})+)([\s\S]+)$/u;
+
+// "⏱️ Tempos de recarga" -> "⏱️ Cooldowns" também vale sem o emoji ou com outro na frente: o código usa um
+// emoji diferente do que o dicionário tem em alguns lugares (icon() de uma lista de parecidos).
+function withBareEntries(entries) {
+    const exact = new Map(entries);
+
+    for (const [from, to] of entries) {
+        const a = LEAD_EMOJI.exec(from);
+        const b = LEAD_EMOJI.exec(to);
+
+        if (a && b && a[1] === b[1] && !exact.has(a[2])) {
+            exact.set(a[2], b[2]);
+        }
+    }
+
+    return exact;
+}
+
 function buildLocale({ EXACT, PATTERNS, NAMES = new Map(), SAME = [] }) {
     return {
-        exact: new Map(Object.entries(EXACT)),
+        exact: withBareEntries(Object.entries(EXACT)),
 
         // textos que valem nos dois idiomas, sem mudar (marcas, palavras iguais)
         same: new Set(SAME),
@@ -375,6 +397,10 @@ export function translateText(text, lang) {
     if (!locale) {
         return text;
     }
+
+    // Em produção o texto traz os emojis do app ("<:h_stopwatch:123>"); o dicionário usa o emoji comum. O
+    // envio troca de novo pelos da Helena (customize) depois da tradução.
+    text = plainEmojis(text);
 
     // o texto inteiro pode ser uma entrada do dicionário (inclusive com várias linhas)
     const whole = locale.exact.get(text);

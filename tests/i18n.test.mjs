@@ -146,7 +146,8 @@ test("texto inteiro, linha por linha e com formatação na frente", () => {
 test("a linha do recibo traduz a conta e o valor conhecido, e mantém o emoji e o número", () => {
     assert.equal(en("💵 | Pagamento: **+R$ 420,00**"), "💵 | Payment: **+R$ 420,00**");
     assert.equal(en("👛 | Carteira: **R$ 1.350,00**"), "👛 | Wallet: **R$ 1.350,00**");
-    assert.equal(en("<:h_wallet:123456789012345678> | Carteira: **R$ 1,00**"), "<:h_wallet:123456789012345678> | Wallet: **R$ 1,00**");
+    // o emoji do app volta ao comum antes de traduzir (o envio, em customize(), põe o da Helena de novo)
+    assert.equal(en("<:h_wallet:123456789012345678> | Carteira: **R$ 1,00**"), "👛 | Wallet: **R$ 1,00**");
     assert.equal(en("🌐 | Status do Discord: **Tudo operacional**"), "🌐 | Discord status: **All systems operational**");
     assert.equal(en("🛰️ | Banco de dados: falhou"), "🛰️ | Database: failed");
 
@@ -773,4 +774,60 @@ test("o valor do recibo também traduz: durações, unidades e padrões", () => 
     en("🔹 | Conta inventada: **R$ 2,00**");
 
     assert.deepEqual(i18n.missingTranslations(), ["en-US\u0000Conta inventada"]);
+});
+
+// ==========================================
+// OS EMOJIS DO APLICATIVO NO TEXTO
+// ==========================================
+
+// Em produção, icon() escreve "<:h_stopwatch:123>" no lugar de "⏱️" (os emojis do app estão carregados). O
+// dicionário é escrito com o emoji comum: o título do /cooldowns saía em português por isso.
+const { plainEmojis, setAppEmojis, customize } = await import("../services/platform/app-emojis.mjs");
+
+test("plainEmojis: o emoji do app volta ao comum; o que não é da Helena fica como está", () => {
+    assert.equal(plainEmojis("<:h_stopwatch:123456789012345678> Tempos"), "⏱️ Tempos");
+    assert.equal(plainEmojis("<a:h_stopwatch:123456789012345678> Tempos"), "⏱️ Tempos");
+    assert.equal(plainEmojis("<:h_ready:1234567890123> e <:h_cross:99999999999>"), "✅ e ❌", "o primeiro da lista de parecidos");
+    assert.equal(plainEmojis("<:outro_emoji:123456789012345678>"), "<:outro_emoji:123456789012345678>");
+    assert.equal(plainEmojis("<:h_naoexiste:123456789012345678>"), "<:h_naoexiste:123456789012345678>");
+    assert.equal(plainEmojis("<@123456789012345678>"), "<@123456789012345678>");
+    assert.equal(plainEmojis("sem emoji"), "sem emoji");
+    assert.equal(plainEmojis(null), null);
+});
+
+test("o texto com emoji do app traduz como o texto com emoji comum (o título do /cooldowns do print)", () => {
+    reset();
+
+    assert.equal(en("<:h_stopwatch:700000000000000100> Tempos de recarga"), "⏱️ Cooldowns");
+    assert.equal(en("<:h_illegal:700000000000000000> Ilegal"), "🦹 Illegal");
+    assert.equal(en("<:h_legal:700000000000000001> Legal"), "⚖️ Legal");
+    assert.equal(en("## <:h_stopwatch:700000000000000100> Tempos de recarga"), "## ⏱️ Cooldowns");
+
+    assert.deepEqual(i18n.missingTranslations(), []);
+});
+
+test("o dicionário vale com outro emoji na frente do mesmo texto (o código usa um parecido da lista)", () => {
+    reset();
+
+    // a chave do dicionário é "⏱️ Tempos de recarga"; o emoji que o código escreveu pode ser outro
+    assert.equal(en("🕐 Tempos de recarga"), "🕐 Cooldowns");
+    assert.equal(en("Tempos de recarga"), "Cooldowns");
+    assert.equal(en("🦸 Ilegal"), "🦸 Illegal");
+
+    assert.deepEqual(i18n.missingTranslations(), []);
+});
+
+test("depois de traduzido, o envio põe de volta os emojis da Helena (customize)", () => {
+    reset();
+
+    setAppEmojis([{ id: "700000000000000100", name: "h_stopwatch", animated: false }]);
+
+    try {
+        const sent = customize(en("<:h_stopwatch:700000000000000100> Tempos de recarga"));
+
+        assert.equal(sent, "<:h_stopwatch:700000000000000100> Cooldowns");
+
+    } finally {
+        setAppEmojis([]);
+    }
 });

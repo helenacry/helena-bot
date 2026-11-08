@@ -42,6 +42,21 @@ export function customize(text) {
     return text.replace(pattern, match => custom.get(keyOf(match)) ?? match);
 }
 
+/**
+ * O contrário de icon(): "<:h_stopwatch:123>" volta a ser "⏱️" (o primeiro emoji comum do nome). A tradução
+ * usa isto: o código escreve o texto com icon(), então em produção ele chega com "<:h_...:id>", e o dicionário
+ * é escrito com o emoji comum. Depois de traduzido, o envio (customize) põe os da Helena de novo.
+ */
+export function plainEmojis(text) {
+    if (typeof text !== "string" || !text.includes("<")) {
+        return text;
+    }
+
+    return text.replace(new RegExp(`<a?:${ICON_PREFIX}([A-Za-z0-9_]+):\\d+>`, "g"), (match, name) =>
+        ICONS[name] ? fallbacksOf(name)[0] : match
+    );
+}
+
 /** Guarda os emojis do aplicativo (o que a API devolve: { id, name, animated }). Devolve quantos desenhos casaram. */
 export function setAppEmojis(items) {
     custom.clear();
