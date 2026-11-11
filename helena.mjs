@@ -1,4 +1,3 @@
-
 import {
     createShardManager,
     resolveShardCount
@@ -1208,6 +1207,85 @@ async function tratarInteracao(interaction) {
     );
 }
 
+const CANAL_LOG_SERVIDORES = process.env.HELENA_CANAL_LOG_SERVIDORES ?? "";
+const nomesServidores = new Map();
+
+async function enviarLogServidor(texto) {
+    if (!CANAL_LOG_SERVIDORES) return;
+
+    try {
+        const res = await fetch(`https://discord.com/api/v10/channels/${CANAL_LOG_SERVIDORES}/messages`, {
+            method: "POST",
+            headers: { Authorization: `Bot ${TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ content: texto, allowed_mentions: { parse: [] } })
+        });
+
+        if (!res.ok) console.warn("[LOG SERVIDORES] HTTP", res.status, await res.text());
+    } catch (erro) {
+        console.warn("[LOG SERVIDORES]", erro.message);
+    }
+}
+
+// Quem adicionou a Helena: a entrada de auditoria BOT_ADD (tipo 28) cujo alvo é a própria Helena.
+// Precisa da permissão "Ver registro de auditoria" neste servidor.
+async function quemAdicionouHelena(guildId) {
+    try {
+        const res = await fetch(
+            `https://discord.com/api/v10/guilds/${guildId}/audit-logs?action_type=28&limit=5`,
+            {
+                headers: { Authorization: `Bot ${TOKEN}` },
+                signal: AbortSignal.timeout(5000)
+            }
+        );
+
+        if (!res.ok) return null;
+
+        const { audit_log_entries = [], users = [] } = await res.json();
+        const entrada = audit_log_entries.find(e => e.target_id === botUserId);
+
+        if (!entrada) return null;
+
+        const quem = users.find(u => u.id === entrada.user_id);
+
+        return { id: entrada.user_id, nome: quem?.global_name ?? quem?.username ?? "?" };
+    } catch {
+        return null;
+    }
+}
+
+async function registrarEntrada(guild) {
+    // o registro de auditoria demora um pouco para aparecer
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const quem = await quemAdicionouHelena(guild.id);
+
+    await enviarLogServidor([
+        "🟢 **Helena adicionada**",
+        `Servidor: ${guild.name} (\`${guild.id}\`)`,
+        `Membros: ${guild.member_count ?? "?"}`,
+        `Por: ${quem
+            ? `${quem.nome} (\`${quem.id}\`)`
+            : "não identificado (a Helena precisa da permissão Ver registro de auditoria)"}`,
+        `Quando: <t:${Math.floor(Date.now() / 1000)}:f>`
+    ].join("\n"));
+}
+
+async function registrarSaida(dados) {
+    const nome = nomesServidores.get(dados.id) ?? "?";
+
+    await enviarLogServidor([
+        "🔴 **Helena removida**",
+        `Servidor: ${nome} (\`${dados.id}\`)`,
+        "Quem removeu: o Discord não mostra isso depois que o bot sai do servidor.",
+        `Quando: <t:${Math.floor(Date.now() / 1000)}:f>`
+    ].join("\n"));
+
+    nomesServidores.delete(dados.id);
+}
+
+// Entrou agora (e não é a reconexão de um reinício): GUILD_CREATE com joined_at recente.
+const entrouAgora = dados => Date.now() - Date.parse(dados.joined_at ?? 0) < 60_000;
+
 // ==========================================
 // EVENTOS DO GATEWAY
 // ==========================================
@@ -1215,6 +1293,16 @@ async function tratarInteracao(interaction) {
 async function tratarEvento(nome, dados, shardId = 0) {
     if (nome === "GUILD_CREATE" || nome === "GUILD_DELETE") {
         processarEventoGuild(nome, dados, shardId);
+
+        if (nome === "GUILD_CREATE") {
+            nomesServidores.set(String(dados.id), dados.name);
+
+            if (entrouAgora(dados)) registrarEntrada(dados);
+        }
+
+        if (nome === "GUILD_DELETE" && !dados.unavailable) {
+            registrarSaida(dados);
+        }
 
         return;
     }
