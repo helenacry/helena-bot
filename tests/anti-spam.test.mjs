@@ -317,7 +317,8 @@ test("um comando barrado não é executado: numa rajada de depósitos só o prim
 // ==========================================
 
 test("a barra usa o mesmo intervalo, depois de achar o comando e antes da prisão e do /perfil", () => {
-    const source = readFileSync(new URL("../helena.mjs", import.meta.url), "utf8");
+    // no Windows o Git pode entregar o arquivo com CRLF (autocrlf): o que se procura aqui tem LF
+    const source = readFileSync(new URL("../helena.mjs", import.meta.url), "utf8").replaceAll("\r\n", "\n");
 
     const find = text => {
         const at = source.indexOf(text);
@@ -379,7 +380,7 @@ test("botões, menus e formulários têm o próprio intervalo: curto e separado 
 });
 
 test("a interação confere o intervalo antes de executar: botão é ignorado em silêncio, formulário recebe aviso", () => {
-    const source = readFileSync(new URL("../helena.mjs", import.meta.url), "utf8");
+    const source = readFileSync(new URL("../helena.mjs", import.meta.url), "utf8").replaceAll("\r\n", "\n");
 
     const find = (text, from = 0) => {
         const at = source.indexOf(text, from);

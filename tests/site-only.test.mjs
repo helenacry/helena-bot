@@ -27,7 +27,8 @@ test("só o valor 'on' liga o modo só-site; qualquer outro deixa o bot como sem
 // NO BOT (helena.mjs não roda em teste: confere no código)
 // ==========================================
 
-const source = readFileSync(new URL("../helena.mjs", import.meta.url), "utf8");
+// no Windows o Git pode entregar o arquivo com CRLF (autocrlf): o que se procura aqui tem LF
+const source = readFileSync(new URL("../helena.mjs", import.meta.url), "utf8").replaceAll("\r\n", "\n");
 
 // A chamada está dentro de um bloco "if (!SITE_ONLY) {": o último desses blocos antes dela ainda
 // não foi fechado (o fecha-chaves de coluna 0 só aparece no fim do bloco).
