@@ -1,0 +1,144 @@
+name: Subir no Discloud
+
+# Publica o bot (e o site que ele serve) no Discloud, pelo GitHub. É sempre manual: Actions > "Subir no Discloud"
+# > Run workflow (ou: gh workflow run deploy-discloud.yml). Nada sobe sozinho a cada push.
+#
+#   1. build   Confere que o commit faz parte da main, roda os testes do bot, o tipo e o build do site, monta
+#              o zip (com o commit dentro, em build-info.json) e guarda o zip como artefato.
+#   2. deploy  Espera a sua aprovação (ambiente "production"), envia o MESMO zip ao Discloud pela API e
+#              espera o /api/version do bot mostrar o commit novo. Se não mostrar, a execução falha.
+#
+# Voltar a uma versão anterior: rode de novo com o SHA dela em "ref". Vale para commits a partir daquele que
+# criou o /api/version (os anteriores não têm como provar a versão no ar).
+#
+# Configuração, uma vez só (passo a passo em docs/hosting-discloud.md, "Subir pelo GitHub"):
+#   - segredo DISCLOUD_TOKEN no ambiente "production" (token da API do Discloud);
+#   - variável DISCLOUD_APP_ID, se o app não se chamar "helena" (opcional);
+#   - o ambiente "production" com você como revisora e só a branch main liberada.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "O que subir: branch, tag ou commit da main (para voltar a uma versão, ponha o SHA dela)"
+        required: true
+        default: main
+        type: string
+      dry_run:
+        description: "Ensaio: confere o token e o app, sem enviar nada"
+        required: false
+        default: false
+        type: boolean
+      force:
+        description: "Subir mesmo que essa versão já esteja no ar"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# duas publicações nunca ao mesmo tempo, e nenhuma é cancelada no meio
+concurrency:
+  group: deploy-discloud
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # o próprio workflow só vale se rodar a partir da main (o ambiente "production" também exige)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      # histórico inteiro, para provar que o commit pedido está na main
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Conferir que o commit faz parte da main
+        id: commit
+        run: |
+          sha="$(git rev-parse HEAD)"
+          if ! git merge-base --is-ancestor "$sha" origin/main; then
+            echo "::error::O commit $sha não faz parte da main: só a main sobe para o Discloud."
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Vai subir"
+            echo
+            echo "\`${sha:0:7}\` — $(git log -1 --format=%s)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar as dependências do bot
+        run: npm ci
+
+      - name: Instalar as dependências do site
+        run: npm ci --prefix site
+
+      - name: Testes do bot
+        run: npm test
+
+      - name: Conferir os tipos do site
+        run: npm --prefix site run check
+
+      - name: Montar o site
+        run: npm --prefix site run build
+
+      - name: Verificar o build do site (contraste, links, peso e metadados)
+        run: npm --prefix site run verify
+
+      - name: Montar o zip do Discloud
+        env:
+          COMMIT: ${{ steps.commit.outputs.sha }}
+        run: npm run discloud:zip -- --force --out="$RUNNER_TEMP/helena.zip" --commit="$COMMIT"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: helena-zip
+          path: ${{ runner.temp }}/helena.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # a aprovação e o segredo moram neste ambiente
+    environment:
+      name: production
+      url: https://helena.discloud.dev
+    steps:
+      # o script que fala com o Discloud vem da main (e não do commit que está sendo subido: numa volta a uma
+      # versão antiga ele nem existiria)
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: helena-zip
+          path: ${{ runner.temp }}/zip
+
+      # as entradas do workflow e o segredo passam por variáveis de ambiente, nunca coladas no comando
+      - name: Enviar ao Discloud e conferir a versão no ar
+        env:
+          DISCLOUD_TOKEN: ${{ secrets.DISCLOUD_TOKEN }}
+          DISCLOUD_APP_ID: ${{ vars.DISCLOUD_APP_ID }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          FORCE: ${{ inputs.force }}
+          COMMIT: ${{ needs.build.outputs.sha }}
+        run: node scripts/ci/discloud-deploy.mjs "$RUNNER_TEMP/zip/helena.zip" --commit="$COMMIT"

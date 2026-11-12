@@ -69,3 +69,46 @@ O bot serve o site no mesmo endereço da API (`https://helena.discloud.dev/`): o
 **Domínio próprio** (por exemplo `helena.seudominio.com`): no painel do Discloud, aba **Domínios**, adicione o domínio e crie no seu DNS os registros **A** `75.2.96.173` e `99.83.186.151` (no Cloudflare, nuvem cinza, "só DNS"), depois faça um **Rebuild**. Aí troque `SITE_URL` em `config/site.mjs`, refaça os três cadastros acima com o endereço novo e monte o site de novo.
 
 O GitHub Pages (`helenacry.github.io/helena-bot/`) fica só com um redirecionamento para o endereço do Discloud, para os links antigos continuarem funcionando.
+
+## Subir pelo GitHub
+
+Em vez de montar o zip e arrastá-lo no painel, o GitHub pode fazer o caminho todo: **Actions → "Subir no Discloud" → Run workflow**. Nada sobe sozinho a cada push; é sempre um clique seu.
+
+O workflow (`.github/workflows/deploy-discloud.yml`) tem dois trabalhos:
+
+1. **build:** confere que o commit faz parte da `main`, roda os testes do bot (`npm test`), os tipos e o build do site, monta o zip (com o commit dentro, em `build-info.json`) e o guarda como artefato. Se qualquer teste falhar, nada sobe.
+2. **deploy:** espera a **sua aprovação** (ambiente `production`), envia **o mesmo zip** ao Discloud pela API (`PUT /app/<ID>/commit`) e espera o `GET /api/version` do bot mostrar o commit novo. É essa conferência que decide se deu certo: enquanto o processo novo sobe, o antigo ainda responde, então "o site respondeu" não prova nada. Se o commit novo não aparece em 5 minutos, a execução falha e o erro manda olhar o log do app.
+
+### Configurar, uma vez só
+
+1. **Token do Discloud:** gere (ou copie) o token da API no Dashboard do Discloud. Ele é seu, vale para a conta toda e **nunca** vai para um arquivo, para o chat nem para um comando colado em lugar público.
+2. **Ambiente `production`** no GitHub: Settings → Environments → New environment → `production`. Marque **Required reviewers** (você, e a outra pessoa se quiser) e, em *Deployment branches*, deixe só a **`main`**.
+3. **Segredo `DISCLOUD_TOKEN`** nesse ambiente (Add environment secret), ou pelo terminal, que pergunta o valor sem deixá-lo no histórico:
+
+   ```
+   gh secret set DISCLOUD_TOKEN --env production --repo helenacry/helena-bot
+   ```
+
+4. Se o app do Discloud não se chama `helena`, crie a variável `DISCLOUD_APP_ID` (Settings → Secrets and variables → Actions → Variables).
+5. **Ensaio:** rode o workflow com **dry_run** marcado. Ele faz tudo, menos enviar: confere o token, o app e o commit que está no ar. Se passar, a configuração está certa.
+
+O segredo só existe no job `deploy`, que só roda na `main`, depois da aprovação. O script (`scripts/ci/discloud-deploy.mjs`) cobre o token com `***` em tudo que escreve.
+
+### Usar
+
+- **Subir a `main`:** Run workflow, deixe `ref = main`. Quando o job `build` terminar, abra a execução e clique em **Review deployments**, marque `production` e **Approve and deploy**. O resumo da execução mostra o que vai subir (`abc1234 — mensagem do commit`) e, no fim, o que estava no ar antes e o que está agora.
+- **Pelo terminal:** `gh workflow run deploy-discloud.yml --repo helenacry/helena-bot` (e `-f dry_run=true` para o ensaio, `-f force=true` para subir uma versão que já está no ar).
+- **Voltar a uma versão anterior:** rode com `ref` igual ao SHA do commit bom (ele precisa fazer parte da `main`). Vale para os commits a partir daquele que criou o `/api/version`; os mais antigos não têm como provar a versão no ar.
+- **Se a versão já está no ar,** o script não envia nada e termina bem (use `force` para subir mesmo assim).
+
+### Quando falha
+
+| Mensagem | O que fazer |
+|---|---|
+| `o Discloud recusou o token` | O token mudou ou foi revogado: gere outro e refaça o segredo. |
+| `o app "x" não existe nesta conta` | Confira `DISCLOUD_APP_ID` (ou apague a variável, se o app é o `helena`). |
+| `o Discloud não aceitou o envio` | A mensagem traz o fim do log de build do app: leia, corrija e rode de novo. |
+| `a versão ... não apareceu em 300 s` | O app subiu mas não está respondendo o commit novo. Veja o log em `discloud.com/dashboard/app/helena/logs`. Se aparecer `DISCORD_BOT_TOKEN não configurado`, as variáveis se perderam (aconteceu numa migração de cluster em 11/11/2026): faça um **Rebuild** e confira a aba Variáveis. |
+| `O commit ... não faz parte da main` | Só a `main` sobe. Faça o merge antes. |
+
+O envio pelo painel (acima) continua valendo como plano B.

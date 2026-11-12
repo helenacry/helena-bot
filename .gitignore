@@ -36,3 +36,6 @@ site/redirect/
 site/.astro/
 site/test-results/
 site/playwright-report/
+
+# Escrito dentro do zip do Discloud (o commit no ar); nunca vai para o Git
+build-info.json

@@ -17,6 +17,7 @@ import { blocked, isOwner, maintenance } from "../platform/developer.mjs";
 import { discordApi } from "../discord/api.mjs";
 import { createCloudflareMatcher, isLoopback, parseExtraRanges } from "./cloudflare.mjs";
 import { createStaticSite } from "./static-site.mjs";
+import { readBuildInfo } from "./build-info.mjs";
 import { avatarUrl as discordAvatar } from "../discord/normalize.mjs";
 
 // ==========================================
@@ -1089,8 +1090,12 @@ export function createWebApi(config, deps = {}) {
     // roteador
     // ----------------------------------
 
+    // de que commit é o código rodando (build-info.json, escrito no zip): a publicação pelo GitHub confere por aqui
+    const buildInfo = deps.buildInfo ?? readBuildInfo();
+
     const routes = {
         "GET /api/health": () => ({ status: 200, body: { ok: true } }),
+        "GET /api/version": () => ({ status: 200, body: { commit: buildInfo.commit } }),
         "POST /api/auth/login": login,
         "POST /api/auth/logout": logout,
         "GET /api/me": me,

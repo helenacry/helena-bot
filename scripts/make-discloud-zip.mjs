@@ -8,6 +8,7 @@
 //   npm run discloud:zip -- --out=C:/pasta/x.zip  onde gravar (padrão: ao lado da pasta do projeto)
 //   npm run discloud:zip -- --force               sobrescreve um zip que já exista
 //   npm run discloud:zip -- --no-site             zip sem o site (o padrão leva o site montado em site-dist/)
+//   npm run discloud:zip -- --commit=<sha>        o commit que o zip leva em build-info.json (padrão: GITHUB_SHA ou o HEAD do git)
 //
 // O site (o Astro, em site/) é servido pelo próprio bot (services/web/static-site.mjs). Ele não vai
 // como código, vai montado: rode "npm run site:build" antes e o zip leva site/dist como site-dist/.
@@ -17,6 +18,7 @@
 // Segredos (.env) e o banco local nunca entram sozinhos: as variáveis vão pelo painel
 // e o banco já vive no Discloud (os commits não apagam data/, conferido num app de teste).
 
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { crc32, deflateRawSync } from "node:zlib";
 import path from "node:path";
@@ -123,15 +125,41 @@ export function siteEntries(root = ROOT) {
         .map(name => ({ name: `site-dist/${name}`, data: readFileSync(path.join(dist, name)) }));
 }
 
-// Junta tudo que vai no zip: [{ name, data }]. "site: false" deixa o site de fora.
-export function collectEntries({ root = ROOT, id, seedDb, first = false, site = true } = {}) {
+const COMMIT = /^[0-9a-f]{40}$/;
+
+// O commit do código que vai no zip: --commit=, ou GITHUB_SHA (no CI), ou o HEAD do git. Sem nenhum, não há
+// build-info.json (o zip continua valendo; só não dá para conferir a versão no ar).
+export function resolveCommit({ commit, env = process.env, root = ROOT } = {}) {
+    const found = commit ?? env.GITHUB_SHA ?? (() => {
+        try {
+            return execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+
+        } catch {
+            return undefined;
+        }
+    })();
+
+    if (found === undefined) {
+        return null;
+    }
+
+    if (!COMMIT.test(found)) {
+        throw new Error(`commit inválido "${found}": use o SHA completo (40 caracteres hexadecimais).`);
+    }
+
+    return found;
+}
+
+// Junta tudo que vai no zip: [{ name, data }]. "site: false" deixa o site de fora. "commit" põe o build-info.json.
+export function collectEntries({ root = ROOT, id, seedDb, first = false, site = true, commit = null } = {}) {
     const files = listFiles(root);
 
     if (!files.includes("discloud.config")) {
         throw new Error("não achei o discloud.config na raiz do projeto.");
     }
 
-    const entries = files.map(name => ({
+    // um build-info.json solto na pasta nunca vai: ele diria um commit velho. Quem decide é o "commit" abaixo.
+    const entries = files.filter(name => name !== "build-info.json").map(name => ({
         name,
         data: name === "discloud.config"
             ? Buffer.from(adjustConfig(readFileSync(path.join(root, name), "utf8"), { id, first }), "utf8")
@@ -140,6 +168,11 @@ export function collectEntries({ root = ROOT, id, seedDb, first = false, site = 
 
     if (site) {
         entries.push(...siteEntries(root));
+    }
+
+    // de que commit é este código (a API mostra em /api/version; o CI confere por lá)
+    if (commit) {
+        entries.push({ name: "build-info.json", data: Buffer.from(JSON.stringify({ commit }) + "\n", "utf8") });
     }
 
     if (seedDb) {
@@ -244,6 +277,7 @@ function parseArgs(argv) {
         if (arg === "--force") options.force = true;
         else if (arg === "--first") options.first = true;
         else if (arg === "--no-site") options.noSite = true;
+        else if (arg.startsWith("--commit=")) options.commit = arg.slice(9);
         else if (arg.startsWith("--id=")) options.id = arg.slice(5);
         else if (arg.startsWith("--seed-db=")) options.seedDb = path.resolve(arg.slice(10));
         else if (arg.startsWith("--out=")) options.out = path.resolve(arg.slice(6));
@@ -267,7 +301,9 @@ function main() {
         throw new Error("o site ainda não foi montado (site/dist). Rode antes: npm run site:build  (ou use --no-site para um zip sem ele).");
     }
 
-    const entries = collectEntries({ id: options.id, seedDb: options.seedDb, first: options.first, site: !options.noSite });
+    const commit = resolveCommit({ commit: options.commit });
+
+    const entries = collectEntries({ id: options.id, seedDb: options.seedDb, first: options.first, site: !options.noSite, commit });
     const zip = buildZip(entries);
 
     writeFileSync(out, zip);
@@ -278,9 +314,25 @@ function main() {
     console.log(`✅ Zip pronto: ${out}`);
     const siteFiles = entries.filter(entry => entry.name.startsWith("site-dist/")).length;
 
-    console.log(`   ${entries.length} arquivos (${siteFiles} do site), ${(zip.length / 1024).toFixed(0)} KB | subdomínio (ID): ${id} | banco de partida: ${options.seedDb ? "SIM (data/helena.db)" : "não"} | primeira subida: ${options.first ? "SIM (sem reinício automático)" : "não"}`);
+    console.log(`   ${entries.length} arquivos (${siteFiles} do site), ${(zip.length / 1024).toFixed(0)} KB | subdomínio (ID): ${id} | banco de partida: ${options.seedDb ? "SIM (data/helena.db)" : "não"} | primeira subida: ${options.first ? "SIM (sem reinício automático)" : "não"} | commit: ${commit ? commit.slice(0, 7) : "desconhecido"}`);
 
     if (!statSync(out).size) throw new Error("o zip saiu vazio.");
+
+    // o commit vem do HEAD, mas o zip leva os arquivos como estão: se houver alteração ainda não commitada, o
+    // /api/version mostraria um commit que não é exatamente este código. Só um aviso (no CI a árvore está limpa).
+    if (commit && options.commit === undefined && !process.env.GITHUB_SHA && hasUncommittedChanges()) {
+        console.log("   ⚠ há alterações ainda não commitadas: o commit acima é o do HEAD, e o zip leva os arquivos como estão.");
+    }
+}
+
+// true se algum arquivo já versionado mudou desde o último commit (os que o Git não conhece não contam)
+export function hasUncommittedChanges(root = ROOT) {
+    try {
+        return execFileSync("git", ["status", "--porcelain", "--untracked-files=no"], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() !== "";
+
+    } catch {
+        return false;
+    }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

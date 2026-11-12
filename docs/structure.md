@@ -28,12 +28,15 @@ config/                  Valores ajustáveis (empregos, itens, crime, cooldowns.
                          respostas do chat (theme.mjs: cores, ícone, humores da pelúcia)
 utils/                   Embeds, recibo e carimbo, plural, V2, tempo, IDs e utilitários
 scripts/                 Ferramentas de linha de comando (npm run db:export, discloud:zip)
+  ci/                    Usadas pelo GitHub Actions: o envio ao Discloud e a conferência da versão
+                         no ar (discloud-deploy.mjs, npm run discloud:deploy)
   dev/                   Para quem mexe no bot: a prévia das respostas (preview-replies.mjs)
   site/                  Geradores do site: dados, cartão de exemplo e wiki (npm run site:data,
                          site:card, wiki:build). Ficam fora de site/ porque leem o código do bot
 site/                    O site (projeto Astro à parte): início, wiki, painel da conta, termos e privacidade
 docs/                    Documentação (desenvolvimento, sistemas, hospedagem, site, notas jurídicas)
 .github/workflows/       Redirecionamento do endereço antigo do site, no GitHub Pages (pages.yml)
+                         e a publicação do bot no Discloud, à mão e com aprovação (deploy-discloud.yml)
 wiki/                    Texto da wiki em Markdown (vira site/src/content/wiki.json com npm run wiki:build)
 Dockerfile               Imagem para a nuvem (veja docs/hosting-railway.md)
 tests/                   Testes automáticos (npm test)

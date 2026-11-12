@@ -103,7 +103,7 @@ function makeUpstream() {
 }
 
 // Sobe a API num servidor próprio, numa porta livre, com relógio controlável.
-async function startApi(overrides = {}, { random = () => 0.5, intercept, sleep = async () => {}, member = async () => ({}) } = {}) {
+async function startApi(overrides = {}, { random = () => 0.5, intercept, sleep = async () => {}, member = async () => ({}), buildInfo } = {}) {
     const upstream = makeUpstream();
 
     const state = { now: T0 };
@@ -116,7 +116,7 @@ async function startApi(overrides = {}, { random = () => 0.5, intercept, sleep =
 
     const api = createWebApi(
         { ...BASE_CONFIG, ...overrides },
-        { fetch: fetchImpl, now: () => state.now, random, sleep, member }
+        { fetch: fetchImpl, now: () => state.now, random, sleep, member, buildInfo }
     );
 
     const server = http.createServer((req, res) => api.handle(req, res));
@@ -228,6 +228,40 @@ test("configuração completa: tira a barra final das origens e só confia em pr
     assert.equal(full.trustProxy, true);
     assert.equal(full.turnstileSecret, "segredo");
     assert.equal(full.clientSecret, "outro");
+});
+
+// ==========================================
+// VERSÃO NO AR
+// ==========================================
+
+const SHA = "0123456789abcdef0123456789abcdef01234567";
+
+test("GET /api/version mostra o commit do zip (é por aqui que a publicação pelo GitHub confere a versão no ar)", async () => {
+    await withApi({}, async ctx => {
+        const response = await call(ctx, "GET", "/api/version");
+
+        assert.equal(response.status, 200);
+        assert.deepEqual(response.json, { commit: SHA });
+        assert.equal(response.headers.get("cache-control"), "no-store", "nada de cache: o que importa é a versão de agora");
+    }, { buildInfo: { commit: SHA } });
+});
+
+test("GET /api/version sem build-info.json (rodando da pasta do projeto) devolve commit nulo, sem erro", async () => {
+    await withApi({}, async ctx => {
+        const response = await call(ctx, "GET", "/api/version");
+
+        assert.equal(response.status, 200);
+        assert.deepEqual(response.json, { commit: null });
+    }, { buildInfo: { commit: null } });
+});
+
+test("GET /api/version só responde ao site cadastrado, como o resto da API", async () => {
+    await withApi({}, async ctx => {
+        const foreign = await call(ctx, "GET", "/api/version", { origin: "https://golpista.exemplo.test" });
+
+        assert.equal(foreign.status, 403);
+        assert.equal(foreign.json?.commit, undefined);
+    }, { buildInfo: { commit: SHA } });
 });
 
 // ==========================================

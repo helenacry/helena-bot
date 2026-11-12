@@ -15,7 +15,9 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
 const SCRIPT = path.join(ROOT, "scripts", "make-discloud-zip.mjs");
 
-const { listFiles, readIgnore, collectEntries, buildZip, validId, siteEntries } = await import("../scripts/make-discloud-zip.mjs");
+const { listFiles, readIgnore, collectEntries, buildZip, validId, siteEntries, resolveCommit, hasUncommittedChanges } = await import("../scripts/make-discloud-zip.mjs");
+
+const { readBuildInfo } = await import("../services/web/build-info.mjs");
 
 const text = file => readFileSync(path.join(ROOT, file), "utf8");
 
@@ -284,6 +286,130 @@ test("npm run discloud:zip grava o zip, avisa o que levou e não sobrescreve sem
 
 test("package.json tem o comando discloud:zip", () => {
     assert.equal(JSON.parse(text("package.json")).scripts["discloud:zip"], "node scripts/make-discloud-zip.mjs");
+});
+
+test("package.json tem o comando discloud:deploy (a publicação pelo GitHub)", () => {
+    assert.equal(JSON.parse(text("package.json")).scripts["discloud:deploy"], "node scripts/ci/discloud-deploy.mjs");
+});
+
+// ==========================================
+// O COMMIT VAI NO ZIP (build-info.json), E O BOT SABE LER
+// ==========================================
+
+const SHA_A = "0123456789abcdef0123456789abcdef01234567";
+const SHA_B = "fedcba9876543210fedcba9876543210fedcba98";
+
+test("com commit, o zip leva o build-info.json; sem commit, não leva nada (o zip padrão continua igual)", () => {
+    const withCommit = readZip(buildZip(collectEntries({ root: fakeProject(), commit: SHA_A })));
+
+    assert.deepEqual(JSON.parse(withCommit["build-info.json"].toString("utf8")), { commit: SHA_A });
+    assert.ok(withCommit["build-info.json"].toString("utf8").endsWith("\n"));
+
+    assert.ok(!("build-info.json" in readZip(buildZip(collectEntries({ root: fakeProject() })))));
+});
+
+test("um build-info.json esquecido na pasta nunca vai no zip: ele diria um commit velho", () => {
+    const project = fakeProject();
+
+    writeFileSync(path.join(project, "build-info.json"), JSON.stringify({ commit: SHA_B }));
+
+    const without = collectEntries({ root: project });
+
+    assert.ok(!without.some(entry => entry.name === "build-info.json"), "sem commit, nada de build-info.json");
+
+    const withCommit = collectEntries({ root: project, commit: SHA_A });
+
+    assert.equal(withCommit.filter(entry => entry.name === "build-info.json").length, 1, "um só, sem duplicar");
+    assert.deepEqual(JSON.parse(readZip(buildZip(withCommit))["build-info.json"].toString("utf8")), { commit: SHA_A });
+});
+
+test("o commit do zip vem de --commit, depois de GITHUB_SHA, depois do git; inválido é recusado", () => {
+    assert.equal(resolveCommit({ commit: SHA_A, env: { GITHUB_SHA: SHA_B } }), SHA_A);
+    assert.equal(resolveCommit({ env: { GITHUB_SHA: SHA_B } }), SHA_B);
+
+    for (const bad of ["abc123", "", "G".repeat(40), SHA_A.toUpperCase(), SHA_A + "0", " " + SHA_A]) {
+        assert.throws(() => resolveCommit({ commit: bad }), /commit inválido/, JSON.stringify(bad));
+        assert.throws(() => resolveCommit({ env: { GITHUB_SHA: bad } }), /commit inválido/, JSON.stringify(bad));
+    }
+
+    // sem nada e fora de um repositório: sem commit, sem erro (o zip continua valendo)
+    assert.equal(resolveCommit({ env: {}, root: mkdtempSync(path.join(tmpdir(), "helena-nogit-")) }), null);
+
+    // dentro do repositório de verdade: o HEAD
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim();
+
+    assert.equal(resolveCommit({ env: {} }), head);
+});
+
+test("hasUncommittedChanges: limpo é falso, arquivo versionado alterado é verdadeiro, fora de um repositório é falso", () => {
+    const repo = mkdtempSync(path.join(tmpdir(), "helena-repo-"));
+
+    const git = (...args) => execFileSync("git", ["-c", "user.name=teste", "-c", "user.email=teste@exemplo.test", "-c", "commit.gpgsign=false", ...args], { cwd: repo, stdio: "ignore" });
+
+    git("init", "-q");
+    writeFileSync(path.join(repo, "a.txt"), "um\n");
+    git("add", "a.txt");
+    git("commit", "-q", "-m", "primeiro");
+
+    assert.equal(hasUncommittedChanges(repo), false);
+
+    writeFileSync(path.join(repo, "solto.txt"), "arquivo que o Git não conhece\n");
+
+    assert.equal(hasUncommittedChanges(repo), false, "arquivo novo não versionado não conta");
+
+    writeFileSync(path.join(repo, "a.txt"), "dois\n");
+
+    assert.equal(hasUncommittedChanges(repo), true);
+
+    assert.equal(hasUncommittedChanges(mkdtempSync(path.join(tmpdir(), "helena-nogit-"))), false);
+});
+
+test("npm run discloud:zip --commit= grava o commit no zip e avisa; commit inválido é recusado", () => {
+    const out = path.join(mkdtempSync(path.join(tmpdir(), "helena-zip-")), "com-commit.zip");
+
+    const made = spawnSync(process.execPath, [SCRIPT, `--out=${out}`, `--commit=${SHA_A}`, "--no-site"], { encoding: "utf8" });
+
+    assert.equal(made.status, 0, made.stderr);
+    assert.match(made.stdout, /commit: 0123456\b/);
+
+    assert.deepEqual(JSON.parse(readZip(readFileSync(out))["build-info.json"].toString("utf8")), { commit: SHA_A });
+
+    const refused = spawnSync(process.execPath, [SCRIPT, `--out=${out}`, "--force", "--commit=xyz", "--no-site"], { encoding: "utf8" });
+
+    assert.equal(refused.status, 1);
+    assert.match(refused.stderr, /commit inválido/);
+});
+
+test("readBuildInfo lê o commit do build-info.json do zip e nunca lança erro", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "helena-build-info-"));
+
+    // o arquivo exatamente como o zip o grava
+    const inZip = readZip(buildZip(collectEntries({ root: fakeProject(), commit: SHA_A })))["build-info.json"];
+
+    writeFileSync(path.join(dir, "ok.json"), inZip);
+
+    assert.deepEqual(readBuildInfo(path.join(dir, "ok.json")), { commit: SHA_A });
+
+    const bad = {
+        "vazio.json": "",
+        "quebrado.json": "{commit:",
+        "curto.json": JSON.stringify({ commit: "abc" }),
+        "outro-tipo.json": JSON.stringify({ commit: 123 }),
+        "sem-campo.json": JSON.stringify({}),
+        "lista.json": "[]",
+        "nulo.json": "null"
+    };
+
+    for (const [name, content] of Object.entries(bad)) {
+        writeFileSync(path.join(dir, name), content);
+
+        assert.deepEqual(readBuildInfo(path.join(dir, name)), { commit: null }, name);
+    }
+
+    assert.deepEqual(readBuildInfo(path.join(dir, "nao-existe.json")), { commit: null });
+
+    // rodando da pasta do projeto (sem zip) não há build-info.json: commit nulo
+    assert.deepEqual(readBuildInfo(), { commit: null });
 });
 
 // ==========================================
