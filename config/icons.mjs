@@ -32,6 +32,12 @@ export const ICONS = Object.freeze({
     banner: "🌌",
     bot: "🤖",
 
+    // apresentação e links (o cartão de quando alguém menciona a Helena, services/platform/about.mjs)
+    flower: "🌸",
+    letter: "💌",
+    globe: ["🌐", "🌍"],
+    laptop: "💻",
+
     // estados
     ready: ["✅", "✔️"],
     wait: "⏳",

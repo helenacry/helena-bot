@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs>
+    <g id="s">
+      <rect x="20" y="22" width="88" height="62" rx="9"/>
+      <path d="M8 90h112l-10 16H18Z"/>
+    </g>
+  </defs>
+  <use xlink:href="#s" transform="translate(5 6)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="20" y="22" width="88" height="62" rx="9" fill="#d3b3ff" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="29" y="31" width="70" height="44" rx="4" fill="#14101c"/>
+  <g fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M55 43 45 53l10 10" stroke="#d3b3ff"/>
+    <path d="M73 43l10 10-10 10" stroke="#d3b3ff"/>
+    <path d="M67 41 61 65" stroke="#e7b643"/>
+  </g>
+  <path d="M8 90h112l-10 16H18Z" fill="#f6f1fd" stroke="#14101c" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M52 97h24" fill="none" stroke="#14101c" stroke-width="4" stroke-linecap="round"/>
+</svg>

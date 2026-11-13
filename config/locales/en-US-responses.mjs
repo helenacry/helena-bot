@@ -284,6 +284,9 @@ export const RESPONSES_EXACT = Object.freeze({
     "Preço unitário": "Unit price",
     "Dinheiro": "Money",
 
+    // ---------- apresentação (quando mencionam só a Helena, config/about.mjs) ----------
+    "Olá! Sou a **Helena**!": "Hi! I'm **Helena**!",
+
     // ---------- pacotes e caixas (/abrir) ----------
     "Isso não abre": "That can't be opened",
     "Não cabe no inventário": "Doesn't fit in your inventory",
@@ -585,6 +588,21 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Você descartou **{n}× {item}**.", "You discarded **{n}× {item}**."),
 
     tpl("Você não possui {e} **{item}** para vender.", "You don't have {e} **{item}** to sell."),
+
+    // ---------- apresentação (quando mencionam só a Helena) ----------
+    // em inglês a ajuda é "hhelp" (o alias do /ajuda), não "hajuda"
+    tpl(
+        "Meu prefixo é **{p}**, use **{c}** para descobrir todos os meus comandos.",
+        ({ p }) => `My prefix is **${p}**, use **${p}help** to discover all my commands.`
+    ),
+
+    tpl("Suporte: {url}", "Support: {url}"),
+
+    tpl("Site: {url}", "Website: {url}"),
+
+    tpl("Wiki: {url}", "Wiki: {url}"),
+
+    tpl("Código: {url}", "Code: {url}"),
 
     // ---------- pacotes e caixas (/abrir) ----------
     [/^(\d+) caixas?$/, m => `${m[1]} ${plural(m[1], "box", "boxes")}`],

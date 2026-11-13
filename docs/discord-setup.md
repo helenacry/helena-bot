@@ -10,7 +10,16 @@ Tudo o que é preciso fazer **no Discord** (e nas variáveis do bot e do site) p
 2. Em **General Information**, copie o **Application ID**. Ele é público. Vai em dois lugares:
    - `site/src/config.ts`, na constante `DISCORD_CLIENT_ID` (monta o botão de convite e o login do painel);
    - `HELENA_OAUTH_CLIENT_ID`, nas variáveis do bot (só se o painel do site estiver ligado).
-3. Ainda em **General Information**, ponha o nome, a descrição e o ícone (`docs/assets/brand/bot-avatar.png` é o avatar) e, em **Tags**, as que quiser.
+3. Ainda em **General Information**, ponha o nome, a descrição e o ícone (`docs/assets/brand/bot-avatar.png` é o avatar) e, em **Tags**, as que quiser. A descrição é a biografia da Helena (o Portal aceita até 400 caracteres e entende negrito e emoji); use este texto, que é o `bioText()` de `config/about.mjs` (`tests/about.test.mjs` confere que são iguais):
+
+   ```
+   🌸 Olá! Sou a **Helena**, a bot de economia e RPG: trabalhe, lave dinheiro, case e fuja da cadeia!
+   ✨ Meu prefixo é **h**, use **hajuda** para descobrir todos os meus comandos.
+   💌 Suporte: https://discord.gg/NDBwQW99RZ
+   🌐 Site: https://helena.discloud.dev/
+   ```
+
+4. Os emojis próprios da Helena (a flor, a carta, o globo, o notebook e os outros, em `assets/emojis/`) são enviados ao aplicativo com `node --env-file=.env scripts/dev/emojis.mjs upload`, que só manda os que ainda não existem. Enquanto um emoji não estiver no aplicativo, o bot usa o comum no lugar. Veja [Design do bot](bot-design.md).
 
 ## 2. O bot e o token
 
@@ -61,8 +70,9 @@ Os jogadores da VSync têm outros IDs, e as duas plataformas não se conhecem: n
 
 ## 7. Como o bot responde
 
-- **Comandos de barra**: o bot registra os 72 comandos e os 26 apelidos (98 de 100, o limite do Discord) a cada subida. Comandos globais podem levar alguns minutos para aparecer em todos os servidores.
+- **Comandos de barra**: o bot registra os comandos dos jogadores e os apelidos a cada subida (o log mostra `N comandos registrados!`; o limite do Discord é 100 na lista global). Os comandos do dono (`admin` e `dev`) vão só para o servidor de suporte (`HELENA_SUPPORT_GUILD_ID`) e não gastam vaga. Comandos globais podem levar alguns minutos para aparecer em todos os servidores.
 - **Prefixo `h`**: `hdaily`, `hperfil`... funcionam como na VSync, pela Message Content Intent.
+- **Só a menção** (`@Helena`, sem mais nada): ela responde com um cartão de apresentação (o prefixo, a ajuda e os links de suporte, site, wiki e código). Há uma espera de 20 s por canal e de 60 s por pessoa; bots, bloqueados e criadores (que têm a resposta carinhosa) não recebem, e em manutenção ela fica quieta. Os links saem sem prévia. O texto está em `config/about.mjs`.
 - **O Discord exige resposta em até 3 segundos** a cada interação. A Helena responde na hora; o `/perfil` (que gera uma imagem) manda primeiro um aviso só para você e publica o cartão logo em seguida.
 - **Menções**: o texto da mensagem (o `body`) avisa quem foi citado; dentro de um embed a menção aparece, mas não avisa. A Helena nunca marca `@everyone`, `@here` ou cargo.
 - **Layout V2** (`HELENA_V2`): vale como antes. No Discord uma mensagem V2 não pode ter texto nem embed junto.

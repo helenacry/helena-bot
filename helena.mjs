@@ -80,8 +80,11 @@ import {
 } from "./services/platform/developer.mjs";
 
 import {
+    PREFIX,
     processarPrefixo
 } from "./services/platform/prefix.mjs";
+
+import { introduceSelf } from "./services/platform/about.mjs";
 
 import {
     commandGate,
@@ -843,15 +846,28 @@ async function tratarMensagem(dados) {
         );
     }
 
-    // Quem me criou me mencionou (e não era um comando): uma resposta fofa, só para os criadores.
+    // Me mencionaram (e não era um comando). Quem me criou ganha uma resposta fofa; qualquer outra pessoa que
+    // escreve só "@Helena" ganha o cartão de apresentação (o prefixo, a ajuda e os links).
     if (!eraComando) {
-        await greetMention({
+        const saudou = await greetMention({
             message,
 
             botId: botUserId,
 
             send: enviarMensagemCanal
         });
+
+        if (!saudou) {
+            await introduceSelf({
+                message,
+
+                botId: botUserId,
+
+                prefix: PREFIX,
+
+                send: enviarMensagemCanal
+            });
+        }
     }
 }
 

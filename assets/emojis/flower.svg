@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128">
+  <defs>
+    <g id="s">
+      <circle cx="64" cy="34" r="21"/>
+      <circle cx="89.7" cy="52.7" r="21"/>
+      <circle cx="79.9" cy="82.8" r="21"/>
+      <circle cx="48.1" cy="82.8" r="21"/>
+      <circle cx="38.3" cy="52.7" r="21"/>
+    </g>
+  </defs>
+  <use xlink:href="#s" transform="translate(5 6)" fill="#3b1ba0" stroke="#3b1ba0" stroke-width="12" stroke-linejoin="round"/>
+  <use xlink:href="#s" fill="#14101c" stroke="#14101c" stroke-width="12" stroke-linejoin="round"/>
+  <use xlink:href="#s" fill="#ff6367"/>
+  <g fill="none" stroke="#14101c" stroke-width="4.5" stroke-linecap="round">
+    <path d="M72.2 50.7 84 34.5"/>
+    <path d="M77.3 66.3 96.3 72.5"/>
+    <path d="M64 76V96"/>
+    <path d="M50.7 66.3 31.7 72.5"/>
+    <path d="M55.8 50.7 44 34.5"/>
+  </g>
+  <path d="M50 28q7-7 15-5M30 48q1-8 8-12" fill="none" stroke="#f6f1fd" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="64" cy="62" r="12" fill="#e7b643" stroke="#14101c" stroke-width="5"/>
+</svg>

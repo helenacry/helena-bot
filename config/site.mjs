@@ -27,3 +27,6 @@ export const SITE_LABEL = SITE_URL
 // ele. O site tem o mesmo link em site/src/config.ts (supportUrl): tests/site.test.mjs confere que os
 // dois são iguais.
 export const SUPPORT_URL = "https://discord.gg/NDBwQW99RZ";
+
+// O código da Helena, no GitHub (o cartão de apresentação do bot leva o link).
+export const REPO_URL = "https://github.com/helenacry/helena-bot";

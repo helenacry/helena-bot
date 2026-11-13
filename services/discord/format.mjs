@@ -14,6 +14,7 @@ import { customize, icon } from "../platform/app-emojis.mjs";
 export const DISCORD_API = "https://discord.com/api/v10";
 
 export const FLAGS = Object.freeze({
+    SUPPRESS_EMBEDS: 1 << 2,
     EPHEMERAL: 1 << 6,
     COMPONENTS_V2: 1 << 15
 });
@@ -329,6 +330,10 @@ export function toDiscordMessage(data = {}, { update = false } = {}) {
 
     if (v2) flags |= FLAGS.COMPONENTS_V2;
     if (data.ephemeral && !update) flags |= FLAGS.EPHEMERAL;
+
+    // "suppressEmbeds": os links do texto não viram prévia (o cartão de apresentação leva quatro links seguidos).
+    // No V2 não há prévia de link, então a marca só vale na mensagem comum.
+    if (data.suppressEmbeds && !v2) flags |= FLAGS.SUPPRESS_EMBEDS;
 
     const json = {};
 
