@@ -19,7 +19,7 @@ Tudo o que é preciso fazer **no Discord** (e nas variáveis do bot e do site) p
    🌐 Site: https://helena.discloud.dev/
    ```
 
-4. Os emojis próprios da Helena (a flor, a carta, o globo, o notebook e os outros, em `assets/emojis/`) são enviados ao aplicativo com `node scripts/dev/emojis.mjs upload`, que só manda os que ainda não existem. Ele precisa do `DISCORD_BOT_TOKEN` do bot **oficial** (o emoji vai para o aplicativo dono do token), que está nas variáveis do Discloud. O `.env` do projeto pode não ter essa variável; para não gravar o token em arquivo, no PowerShell:
+4. Os emojis próprios da Helena (a flor, a carta, o globo, o notebook e os outros, em `assets/emojis/`) são enviados ao aplicativo com `node scripts/dev/emojis.mjs upload`, que só manda os que ainda não existem. Ele precisa do `DISCORD_BOT_TOKEN` do bot **oficial** (o emoji vai para o aplicativo dono do token), que está nas variáveis do Discloud. Se o token já estiver num arquivo de ambiente seu (`.env` ou `.env.test`, os dois ignorados pelo Git), rode `node --env-file=<arquivo> scripts/dev/emojis.mjs upload`. Para não gravar o token em arquivo, no PowerShell:
 
    ```powershell
    $s = Read-Host "Token do bot" -AsSecureString; $env:DISCORD_BOT_TOKEN = [System.Net.NetworkCredential]::new("", $s).Password

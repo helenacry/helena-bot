@@ -87,6 +87,17 @@ export const MISSING_TOKEN =
     "     Remove-Item Env:DISCORD_BOT_TOKEN\n" +
     "   O token está nas variáveis do app no Discloud (aba Variáveis).";
 
+/** O que mostrar quando o envio falha: o Discord recusar o token (401) quase sempre é o token errado, não um defeito. */
+export function explainFailure(error) {
+    const message = error?.message ?? String(error);
+
+    if (error?.status === 401) {
+        return `${message}\n❌ O Discord recusou o token. Confira se o DISCORD_BOT_TOKEN é o do bot Helena (aba Bot do Portal ou variáveis do Discloud) e não um token antigo, como o da VSync.`;
+    }
+
+    return message;
+}
+
 async function upload({ replace }) {
     if (!String(process.env.DISCORD_BOT_TOKEN ?? "").trim()) {
         throw new Error(MISSING_TOKEN);
@@ -143,7 +154,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fileURLToPath(new URL(
 
         } catch (error) {
             // uma mensagem clara em vez do rastro de pilha
-            console.error(error?.message ?? error);
+            console.error(explainFailure(error));
 
             process.exitCode = 1;
         }

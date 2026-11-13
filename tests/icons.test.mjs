@@ -324,3 +324,17 @@ test("upload sem DISCORD_BOT_TOKEN explica o que fazer e sai com erro, sem rastr
     assert.equal(blank.status, 1);
     assert.match(blank.stderr, /Falta o DISCORD_BOT_TOKEN/);
 });
+
+test("quando o Discord recusa o token (401), o envio diz que o token é o errado e não repete valor nenhum", async () => {
+    const { explainFailure } = await import("../scripts/dev/emojis.mjs");
+
+    const refused = explainFailure(Object.assign(new Error("[DISCORD] HTTP 401 em GET /applications/@me: 401: Unauthorized"), { status: 401 }));
+
+    assert.match(refused, /HTTP 401/);
+    assert.match(refused, /recusou o token/);
+    assert.match(refused, /VSync/);
+
+    // outros erros seguem como vieram
+    assert.equal(explainFailure(Object.assign(new Error("[DISCORD] HTTP 400 em POST: nome inválido"), { status: 400 })), "[DISCORD] HTTP 400 em POST: nome inválido");
+    assert.equal(explainFailure("falhou"), "falhou");
+});
