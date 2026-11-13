@@ -77,7 +77,7 @@ Os desenhos ficam em `assets/emojis/<nome>.svg` (a pelúcia, tinta escura, lilá
 
 **Nenhum comando precisa saber disso.** O código continua escrevendo o emoji comum. Na hora de enviar, `services/discord/format.mjs` troca pelo da Helena (`customize()`, de `services/platform/app-emojis.mjs`) no título, na descrição e nos campos do embed, no texto do layout V2, no corpo da mensagem e nos emojis de botões e menus. Fica de fora o que não aceita emoji personalizado (autor e rodapé do embed, rótulos, placeholders e descrições de menu). Se a troca estourar o limite de caracteres, o texto sai com os emojis comuns. Emoji que ainda não foi enviado ao aplicativo, os de itens do jogo e os quadradinhos coloridos de status ficam como são.
 
-- **Desenhar um novo:** crie o SVG em `assets/emojis/<nome>.svg` (128 × 128, fundo transparente), acrescente o nome e o emoji comum em `config/icons.mjs`, veja a folha com `npm run emojis:sheet -- folha.png` e envie com `node --env-file=.env scripts/dev/emojis.mjs upload` (só envia os que faltam; `--replace` troca os que já existem). `tests/icons.test.mjs` confere que cada nome tem desenho e que cada PNG cabe no limite do Discord.
+- **Desenhar um novo:** crie o SVG em `assets/emojis/<nome>.svg` (128 × 128, fundo transparente), acrescente o nome e o emoji comum em `config/icons.mjs`, veja a folha com `npm run emojis:sheet -- folha.png` e envie com `node scripts/dev/emojis.mjs upload` (só envia os que faltam; `--replace` troca os que já existem; precisa do `DISCORD_BOT_TOKEN` do bot oficial e o bot só vê os novos depois de um Rebuild, veja [Configurar no Discord](discord-setup.md#1-criar-o-aplicativo)). `tests/icons.test.mjs` confere que cada nome tem desenho e que cada PNG cabe no limite do Discord.
 
 ## Texto
 

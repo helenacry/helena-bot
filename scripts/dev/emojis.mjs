@@ -5,7 +5,16 @@
 //   node scripts/dev/emojis.mjs upload --replace    apaga e envia de novo os que já existem (para trocar um desenho)
 //
 // O envio fala com o Discord de verdade (POST /applications/:id/emojis), então só roda quando você pede.
-// Use com o .env certo:  node --env-file=.env scripts/dev/emojis.mjs upload
+//
+// Ele precisa de DISCORD_BOT_TOKEN: o token do bot OFICIAL (o mesmo das variáveis do Discloud; o emoji vai para o
+// aplicativo dono do token). O .env do projeto pode não tê-lo (o antigo era da VSync). Para não gravar o token em
+// arquivo, no PowerShell (não aparece na tela nem no histórico, e some quando a janela fecha):
+//
+//   $s = Read-Host "Token do bot" -AsSecureString; $env:DISCORD_BOT_TOKEN = [System.Net.NetworkCredential]::new("", $s).Password
+//   node scripts/dev/emojis.mjs upload
+//   Remove-Item Env:DISCORD_BOT_TOKEN
+//
+// O bot só lê a lista de emojis do aplicativo quando sobe: depois do envio, faça um Rebuild no Discloud.
 
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -70,12 +79,27 @@ async function sheet(output) {
 
 // ---------------------------------------------------------------- o envio
 
+export const MISSING_TOKEN =
+    "❌ Falta o DISCORD_BOT_TOKEN: o envio usa o token do bot oficial, e o .env do projeto pode não ter essa variável.\n" +
+    "   Sem gravar o token em arquivo (PowerShell):\n" +
+    "     $s = Read-Host \"Token do bot\" -AsSecureString; $env:DISCORD_BOT_TOKEN = [System.Net.NetworkCredential]::new(\"\", $s).Password\n" +
+    "     node scripts/dev/emojis.mjs upload\n" +
+    "     Remove-Item Env:DISCORD_BOT_TOKEN\n" +
+    "   O token está nas variáveis do app no Discloud (aba Variáveis).";
+
 async function upload({ replace }) {
+    if (!String(process.env.DISCORD_BOT_TOKEN ?? "").trim()) {
+        throw new Error(MISSING_TOKEN);
+    }
+
     const { createDiscordApi } = await import("../../services/discord/api.mjs");
 
     const api = createDiscordApi();
 
     const application = await api.application();
+
+    // para conferir que é o aplicativo certo antes de qualquer envio
+    console.log(`Aplicativo: ${application.name} (${application.id})`);
 
     const existing = new Map(((await api.appEmojis(application.id)).items ?? []).map(item => [item.name, item]));
 
@@ -102,6 +126,10 @@ async function upload({ replace }) {
     }
 
     console.log(`${sent} emoji(s) enviado(s) ao aplicativo ${application.name}.`);
+
+    if (sent > 0) {
+        console.log("O bot só lê a lista de emojis ao subir: faça um Rebuild no Discloud para ele passar a usar os novos.");
+    }
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === fileURLToPath(new URL(`file://${process.argv[1].replace(/\\/g, "/")}`))) {
@@ -110,7 +138,15 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fileURLToPath(new URL(
     if (command === "sheet") {
         await sheet(rest[0] ?? "emojis-sheet.png");
     } else if (command === "upload") {
-        await upload({ replace: rest.includes("--replace") });
+        try {
+            await upload({ replace: rest.includes("--replace") });
+
+        } catch (error) {
+            // uma mensagem clara em vez do rastro de pilha
+            console.error(error?.message ?? error);
+
+            process.exitCode = 1;
+        }
     } else {
         console.log("Uso: node scripts/dev/emojis.mjs sheet [saida.png] | upload [--replace]");
     }

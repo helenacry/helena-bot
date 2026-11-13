@@ -289,3 +289,38 @@ test("o corpo da mensagem e o texto do layout V2 também; passando de 4000 no to
     assert.equal(big[0].content, "🔥".repeat(100));
     assert.equal(big[1].content, "🏦".repeat(100), "o V2 inteiro volta, não só um bloco");
 });
+
+// ==========================================
+// O ENVIO (sem rede: o que acontece quando falta o token)
+// ==========================================
+
+test("upload sem DISCORD_BOT_TOKEN explica o que fazer e sai com erro, sem rastro de pilha e sem pedir nada ao Discord", async () => {
+    const { spawnSync } = await import("node:child_process");
+    const { fileURLToPath } = await import("node:url");
+
+    const script = fileURLToPath(new URL("../scripts/dev/emojis.mjs", import.meta.url));
+
+    // um ambiente quase vazio: nenhum token, nem o do computador de quem roda o teste
+    const result = spawnSync(process.execPath, [script, "upload"], {
+        env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot },
+        encoding: "utf8",
+        timeout: 30_000
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Falta o DISCORD_BOT_TOKEN/);
+    assert.match(result.stderr, /Read-Host/);
+    assert.match(result.stderr, /Remove-Item Env:DISCORD_BOT_TOKEN/);
+    assert.doesNotMatch(result.stderr, /\n\s+at /, "sem rastro de pilha");
+    assert.equal(result.stdout.includes("Aplicativo:"), false, "não chegou a falar com o Discord");
+
+    // e um token só de espaços também conta como falta
+    const blank = spawnSync(process.execPath, [script, "upload"], {
+        env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot, DISCORD_BOT_TOKEN: "   " },
+        encoding: "utf8",
+        timeout: 30_000
+    });
+
+    assert.equal(blank.status, 1);
+    assert.match(blank.stderr, /Falta o DISCORD_BOT_TOKEN/);
+});
