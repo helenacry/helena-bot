@@ -40,5 +40,5 @@ docs/                    Documentação (desenvolvimento, sistemas, hospedagem, 
 wiki/                    Texto da wiki em Markdown (vira site/src/content/wiki.json com npm run wiki:build)
 Dockerfile               Imagem para a nuvem (veja docs/hosting-railway.md)
 tests/                   Testes automáticos (npm test)
-assets/                  Imagens e as fontes Poppins: a base do cartão de perfil
+assets/                  brand/ (avatar, banner, ícones: veja assets/brand/README.md), emojis/ (os emojis do app, em SVG) e fonts/ (as fontes Poppins do cartão de perfil)
 ```

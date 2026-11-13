@@ -17,7 +17,7 @@ on:
       - "scripts/site/**"
       - "config/site.mjs"
       - "config/web.mjs"
-      - "assets/helena_pfp.png"
+      - "assets/brand/helena-pfp.png"
       - "package.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:

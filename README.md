@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.png" alt="Helena: bot de economia e RPG para o Discord. Trabalhe, lave dinheiro, case ou vá preso." width="100%">
+<img src="assets/brand/readme-banner.png" alt="Helena: bot de economia e RPG para o Discord. Trabalhe, lave dinheiro, case ou vá preso." width="100%">
 
 <br>
 

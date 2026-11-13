@@ -1,9 +1,9 @@
 // Gera as imagens de perfil da Helena (1024 x 1024) a partir do desenho em vetor da pelúcia:
-//   ../docs/assets/brand/bot-avatar.png    o avatar do bot no Discord (fundo violeta, a pelúcia com sombra dura)
-//   ../docs/assets/brand/github-org.png    o avatar da organização helenacry no GitHub (papel lilás + selo violeta)
-//   ../docs/assets/brand/server-icon.png   o ícone do servidor oficial no Discord (carimbo redondo, tinta escura)
-//   ../docs/assets/brand/app-banner.png    o banner do app no Discord (1500 x 500, tudo no miolo por causa dos recortes)
-//   ../assets/helena_pfp.png               a foto da Helena no site e no cartão de exemplo (o avatar do bot, 512 px)
+//   ../../assets/brand/bot-avatar.png    o avatar do bot no Discord (fundo violeta, a pelúcia com sombra dura)
+//   ../../assets/brand/github-org.png    o avatar da organização helenacry no GitHub (papel lilás + selo violeta)
+//   ../../assets/brand/server-icon.png   o ícone do servidor oficial no Discord (carimbo redondo, tinta escura)
+//   ../../assets/brand/app-banner.png    o banner do app no Discord (1500 x 500, tudo no miolo por causa dos recortes)
+//   ../../assets/brand/helena-pfp.png    a foto da Helena no site e no cartão de exemplo (o avatar do bot, 512 px)
 // Rode só quando o desenho mudar:  npm --prefix site run profiles
 //
 // As plataformas cortam o avatar em círculo ou em quadrado de cantos redondos, então tudo
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 
 import sharp from "sharp";
 
-const OUT = new URL("../../docs/assets/brand/", import.meta.url);
+const OUT = new URL("../../assets/brand/", import.meta.url);
 
 await mkdir(OUT, { recursive: true });
 
@@ -108,6 +108,6 @@ await sharp(Buffer.from(banner), { density: 72 }).png({ compressionLevel: 9 }).t
 await sharp(Buffer.from(bot), { density: 72 })
   .resize(512, 512)
   .png({ compressionLevel: 9 })
-  .toFile(fileURLToPath(new URL("../../assets/helena_pfp.png", import.meta.url)));
+  .toFile(fileURLToPath(new URL("helena-pfp.png", OUT)));
 
-console.log("docs/assets/brand/bot-avatar.png, github-org.png e server-icon.png atualizados, e assets/helena_pfp.png igual ao avatar do bot.");
+console.log("assets/brand/: bot-avatar, github-org, server-icon e app-banner atualizados, e helena-pfp igual ao avatar do bot.");

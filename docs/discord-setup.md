@@ -10,7 +10,7 @@ Tudo o que é preciso fazer **no Discord** (e nas variáveis do bot e do site) p
 2. Em **General Information**, copie o **Application ID**. Ele é público. Vai em dois lugares:
    - `site/src/config.ts`, na constante `DISCORD_CLIENT_ID` (monta o botão de convite e o login do painel);
    - `HELENA_OAUTH_CLIENT_ID`, nas variáveis do bot (só se o painel do site estiver ligado).
-3. Ainda em **General Information**, ponha o nome, a descrição e o ícone (`docs/assets/brand/bot-avatar.png` é o avatar) e, em **Tags**, as que quiser. A descrição é a biografia da Helena (o Portal aceita até 400 caracteres e entende negrito e emoji); use este texto, que é o `bioText()` de `config/about.mjs` (`tests/about.test.mjs` confere que são iguais):
+3. Ainda em **General Information**, ponha o nome, a descrição e o ícone (`assets/brand/bot-avatar.png` é o avatar, e `assets/brand/app-banner.png` o banner, 1500 x 500, que vai em **Bot → Banner**) e, em **Tags**, as que quiser. A descrição é a biografia da Helena (o Portal aceita até 400 caracteres e entende negrito e emoji); use este texto, que é o `bioText()` de `config/about.mjs` (`tests/about.test.mjs` confere que são iguais):
 
    ```
    🌸 Olá! Sou a **Helena**, a bot de economia e RPG: trabalhe, lave dinheiro, case e fuja da cadeia!

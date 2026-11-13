@@ -1,7 +1,7 @@
 // Gera as imagens fixas do site a partir do desenho em vetor da pelúcia:
 //   public/apple-touch-icon.png  180 x 180
 //   public/og-default.png        1200 x 630 (compartilhamento em redes e chats)
-//   ../docs/assets/banner.png    1600 x 420 (o topo do README)
+//   ../../assets/brand/readme-banner.png   1600 x 420 a 96 dpi, sai 2133 x 560 (o topo do README)
 // Rode só quando o desenho mudar:  npm --prefix site run icons
 // Os arquivos gerados são versionados, então o build do site não depende do sharp para isso.
 
@@ -45,7 +45,7 @@ await sharp(Buffer.from(svg), { density: 96 }).png({ compressionLevel: 9 }).toFi
 
 console.log("public/apple-touch-icon.png e public/og-default.png atualizados.");
 
-// O banner do README (docs/assets/banner.png): a pelúcia, o nome e a frase, no papel lilás.
+// O banner do README (assets/brand/readme-banner.png): a pelúcia, o nome e a frase, no papel lilás.
 const bannerPlush = plush.replace('translate(846 122) scale(2.4)', 'translate(120 70) scale(2.55)');
 
 const banner = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420">
@@ -58,6 +58,6 @@ const banner = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420
   <text x="566" y="344" font-family="Courier New, monospace" font-weight="700" font-size="30" letter-spacing="1" fill="#5a2be2">Trabalhe, lave dinheiro, case ou vá preso.</text>
 </svg>`;
 
-await sharp(Buffer.from(banner), { density: 96 }).png({ compressionLevel: 9 }).toFile(fileURLToPath(new URL("../../docs/assets/banner.png", import.meta.url)));
+await sharp(Buffer.from(banner), { density: 96 }).png({ compressionLevel: 9 }).toFile(fileURLToPath(new URL("../../assets/brand/readme-banner.png", import.meta.url)));
 
-console.log("docs/assets/banner.png atualizado.");
+console.log("assets/brand/readme-banner.png atualizado.");

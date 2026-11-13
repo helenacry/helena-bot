@@ -14,6 +14,7 @@ node_modules
 tests
 site
 wiki
+assets/brand
 README.md
 Dockerfile
 .dockerignore

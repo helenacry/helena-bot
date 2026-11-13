@@ -656,7 +656,7 @@ test("o site publicado não leva script do bot: site/ só importa config/ e a fo
             const rel = relative(dirname(SITE), target).replace(/\\/g, "/");
 
             // config/ (os mesmos valores do bot) e a foto da Helena, que vira o avatar da conversa
-            assert.match(rel, /^(?:config\/[a-z-]+\.mjs|assets\/helena_pfp\.png)$/, `${relative(SITE, file)} importa ${rel}, fora de site/`);
+            assert.match(rel, /^(?:config\/[a-z-]+\.mjs|assets\/brand\/helena-pfp\.png)$/, `${relative(SITE, file)} importa ${rel}, fora de site/`);
         }
     }
 

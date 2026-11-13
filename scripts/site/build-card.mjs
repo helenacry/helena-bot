@@ -5,7 +5,7 @@
 //   npm run site:card
 //
 // Rode de novo sempre que o desenho do cartão mudar. Os dados são de uma
-// jogadora fictícia, e a foto é a da própria Helena (assets/helena_pfp.png).
+// jogadora fictícia, e a foto é a da própria Helena (assets/brand/helena-pfp.png).
 
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -19,7 +19,7 @@ import { getItem } from "../../config/items.mjs";
 const OUTPUT = new URL("../../site/src/assets/helena-card.webp", import.meta.url);
 
 const avatarBuffer = await readFile(
-    new URL("../../assets/helena_pfp.png", import.meta.url)
+    new URL("../../assets/brand/helena-pfp.png", import.meta.url)
 );
 
 const revolver = getItem("revolver");

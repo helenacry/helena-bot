@@ -87,3 +87,26 @@ test("todo script do package.json aponta para um arquivo que existe", () => {
 
     assert.ok(checked >= 6, `conferiu ${checked} arquivos`);
 });
+
+test("as imagens de marca ficam em assets/brand, cada uma descrita no README da pasta, e nenhuma sobra solta pelo projeto", () => {
+    const folder = path.join(ROOT, "assets", "brand");
+    const description = readFileSync(path.join(folder, "README.md"), "utf8");
+
+    const images = readdirSync(folder).filter(name => /\.(png|jpe?g|webp|svg)$/i.test(name));
+
+    assert.ok(images.length >= 6, "avatar, banners e ícones");
+
+    for (const image of images) {
+        assert.match(image, /^[a-z0-9]+(-[a-z0-9]+)*\.[a-z]+$/, `${image}: nome em inglês, kebab-case`);
+        assert.ok(description.includes("`" + image + "`"), `assets/brand/README.md não descreve ${image}`);
+    }
+
+    // e o contrário: o que o README promete existe
+    for (const [, named] of description.matchAll(/^\| `([^`]+\.(?:png|jpe?g|webp|svg))` \|/gim)) {
+        assert.ok(images.includes(named), `assets/brand/README.md cita ${named}, que não existe`);
+    }
+
+    // as pastas antigas não voltam
+    assert.equal(existsSync(path.join(ROOT, "docs", "assets")), false, "as imagens saíram de docs/assets");
+    assert.equal(existsSync(path.join(ROOT, "assets", "helena_pfp.png")), false, "a foto da Helena mora em assets/brand/helena-pfp.png");
+});

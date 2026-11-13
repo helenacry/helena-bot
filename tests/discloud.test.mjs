@@ -126,15 +126,20 @@ test("o zip lido de volta tem o bot inteiro, com CRC e tamanho certos, e nada qu
         assert.ok(names.includes(must), `${must} falta no zip`);
     }
 
-    // a foto da Helena e as fontes do cartão de perfil
-    const assets = readdirSync(path.join(ROOT, "assets"), { recursive: true }).map(String).filter(name => statSync(path.join(ROOT, "assets", name)).isFile());
+    // as fontes do cartão de perfil
+    const all = readdirSync(path.join(ROOT, "assets"), { recursive: true }).map(String).filter(name => statSync(path.join(ROOT, "assets", name)).isFile());
 
-    assert.ok(assets.includes("helena_pfp.png"));
+    // assets/brand (avatar, banners, ícones) é para o Portal, o GitHub, o README e o site: o bot não os lê, então ficam fora do zip
+    const assets = all.filter(name => !/^brand[\\/]/.test(name));
+
+    assert.ok(all.some(name => /^brand[\\/]helena-pfp\.png$/.test(name)), "a foto da Helena mora em assets/brand");
     assert.ok(assets.filter(name => name.endsWith(".ttf")).length >= 5, "as fontes Poppins");
 
     for (const asset of assets) {
         assert.ok(names.includes("assets/" + asset.replaceAll("\\", "/")), `assets/${asset} falta no zip`);
     }
+
+    assert.deepEqual(names.filter(name => name.startsWith("assets/brand/")), [], "as imagens de marca não vão para o Discloud");
 
     // nada de segredos, banco, testes, site, wiki, git nem node_modules
     for (const name of names) {

@@ -12,6 +12,7 @@ public
 tests
 site
 wiki
+brand
 Dockerfile
 .dockerignore
 .gitattributes
