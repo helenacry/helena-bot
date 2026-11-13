@@ -371,8 +371,12 @@ test("loja: compra por nome, sem acento e pelo ID", async () => {
     reset();
     set("UPDATE players SET wallet = 1000000 WHERE guild_id=? AND user_id=?", G, ME);
 
-    await send(submit("loja:comprar", { item: "Caixa misteriosa", quantidade: "2" }));
-    assert.equal(bought("mystery_box"), 2);
+    await send(submit("loja:comprar", { item: "Pacote de suprimentos", quantidade: "2" }));
+    assert.equal(bought("supply_pack"), 2);
+
+    // a caixa misteriosa (sorteio) não se compra mais: só de graça
+    await send(submit("loja:comprar", { item: "Caixa misteriosa", quantidade: "1" }));
+    assert.equal(bought("mystery_box"), 0);
 
     await send(submit("loja:comprar", { item: "maca", quantidade: "3" }));
     assert.equal(bought("apple"), 3, "sem acento acha Maçã");

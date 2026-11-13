@@ -119,6 +119,10 @@ export function createDiscordApi({
         // Substitui a lista inteira de comandos globais.
         registerCommands: (appId, commands) => request("PUT", `/applications/${id(appId)}/commands`, { json: commands }),
 
+        // Substitui a lista de comandos de UM servidor (cada servidor tem a sua, com teto próprio de 100).
+        registerGuildCommands: (appId, guildId, commands) =>
+            request("PUT", `/applications/${id(appId)}/guilds/${id(guildId)}/commands`, { json: commands }),
+
         // ---- interações ----
 
         respond: (interactionId, interactionToken, { json, files }) =>

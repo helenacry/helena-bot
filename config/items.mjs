@@ -66,13 +66,26 @@ export const ITEMS = Object.freeze([
         sellPrice: 750
     },
     {
+        id: "supply_pack",
+        name: "Pacote de suprimentos",
+        emoji: "📦",
+        category: "box",
+        description: "Sempre vem 3 maçãs, 2 cafés e 1 energético. Abra com /abrir.",
+        maxStack: 25,
+        buyPrice: 3400,
+        sellable: false,
+        sellPrice: 0
+    },
+    {
+        // Não se compra (buyPrice null): é sorteio, e sorteio só de graça (config/boxes.mjs). Até 12/11/2026 ficava
+        // na loja por 10000; quem já tem uma continua com ela.
         id: "mystery_box",
         name: "Caixa misteriosa",
         emoji: "🎁",
         category: "box",
-        description: "Uma caixa com conteúdo desconhecido.",
+        description: "Uma caixa com conteúdo desconhecido. Não está mais à venda e ainda não abre.",
         maxStack: 25,
-        buyPrice: 10000,
+        buyPrice: null,
         sellable: false,
         sellPrice: 0
     },

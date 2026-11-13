@@ -28,6 +28,7 @@ const { handlePanelClick, handleModalSubmit } = await import("../../services/pan
 const { handleEscapeClick, clearEscapeSessions } = await import("../../services/crime/prison-escape.mjs");
 const { handleUserinfoComponent } = await import("../../services/panels/userinfo-panel.mjs");
 const { addItem } = await import("../../services/economy/inventory.mjs");
+const { setBoxRandom } = await import("../../services/economy/boxes.mjs");
 const { getPlayer } = await import("../../database/economy.mjs");
 const { ITEMS } = await import("../../config/items.mjs");
 
@@ -464,6 +465,10 @@ export async function scan({ rounds = Number(process.env.SCAN_ROUNDS ?? 4), only
         Math.random = seeded(seed);
     }
 
+    // as caixas sorteiam pelo crypto; aqui valem o Math.random (semeado com --seed), para o prêmio variar de
+    // uma rodada para outra e o resultado se repetir com a mesma semente
+    setBoxRandom(() => Math.random());
+
     // os comandos registram erros esperados no log ("Essa arma não existe"): não é o que interessa aqui
     console.warn = () => {};
     console.error = () => {};
@@ -473,6 +478,8 @@ export async function scan({ rounds = Number(process.env.SCAN_ROUNDS ?? 4), only
 
     } finally {
         Math.random = realRandom;
+
+        setBoxRandom();
 
         Object.assign(console, realConsole);
     }

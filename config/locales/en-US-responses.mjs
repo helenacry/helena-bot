@@ -282,6 +282,12 @@ export const RESPONSES_EXACT = Object.freeze({
     "Munição agora": "Ammo now",
     "Ainda tem": "Still have",
     "Preço unitário": "Unit price",
+    "Dinheiro": "Money",
+
+    // ---------- pacotes e caixas (/abrir) ----------
+    "Isso não abre": "That can't be opened",
+    "Não cabe no inventário": "Doesn't fit in your inventory",
+    "Esse item não existe.": "That item doesn't exist.",
 
     // ---------- bolsa ----------
     "Bolsa do servidor": "Server market",
@@ -579,6 +585,38 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Você descartou **{n}× {item}**.", "You discarded **{n}× {item}**."),
 
     tpl("Você não possui {e} **{item}** para vender.", "You don't have {e} **{item}** to sell."),
+
+    // ---------- pacotes e caixas (/abrir) ----------
+    [/^(\d+) caixas?$/, m => `${m[1]} ${plural(m[1], "box", "boxes")}`],
+
+    [/^(\d+) pacotes?$/, m => `${m[1]} ${plural(m[1], "pack")}`],
+
+    tpl("Você abriu {item} e recebeu:", "You opened {item} and got:"),
+
+    tpl("Você abriu **{n}** pacotes. Recebeu:", "You opened **{n}** packs. You got:"),
+
+    tpl("Você abriu {item} e encontrou:", "You opened {item} and found:"),
+
+    tpl("Você abriu **{n}** caixas. Saiu:", "You opened **{n}** boxes. You got:"),
+
+    tpl("Você não tem espaço para abrir {item}: {other} já está em {n}/{n2}.", "You don't have room to open {item}: {other} is already at {n}/{n2}."),
+
+    tpl("Agora só dá para abrir **{n}** de {item}: {other} não cabe mais que isso.", "Right now you can only open **{n}** of {item}: {other} doesn't fit any more than that."),
+
+    tpl("Você não possui {item}. Compre na `/loja`.", "You don't have {item}. Buy one in `/loja`."),
+
+    tpl("{item} não pode ser aberto.", "{item} can't be opened."),
+
+    tpl("{item} se abre com `/abrir`.", "{item} is opened with `/abrir`."),
+
+    tpl("Dá para abrir no máximo {n} de uma vez.", "You can open at most {n} at once."),
+
+    tpl("A carteira chegou ao limite: {m} se perderam.", "Your wallet hit its limit: {m} was lost."),
+
+    // sem o emoji na frente: o tradutor tira os emojis do começo da linha antes de procurar (a faixa e o 💵)
+    tpl("**{m}** ({n} não couberam na mochila e viraram dinheiro)", "**{m}** ({n} didn't fit in your backpack and turned into money)"),
+
+    tpl("**{m}** (não coube na mochila e virou dinheiro)", "**{m}** (didn't fit in your backpack and turned into money)"),
 
     tpl("Você tem **{n}** de {item}.", "You have **{n}** of {item}."),
 

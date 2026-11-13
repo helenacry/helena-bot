@@ -455,30 +455,67 @@ test("termos: idade, caixas de recompensa, consumidor, foro e consentimento nas 
     assert.match(text, /twemoji/);
 });
 
-test("a promessa 'sem caixas de recompensa' é verdade: a caixa misteriosa da loja não abre nem sorteia nada", () => {
-    // ECA Digital veda caixas de recompensa para o público infantojuvenil. Hoje a "Caixa misteriosa"
-    // é só um item de loja sem abertura. Quem criar o sorteio precisa rever os termos, a política
-    // e a regra do ECA Digital antes (e este teste vai falhar para lembrar).
-    const items = readFileSync(join(dirname(SITE), "config", "items.mjs"), "utf8");
+test("a promessa 'sem caixas de recompensa pagas' é verdade: nada que se compra sorteia", async () => {
+    // O ECA Digital (Lei 15.211/2025, art. 20) veda caixas de recompensa em jogo de acesso provável por
+    // adolescentes, e os termos e a política prometem que a Helena não vende nem tem caixas de recompensa pagas.
+    //
+    // Decisão de 12/11/2026: o que se compra tem conteúdo à vista (o Pacote de suprimentos, sempre igual); o
+    // sorteio só existe em caixa que se ganha de graça (config/boxes.mjs, kind "random"), que não tem preço.
+    // Se isso mudar, é preciso rever termos, política e a lei ANTES (docs/legal-notes.md), e este teste vai
+    // falhar para lembrar.
+    const root = dirname(SITE);
 
-    assert.match(items, /id: "mystery_box"/);
+    const { BOXES, OPENABLE_BOXES } = await import(pathToFileURL(join(root, "config", "boxes.mjs")).href);
+    const { ITEMS } = await import(pathToFileURL(join(root, "config", "items.mjs")).href);
+
+    for (const [id, box] of Object.entries(BOXES)) {
+        const item = ITEMS.find(entry => entry.id === id);
+
+        assert.ok(item, `${id} existe no catálogo`);
+
+        if (box.kind === "random") {
+            assert.equal(item.buyPrice, null, `${id} sorteia e está à venda`);
+            assert.equal(OPENABLE_BOXES.includes(id), false, `${id} abre pelo /abrir sem existir de graça (decida antes: docs/legal-notes.md)`);
+        }
+    }
+
+    // tudo o que tem preço e sorteia seria uma caixa paga: nenhum item à venda aponta para uma tabela de sorteio
+    for (const item of ITEMS.filter(entry => entry.buyPrice)) {
+        assert.notEqual(BOXES[item.id]?.kind, "random", `${item.id} está à venda`);
+    }
+
+    // o código que compra (loja, gemas, mercado) não conhece o sorteio
+    const walk = current => readdirSync(current, { withFileTypes: true }).flatMap(entry => {
+        const full = join(current, entry.name);
+
+        return entry.isDirectory() ? walk(full) : entry.name.endsWith(".mjs") ? [full] : [];
+    });
+
+    const ALLOWED_TO_KNOW_BOXES = new Set([
+        "services/economy/boxes.mjs",       // o sorteio
+        "services/economy/boxes-view.mjs",  // a tela do resultado
+        "services/economy/use-item.mjs",    // só a lista do que abre, para a dica do /usaritem
+        "commands/economy/open-box.mjs"     // o /abrir (só o que está em OPENABLE_BOXES)
+    ]);
 
     for (const folder of ["services", "commands"]) {
-        const dir = join(dirname(SITE), folder);
+        for (const file of walk(join(root, folder))) {
+            const name = relative(root, file).replaceAll("\\", "/");
 
-        const walk = current => readdirSync(current, { withFileTypes: true }).flatMap(entry => {
-            const full = join(current, entry.name);
+            const source = readFileSync(file, "utf8");
 
-            return entry.isDirectory() ? walk(full) : entry.name.endsWith(".mjs") ? [full] : [];
-        });
+            if (/rollPrize|kind === "random"/.test(source) && name !== "services/economy/boxes.mjs") {
+                assert.fail(`${name} mexe no sorteio das caixas`);
+            }
 
-        for (const file of walk(dir)) {
-            assert.doesNotMatch(readFileSync(file, "utf8"), /mystery_box|category === "box"|\.category === 'box'/, `${relative(dirname(SITE), file)} trata a caixa misteriosa`);
+            if (/config\/boxes\.mjs|economy\/boxes(?:-view)?\.mjs/.test(source)) {
+                assert.ok(ALLOWED_TO_KNOW_BOXES.has(name), `${name} usa as caixas: revise a regra do sorteio pago antes de liberar`);
+            }
         }
     }
 
     // e gemas e dinheiro do jogo não são vendidos: nenhuma rota de pagamento
-    const web = readFileSync(join(dirname(SITE), "services", "web", "web-api.mjs"), "utf8");
+    const web = readFileSync(join(root, "services", "web", "web-api.mjs"), "utf8");
 
     assert.doesNotMatch(web, /payment|checkout|stripe|mercadopago|pix/i);
 });

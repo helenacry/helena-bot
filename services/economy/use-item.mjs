@@ -1,6 +1,8 @@
 
 import { getItem, getItemUse } from "../../config/items.mjs";
 
+import { OPENABLE_BOXES } from "../../config/boxes.mjs";
+
 import { getPlayer } from "../../database/economy.mjs";
 
 import {
@@ -80,7 +82,9 @@ export function useItem(
     if (!use) {
         throw new GameBlocked(
             "Item não usável",
-            `${item.emoji} **${item.name}** não pode ser usado.`
+            OPENABLE_BOXES.includes(item.id)
+                ? `${item.emoji} **${item.name}** se abre com \`/abrir\`.`
+                : `${item.emoji} **${item.name}** não pode ser usado.`
         );
     }
 

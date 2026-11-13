@@ -1,6 +1,6 @@
 {
   "stats": {
-    "commands": 57,
+    "commands": 58,
     "aliases": 26,
     "jobs": 23,
     "shopItems": 20,
@@ -13,6 +13,11 @@
       "label": "Economia",
       "emoji": "💰",
       "commands": [
+        {
+          "name": "abrir",
+          "aliases": [],
+          "description": "Abra pacotes de suprimentos e receba o conteúdo"
+        },
         {
           "name": "bolsa",
           "aliases": [

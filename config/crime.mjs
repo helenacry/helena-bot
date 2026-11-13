@@ -301,6 +301,7 @@ export const PRISON_BLOCKED_COMMANDS = new Set([
     "curar",
     "descartar",
     "usaritem",
+    "abrir",
     "municao",
     "colete",
     "reparar"

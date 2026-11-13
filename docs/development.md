@@ -112,7 +112,8 @@ Escreva uma `description` clara (até 100 caracteres, é o que o Discord mostra 
 
 - Nome de 1 a 32 caracteres: minúsculas sem acento, números, `-` ou `_`.
 - Não pode repetir o nome de um comando nem de outro alias. O bot recusa iniciar se repetir.
-- O Discord aceita no máximo **100 comandos globais** (comandos mais aliases). O bot recusa registrar se passar disso.
+- O Discord aceita no máximo **100 comandos globais** (comandos mais aliases). O bot recusa registrar se passar disso. Alias gasta uma vaga; pense duas vezes antes de criar.
+- Os comandos do dono (pastas `admin/` e `dev/`) **não gastam vaga global**: o bot os registra só no servidor de suporte (`HELENA_SUPPORT_GUILD_ID`), que tem a lista própria de 100. Nos outros servidores eles continuam pelo prefixo `h`. Sem esse ID, eles ficam na lista global enquanto couberem e, se não couberem, só no prefixo (o log avisa). `tests/command-slots.test.mjs` trava a regra e confere que sobram vagas.
 
 ## Testes
 

@@ -29,7 +29,18 @@ As armas ficam em [Armas](wiki:combat/weapons). O resto:
 Itens vendáveis voltam pela **metade do preço** de compra.
 
 > [!WARNING]
-> A caixa misteriosa, a vara de pesca e a mochila **ainda não fazem nada**: a própria descrição fala em "futuras" atividades e expansões. Compre só se quiser colecionar.
+> A vara de pesca e a mochila **ainda não fazem nada**: a própria descrição fala em atividades e expansões futuras. Compre só se quiser colecionar.
+
+## Pacotes: `/abrir`
+
+O **Pacote de suprimentos** vem sempre com o mesmo conteúdo, que aparece na loja antes de você pagar: **3 maçãs, 2 cafés e 1 energético**. Sai mais barato que comprar as peças soltas. O `/abrir` abre um pacote e põe tudo no seu inventário; com `quantidade` (um número, ou `max`) abre vários, até 25 de uma vez.
+
+- A comida só começa a **vencer** na hora em que você abre o pacote, não na compra.
+- Se algum item do conteúdo **não couber** no inventário (já está no limite), o pacote **não é aberto** e nada se perde. O bot diz quantos dá para abrir.
+- O pacote não é vendável.
+
+> [!NOTE]
+> A Helena não tem caixas de recompensa pagas: tudo o que se compra tem **conteúdo à vista**. A **caixa misteriosa**, de conteúdo sorteado, não é mais vendida. Quem já tinha uma continua com ela guardada, e ela ainda não abre.
 
 ## Preços mudam: a bolsa
 
@@ -67,7 +78,7 @@ O `/usaritem` (atalho `/usar`) abre um menu com o que dá para usar. Sem opçõe
 
 ## Na cadeia
 
-`/comprar`, `/vender`, `/descartar` e `/usaritem` ficam **bloqueados** enquanto você cumpre pena. Abrir a loja e o inventário para olhar continua liberado.
+`/comprar`, `/vender`, `/descartar`, `/usaritem` e `/abrir` ficam **bloqueados** enquanto você cumpre pena. Abrir a loja e o inventário para olhar continua liberado.
 
 ## Próximo passo
 

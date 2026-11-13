@@ -533,7 +533,8 @@ const comandos = await carregarComandos();
 if (!SITE_ONLY) {
     await registrarComandos(
         appId,
-        comandos
+        comandos,
+        { supportGuildId: process.env.HELENA_SUPPORT_GUILD_ID }
     );
 }
 

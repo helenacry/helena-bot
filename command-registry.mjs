@@ -225,14 +225,27 @@ function localizarComando(comando, pasta) {
     };
 }
 
-export async function registrarComandos(appId, comandos) {
+// Registra os comandos de barra no Discord.
+//
+// Os comandos do dono (pastas admin e dev, HIDDEN_FOLDERS) não ficam na lista global: ela tem o teto de 100 e
+// cada vaga ocupada por um comando que só o dono usa é uma vaga a menos para os jogadores. Eles vão só para o
+// servidor de suporte ("supportGuildId", HELENA_SUPPORT_GUILD_ID), que tem a própria lista de 100. Nos outros
+// servidores continuam disponíveis pelo prefixo h, que não gasta vaga.
+//   - sem servidor de suporte configurado, eles ficam globais enquanto couberem no teto; se não couberem,
+//     ficam só no prefixo h (e o log avisa);
+//   - se o registro no servidor de suporte falhar (o bot não está lá, falta permissão), só avisa: o bot sobe.
+export async function registrarComandos(appId, comandos, { supportGuildId } = {}) {
     const aliases = aliasesPorComandos.get(comandos) ?? new Map();
 
     // A pasta de cada comando (de onde sai a categoria da etiqueta "[💰 Economia]" da descrição).
     const origem = ultimaCarga?.comandos === comandos ? ultimaCarga.origem : new Map();
 
+    const pastaDe = comando => String(origem.get(comando.name) ?? "").split("/")[0];
+
+    const doDono = comando => HIDDEN_FOLDERS.has(pastaDe(comando));
+
     const paraDiscord = (nome, comando) => {
-        const pasta = String(origem.get(comando.name) ?? "").split("/")[0];
+        const pasta = pastaDe(comando);
 
         const traduzida = localizarComando(comando, pasta);
 
@@ -252,19 +265,41 @@ export async function registrarComandos(appId, comandos) {
     // Cada comando seguido dos seus aliases, que repetem a
     // descrição e as opções do comando original. toDiscordCommand confere as regras do
     // Discord (nome, descrição, opções) e diz exatamente o que está errado.
-    const payload = [
-        ...[...comandos.values()].map(
-            comando => paraDiscord(comando.name, comando)
-        ),
-        ...[...aliases].map(
-            ([alias, comando]) => paraDiscord(alias, comando)
-        )
+    const entradas = [
+        ...[...comandos.values()].map(comando => ({ nome: comando.name, comando, alias: false })),
+        ...[...aliases].map(([alias, comando]) => ({ nome: alias, comando, alias: true }))
     ];
 
+    const daLista = entradas.filter(entrada => !doDono(entrada.comando));
+
+    let doDonoEntradas = entradas.filter(entrada => doDono(entrada.comando));
+
+    const servidorDeSuporte = /^\d{17,20}$/.test(String(supportGuildId ?? "")) ? String(supportGuildId) : null;
+
+    let globais = daLista;
+
+    if (!servidorDeSuporte && doDonoEntradas.length) {
+        if (daLista.length + doDonoEntradas.length <= LIMITE_COMANDOS) {
+            globais = [...daLista, ...doDonoEntradas];
+
+        } else {
+            console.warn(
+                `[COMANDOS] Sem HELENA_SUPPORT_GUILD_ID, os ${doDonoEntradas.length} comandos do dono não cabem na lista ` +
+                `global (teto de ${LIMITE_COMANDOS}): ficam só pelo prefixo h.`
+            );
+        }
+
+        doDonoEntradas = [];
+    }
+
+    const payload = globais.map(({ nome, comando }) => paraDiscord(nome, comando));
+
     if (payload.length > LIMITE_COMANDOS) {
+        const totalAliases = globais.filter(entrada => entrada.alias).length;
+
         throw new Error(
-            `São ${payload.length} comandos de barra (${comandos.size} ` +
-            `comandos + ${aliases.size} aliases), acima do limite de ` +
+            `São ${payload.length} comandos de barra (${payload.length - totalAliases} ` +
+            `comandos + ${totalAliases} aliases), acima do limite de ` +
             `${LIMITE_COMANDOS} do Discord. Remova aliases.`
         );
     }
@@ -276,8 +311,28 @@ export async function registrarComandos(appId, comandos) {
         throw new Error(`Erro ao registrar comandos: ${error.message}`);
     }
 
+    const aliasesGlobais = globais.filter(entrada => entrada.alias).length;
+
     console.log(
         `${payload.length} comandos registrados! ` +
-        `(${comandos.size} comandos + ${aliases.size} aliases)`
+        `(${payload.length - aliasesGlobais} comandos + ${aliasesGlobais} aliases)`
     );
+
+    if (servidorDeSuporte && doDonoEntradas.length) {
+        const doServidor = doDonoEntradas.map(({ nome, comando }) => paraDiscord(nome, comando));
+
+        try {
+            await discordApi().registerGuildCommands(appId, servidorDeSuporte, doServidor);
+
+            console.log(
+                `[COMANDOS] ${doServidor.length} comandos do dono registrados só no servidor de suporte.`
+            );
+
+        } catch (error) {
+            console.warn(
+                "[COMANDOS] Não consegui registrar os comandos do dono no servidor de suporte " +
+                `(eles seguem pelo prefixo h): ${error.message}`
+            );
+        }
+    }
 }
