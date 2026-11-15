@@ -260,6 +260,23 @@ export const RESPONSES_EXACT = Object.freeze({
     "⏱️ Tempos de recarga": "⏱️ Cooldowns",
     "🦹 Ilegal": "🦹 Illegal",
     "Pronto para uso": "Ready to use",
+
+    // ---------- pesca (/pescar) ----------
+    "Pescar": "Fish",
+    "Precisa de uma vara de pesca": "Needs a fishing rod",
+    "Falta a vara": "Missing the rod",
+    "Nada mordeu": "Nothing bit",
+    "A linha ainda está na água": "Your line is still in the water",
+    "Vale": "Worth",
+    "Preço na loja": "Shop price",
+    "Vendido na hora": "Sold on the spot",
+    "Lixo": "Junk",
+    "A isca voltou vazia. Hoje os peixes não estão com fome.": "The bait came back empty. The fish aren't hungry today.",
+    "Compre na /loja, na prateleira Ferramentas.": "Buy it in /loja, on the Tools shelf.",
+    "Depois é só usar /pescar": "Then just use /pescar",
+    "Venda o que pescar com /vender.": "Sell what you catch with /vender.",
+    "Descanse um pouco antes de lançar a linha de novo.": "Rest a little before casting your line again.",
+    "Enquanto isso: /trabalhar, /daily ou /missoes": "Meanwhile: /trabalhar, /daily or /missoes",
     "Só para casais": "Couples only",
     "Toque em Atualizar para ver os tempos de agora.": "Tap Refresh to see the current times.",
     "Bônus": "Bonus",
@@ -603,6 +620,23 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Wiki: {url}", "Wiki: {url}"),
 
     tpl("Código: {url}", "Code: {url}"),
+
+    // ---------- pesca (/pescar) ----------
+    tpl("Você lançou a linha e pegou {item}.", "You cast your line and caught {item}."),
+
+    tpl("Você fisgou {item}. Pelo menos limpou o rio.", "You hooked {item}. At least you cleaned up the river."),
+
+    tpl("Que pescaria! Você fisgou {item}!", "What a catch! You hooked {item}!"),
+
+    tpl("Não é possível! Você pescou {item}!", "No way! You caught {item}!"),
+
+    tpl("Para pescar você precisa de uma {item} no inventário.", "To fish you need a {item} in your inventory."),
+
+    tpl("Dá para pescar de novo em **{t}**.", "You can fish again in **{t}**."),
+
+    tpl("Dá para pescar de novo em {t}", "You can fish again in {t}"),
+
+    tpl("Você já tem {n} de {item}, então ele foi vendido na hora. Venda os que tem com /vender.", "You already have {n} {item}, so it was sold on the spot. Sell the ones you have with /vender."),
 
     // ---------- pacotes e caixas (/abrir) ----------
     [/^(\d+) caixas?$/, m => `${m[1]} ${plural(m[1], "box", "boxes")}`],

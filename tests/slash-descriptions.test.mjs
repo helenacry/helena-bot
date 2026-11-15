@@ -58,8 +58,9 @@ test("todo comando e todo alias registrados levam a etiqueta da categoria na des
     const original = globalThis.fetch;
     const log = console.log;
 
+    // a lista global e a do servidor de suporte (os comandos do dono vão só para lá): o teste olha as duas juntas
     globalThis.fetch = async (url, init) => {
-        body = JSON.parse(init.body);
+        body = [...(body ?? []), ...JSON.parse(init.body)];
 
         return { ok: true, status: 200, text: async () => "" };
     };
@@ -67,7 +68,7 @@ test("todo comando e todo alias registrados levam a etiqueta da categoria na des
     console.log = () => {};
 
     try {
-        await registrarComandos("APP", comandos);
+        await registrarComandos("APP", comandos, { supportGuildId: "123456789012345678" });
 
     } finally {
         globalThis.fetch = original;
@@ -134,8 +135,9 @@ test("os comandos dos jogadores levam a descrição em inglês (com a etiqueta t
     const original = globalThis.fetch;
     const log = console.log;
 
+    // a lista global e a do servidor de suporte (os comandos do dono vão só para lá): o teste olha as duas juntas
     globalThis.fetch = async (url, init) => {
-        body = JSON.parse(init.body);
+        body = [...(body ?? []), ...JSON.parse(init.body)];
 
         return { ok: true, status: 200, text: async () => "" };
     };
@@ -143,7 +145,7 @@ test("os comandos dos jogadores levam a descrição em inglês (com a etiqueta t
     console.log = () => {};
 
     try {
-        await registrarComandos("APP", comandos);
+        await registrarComandos("APP", comandos, { supportGuildId: "123456789012345678" });
 
     } finally {
         globalThis.fetch = original;

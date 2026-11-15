@@ -38,6 +38,9 @@ const READY = ["✅", "Pronto para uso"];
 // o Gozofone de quem não é casado(a): a linha existe, mas não está pronta nem esperando
 const LOCKED = ["💍", "Só para casais"];
 
+// a pesca de quem ainda não tem a vara: a linha existe, mas o comando recusaria
+const NO_ROD = ["🎣", "Precisa de uma vara de pesca"];
+
 // o relógio do Discord: <t:quando:R>, "em 2 horas"
 const waitsUntil = (line, when) => assert.deepEqual(line, ["⏳", `<t:${when}:R>`]);
 
@@ -69,6 +72,7 @@ test("tudo pronto: '✅ Pronto para uso' em todas as linhas, nos dois grupos, se
     // cada grupo é uma lista (✅ **nome:** Pronto para uso), na ordem de sempre
     assert.deepEqual(Object.entries(linesOf(legal.value)), [
         ["Trabalhar", READY],
+        ["Pescar", NO_ROD],
         ["Recompensa diária", READY],
         ["Bônus de gemas", READY],
         ["Gozofone", LOCKED]
@@ -120,7 +124,7 @@ test("preso: a cadeia aparece no grupo ilegal, com o relógio de quando sai", ()
 test("as atividades vêm das mesmas fontes do jogo (daily e gemas pelo serviço, não por coluna solta)", () => {
     const data = cooldownsOf(G, ME.id, NOW);
 
-    assert.deepEqual(data.legal.map(item => item.label), ["Trabalhar", "Recompensa diária", "Bônus de gemas", "Gozofone"]);
+    assert.deepEqual(data.legal.map(item => item.label), ["Trabalhar", "Pescar", "Recompensa diária", "Bônus de gemas", "Gozofone"]);
     assert.deepEqual(data.illegal.map(item => item.label), ["Crime", "Roubar", "Lavagem"]);
     assert.equal(data.prison, null);
 });

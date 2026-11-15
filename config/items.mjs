@@ -5,6 +5,7 @@ export const ITEM_CATEGORIES = Object.freeze({
     equipment: "Equipamentos",
     weapon: "Armas",
     box: "Caixas",
+    fish: "Pescaria",
     collectible: "Colecionáveis"
 });
 
@@ -15,6 +16,7 @@ export const ITEM_CATEGORY_EMOJIS = Object.freeze({
     equipment: "🎒",
     weapon: "⚔️",
     box: "🎁",
+    fish: "🎣",
     collectible: "💎"
 });
 
@@ -94,7 +96,7 @@ export const ITEMS = Object.freeze([
         name: "Vara de pesca",
         emoji: "🎣",
         category: "tool",
-        description: "Ferramenta para futuras atividades de pesca.",
+        description: "Para pescar com /pescar. Precisa estar no inventário.",
         maxStack: 1,
         buyPrice: 5000,
         sellable: true,
@@ -318,6 +320,119 @@ export const ITEMS = Object.freeze([
         buyPrice: 750000,
         sellable: false,
         sellPrice: 0
+    },
+
+    // ----- o que se pesca com /pescar (config/fishing.mjs) -----
+    // Não se compram (buyPrice null): vêm da pesca e se vendem com /vender, pelo preço do mercado.
+    {
+        id: "old_boot",
+        name: "Bota velha",
+        emoji: "🥾",
+        category: "fish",
+        description: "Alguém perdeu o pé do outro lado do rio. Não vale quase nada.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 50
+    },
+    {
+        id: "tin_can",
+        name: "Lata enferrujada",
+        emoji: "🥫",
+        category: "fish",
+        description: "Já foi uma lata de sardinha. Não vale quase nada.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 50
+    },
+    {
+        id: "lambari",
+        name: "Lambari",
+        emoji: "🐟",
+        category: "fish",
+        description: "Um peixinho pequeno, o mais fácil de pegar.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 200
+    },
+    {
+        id: "tilapia",
+        name: "Tilápia",
+        emoji: "🐠",
+        category: "fish",
+        description: "Peixe de água doce, comum em qualquer represa.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 400
+    },
+    {
+        id: "carp",
+        name: "Carpa",
+        emoji: "🐡",
+        category: "fish",
+        description: "Grande e teimosa. Dá trabalho para puxar.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 900
+    },
+    {
+        id: "catfish",
+        name: "Bagre",
+        emoji: "🐟",
+        category: "fish",
+        description: "Vive no fundo do rio e come qualquer coisa.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 1200
+    },
+    {
+        id: "dourado",
+        name: "Dourado",
+        emoji: "🐠",
+        category: "fish",
+        description: "O rei do rio: escamas douradas e muita briga.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 2800
+    },
+    {
+        id: "pintado",
+        name: "Pintado",
+        emoji: "🐟",
+        category: "fish",
+        description: "Peixe de couro, pintado de manchas, muito procurado.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 4000
+    },
+    {
+        id: "tucunare",
+        name: "Tucunaré",
+        emoji: "🐟",
+        category: "fish",
+        description: "Forte e rápido: quem o pega conta a história por semanas.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 10000
+    },
+    {
+        id: "pirarucu",
+        name: "Pirarucu",
+        emoji: "🐋",
+        category: "fish",
+        description: "O gigante da Amazônia. Quase ninguém pesca um.",
+        maxStack: 99,
+        buyPrice: null,
+        sellable: true,
+        sellPrice: 50000
     },
     
 ]);

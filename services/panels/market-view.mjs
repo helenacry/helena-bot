@@ -58,10 +58,11 @@ function priceTable(market) {
         return "Nada para vender.";
     }
 
+    // o que só se pesca (peixes, lixo) não se compra: a linha mostra só a venda
     return items
         .map(item =>
             `${item.emoji} **${item.name}**${isHot(item, market) ? " ▲" : ""} · ` +
-            `compra ${formatMoney(buyPriceOf(item, market))} · ` +
+            (Number.isSafeInteger(item.buyPrice) && item.buyPrice > 0 ? `compra ${formatMoney(buyPriceOf(item, market))} · ` : "") +
             `venda ${formatMoney(sellPriceOf(item, market))}`
         )
         .join("\n");

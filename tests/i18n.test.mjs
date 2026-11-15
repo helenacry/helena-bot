@@ -14,7 +14,8 @@ const { buildConfigView, handleConfigClick } = await import("../services/panels/
 const { handlePanelClick } = await import("../services/panels/panels.mjs");
 const { createTransport } = await import("../services/discord/transport.mjs");
 const { buildPingView } = await import("../services/panels/ping-panel.mjs");
-const { carregarComandos } = await import("../command-registry.mjs");
+const { carregarComandos, comandosCarregados } = await import("../command-registry.mjs");
+const { HIDDEN_FOLDERS } = await import("../config/command-categories.mjs");
 
 const { translateText, localizeData, localizeResponse, getLang, setLang } = i18n;
 
@@ -485,7 +486,12 @@ test("o /config está nos comandos, na ajuda e cabe nos 100 comandos de barra", 
     assert.ok(comandos.has("config"));
     assert.equal(comandos.get("config").description.length <= 100, true);
 
-    const slash = [...comandos.values()].reduce((total, command) => total + 1 + (command.aliases?.length ?? 0), 0);
+    // só a lista global (os do dono vão para o servidor de suporte, command-slots.test.mjs)
+    const { origem } = comandosCarregados();
+
+    const slash = [...comandos.values()]
+        .filter(command => !HIDDEN_FOLDERS.has(String(origem.get(command.name) ?? "").split("/")[0]))
+        .reduce((total, command) => total + 1 + (command.aliases?.length ?? 0), 0);
 
     assert.ok(slash <= 100, `${slash} comandos de barra`);
 });

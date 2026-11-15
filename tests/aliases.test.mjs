@@ -3,7 +3,7 @@ import { createPrefixRunner } from "./helpers.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { carregarComandos, resolverComando, registrarComandos } =
+const { carregarComandos, comandosCarregados, resolverComando, registrarComandos } =
     await import("../command-registry.mjs");
 
 const silently = async fn => {
@@ -78,7 +78,9 @@ test("o registro no Discord inclui cada alias com a mesma descrição e opções
     };
 
     try {
-        await silently(() => registrarComandos("APP", comandos));
+        // a lista que o bot registraria: a da última carga (é dela que o registro sabe a pasta de cada comando, e
+        // portanto quais são do dono e ficam fora da lista global)
+        await silently(() => registrarComandos("APP", comandosCarregados().comandos));
     } finally {
         globalThis.fetch = original;
     }

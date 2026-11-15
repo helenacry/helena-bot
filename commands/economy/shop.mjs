@@ -1,9 +1,9 @@
 
-import { ITEM_CATEGORIES } from "../../config/items.mjs";
-
 import {
     buildShopHome,
     buildShopView,
+    isShopCategory,
+    shopCategories,
     shopContext
 } from "../../services/panels/shop-view.mjs";
 
@@ -34,11 +34,10 @@ export default {
             type: "string",
             required: false,
 
-            choices: Object.entries(
-                ITEM_CATEGORIES
-            ).map(([value, name]) => ({
-                name,
-                value
+            // só as categorias com algo à venda (a primeira, "Todas", é a vitrine inicial)
+            choices: shopCategories().slice(1).map(category => ({
+                name: category.label,
+                value: category.value
             }))
         }
     ],
@@ -58,7 +57,7 @@ export default {
 
             const category = interaction.data?.options?.categoria;
 
-            if (category && !Object.hasOwn(ITEM_CATEGORIES, category)) {
+            if (category && !isShopCategory(category)) {
                 return errorEmbed("Categoria inválida.");
             }
 

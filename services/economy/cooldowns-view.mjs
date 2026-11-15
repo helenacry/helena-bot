@@ -25,6 +25,8 @@ import { getGemBonusStatus } from "./gem-bonus.mjs";
 
 import { callWait } from "../social/family.mjs";
 
+import { fishingWait, hasRod } from "./fishing.mjs";
+
 import { createEmbed, HELENA_COLORS } from "../../utils/embed.mjs";
 
 import {
@@ -61,7 +63,7 @@ function line(label, remaining, now, mark = "⏳") {
 // A linha de quem ainda não pode usar a atividade: não está pronta nem esperando, então não
 // ganha o ✅ (o comando recusaria) nem conta entre os que esperam.
 function lockedLine(item) {
-    return `${icon("💍")} **${item.label}:** ${item.locked}`;
+    return `${icon(item.lockedIcon ?? "💍")} **${item.label}:** ${item.locked}`;
 }
 
 const showLine = (item, now) => item.locked ? lockedLine(item) : line(item.label, item.remaining, now);
@@ -82,6 +84,10 @@ export function cooldownsOf(guildId, userId, now = Math.floor(Date.now() / 1000)
     return {
         legal: [
             { label: "Trabalhar", remaining: getRemaining(player[COOLDOWNS.work.column], COOLDOWNS.work.duration, now) },
+            // a pesca precisa da vara: sem ela a linha diz isso, em vez de mostrar "Pronto para uso" para um comando que recusa
+            hasRod(guildId, userId)
+                ? { label: "Pescar", remaining: fishingWait(player.last_fish, now) }
+                : { label: "Pescar", remaining: 0, locked: "Precisa de uma vara de pesca", lockedIcon: "🎣" },
             { label: "Recompensa diária", remaining: getDailyStatus(guildId, userId, now).remaining },
             { label: "Bônus de gemas", remaining: getGemBonusStatus(userId, now).remaining },
             call.married

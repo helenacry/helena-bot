@@ -68,6 +68,14 @@ export function runMigrations() {
                 ALTER TABLE players
                 ADD COLUMN energy_updated_at INTEGER NOT NULL DEFAULT 0
             `
+        },
+        {
+            // a última pescaria (/pescar), como last_work é o último turno
+            name: "last_fish",
+            sql: `
+                ALTER TABLE players
+                ADD COLUMN last_fish INTEGER NOT NULL DEFAULT 0
+            `
         }
     ];
 

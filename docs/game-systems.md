@@ -94,14 +94,25 @@ Depois de usar um comando, a mesma pessoa espera **3 segundos** para o próximo,
 - **Tentar de novo não empurra a espera:** o intervalo conta do último comando aceito.
 - **Desligar:** `HELENA_ANTI_SPAM=off`. Os testes rodam com ele desligado (`tests/helpers.mjs`); `tests/anti-spam.test.mjs` cria o seu com relógio controlado (`createPrefixRunner({ gate })`).
 
+## Pesca
+
+O `/pescar` (atalho `/fish`) lança a linha com a Vara de pesca do inventário. Regras e tabela em `config/fishing.mjs`, conta em `services/economy/fishing.mjs` (`fish()`, numa transação só) e telas em `services/economy/fishing-view.mjs`.
+
+- **Precisa de:** a `fishing_rod` no inventário (não gasta), 5 de energia por lançamento e 10 minutos de espera (coluna `players.last_fish`, que o `/cooldowns` lê). Preso não pesca (`PRISON_BLOCKED_COMMANDS`). Dá 3 XP por lançamento, pegando ou não alguma coisa.
+- **O que sai:** uma linha da tabela, sorteada por peso (a soma é 1000, então o peso é a chance em décimos de por cento): a isca vazia, dois lixos, e peixes de comum a lendário (lambari, tilápia, carpa, bagre, dourado, pintado, tucunaré e pirarucu). Tudo é item da categoria `fish` (config/items.mjs): não se compra (`buyPrice: null`) e se vende pelo preço do mercado. O valor médio de um lançamento é uns R$ 9 (`tests/fishing.test.mjs` trava entre R$ 7 e R$ 11), bem abaixo do trabalho mais fraco por hora.
+- **Recusas esperadas:** sem vara, esperando e sem energia voltam como `{ status }`, não como erro, e cada uma tem a sua tela. Sem energia, a espera não começa.
+- **Inventário cheio do item (99):** o item é vendido na hora pelo preço base (linha `fish_sale` no extrato interno), respeitando o teto da carteira.
+- **Sorteio nos testes:** `setFishingRandom()` ou a opção `random` de `fish()`; `rollCatch()` recebe o número de 0 a 1.
+- **Sem caixa:** a pesca não dá caixa sorteada. Se um dia der (a ideia dos drops), é preciso rever o que está em `docs/legal-notes.md` ("Caixas e pacotes") antes.
+
 ## Bolsa
 
 O `/bolsa` é o painel de mercado do servidor (ele não é uma bolsa de ações: é um índice que mexe nos preços). Cada servidor tem o seu mercado, sem ninguém precisar ligar nada. Regras em `config/market.mjs`, estado e preços em `services/economy/market.mjs`, tela em `services/panels/market-view.mjs`.
 
 - **Índice:** de 0 a 90, sorteado com a mesma chance para cada número a cada 30 minutos, sem olhar o anterior. O 45 é o preço de tabela; o 0 vale 90% e o 90 vale 110%, em linha reta (a cada 9 pontos, 2%). Faixas só para o texto: Baixo (0 a 29), Médio (30 a 60) e Alto (61 a 90).
 - **Preços:** a compra vale a tabela de `config/items.mjs` vezes o preço do índice; a venda também, e mais o bônus do item em alta. Vale na loja, nos formulários, em `/comprar`, `/vender` e no inventário. O preço que vale é o da hora em que você confirma, não o que estava na tela.
-- **Item em alta:** a cada sorteio, um item vendável (hoje: maçã, café, energético, vara de pesca e mochila) paga de +5,5% a +24,5% na venda, por cima do índice. Armas não se vendem, então nunca ficam em alta.
+- **Item em alta:** a cada sorteio, um item vendável (hoje: maçã, café, energético, vara de pesca, mochila e tudo o que se pesca) paga de +5,5% a +24,5% na venda, por cima do índice. Armas não se vendem, então nunca ficam em alta. O que só se pesca não se compra: na lista de preços do `/bolsa` essas linhas mostram só a venda.
 - **Sorteio sob demanda:** o índice novo sai na primeira consulta depois dos 30 minutos (uma compra, uma venda ou o `/bolsa`), e o prazo seguinte conta dali. Com o bot desligado nada acontece; na volta sai um sorteio só. Tendência é só a comparação com o sorteio anterior, não uma previsão.
 - **Sem lucro garantido:** o melhor caso (comprar no índice 0 e vender no 90 com o bônus máximo) ainda perde dinheiro, e o teste confere isso item por item.
 - **Desligar:** `HELENA_MARKET=off` deixa tudo na tabela e o `/bolsa` avisa que está desligada. Os testes rodam com ela desligada (`tests/helpers.mjs`) para a loja valer a tabela; `tests/market.test.mjs` liga e controla o sorteio com `setMarketRandom`.
-- **Escopo:** a bolsa cobre só a venda de itens da loja: o "item em alta" vale para ela e não há cotação de peixe nem de fazenda.
+- **Escopo:** a bolsa cobre a compra e a venda dos itens da loja e a venda do que se pesca (a venda de um peixe segue o índice e o bônus do item em alta); não há cotação de fazenda nem de ações.

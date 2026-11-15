@@ -70,6 +70,7 @@ export async function collectWikiBot() {
     const { MISSIONS } = await import("../../config/missions.mjs");
     const { COOLDOWNS } = await import("../../config/cooldowns.mjs");
     const { WORK_CONFIG } = await import("../../config/work.mjs");
+    const { FISHING_CONFIG, FISHING_TABLE, FISHING_TIERS } = await import("../../config/fishing.mjs");
     const { LIVE_CONFIG } = await import("../../config/live.mjs");
     const { ANTI_SPAM } = await import("../../config/anti-spam.mjs");
 
@@ -121,6 +122,13 @@ export async function collectWikiBot() {
             cooldown: duration(WORK_CONFIG.cooldown),
             xp: String(WORK_CONFIG.xp),
             energy: String(ENERGY_CONFIG.workCost)
+        },
+
+        fishing: {
+            cooldown: duration(FISHING_CONFIG.cooldown),
+            energy: String(FISHING_CONFIG.energyCost),
+            xp: String(FISHING_CONFIG.xp),
+            rodPrice: reais(ITEMS.find(item => item.id === FISHING_CONFIG.rod).buyPrice)
         },
 
         energy: {
@@ -349,6 +357,21 @@ export async function collectWikiBot() {
         ])
     );
 
+    // o que a pesca traz: a chance de cada linha é o peso em décimos de por cento (a tabela soma 1000)
+    tables.fish = table(
+        ["O que sai", "Raridade", "Chance", "Vale"],
+        FISHING_TABLE.map(entry => {
+            const item = entry.item ? ITEMS.find(candidate => candidate.id === entry.item) : null;
+
+            return [
+                item ? `${item.emoji} ${item.name}` : "🌊 Nada (a isca volta vazia)",
+                `${FISHING_TIERS[entry.tier].emoji} ${FISHING_TIERS[entry.tier].label}`,
+                `${(entry.weight / 10).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`,
+                item ? reais(item.sellPrice) : "—"
+            ];
+        })
+    );
+
     tables["robbery-reaction"] = table(
         ["Arma", "Tipo", "Chance de acertar ao reagir"],
         weapons.map(item => [
@@ -380,6 +403,7 @@ export async function collectWikiBot() {
         ["Ação", "Custo em energia"],
         [
             [`Trabalhar (${code("/trabalhar")})`, String(ENERGY_CONFIG.workCost)],
+            [`Pescar (${code("/pescar")})`, String(FISHING_CONFIG.energyCost)],
             [`Crime (${code("/crime")})`, String(CRIME_CONFIG.energyCost)],
             [`Roubar (${code("/roubar")})`, String(ROBBERY_CONFIG.energyCost)],
             [`Lavar dinheiro (${code("/lavagem")})`, String(LAUNDERING_CONFIG.energyCost)]

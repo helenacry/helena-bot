@@ -390,19 +390,27 @@ test("as regras do Discord para um comando: nome, descrição, ordem das opçõe
     assert.throws(() => toDiscordCommand("Daily", { description: "x" }), /nome precisa/);
 });
 
-test("os 74 comandos e os 26 aliases do bot cabem nas regras do Discord (e nos 100 comandos)", async () => {
-    const { resolverComando } = await import("../command-registry.mjs");
+test("os comandos e os aliases do bot cabem nas regras do Discord (e nos 100 comandos de cada lista)", async () => {
+    const { resolverComando, comandosCarregados } = await import("../command-registry.mjs");
+    const { HIDDEN_FOLDERS } = await import("../config/command-categories.mjs");
+
+    const { origem } = comandosCarregados();
+
+    // Os do dono (admin e dev) vão só para o servidor de suporte e têm a lista deles; os dos jogadores, a global. O
+    // teto de 100 vale para cada uma.
+    const isOwner = command => HIDDEN_FOLDERS.has(String(origem.get(command.name) ?? "").split("/")[0]);
 
     let total = 0;
+    let ownerTotal = 0;
     const problems = [];
 
     for (const command of commands.values()) {
-        total++;
+        if (isOwner(command)) ownerTotal++; else total++;
 
         problems.push(...commandProblems(command.name, command));
 
         for (const alias of command.aliases ?? []) {
-            total++;
+            if (isOwner(command)) ownerTotal++; else total++;
 
             assert.equal(resolverComando(commands, alias)?.name, command.name);
 
@@ -411,7 +419,8 @@ test("os 74 comandos e os 26 aliases do bot cabem nas regras do Discord (e nos 1
     }
 
     assert.deepEqual(problems, []);
-    assert.ok(total <= 100, `${total} comandos de barra (o Discord aceita 100)`);
+    assert.ok(total <= 100, `${total} comandos de barra na lista global (o Discord aceita 100)`);
+    assert.ok(ownerTotal <= 100, `${ownerTotal} comandos do dono (o Discord aceita 100 por servidor)`);
 
     // e a conversão inteira funciona
     for (const command of commands.values()) {

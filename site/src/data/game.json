@@ -1,7 +1,7 @@
 {
   "stats": {
-    "commands": 58,
-    "aliases": 26,
+    "commands": 59,
+    "aliases": 27,
     "jobs": 23,
     "shopItems": 20,
     "weapons": 14,
@@ -100,6 +100,13 @@
             "missao"
           ],
           "description": "Consulte e resgate suas missões diárias"
+        },
+        {
+          "name": "pescar",
+          "aliases": [
+            "fish"
+          ],
+          "description": "Pesque com a vara e venda o que pegar"
         },
         {
           "name": "ranking",

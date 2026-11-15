@@ -371,7 +371,8 @@ test("a bolsa não abre lucro: comprar no mais barato e vender no mais caro, com
     const best = marketAt(90, null, MARKET_CONFIG.hotBonusMaxBp);
     const cheapest = marketAt(0);
 
-    for (const item of sellable) {
+    // o que só se pesca não se compra: sem compra não há lucro a fazer
+    for (const item of sellable.filter(entry => entry.buyPrice)) {
         const sale = sellPriceOf(item, { ...best, hotItemId: item.id });
 
         assert.ok(sale < buyPriceOf(item, cheapest), `${item.id}: vende por ${sale} e compra por ${buyPriceOf(item, cheapest)}`);
@@ -602,7 +603,7 @@ test("/bolsa mostra o índice, o item em alta e os preços, com os botões do do
     const lines = prices.split("\n");
 
     for (const line of lines) {
-        assert.match(line, /^\S+ \*\*.+\*\*( ▲)? · compra R\$\s[\d.,]+ · venda R\$\s[\d.,]+$/);
+        assert.match(line, /^\S+ \*\*.+\*\*( ▲)? · (compra R\$\s[\d.,]+ · )?venda R\$\s[\d.,]+$/);
     }
 
     assert.equal(lines.length, sellable.length, "uma linha por item vendável");

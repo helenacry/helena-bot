@@ -153,18 +153,38 @@ test("sem servidor de suporte (ou com um ID inválido) e sem folga, os do dono f
     });
 });
 
-test("sem servidor de suporte mas com folga, os do dono ficam na lista global como antes", async () => {
-    assert.ok(totalOf() <= 100, "o projeto cabe no teto com tudo junto");
+// Tira comandos de jogadores de verdade da lista (e devolve depois) até tudo caber no teto: o teste da folga não pode
+// depender de quantos comandos o projeto tem hoje (a conta muda a cada comando novo).
+function withRoom(fn) {
+    const removed = [];
 
-    const { calls, warnings } = await register(undefined);
+    for (const [name, command] of [...comandos].reverse()) {
+        if (totalOf() <= 100) break;
 
-    assert.equal(calls.length, 1);
-    assert.deepEqual(warnings, []);
-    assert.ok(calls[0].body.length <= 100);
+        if (HIDDEN_FOLDERS.has(folderOf(command))) continue;
 
-    for (const name of ownerNames) {
-        assert.ok(calls[0].body.some(command => command.name === name), `${name} ficou na lista global`);
+        removed.push([name, command]);
+
+        comandos.delete(name);
     }
+
+    return Promise.resolve(fn()).finally(() => removed.forEach(([name, command]) => comandos.set(name, command)));
+}
+
+test("sem servidor de suporte mas com folga, os do dono ficam na lista global como antes", async () => {
+    await withRoom(async () => {
+        assert.ok(totalOf() <= 100, "com folga: tudo junto cabe no teto");
+
+        const { calls, warnings } = await register(undefined);
+
+        assert.equal(calls.length, 1);
+        assert.deepEqual(warnings, []);
+        assert.ok(calls[0].body.length <= 100);
+
+        for (const name of ownerNames) {
+            assert.ok(calls[0].body.some(command => command.name === name), `${name} ficou na lista global`);
+        }
+    });
 });
 
 test("a lista global dos jogadores sozinha acima do teto é recusada, com ou sem servidor de suporte", async () => {
