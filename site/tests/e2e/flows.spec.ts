@@ -1,9 +1,14 @@
 // Fluxos de uso: a conversa de exemplo, o laboratório do crime, a busca de comandos e da
 // wiki (Pagefind), o tema, o menu do celular e o painel da conta com a API simulada.
+import { readFileSync } from "node:fs";
+
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 import { SITE } from "../../src/config.ts";
+
+// O total de comandos vem dos dados do site (o número que a home mostra), para o teste não quebrar a cada comando novo.
+const TOTAL_COMMANDS: number = JSON.parse(readFileSync(new URL("../../src/data/game.json", import.meta.url), "utf8")).stats.commands;
 
 // O ID do aplicativo que o site usa no login: o de config.ts ou, nos testes, o da variável
 // PUBLIC_DISCORD_CLIENT_ID (o mesmo valor com que o site foi construído).
@@ -125,7 +130,7 @@ test.describe("página inicial", () => {
     await expect(page.locator(hydrated("#ex-q"))).toBeAttached();
     await search.fill("saldo");
 
-    await expect(page.getByText(/^\d+ de 57 comandos$/)).toBeVisible();
+    await expect(page.getByText(new RegExp(`^\\d+ de ${TOTAL_COMMANDS} comandos$`))).toBeVisible();
     await expect(page.locator(".ex-name", { hasText: "/saldo" })).toBeVisible();
 
     await search.fill("zzzzzz");
