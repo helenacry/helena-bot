@@ -495,6 +495,7 @@ test("a promessa 'sem caixas de recompensa pagas' é verdade: nada que se compra
         "services/economy/boxes.mjs",       // o sorteio
         "services/economy/boxes-view.mjs",  // a tela do resultado
         "services/economy/use-item.mjs",    // só a lista do que abre, para a dica do /usaritem
+        "services/economy/box-refund.mjs",  // devolve o preço antigo das caixas já compradas, uma vez: só lê o valor e paga em dinheiro, não sorteia nem vende
         "commands/economy/open-box.mjs"     // o /abrir (só o que está em OPENABLE_BOXES)
     ]);
 
@@ -614,7 +615,7 @@ test("a política cobre todas as tabelas do banco que guardam dados de pessoas",
     };
 
     // tabelas sem nada de pessoa (só IDs técnicos e ajustes do bot)
-    const technical = ["processed_interactions", "developer_settings", "market_state"];
+    const technical = ["processed_interactions", "developer_settings", "market_state", "data_fixes"];
 
     const tables = db
         .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")

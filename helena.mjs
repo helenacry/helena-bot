@@ -69,6 +69,14 @@ import {
 } from "./database/settings-migrations.mjs";
 
 import {
+    runDataFixesMigrations
+} from "./database/data-fixes-migrations.mjs";
+
+import {
+    refundLegacyBoxes
+} from "./services/economy/box-refund.mjs";
+
+import {
     runDeveloperMigrations
 } from "./database/developer-migrations.mjs";
 
@@ -514,6 +522,23 @@ runFamilyMigrations();
 runUserinfoHistoryMigrations();
 runFoodMigrations();
 runSettingsMigrations();
+runDataFixesMigrations();
+
+// Devolve o dinheiro das Caixas misteriosas que já estavam nos inventários (a caixa saiu da loja em 12/11/2026).
+// Roda uma vez só; se falhar, nada muda e tenta de novo na próxima subida.
+try {
+    const reembolso = refundLegacyBoxes();
+
+    if (reembolso) {
+        console.log(
+            `[ECONOMIA] Caixas misteriosas reembolsadas: ${reembolso.boxes} caixa(s) de ${reembolso.people} pessoa(s), ${reembolso.cents} centavos devolvidos` +
+            (reembolso.kept > 0 ? `; ${reembolso.kept} ficaram por a carteira estar no teto.` : ".")
+        );
+    }
+
+} catch (erro) {
+    console.error("[ECONOMIA] Não foi possível reembolsar as Caixas misteriosas:", erro?.message ?? erro);
+}
 
 // Traz o contador antigo do /userinfo (JSON) para o banco, uma vez.
 // O arquivo vira views.json.imported; sem ele, não faz nada.
