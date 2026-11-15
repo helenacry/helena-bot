@@ -1,39 +1,41 @@
-
 import {
     getPlayer
 } from "../../database/economy.mjs";
 
 import {
-    checkAchievements,
     equipTitle,
-    getEquippedTitle,
-    getAvailableTitles
+    getEquippedTitle
 } from "../../services/progress/achievements.mjs";
 
 import {
-    createEmbed,
-    embedResponse,
-    errorEmbed,
-    HELENA_COLORS
+    buildTitles,
+    titlesResponse
+} from "../../services/progress/titles-view.mjs";
+
+import {
+    errorEmbed
 } from "../../utils/embed.mjs";
 
 // ==========================================
 // COMANDO /EQUIPARTITULO
 // ==========================================
 
+// Sem o identificador, abre o painel dos títulos, com um botão para equipar cada um. Com o identificador
+// (/equipartitulo titulo:first_steps), equipa direto e mostra o mesmo painel com o resultado no topo.
+
 export default {
     name: "equipartitulo",
 
     description:
-        "Equipe um título que você desbloqueou",
+        "Equipe um título com um botão",
 
     options: [
         {
             name: "titulo",
             description:
-                "Identificador do título. Consulte /titulos",
+                "Identificador do título (deixe vazio para escolher pelos botões)",
             type: "string",
-            required: true
+            required: false
         }
     ],
 
@@ -48,113 +50,43 @@ export default {
         }
 
         try {
-            // ==================================
-            // IDENTIFICAR JOGADOR
-            // ==================================
-
             getPlayer(guildId, userId);
 
             const achievementId = String(
-                interaction.data.options?.titulo || ""
+                interaction.data?.options?.titulo || ""
             ).trim().toLowerCase();
 
+            // sem identificador: só o painel
             if (!achievementId) {
-                return errorEmbed(
-                    "Informe o identificador do título.\n\n" +
-                    "Use `/titulos` para consultar os disponíveis."
-                );
+                return titlesResponse(buildTitles({ guildId, userId }));
             }
 
-            // ==================================
-            // ATUALIZAR CONQUISTAS
-            // ==================================
+            // conquistas que já podem ser desbloqueadas entram antes de equipar
+            buildTitles({ guildId, userId });
 
-            checkAchievements(guildId, userId);
-
-            // ==================================
-            // VERIFICAR TÍTULO ATUAL
-            // ==================================
-
-            const currentTitle = getEquippedTitle(
-                guildId,
-                userId
-            );
-
-            if (
-                currentTitle?.achievementId ===
-                achievementId
-            ) {
-                return embedResponse(
-                    createEmbed({
-                        section: "Títulos",
-                        title: "🏷️ Esse título já está equipado",
-
-                        description:
-                            "Você já está usando **" +
-                            currentTitle.formatted +
-                            "**.",
-
-                        color: HELENA_COLORS.warning,
-                        mood: "alerta",
-
-                        footer:
-                            "/titulos mostra os outros"
-                    })
-                );
+            if (getEquippedTitle(guildId, userId)?.achievementId === achievementId) {
+                return titlesResponse(buildTitles({
+                    guildId,
+                    userId,
+                    notice: "Esse título já está equipado."
+                }));
             }
 
-            // ==================================
-            // EQUIPAR TÍTULO
-            // ==================================
-
-            const result = equipTitle(
-                guildId,
-                userId,
-                achievementId
-            );
+            const result = equipTitle(guildId, userId, achievementId);
 
             if (!result.success) {
-                const available = getAvailableTitles(
+                return titlesResponse(buildTitles({
                     guildId,
-                    userId
-                );
-
-                const availableText = available.length
-                    ? available
-                        .map(title => "`" + title.id + "`")
-                        .join(", ")
-                    : "Nenhum título desbloqueado.";
-
-                return errorEmbed(
-                    result.reason +
-                    "\n\n**Seus títulos disponíveis:**\n" +
-                    availableText
-                );
+                    userId,
+                    notice: "⚠️ " + result.reason + "\nEscolha um dos seus títulos abaixo."
+                }));
             }
 
-            // ==================================
-            // RESPOSTA
-            // ==================================
-
-            return embedResponse(
-                createEmbed({
-                    section: "Títulos",
-                    title: "✨ Título equipado",
-
-                    description:
-                        "Agora você é **" +
-                        result.title +
-                        "**.\n" +
-                        "🏆 " + result.achievement.name +
-                        " · `" + result.achievement.id + "`",
-
-                    color: HELENA_COLORS.success,
-                    mood: "festa",
-
-                    footer:
-                        "Ele aparece no seu /perfil"
-                })
-            );
+            return titlesResponse(buildTitles({
+                guildId,
+                userId,
+                notice: `✨ Título equipado: **${result.title}**. Ele aparece no seu /perfil.`
+            }));
 
         } catch (error) {
             console.error(

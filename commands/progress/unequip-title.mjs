@@ -1,4 +1,3 @@
-
 import {
     getPlayer
 } from "../../database/economy.mjs";
@@ -9,15 +8,19 @@ import {
 } from "../../services/progress/achievements.mjs";
 
 import {
-    createEmbed,
-    embedResponse,
-    errorEmbed,
-    HELENA_COLORS
+    buildTitles,
+    titlesResponse
+} from "../../services/progress/titles-view.mjs";
+
+import {
+    errorEmbed
 } from "../../utils/embed.mjs";
 
 // ==========================================
 // COMANDO /DESEQUIPARTITULO
 // ==========================================
+
+// Tira o título equipado e mostra o painel dos títulos (de onde também dá para tirar, pelo botão "Tirar título").
 
 export default {
     name: "desequipartitulo",
@@ -36,74 +39,29 @@ export default {
         }
 
         try {
-            // ==================================
-            // IDENTIFICAR JOGADOR
-            // ==================================
-
             getPlayer(guildId, userId);
 
-            // ==================================
-            // CONSULTAR TÍTULO ATUAL
-            // ==================================
+            const current = getEquippedTitle(guildId, userId);
 
-            const currentTitle = getEquippedTitle(
-                guildId,
-                userId
-            );
-
-            if (!currentTitle) {
-                return embedResponse(
-                    createEmbed({
-                        section: "Títulos",
-                        title: "🏷️ Nenhum título equipado",
-
-                        description:
-                            "Use `/titulos` para consultar os que você já pode usar.",
-
-                        color: HELENA_COLORS.warning,
-                        mood: "alerta",
-
-                        footer:
-                            "/equipartitulo escolhe um"
-                    })
-                );
+            if (!current) {
+                return titlesResponse(buildTitles({
+                    guildId,
+                    userId,
+                    notice: "Você não tem título equipado. Escolha um nos botões abaixo."
+                }));
             }
 
-            // ==================================
-            // DESEQUIPAR
-            // ==================================
-
-            const removed = unequipTitle(
-                guildId,
-                userId
-            );
-
-            if (!removed) {
+            if (!unequipTitle(guildId, userId)) {
                 return errorEmbed(
                     "Não foi possível remover o título. Tente novamente."
                 );
             }
 
-            // ==================================
-            // RESPOSTA
-            // ==================================
-
-            return embedResponse(
-                createEmbed({
-                    section: "Títulos",
-                    title: "🏷️ Título removido",
-
-                    description:
-                        "Você tirou **" + currentTitle.formatted + "**.\n" +
-                        "A conquista continua sua e dá para equipar de novo.",
-
-                    color: HELENA_COLORS.wait,
-                    mood: "dormindo",
-
-                    footer:
-                        "/equipartitulo escolhe outro"
-                })
-            );
+            return titlesResponse(buildTitles({
+                guildId,
+                userId,
+                notice: `🏷️ Título removido: **${current.formatted}**. A conquista continua sua e dá para equipar de novo.`
+            }));
 
         } catch (error) {
             console.error(

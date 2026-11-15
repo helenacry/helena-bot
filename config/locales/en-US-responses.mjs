@@ -261,6 +261,18 @@ export const RESPONSES_EXACT = Object.freeze({
     "🦹 Ilegal": "🦹 Illegal",
     "Pronto para uso": "Ready to use",
 
+    // ---------- títulos (o painel com botões) ----------
+    "Equipado": "Equipped",
+    "equipado": "equipped",
+    "Tirar título": "Remove title",
+    "Toque em um título para equipar": "Tap a title to equip it",
+    "Também dá para equipar com /equipartitulo titulo:<id>": "You can also equip with /equipartitulo titulo:<id>",
+    "Você não tem título equipado. Escolha um nos botões abaixo.": "You have no title equipped. Pick one with the buttons below.",
+    "Você não tinha título equipado.": "You didn't have a title equipped.",
+    "Esse título já está equipado.": "That title is already equipped.",
+    "Escolha um dos seus títulos abaixo.": "Pick one of your titles below.",
+    "Título removido. A conquista continua sua e dá para equipar de novo.": "Title removed. The achievement is still yours and you can equip it again.",
+
     // ---------- pesca (/pescar) ----------
     "Pescar": "Fish",
     "Precisa de uma vara de pesca": "Needs a fishing rod",
@@ -620,6 +632,15 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Wiki: {url}", "Wiki: {url}"),
 
     tpl("Código: {url}", "Code: {url}"),
+
+    // ---------- títulos (o painel com botões) ----------
+    tpl("Título equipado: {t}. Ele aparece no seu /perfil.", "Title equipped: {t}. It shows on your /perfil."),
+
+    tpl("Título removido: {t}. A conquista continua sua e dá para equipar de novo.", "Title removed: {t}. The achievement is still yours and you can equip it again."),
+
+    [/^(\d+) títulos? desbloqueados? de (\d+)$/, m => `${m[1]} ${plural(m[1], "title", "titles")} unlocked of ${m[2]}`],
+
+    [/^página (\d+)\/(\d+)$/, m => `page ${m[1]}/${m[2]}`],
 
     // ---------- pesca (/pescar) ----------
     tpl("Você lançou a linha e pegou {item}.", "You cast your line and caught {item}."),

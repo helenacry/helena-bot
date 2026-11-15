@@ -303,12 +303,12 @@
         {
           "name": "equipartitulo",
           "aliases": [],
-          "description": "Equipe um título que você desbloqueou"
+          "description": "Equipe um título com um botão"
         },
         {
           "name": "titulos",
           "aliases": [],
-          "description": "Consulte seus títulos desbloqueados"
+          "description": "Veja seus títulos e equipe um com um botão"
         }
       ]
     },
