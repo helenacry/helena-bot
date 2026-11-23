@@ -41,3 +41,22 @@ export function bioText({ prefix }) {
         `🌐 Site: ${SITE_URL}`
     ].join("\n");
 }
+
+// ==========================================
+// O /SOBRE
+// ==========================================
+
+// A atualização mais nova, para o /sobre apontar. Ao publicar uma atualização (wiki/updates/vX-Y.md), troque aqui:
+// tests/about-panel.test.mjs confere que é a mesma da pasta e falha se esquecer.
+export const LATEST_UPDATE = Object.freeze({
+    version: "1.3",
+    title: "pacote de suprimentos e apresentação",
+    slug: "v1-3"
+});
+
+// As sugestões enviadas pelo botão do /sobre (services/platform/suggestions.mjs).
+export const SUGGESTION_RULES = Object.freeze({
+    min: 10,
+    max: 500,
+    cooldownMs: 10 * 60 * 1000
+});

@@ -41,6 +41,12 @@ const timeWords = (n, unit) => {
     return `${n} ${String(n) === "1" ? one : many}`;
 };
 
+// Os títulos das atualizações em inglês, por versão (a página da wiki fica em português; o /sobre aponta para ela).
+// tests/about-panel.test.mjs confere que a versão mais nova (LATEST_UPDATE) tem o seu.
+export const UPDATE_TITLES = Object.freeze({
+    "1.3": "supply pack and introduction"
+});
+
 export const RESPONSES_EXACT = Object.freeze({
     // ---------- avisos e erros comuns ----------
     "❌ Não deu certo": "❌ That didn't work",
@@ -260,6 +266,31 @@ export const RESPONSES_EXACT = Object.freeze({
     "⏱️ Tempos de recarga": "⏱️ Cooldowns",
     "🦹 Ilegal": "🦹 Illegal",
     "Pronto para uso": "Ready to use",
+
+    // ---------- /sobre e a sugestão ----------
+    "🌸 Sobre a Helena": "🌸 About Helena",
+    "Bot de economia e RPG: trabalhe, lave dinheiro, case e fuja da cadeia.": "Economy and RPG bot: work, launder money, get married and escape from jail.",
+    "Código aberto no GitHub": "Open source on GitHub",
+    "Versão": "Version",
+    "Jogadores": "Players",
+    "Sugestão": "Suggestion",
+    "Enviar sugestão": "Send a suggestion",
+    "Sua sugestão": "Your suggestion",
+    "O que a Helena poderia ter ou melhorar?": "What could Helena have or improve?",
+    "Sugestão enviada": "Suggestion sent",
+    "Obrigada! Os criadores leem todas. Não dá para responder por aqui, então entre no servidor de suporte se quiser conversar.": "Thank you! The creators read every one. We can't reply here, so join the support server if you want to chat.",
+    "Sugestão curta demais": "Suggestion too short",
+    "Sugestão longa demais": "Suggestion too long",
+    "Calma um pouquinho": "Hold on a moment",
+    "Você não pode enviar sugestões.": "You can't send suggestions.",
+    "As sugestões não estão ligadas agora.": "Suggestions are turned off right now.",
+    "Não foi possível enviar": "Couldn't send it",
+    "Tente de novo em alguns minutos.": "Try again in a few minutes.",
+    "Código": "Code",
+    "local": "local",
+    "Site": "Website",
+    "Suporte": "Support",
+    "Wiki": "Wiki",
 
     // ---------- a mochila (o limite total do inventário) ----------
     "Mochila cheia": "Backpack full",
@@ -641,6 +672,16 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Wiki: {url}", "Wiki: {url}"),
 
     tpl("Código: {url}", "Code: {url}"),
+
+    // ---------- /sobre e a sugestão ----------
+    // "Novidade: [Atualização 1.3: título](endereço)": o título vem de UPDATE_TITLES (config/about.mjs tem a versão mais nova)
+    [/^Novidade: \[Atualização (\S+): (.+)\]\((.+)\)$/, m => `News: [Update ${m[1]}: ${UPDATE_TITLES[m[1]] ?? m[2]}](${m[3]})`],
+
+    tpl("Escreva pelo menos {n} caracteres para a gente entender a ideia.", "Write at least {n} characters so we can understand the idea."),
+
+    tpl("O limite é de {n} caracteres.", "The limit is {n} characters."),
+
+    tpl("Dá para mandar outra em {t}.", "You can send another in {t}."),
 
     // ---------- a mochila ----------
     tpl("Sua mochila está cheia ({a}/{b}): cabem mais {n} unidade(s). Venda ou descarte itens, ou compre uma mochila maior.", "Your backpack is full ({a}/{b}): {n} more unit(s) fit. Sell or discard items, or buy a bigger backpack."),

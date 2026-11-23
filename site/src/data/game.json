@@ -1,6 +1,6 @@
 {
   "stats": {
-    "commands": 59,
+    "commands": 60,
     "aliases": 27,
     "jobs": 23,
     "shopItems": 22,
@@ -392,6 +392,11 @@
           "name": "ping",
           "aliases": [],
           "description": "Mostra se o bot está no ar e se a lentidão é da Helena ou do Discord"
+        },
+        {
+          "name": "sobre",
+          "aliases": [],
+          "description": "Veja a versão, as novidades e os links da Helena"
         }
       ]
     }

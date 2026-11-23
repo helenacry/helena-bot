@@ -67,6 +67,7 @@ O site monta esse mesmo link sozinho quando o `DISCORD_CLIENT_ID` está preenchi
 | `HELENA_ADMIN_IDS` | quem usa os comandos `/admin*` |
 | `HELENA_SUPPORT_GUILD_ID` e `HELENA_USERS_CHANNEL_ID`, `HELENA_SERVERS_CHANNEL_ID`, `HELENA_SHARDS_CHANNEL_ID`, `HELENA_TOPXP_CHANNEL_ID`, `HELENA_TOPLEVEL_CHANNEL_ID`, `HELENA_TOPCOINS_CHANNEL_ID` | os contadores do servidor de suporte: crie um **canal de voz** para cada um e cole o ID. A Helena precisa de **Ver canal** e **Gerenciar canais** neles, e o Discord só deixa renomear um canal 2 vezes a cada 10 minutos (por isso o intervalo mínimo é de 5) |
 | `HELENA_MEMBERS_INTENT` | `on` pede a *Server Members Intent*, que traz a entrada de membros: a Helena dá boas-vindas, no chat, aos criadores (os IDs de `HELENA_OWNER_ID`) quando entram em um servidor com ela, e a mais ninguém. Padrão `off`. Precisa da intent ligada no portal (seção 2). A resposta fofa quando os criadores mencionam a Helena **não** precisa disso |
+| `HELENA_CANAL_SUGESTOES` | o ID de um canal de texto do servidor de suporte que recebe as sugestões do botão **Sugestão** do `/sobre` (a Helena precisa de **Ver canal** e **Enviar mensagens** nele). Vazio desliga, e o botão some |
 | `HELENA_SHARDS` | os fragmentos (shards) do gateway. Vazio ou `auto` segue a recomendação do Discord, que é 1 até o bot passar de 2500 servidores |
 | `HELENA_DATABASE_PATH` | o banco. **Comece de um arquivo novo** (veja abaixo) |
 

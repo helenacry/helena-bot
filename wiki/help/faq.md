@@ -54,6 +54,10 @@ Os botões e menus das mensagens não contam, e o aviso aparece só uma vez por 
 
 Use **`/ping`** (ou `hping`): se o bot estiver funcionando, ele responde na hora. Se nem o `/ping` responde, o bot está fora do ar ou reiniciando, e não há nada a fazer do seu lado além de tentar de novo mais tarde.
 
+### Como sei a versão da Helena e o que mudou?
+
+Use **`/sobre`**: ele mostra a versão que está no ar, há quanto tempo o bot está ligado, quantos servidores e jogadores ele tem e a novidade mais recente, com o link da página na wiki. Os botões levam ao servidor de suporte, ao site, à wiki e ao código. Se o servidor de suporte tiver as sugestões ligadas, o botão **Sugestão** abre um formulário (de 10 a 500 caracteres, uma ideia a cada 10 minutos) e manda o texto para os criadores. O bot não guarda o que você escreve ali.
+
 ### Como troco o idioma da Helena?
 
 Use **`/config`** (ou `hconfig`) e toque em **Português (Brasil)** ou **English (US)**. A escolha vale só para você, em todos os servidores, e a resposta ao toque já sai no idioma novo. Pelo `/config` o painel é privado: só você o vê. As respostas dos comandos, os botões e os avisos saem em inglês; o cartão do `/perfil` (uma imagem) e os nomes dos comandos (`/saldo`, `/loja`...) continuam como são. Se algo ainda aparecer em português, avise no servidor de suporte.

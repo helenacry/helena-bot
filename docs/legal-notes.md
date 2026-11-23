@@ -9,6 +9,7 @@ Revisão técnico-jurídica dos [Termos de uso](../site/src/pages/terms/index.as
 Uma versão só para o lote de novidades da 1.4 em diante; a lista cresce a cada tabela nova (ainda não publicada).
 
 - **Contadores do jogo.** Tabela nova, `player_stats`: para cada pessoa e servidor, um nome de contador e um número (quantos turnos de trabalho, pescarias, crimes e roubos com sucesso, quais peixes já pescou). Servem às conquistas por quantidade e ao tutorial. Só números, sem texto livre. A política descreve na seção 4, junto das missões e conquistas. Base: execução do jogo.
+- **Sugestões do `/sobre`.** O texto que a pessoa escreve (de 10 a 500 caracteres) é enviado a um canal do servidor de suporte (`HELENA_CANAL_SUGESTOES`), com o nome de exibição, o ID e o ID do servidor, e **não é guardado no banco**. Uma sugestão por pessoa a cada 10 minutos (na memória). A política diz isso na seção 4. Base: consentimento (a pessoa decide enviar).
 - **Hora da última pescaria.** A coluna `last_fish` de `players` é um dado operacional como `last_work` (recarga do comando): não é citada uma a uma na política.
 
 ## O que mudou na versão 2.5 da Política de Privacidade (07/11/2026)

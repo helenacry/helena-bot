@@ -98,6 +98,10 @@ import {
 
 import { introduceSelf } from "./services/platform/about.mjs";
 
+import { setRuntimeStats } from "./services/platform/runtime-stats.mjs";
+
+import { setSuggestionSender } from "./services/platform/suggestions.mjs";
+
 import {
     commandGate,
     interactionGate,
@@ -1256,6 +1260,29 @@ async function tratarInteracao(interaction) {
 
 const CANAL_LOG_SERVIDORES = process.env.HELENA_CANAL_LOG_SERVIDORES ?? "";
 const nomesServidores = new Map();
+
+// Os números de agora para o /sobre, e o envio das sugestões (HELENA_CANAL_SUGESTOES) ao Discord.
+setRuntimeStats(() => ({ servers: nomesServidores.size || null }));
+
+setSuggestionSender(async (canal, corpo) => {
+    try {
+        const res = await fetch(`https://discord.com/api/v10/channels/${canal}/messages`, {
+            method: "POST",
+            headers: { Authorization: `Bot ${TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify(corpo),
+            signal: AbortSignal.timeout(8000)
+        });
+
+        if (!res.ok) console.warn("[SUGESTÕES] HTTP", res.status);
+
+        return res.ok;
+
+    } catch (erro) {
+        console.warn("[SUGESTÕES]", erro.message);
+
+        return false;
+    }
+});
 
 async function enviarLogServidor(texto) {
     if (!CANAL_LOG_SERVIDORES) return;

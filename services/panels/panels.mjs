@@ -40,6 +40,8 @@ import { handleMissionsClick } from "./missions-panel.mjs";
 
 import { handleTitlesClick } from "./titles-panel.mjs";
 
+import { handleAboutClick, handleAboutModal } from "./about-panel.mjs";
+
 import { handlePingClick } from "./ping-panel.mjs";
 
 import { handleRobClick } from "./rob-panel.mjs";
@@ -82,6 +84,7 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   rank:tipo:<dono>:<tipo>                  /ranking     (ranking-panel.mjs)
 //   miss:resgatar:<dono>:<missão>            /missoes     (missions-panel.mjs)
 //   tit:eq|rem|pg:<dono>:<página>[:<id>]     /titulos     (titles-panel.mjs, equipar com um botão)
+//   sobre:sugestao                           /sobre       (about-panel.mjs, abre o formulário de sugestão)
 //   ping:ref                                 /ping        (ping-panel.mjs, Atualizar: qualquer pessoa)
 //   rob:rea:<oferta>                         /roubar      (rob-panel.mjs, Reagir: só quem foi alvo)
 //   cfg:set:<dono>:<idioma>                  /config      (config-panel.mjs, o idioma de cada pessoa)
@@ -180,6 +183,10 @@ export function handlePanelClick(interaction) {
 
     if (area === "tit") {
         return handleTitlesClick(interaction);
+    }
+
+    if (area === "sobre") {
+        return handleAboutClick(interaction);
     }
 
     if (area === "ping") {
@@ -317,7 +324,7 @@ export async function handleModalSubmit(interaction, comandos) {
         interaction.data?.customId || ""
     ).split(":");
 
-    if (!["banco", "lavagem", "bio", "loja", "inv", "uso", "ajuda", "gf", "userinfo"].includes(area)) {
+    if (!["banco", "lavagem", "bio", "loja", "inv", "uso", "ajuda", "gf", "userinfo", "sobre"].includes(area)) {
         return null;
     }
 
@@ -353,6 +360,11 @@ export async function handleModalSubmit(interaction, comandos) {
 
     if (area === "gf") {
         return handleFamilyModal(interaction);
+    }
+
+    // a sugestão do /sobre vai aos criadores (o texto não fica no banco)
+    if (area === "sobre") {
+        return handleAboutModal(interaction);
     }
 
     // "Procurar por @usuário..." do /userinfo: o mesmo comando, só para quem pediu.

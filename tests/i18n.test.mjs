@@ -209,7 +209,7 @@ test("o dicionário: toda tradução é um texto não vazio e nenhuma entrada tr
     }
 
     // iguais nos dois idiomas só porque o nome é o mesmo (marca, nome de comando, nome do idioma)
-    const allowed = new Set(["Admin", "Crime", "Daily", "Ranking", "Status", "Hospital", "Gozofone", "Arsenal", "Total", "🏓 Pong!", "🏆 Ranking", "🏥 Hospital", "Português (Brasil)", "English (US)"]);
+    const allowed = new Set(["Admin", "Crime", "Daily", "Ranking", "Status", "Hospital", "Gozofone", "Arsenal", "Total", "🏓 Pong!", "🏆 Ranking", "🏥 Hospital", "Português (Brasil)", "English (US)", "Wiki", "local"]);
 
     assert.deepEqual(same.filter(text => !allowed.has(text)), [], "entrada igual nos dois idiomas: tire ou ponha na lista acima");
 });
