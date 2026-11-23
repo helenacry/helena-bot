@@ -63,7 +63,7 @@ export const BOXES = Object.freeze({
         contents: pack(["apple", 3], ["coffee", 2], ["energy_drink", 1])
     }),
 
-    // Caixa misteriosa: só de graça. Ainda não abre pelo /abrir (veja OPENABLE_BOXES).
+    // Caixa misteriosa: só de graça (nunca à venda). Vem dos drops do chat (FREE_SOURCES) e abre pelo /abrir.
     mystery_box: Object.freeze({
         kind: "random",
 
@@ -95,9 +95,16 @@ export const BOXES = Object.freeze({
     })
 });
 
-// O que o /abrir abre hoje. A caixa misteriosa (sorteio) entra aqui quando existir de graça: o primeiro lugar
-// será o drop do chat. Enquanto isso, quem já tem uma fica com ela guardada (não abre, não se vende).
-export const OPENABLE_BOXES = Object.freeze(["supply_pack"]);
+// De onde sai cada caixa SORTEADA, de graça (nunca à venda: docs/legal-notes.md, "Caixas e pacotes"). Uma caixa sorteada
+// só pode entrar em OPENABLE_BOXES se tiver ao menos uma fonte de graça aqui, e tests/site.test.mjs confere que a fonte
+// existe de verdade ("chat_drop": o item está na tabela de config/drops.mjs).
+export const FREE_SOURCES = Object.freeze({
+    mystery_box: Object.freeze(["chat_drop"])
+});
+
+// O que o /abrir abre hoje: o pacote (conteúdo à vista, à venda) e a caixa misteriosa (sorteio, só de graça, desde que
+// os drops do chat existem).
+export const OPENABLE_BOXES = Object.freeze(["supply_pack", "mystery_box"]);
 
 export function getBox(itemId) {
     return BOXES[itemId] ?? null;

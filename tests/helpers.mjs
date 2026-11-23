@@ -55,7 +55,8 @@ const migrations = [
     ["../database/food-migrations.mjs", "runFoodMigrations"],
     ["../database/settings-migrations.mjs", "runSettingsMigrations"],
     ["../database/data-fixes-migrations.mjs", "runDataFixesMigrations"],
-    ["../database/stats-migrations.mjs", "runStatsMigrations"]
+    ["../database/stats-migrations.mjs", "runStatsMigrations"],
+    ["../database/guild-settings-migrations.mjs", "runGuildSettingsMigrations"]
 ];
 
 // Silencia o log das migrações.

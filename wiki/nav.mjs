@@ -28,7 +28,7 @@ export const NAV = [
     {
         id: "economy",
         title: "Economia",
-        pages: ["bank-and-transfers", "shop-and-inventory", "fishing", "market", "gems", "rankings"]
+        pages: ["bank-and-transfers", "shop-and-inventory", "fishing", "drops", "market", "gems", "rankings"]
     },
     {
         id: "character",

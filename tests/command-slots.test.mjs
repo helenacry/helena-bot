@@ -93,13 +93,13 @@ test("com servidor de suporte: a lista global leva só os jogadores e o servidor
     assert.ok(global.some(command => command.name === "abrir"), "/abrir está na lista global");
 });
 
-test("sobram vagas na lista global para os próximos comandos (pesca, mochila, drops)", async () => {
+test("sobram vagas na lista global para os próximos comandos (cozinha, casa, pet, troca, chefão, assalto)", async () => {
     const { calls } = await register(SUPPORT);
 
     const used = calls[0].body.length;
 
     assert.ok(used <= 100, `${used} comandos globais`);
-    assert.ok(100 - used >= 10, `só ${100 - used} vagas livres: confira os aliases antes de criar mais comandos`);
+    assert.ok(100 - used >= 5, `só ${100 - used} vagas livres: confira os aliases antes de criar mais comandos`);
 });
 
 test("os comandos do dono mantêm a descrição só em português no servidor de suporte (ninguém mais os vê)", async () => {

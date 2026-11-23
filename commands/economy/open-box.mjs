@@ -1,5 +1,7 @@
 import { OPENABLE_BOXES } from "../../config/boxes.mjs";
 
+import { getItem } from "../../config/items.mjs";
+
 import { openBoxes } from "../../services/economy/boxes.mjs";
 
 import { openedResponse } from "../../services/economy/boxes-view.mjs";
@@ -17,22 +19,30 @@ import {
 // COMANDO /ABRIR
 // ==========================================
 
-// Abre pacotes do inventário: cada um gasta 1 unidade e entrega o conteúdo, que é sempre o mesmo (o
-// Pacote de suprimentos). Sem quantidade abre um; "max" abre todos, até 25 de cada vez.
-// O que dá para abrir está em OPENABLE_BOXES (config/boxes.mjs) e a conta toda em services/economy/boxes.mjs.
+// Abre pacotes e caixas do inventário: cada um gasta 1 unidade e entrega o conteúdo (o Pacote de suprimentos sempre
+// traz o mesmo; a Caixa misteriosa sorteia). Sem quantidade abre um; "max" abre todos, até 25 de cada vez. Sem dizer
+// qual ("caixa"), abre o pacote. O que dá para abrir está em OPENABLE_BOXES (config/boxes.mjs) e a conta toda em
+// services/economy/boxes.mjs.
 
-const [BOX_ITEM] = OPENABLE_BOXES;
+const DEFAULT_BOX = OPENABLE_BOXES[0];
 
 export default {
     name: "abrir",
-    description: "Abra pacotes de suprimentos e receba o conteúdo",
+    description: "Abra pacotes e caixas misteriosas e receba o conteúdo",
 
     options: [
         {
             name: "quantidade",
-            description: "Número de pacotes, ou 'max' para abrir todos (até 25)",
+            description: "Quantos abrir, ou 'max' para abrir todos (até 25)",
             type: "string",
             required: false
+        },
+        {
+            name: "caixa",
+            description: "O que abrir (o pacote, se você não escolher)",
+            type: "string",
+            required: false,
+            choices: OPENABLE_BOXES.map(id => ({ name: getItem(id).name, value: id }))
         }
     ],
 
@@ -62,7 +72,13 @@ export default {
                 );
             }
 
-            return openedResponse(openBoxes(guildId, userId, BOX_ITEM, quantity));
+            const chosen = interaction.data?.options?.caixa ?? DEFAULT_BOX;
+
+            if (!OPENABLE_BOXES.includes(chosen)) {
+                return warningEmbed("Isso não abre", "Escolha o pacote ou a caixa misteriosa.");
+            }
+
+            return openedResponse(openBoxes(guildId, userId, chosen, quantity));
 
         } catch (error) {
             if (error instanceof GameBlocked) {

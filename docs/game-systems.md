@@ -94,6 +94,16 @@ Depois de usar um comando, a mesma pessoa espera **3 segundos** para o próximo,
 - **Tentar de novo não empurra a espera:** o intervalo conta do último comando aceito.
 - **Desligar:** `HELENA_ANTI_SPAM=off`. Os testes rodam com ele desligado (`tests/helpers.mjs`); `tests/anti-spam.test.mjs` cria o seu com relógio controlado (`createPrefixRunner({ gate })`).
 
+## Drops no chat e o /servidor
+
+Um servidor liga os drops com o `/servidor` (só para quem tem Administrador ou Gerenciar servidor; começa desligado). Aí a Helena às vezes solta um presente com o botão **Pegar!** onde há conversa. Regras em `config/drops.mjs`, lógica em `services/economy/drops.mjs` (`createDrops`, com o Discord e o relógio injetados nos testes), telas em `drops-view.mjs` e clique em `services/panels/drops-panel.mjs`; os ajustes ficam em `guild_settings` (`services/platform/guild-settings.mjs`) e o painel em `services/panels/server-view.mjs` e `server-panel.mjs`.
+
+- **Conversa:** o `helena.mjs` avisa o serviço a cada mensagem de servidor (`drops.noteChat`: só servidor, canal e quem escreveu; o texto não passa). Só na memória, janela de 10 minutos: pelo menos 8 mensagens de 2 pessoas. O sorteio roda a cada minuto (`setInterval` no `helena.mjs`): chance de 15% por rodada elegível, no máximo um drop por servidor a cada 2 horas, e nunca dois ao mesmo tempo.
+- **Clique:** o primeiro leva. A marca (`claimedBy`) vem antes de entregar e não há `await` entre conferir e marcar, então dois cliques não levam os dois. Só leva quem já tem conta no servidor (clicar não cria conta), não está bloqueado e não passou de 5 presentes no dia UTC (contador `drop_day:<data>` em `player_stats`). O drop some em 60 s (a mensagem vira "sumiu"); se o bot reinicia, o botão de um drop antigo só avisa que sumiu.
+- **Prêmios:** dinheiro (R$ 30 a R$ 120), maçãs, cafés, energético, Pacote de suprimentos e, com 5%, a Caixa misteriosa. Item que não cabe (limite do item ou mochila cheia) vira o dinheiro de reserva. Extrato: `drop`.
+- **A caixa:** `FREE_SOURCES.mystery_box = ["chat_drop"]` em `config/boxes.mjs` é o que permite a Caixa misteriosa estar em `OPENABLE_BOXES`; o teste-guarda de `tests/site.test.mjs` confere que a fonte existe. Ver `docs/legal-notes.md`.
+- **Permissão:** o `/servidor` lê `interaction.member.permissions` (só vem nos comandos de barra e nos botões); pelo prefixo `h` ele pede o comando de barra.
+
 ## Pesca
 
 O `/pescar` (atalho `/fish`) lança a linha com a Vara de pesca do inventário. Regras e tabela em `config/fishing.mjs`, conta em `services/economy/fishing.mjs` (`fish()`, numa transação só) e telas em `services/economy/fishing-view.mjs`.

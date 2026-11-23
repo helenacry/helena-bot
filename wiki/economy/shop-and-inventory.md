@@ -50,7 +50,7 @@ O **Pacote de suprimentos** vem sempre com o mesmo conteúdo, que aparece na loj
 - O pacote não é vendável.
 
 > [!NOTE]
-> A Helena não tem caixas de recompensa pagas: tudo o que se compra tem **conteúdo à vista**. A **caixa misteriosa**, de conteúdo sorteado, não é mais vendida. Quem já tinha uma continua com ela guardada, e ela ainda não abre.
+> A Helena não tem caixas de recompensa pagas: tudo o que se compra tem **conteúdo à vista**. A **caixa misteriosa**, de conteúdo sorteado, **nunca é vendida**: ela só vem dos presentes que a Helena solta no chat ([Drops no chat](wiki:economy/drops)) e abre com `/abrir`, escolhendo `caixa`.
 
 ## Preços mudam: a bolsa
 

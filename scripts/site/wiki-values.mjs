@@ -74,6 +74,7 @@ export async function collectWikiBot() {
     const { INVENTORY_CONFIG } = await import("../../config/inventory.mjs");
     const { TUTORIAL_REWARD, TUTORIAL_STEPS } = await import("../../config/tutorial.mjs");
     const { EVENTS, WEEKDAY_NAMES } = await import("../../config/events.mjs");
+    const { DROP_CONFIG, DROP_PRIZES } = await import("../../config/drops.mjs");
     const { LIVE_CONFIG } = await import("../../config/live.mjs");
     const { ANTI_SPAM } = await import("../../config/anti-spam.mjs");
 
@@ -129,6 +130,15 @@ export async function collectWikiBot() {
 
         inventory: {
             base: String(INVENTORY_CONFIG.baseCapacity)
+        },
+
+        drops: {
+            minMessages: String(DROP_CONFIG.minMessages),
+            minPeople: String(DROP_CONFIG.minPeople),
+            window: duration(DROP_CONFIG.chatWindowMs / 1000),
+            interval: duration(DROP_CONFIG.minIntervalMs / 1000),
+            expire: duration(DROP_CONFIG.expireMs / 1000),
+            cap: String(DROP_CONFIG.dailyCap)
         },
 
         tutorial: {
@@ -398,6 +408,22 @@ export async function collectWikiBot() {
             reais(item.buyPrice),
             reais(item.sellPrice)
         ])
+    );
+
+    // o que pode vir num drop: a chance é o peso em % (a tabela soma 100)
+    tables["drop-prizes"] = table(
+        ["O que vem", "Chance", "Se não couber"],
+        DROP_PRIZES.map(prize => {
+            const item = prize.item ? ITEMS.find(candidate => candidate.id === prize.item) : null;
+
+            return [
+                prize.money
+                    ? `💵 Dinheiro, de ${reais(prize.money[0])} a ${reais(prize.money[1])}`
+                    : `${item.emoji} ${item.name} ×${prize.quantity}`,
+                `${prize.weight}%`,
+                prize.money ? "—" : reais(prize.fallback)
+            ];
+        })
     );
 
     tables.events = table(

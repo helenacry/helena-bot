@@ -267,6 +267,52 @@ export const RESPONSES_EXACT = Object.freeze({
     "🦹 Ilegal": "🦹 Illegal",
     "Pronto para uso": "Ready to use",
 
+    // ---------- /servidor ----------
+    "⚙️ Ajustes do servidor": "⚙️ Server settings",
+    "Drops": "Drops",
+    "Canal dos drops": "Drops channel",
+    "ligados": "on",
+    "desligados": "off",
+    "qualquer canal com conversa": "any channel with chat",
+    "A Helena só conta quantas mensagens e de quantas pessoas, na memória e por poucos minutos. Ela não guarda o texto de nada.": "Helena only counts how many messages and from how many people, in memory and for a few minutes. She doesn't keep the text of anything.",
+    "Desligar drops": "Turn drops off",
+    "Ligar drops": "Turn drops on",
+    "Usar este canal": "Use this channel",
+    "Qualquer canal": "Any channel",
+    "Só quem gerencia o servidor muda isto": "Only people who manage the server can change this",
+    "🔔 Drops ligados. A Helena solta presentes quando a conversa esquentar.": "🔔 Drops on. Helena drops gifts when the chat heats up.",
+    "🔕 Drops desligados.": "🔕 Drops off.",
+    "🌐 Os drops podem aparecer em qualquer canal com conversa.": "🌐 Drops can show up in any channel with chat.",
+    "Sem permissão": "No permission",
+    "Só quem gerencia o servidor (Administrador ou Gerenciar servidor) pode mudar estes ajustes.": "Only people who manage the server (Administrator or Manage Server) can change these settings.",
+    "Use o comando de barra": "Use the slash command",
+    "Para mexer nos ajustes do servidor, use `/servidor` (o Discord só confirma as permissões nos comandos de barra).": "To change the server settings, use `/servidor` (Discord only confirms permissions in slash commands).",
+    "Canal desconhecido": "Unknown channel",
+    "Não foi possível saber em que canal você está.": "Couldn't tell which channel you're in.",
+
+    // ---------- drops no chat ----------
+    "Drop": "Gift",
+    "🎁 Um presente apareceu!": "🎁 A gift appeared!",
+    "Seja a primeira pessoa a apertar o botão.": "Be the first person to press the button.",
+    "Quem já usou a Helena neste servidor pode pegar": "Anyone who already used Helena on this server can grab it",
+    "Pegar!": "Grab it!",
+    "💨 O presente sumiu": "💨 The gift vanished",
+    "Ninguém pegou a tempo.": "Nobody grabbed it in time.",
+    "O próximo aparece quando a conversa esquentar": "The next one shows up when the chat heats up",
+    "🎉 O presente foi pego!": "🎉 The gift was grabbed!",
+    "Abra a caixa com /abrir": "Open the box with /abrir",
+    "Parabéns!": "Congratulations!",
+    "Foi por pouco": "So close",
+    "Outra pessoa pegou o presente primeiro.": "Someone else grabbed the gift first.",
+    "O presente já sumiu": "The gift is gone",
+    "Ele ficou pouco tempo no chat. O próximo aparece quando a conversa esquentar.": "It was only in the chat for a short while. The next one shows up when the chat heats up.",
+    "Use a Helena primeiro": "Use Helena first",
+    "Só quem já usou a Helena neste servidor pode pegar presentes. Comece com `/tutorial`.": "Only people who already used Helena on this server can grab gifts. Start with `/tutorial`.",
+    "Limite de hoje": "Today's limit",
+    "Você não pode pegar presentes.": "You can't grab gifts.",
+    "Não foi possível pegar": "Couldn't grab it",
+    "Tente no próximo presente.": "Try the next gift.",
+
     // ---------- eventos da semana (/evento) ----------
     "Quarta do trabalhador": "Worker Wednesday",
     "Sexta de maré boa": "Good Tide Friday",
@@ -727,6 +773,19 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Código: {url}", "Code: {url}"),
 
     // ---------- /sobre e a sugestão ----------
+    // ---------- /servidor e drops ----------
+    tpl("Com os drops ligados, a Helena às vezes solta um presente no chat quando há conversa (pelo menos {n} mensagens de {n2} pessoas em {t}). Quem aperta primeiro leva. No máximo um a cada {n3} horas e {n4} por pessoa por dia.", "With drops on, Helena sometimes drops a gift in the chat when people are talking (at least {n} messages from {n2} people within {t}). Whoever presses first gets it. At most one every {n3} hours and {n4} per person per day."),
+
+    tpl("📍 Os drops agora aparecem só em {c}.", "📍 Drops now only show up in {c}."),
+
+    tpl("Não foi possível salvar o ajuste: {t}", "Couldn't save the setting: {t}"),
+
+    tpl("O presente some em **{n} segundos**.", "The gift disappears in **{n} seconds**."),
+
+    tpl("{u} levou:", "{u} got:"),
+
+    tpl("Você já pegou {n} presentes hoje neste servidor. Volte amanhã.", "You already grabbed {n} gifts today on this server. Come back tomorrow."),
+
     // ---------- eventos da semana ----------
     tpl("acaba {t}", "ends {t}"),
 

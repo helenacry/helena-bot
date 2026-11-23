@@ -465,7 +465,8 @@ test("a promessa 'sem caixas de recompensa pagas' é verdade: nada que se compra
     // falhar para lembrar.
     const root = dirname(SITE);
 
-    const { BOXES, OPENABLE_BOXES } = await import(pathToFileURL(join(root, "config", "boxes.mjs")).href);
+    const { BOXES, FREE_SOURCES, OPENABLE_BOXES } = await import(pathToFileURL(join(root, "config", "boxes.mjs")).href);
+    const { DROP_PRIZES } = await import(pathToFileURL(join(root, "config", "drops.mjs")).href);
     const { ITEMS } = await import(pathToFileURL(join(root, "config", "items.mjs")).href);
 
     for (const [id, box] of Object.entries(BOXES)) {
@@ -475,7 +476,18 @@ test("a promessa 'sem caixas de recompensa pagas' é verdade: nada que se compra
 
         if (box.kind === "random") {
             assert.equal(item.buyPrice, null, `${id} sorteia e está à venda`);
-            assert.equal(OPENABLE_BOXES.includes(id), false, `${id} abre pelo /abrir sem existir de graça (decida antes: docs/legal-notes.md)`);
+
+            // a caixa sorteada só abre se existir uma fonte DE GRAÇA declarada, e a fonte existe de verdade
+            if (OPENABLE_BOXES.includes(id)) {
+                const sources = FREE_SOURCES[id] ?? [];
+
+                assert.ok(sources.length > 0, `${id} abre pelo /abrir sem nenhuma fonte de graça (decida antes: docs/legal-notes.md)`);
+
+                for (const source of sources) {
+                    assert.equal(source, "chat_drop", `fonte desconhecida de ${id}: ${source} (ensine este teste a conferi-la)`);
+                    assert.ok(DROP_PRIZES.some(prize => prize.item === id), `${id} diz vir do drop, mas o drop não o sorteia`);
+                }
+            }
         }
     }
 
@@ -616,7 +628,7 @@ test("a política cobre todas as tabelas do banco que guardam dados de pessoas",
     };
 
     // tabelas sem nada de pessoa (só IDs técnicos e ajustes do bot)
-    const technical = ["processed_interactions", "developer_settings", "market_state", "data_fixes"];
+    const technical = ["processed_interactions", "developer_settings", "market_state", "data_fixes", "guild_settings"];
 
     const tables = db
         .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")

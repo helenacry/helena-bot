@@ -49,6 +49,7 @@ const BASE_EXACT = Object.freeze({
     "Pescaria": "Fishing",
     "Sobre": "About",
     "Eventos": "Events",
+    "Servidor": "Server",
     "Prisão": "Prison",
     "Privacidade": "Privacy",
     "Ranking": "Ranking",

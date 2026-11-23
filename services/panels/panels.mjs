@@ -44,6 +44,10 @@ import { handleAboutClick, handleAboutModal } from "./about-panel.mjs";
 
 import { handleTutorialClick } from "./tutorial-panel.mjs";
 
+import { handleDropClick } from "./drops-panel.mjs";
+
+import { handleServerClick } from "./server-panel.mjs";
+
 import { handlePingClick } from "./ping-panel.mjs";
 
 import { handleRobClick } from "./rob-panel.mjs";
@@ -88,6 +92,8 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   tit:eq|rem|pg:<dono>:<página>[:<id>]     /titulos     (titles-panel.mjs, equipar com um botão)
 //   sobre:sugestao                           /sobre       (about-panel.mjs, abre o formulário de sugestão)
 //   tut:ref|claim:<dono>                     /tutorial    (tutorial-panel.mjs, reconferir e resgatar o prêmio)
+//   drop:pegar:<id>                          drops no chat (drops-panel.mjs, o primeiro clique leva)
+//   srv:drops|canal:<valor>                  /servidor    (server-panel.mjs, só para quem gerencia o servidor)
 //   ping:ref                                 /ping        (ping-panel.mjs, Atualizar: qualquer pessoa)
 //   rob:rea:<oferta>                         /roubar      (rob-panel.mjs, Reagir: só quem foi alvo)
 //   cfg:set:<dono>:<idioma>                  /config      (config-panel.mjs, o idioma de cada pessoa)
@@ -194,6 +200,14 @@ export function handlePanelClick(interaction) {
 
     if (area === "tut") {
         return handleTutorialClick(interaction);
+    }
+
+    if (area === "drop") {
+        return handleDropClick(interaction);
+    }
+
+    if (area === "srv") {
+        return handleServerClick(interaction);
     }
 
     if (area === "ping") {

@@ -81,6 +81,14 @@ import {
 } from "./database/stats-migrations.mjs";
 
 import {
+    runGuildSettingsMigrations
+} from "./database/guild-settings-migrations.mjs";
+
+import { drops, setDropSender } from "./services/economy/drops.mjs";
+
+import { DROP_CONFIG } from "./config/drops.mjs";
+
+import {
     runDeveloperMigrations
 } from "./database/developer-migrations.mjs";
 
@@ -532,6 +540,7 @@ runFoodMigrations();
 runSettingsMigrations();
 runDataFixesMigrations();
 runStatsMigrations();
+runGuildSettingsMigrations();
 
 // Devolve o dinheiro das Caixas misteriosas que já estavam nos inventários (a caixa saiu da loja em 12/11/2026).
 // Roda uma vez só; se falhar, nada muda e tenta de novo na próxima subida.
@@ -856,6 +865,10 @@ async function tratarMensagem(dados) {
     ) {
         return;
     }
+
+    // Quem falou e onde (só isso, na memória e por poucos minutos): é o que os drops usam para saber que há conversa.
+    // O texto da mensagem não passa por aqui.
+    drops.noteChat({ guildId: message.guildId, channelId: message.channelId, userId: message.author?.id });
 
     let eraComando = false;
 
@@ -1257,6 +1270,17 @@ async function tratarInteracao(interaction) {
         resultado
     );
 }
+
+// Os drops no chat: quem envia e edita as mensagens do Discord, e o sorteio de cada minuto (só age nos servidores que
+// ligaram os drops com o /servidor, onde há conversa).
+setDropSender({
+    send: (alvo, dados) => enviarMensagemCanal(alvo, dados),
+    edit: (alvo, idMensagem, dados) => editarMensagemCanal(alvo, idMensagem, dados)
+});
+
+setInterval(() => {
+    drops.tick().catch(erro => console.warn("[DROPS]", erro?.message ?? erro));
+}, DROP_CONFIG.tickMs).unref();
 
 const CANAL_LOG_SERVIDORES = process.env.HELENA_CANAL_LOG_SERVIDORES ?? "";
 const nomesServidores = new Map();

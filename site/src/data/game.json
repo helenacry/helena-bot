@@ -1,6 +1,6 @@
 {
   "stats": {
-    "commands": 62,
+    "commands": 63,
     "aliases": 27,
     "jobs": 23,
     "shopItems": 22,
@@ -16,7 +16,7 @@
         {
           "name": "abrir",
           "aliases": [],
-          "description": "Abra pacotes de suprimentos e receba o conteúdo"
+          "description": "Abra pacotes e caixas misteriosas e receba o conteúdo"
         },
         {
           "name": "bolsa",
@@ -402,6 +402,11 @@
           "name": "ping",
           "aliases": [],
           "description": "Mostra se o bot está no ar e se a lentidão é da Helena ou do Discord"
+        },
+        {
+          "name": "servidor",
+          "aliases": [],
+          "description": "Ajuste os drops e o canal deste servidor (para admins)"
         },
         {
           "name": "sobre",

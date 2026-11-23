@@ -85,7 +85,7 @@ export const ITEMS = Object.freeze([
         name: "Caixa misteriosa",
         emoji: "🎁",
         category: "box",
-        description: "Uma caixa com conteúdo desconhecido. Não está mais à venda e ainda não abre.",
+        description: "Uma caixa com conteúdo sorteado. Não se compra: vem dos presentes que a Helena solta no chat. Abra com /abrir.",
         maxStack: 25,
         buyPrice: null,
         sellable: false,

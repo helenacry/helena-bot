@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 //   PACOTE (fixed)   conteúdo sempre igual, à vista; pode ser vendido na loja.
 //   CAIXA (random)   sorteio; nunca se compra. Ainda não abre pelo /abrir (só quando existir de graça).
 
-const { BOXES, BOX_TIERS, BOX_TIER_ORDER, MAX_OPEN_AT_ONCE, OPENABLE_BOXES, getBox } = await import("../config/boxes.mjs");
+const { BOXES, BOX_TIERS, BOX_TIER_ORDER, FREE_SOURCES, MAX_OPEN_AT_ONCE, OPENABLE_BOXES, getBox } = await import("../config/boxes.mjs");
 const { ITEMS, getItem } = await import("../config/items.mjs");
 const { PRISON_BLOCKED_COMMANDS } = await import("../config/crime.mjs");
 const { formatMoney } = await import("../database/economy.mjs");
@@ -142,12 +142,16 @@ test("o que se compra nunca sorteia: caixa sorteada não tem preço, pacote à v
     }
 });
 
-test("a caixa sorteada ainda não abre pelo /abrir: só entra na lista quando existir de graça", () => {
-    assert.deepEqual([...OPENABLE_BOXES], ["supply_pack"]);
+test("a caixa sorteada só abre pelo /abrir porque existe de graça (os drops do chat), e nunca está à venda", () => {
+    assert.deepEqual([...OPENABLE_BOXES], ["supply_pack", "mystery_box"]);
 
-    for (const id of OPENABLE_BOXES) {
-        assert.equal(getBox(id).kind, "fixed", `${id}: o que abre hoje é pacote fixo`);
-    }
+    assert.equal(getBox("supply_pack").kind, "fixed");
+    assert.equal(getBox("mystery_box").kind, "random");
+
+    // a condição: ter fonte de graça declarada, e preço nenhum
+    assert.deepEqual([...FREE_SOURCES.mystery_box], ["chat_drop"]);
+    assert.equal(getItem("mystery_box").buyPrice, null);
+    assert.equal(getItem("mystery_box").sellable, false);
 });
 
 test("o pacote é à vista: a descrição diz o que vem, e custa menos que as peças soltas", () => {
@@ -615,7 +619,7 @@ test("recusas: sem unidade, quantidade inválida, mais do que tem e o que não a
     assert.equal((await blocked(() => openBoxes(full, ME, "supply_pack", MAX_OPEN_AT_ONCE + 1))).title, "Quantidade inválida");
 });
 
-test("/usaritem avisa que o pacote se abre com /abrir, e a caixa sorteada não promete isso", async () => {
+test("/usaritem avisa que o pacote e a caixa se abrem com /abrir", async () => {
     const g = setup(1);
 
     const pack = await blocked(() => useItem(g, ME, "supply_pack"));
@@ -627,7 +631,7 @@ test("/usaritem avisa que o pacote se abre com /abrir, e a caixa sorteada não p
 
     const box = await blocked(() => useItem(g, ME, "mystery_box"));
 
-    assert.doesNotMatch(box.message, /\/abrir/);
+    assert.match(box.message, /\/abrir/, "a caixa abre pelo /abrir desde que existe de graça (os drops)");
 });
 
 // ==========================================
@@ -652,12 +656,13 @@ const descriptionOf = response => embedOf(response).description;
 
 const texto = response => JSON.stringify(response.data);
 
-test("o comando: nome, uma opção, sem alias (não gasta vaga), bloqueado na prisão e no catálogo", () => {
+test("o comando: nome, duas opções, sem alias (não gasta vaga), bloqueado na prisão e no catálogo", () => {
     assert.ok(command, "/abrir existe");
     assert.equal(command.name, "abrir");
     assert.equal(command.aliases, undefined, "alias gasta vaga de comando de barra");
-    assert.deepEqual(command.options.map(option => option.name), ["quantidade"]);
-    assert.equal(command.options[0].required, false);
+    assert.deepEqual(command.options.map(option => option.name), ["quantidade", "caixa"]);
+    assert.ok(command.options.every(option => option.required === false));
+    assert.deepEqual(command.options[1].choices.map(choice => choice.value), [...OPENABLE_BOXES], "as escolhas são o que abre");
     assert.ok(command.description.length <= 70, "sobra espaço para a etiqueta da categoria");
 
     assert.ok(PRISON_BLOCKED_COMMANDS.has("abrir"), "preso não abre");
