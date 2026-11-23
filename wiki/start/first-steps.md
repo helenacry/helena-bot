@@ -52,6 +52,10 @@ Quantias são sempre em **reais inteiros** (`500`, não `500,50`). Para usar tud
 > [!WARNING]
 > O dinheiro que fica na **carteira** pode ser roubado por outros jogadores. O dinheiro no **banco** não pode. Se não vai usar agora, deposite.
 
+## O tutorial: `/tutorial`
+
+O `/tutorial` é uma lista de **{{v:tutorial.steps}} primeiros passos** (escolher um emprego, trabalhar, pegar o daily no site, guardar dinheiro no banco, comprar na loja, pescar e resgatar uma missão). Cada passo se marca **sozinho** quando você o faz, e quem já jogou entra com vários passos prontos. Cumpridos todos, o botão **Resgatar prêmio** paga **{{v:tutorial.reward}}** e **{{v:tutorial.xp}} XP**, uma vez por servidor.
+
 ## Não sabe o que fazer a seguir?
 
 {{cards: start/earning-money, start/jobs}}

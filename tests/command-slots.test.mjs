@@ -163,6 +163,9 @@ function withRoom(fn) {
 
         if (HIDDEN_FOLDERS.has(folderOf(command))) continue;
 
+        // o registro conta os apelidos pelo mapa dele, que não acompanha esta lista: só saem comandos sem apelido
+        if (command.aliases?.length) continue;
+
         removed.push([name, command]);
 
         comandos.delete(name);

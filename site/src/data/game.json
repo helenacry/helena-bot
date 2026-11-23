@@ -1,6 +1,6 @@
 {
   "stats": {
-    "commands": 60,
+    "commands": 61,
     "aliases": 27,
     "jobs": 23,
     "shopItems": 22,
@@ -309,6 +309,11 @@
           "name": "titulos",
           "aliases": [],
           "description": "Veja seus títulos e equipe um com um botão"
+        },
+        {
+          "name": "tutorial",
+          "aliases": [],
+          "description": "Siga os primeiros passos e ganhe um prêmio"
         }
       ]
     },

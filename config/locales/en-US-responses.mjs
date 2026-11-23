@@ -267,6 +267,32 @@ export const RESPONSES_EXACT = Object.freeze({
     "🦹 Ilegal": "🦹 Illegal",
     "Pronto para uso": "Ready to use",
 
+    // ---------- /tutorial ----------
+    "Tutorial": "Tutorial",
+    "🧭 Primeiros passos": "🧭 First steps",
+    "Escolha um emprego": "Pick a job",
+    "Use /trabalhar e escolha no menu": "Use /trabalhar and pick from the menu",
+    "Faça o primeiro expediente": "Do your first shift",
+    "Use /trabalhar": "Run /trabalhar",
+    "Resgate o daily no site": "Claim the daily on the website",
+    "O /daily leva ao painel do site": "/daily takes you to the website panel",
+    "Guarde dinheiro no banco": "Put money in the bank",
+    "Use /depositar ou o botão do /saldo": "Use /depositar or the /saldo button",
+    "Compre algo na loja": "Buy something in the shop",
+    "Abra a /loja": "Open the /loja",
+    "Pesque pela primeira vez": "Fish for the first time",
+    "Compre a vara na /loja e use /pescar": "Buy the rod in /loja and use /pescar",
+    "Resgate uma missão": "Claim a mission",
+    "Veja o /missoes": "Check /missoes",
+    "Você completou todos os primeiros passos e já recebeu o prêmio. Boa sorte por aí!": "You completed all the first steps and already got the reward. Good luck out there!",
+    "Os passos se marcam sozinhos": "Steps check themselves off",
+    "Resgatar prêmio": "Claim reward",
+    "Feito": "Done",
+    "Falta": "Missing",
+    "Prêmio já recebido": "Reward already claimed",
+    "Você já resgatou o prêmio do tutorial neste servidor.": "You already claimed the tutorial reward on this server.",
+    "Ainda faltam passos": "Steps still missing",
+
     // ---------- /sobre e a sugestão ----------
     "🌸 Sobre a Helena": "🌸 About Helena",
     "Bot de economia e RPG: trabalhe, lave dinheiro, case e fuja da cadeia.": "Economy and RPG bot: work, launder money, get married and escape from jail.",
@@ -674,6 +700,15 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Código: {url}", "Code: {url}"),
 
     // ---------- /sobre e a sugestão ----------
+    // ---------- /tutorial ----------
+    tpl("Tudo feito! Resgate o prêmio: {t}.", "All done! Claim the reward: {t}."),
+
+    tpl("Siga os primeiros passos e ganhe {t} ao completar todos.", "Follow the first steps and earn {t} when you complete them all."),
+
+    tpl("Prêmio resgatado: **+{m}** e **+{n} XP**", "Reward claimed: **+{m}** and **+{n} XP**"),
+
+    tpl("Você fez {n} de {n2}.", "You did {n} of {n2}."),
+
     // "Novidade: [Atualização 1.3: título](endereço)": o título vem de UPDATE_TITLES (config/about.mjs tem a versão mais nova)
     [/^Novidade: \[Atualização (\S+): (.+)\]\((.+)\)$/, m => `News: [Update ${m[1]}: ${UPDATE_TITLES[m[1]] ?? m[2]}](${m[3]})`],
 

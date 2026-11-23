@@ -42,6 +42,8 @@ import { handleTitlesClick } from "./titles-panel.mjs";
 
 import { handleAboutClick, handleAboutModal } from "./about-panel.mjs";
 
+import { handleTutorialClick } from "./tutorial-panel.mjs";
+
 import { handlePingClick } from "./ping-panel.mjs";
 
 import { handleRobClick } from "./rob-panel.mjs";
@@ -85,6 +87,7 @@ import { LAUNDERING_CONFIG } from "../../config/crime.mjs";
 //   miss:resgatar:<dono>:<missão>            /missoes     (missions-panel.mjs)
 //   tit:eq|rem|pg:<dono>:<página>[:<id>]     /titulos     (titles-panel.mjs, equipar com um botão)
 //   sobre:sugestao                           /sobre       (about-panel.mjs, abre o formulário de sugestão)
+//   tut:ref|claim:<dono>                     /tutorial    (tutorial-panel.mjs, reconferir e resgatar o prêmio)
 //   ping:ref                                 /ping        (ping-panel.mjs, Atualizar: qualquer pessoa)
 //   rob:rea:<oferta>                         /roubar      (rob-panel.mjs, Reagir: só quem foi alvo)
 //   cfg:set:<dono>:<idioma>                  /config      (config-panel.mjs, o idioma de cada pessoa)
@@ -187,6 +190,10 @@ export function handlePanelClick(interaction) {
 
     if (area === "sobre") {
         return handleAboutClick(interaction);
+    }
+
+    if (area === "tut") {
+        return handleTutorialClick(interaction);
     }
 
     if (area === "ping") {

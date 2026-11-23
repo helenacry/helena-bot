@@ -72,6 +72,7 @@ export async function collectWikiBot() {
     const { WORK_CONFIG } = await import("../../config/work.mjs");
     const { FISHING_CONFIG, FISHING_TABLE, FISHING_TIERS } = await import("../../config/fishing.mjs");
     const { INVENTORY_CONFIG } = await import("../../config/inventory.mjs");
+    const { TUTORIAL_REWARD, TUTORIAL_STEPS } = await import("../../config/tutorial.mjs");
     const { LIVE_CONFIG } = await import("../../config/live.mjs");
     const { ANTI_SPAM } = await import("../../config/anti-spam.mjs");
 
@@ -127,6 +128,12 @@ export async function collectWikiBot() {
 
         inventory: {
             base: String(INVENTORY_CONFIG.baseCapacity)
+        },
+
+        tutorial: {
+            steps: String(TUTORIAL_STEPS.length),
+            reward: reais(TUTORIAL_REWARD.money),
+            xp: String(TUTORIAL_REWARD.xp)
         },
 
         fishing: {

@@ -265,6 +265,7 @@ export const COMMAND_TEXT = Object.freeze({
     "Abra pacotes de suprimentos e receba o conteúdo": "Open supply packs and get what's inside",
     "Pesque com a vara e venda o que pegar": "Fish with your rod and sell what you catch",
     "Veja a versão, as novidades e os links da Helena": "See the version, the news and the links of Helena",
+    "Siga os primeiros passos e ganhe um prêmio": "Follow the first steps and earn a reward",
     "Número de pacotes, ou 'max' para abrir todos (até 25)": "Number of packs, or 'max' to open them all (up to 25)",
     "Item que deseja vender": "Item you want to sell",
     "Abra a loja: compre e venda itens": "Open the shop: buy and sell items",
