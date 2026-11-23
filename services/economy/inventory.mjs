@@ -6,6 +6,11 @@ import {
     getItem
 } from "../../config/items.mjs";
 
+import {
+    inventoryRoom,
+    inventorySpace
+} from "./backpack.mjs";
+
 // ==========================================
 // UTILITÁRIOS
 // ==========================================
@@ -106,11 +111,14 @@ export function getItemQuantity(
 // Deve ser executada dentro da mesma transação
 // que concede o item ou desconta seu preço.
 
+// O inventário também tem um limite total (a mochila, config/inventory.mjs): passar dele recusa. A própria mochila
+// entra sempre (senão quem está cheio nunca poderia comprar uma maior), e "ignoreCapacity" é para o dono dar item.
 export function addItem(
     guildId,
     userId,
     itemId,
-    quantity = 1
+    quantity = 1,
+    { ignoreCapacity = false } = {}
 ) {
     requireTransaction();
     validatePlayer(guildId, userId);
@@ -133,6 +141,15 @@ export function addItem(
     if (quantity > item.maxStack - current) {
         throw new Error(
             `Você pode armazenar no máximo ${item.maxStack} unidade(s) de ${item.name}.`
+        );
+    }
+
+    if (!ignoreCapacity && !item.capacity && quantity > inventoryRoom(guildId, userId)) {
+        const space = inventorySpace(guildId, userId);
+
+        throw new Error(
+            `Sua mochila está cheia (${space.used}/${space.total}): cabem mais ${space.room} unidade(s). ` +
+            "Venda ou descarte itens, ou compre uma mochila maior."
         );
     }
 

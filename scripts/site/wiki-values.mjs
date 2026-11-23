@@ -71,6 +71,7 @@ export async function collectWikiBot() {
     const { COOLDOWNS } = await import("../../config/cooldowns.mjs");
     const { WORK_CONFIG } = await import("../../config/work.mjs");
     const { FISHING_CONFIG, FISHING_TABLE, FISHING_TIERS } = await import("../../config/fishing.mjs");
+    const { INVENTORY_CONFIG } = await import("../../config/inventory.mjs");
     const { LIVE_CONFIG } = await import("../../config/live.mjs");
     const { ANTI_SPAM } = await import("../../config/anti-spam.mjs");
 
@@ -122,6 +123,10 @@ export async function collectWikiBot() {
             cooldown: duration(WORK_CONFIG.cooldown),
             xp: String(WORK_CONFIG.xp),
             energy: String(ENERGY_CONFIG.workCost)
+        },
+
+        inventory: {
+            base: String(INVENTORY_CONFIG.baseCapacity)
         },
 
         fishing: {
@@ -373,6 +378,18 @@ export async function collectWikiBot() {
                 item ? reais(item.sellPrice) : "—"
             ];
         })
+    );
+
+    // as mochilas: cada uma soma espaço ao inventário (só vale a maior)
+    tables.backpacks = table(
+        ["Mochila", "Espaço que soma", "Espaço total", "Compra", "Venda"],
+        ITEMS.filter(item => item.capacity).sort((a, b) => a.capacity - b.capacity).map(item => [
+            `${item.emoji} ${item.name}`,
+            String(item.capacity),
+            String(INVENTORY_CONFIG.baseCapacity + item.capacity),
+            reais(item.buyPrice),
+            reais(item.sellPrice)
+        ])
     );
 
     tables["robbery-reaction"] = table(

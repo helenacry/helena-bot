@@ -13,6 +13,8 @@ import {
 
 import { getEquippedWeapon } from "../combat/equipment.mjs";
 
+import { inventorySpace } from "../economy/backpack.mjs";
+
 import {
     expiredNotice,
     foodStatus,
@@ -94,6 +96,9 @@ export function buildInventoryView({
     const inventory = getInventory(guildId, userId);
 
     const stats = getInventoryStats(guildId, userId);
+
+    // o espaço da mochila: o que está ocupado do total
+    const space = inventorySpace(guildId, userId);
 
     const equipped = getEquippedWeapon(guildId, userId)?.id ?? null;
 
@@ -182,6 +187,7 @@ export function buildInventoryView({
     const summary =
         `📂 **${label}** · **${plural(stats.uniqueItems, "item diferente", "itens diferentes")}** · ` +
         `**${stats.totalQuantity}** no total` +
+        `\n🎒 Mochila **${space.used}/${space.total}**${space.room < 1 ? " · cheia" : ""}` +
         (equipped ? "\n🟢 arma equipada" : "") +
         (food.expired.length ? "\n" + expiredNotice(food.expired) : "");
 

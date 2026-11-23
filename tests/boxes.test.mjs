@@ -55,6 +55,10 @@ function setup(boxes = 1, itemId = "supply_pack") {
 
     getPlayer(g, ME);
 
+    // a maior mochila: estes testes são sobre o conteúdo e o limite de cada item, não sobre o espaço total
+    // (a mochila tem testes próprios em tests/backpack.test.mjs)
+    tx(() => addItem(g, ME, "expedition_backpack", 1));
+
     if (boxes > 0) {
         tx(() => addItem(g, ME, itemId, boxes));
     }

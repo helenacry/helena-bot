@@ -156,7 +156,7 @@ function seedPlayer(guild, user, { rich = true } = {}) {
                 // 2 unidades; as armas e outros itens de limite 1 ficam com 1
                 for (const quantity of [2, 1]) {
                     try {
-                        addItem(guild, user, item.id, quantity);
+                        addItem(guild, user, item.id, quantity, { ignoreCapacity: true });
 
                         break;
 

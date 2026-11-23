@@ -316,7 +316,8 @@ export function grant({
                 guild,
                 target,
                 itemId,
-                n
+                n,
+                { ignoreCapacity: true }
             );
 
         } else if (type === "gems") {

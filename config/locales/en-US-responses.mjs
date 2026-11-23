@@ -261,6 +261,12 @@ export const RESPONSES_EXACT = Object.freeze({
     "🦹 Ilegal": "🦹 Illegal",
     "Pronto para uso": "Ready to use",
 
+    // ---------- a mochila (o limite total do inventário) ----------
+    "Mochila cheia": "Backpack full",
+    "cheia": "full",
+    "Sua mochila está cheia": "Your backpack is full",
+    "Sua carteira não cobre nem uma unidade, você já tem o limite deste item ou a mochila está cheia.": "Your wallet doesn't cover even one unit, you already have this item's limit or your backpack is full.",
+
     // ---------- missões semanais ----------
     "As semanais pagam mais e pedem constância. Elas reiniciam na **segunda-feira, à meia-noite UTC**.": "Weekly missions pay more and ask for consistency. They reset on **Monday at midnight UTC**.",
 
@@ -635,6 +641,13 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Wiki: {url}", "Wiki: {url}"),
 
     tpl("Código: {url}", "Code: {url}"),
+
+    // ---------- a mochila ----------
+    tpl("Sua mochila está cheia ({a}/{b}): cabem mais {n} unidade(s). Venda ou descarte itens, ou compre uma mochila maior.", "Your backpack is full ({a}/{b}): {n} more unit(s) fit. Sell or discard items, or buy a bigger backpack."),
+
+    tpl("Você não tem espaço para abrir {item} ({a}/{b}). Venda ou descarte itens, ou compre uma mochila maior.", "You don't have room to open {item} ({a}/{b}). Sell or discard items, or buy a bigger backpack."),
+
+    tpl("Agora só dá para abrir **{n}** de {item}: a mochila está em {a}/{b}.", "Right now you can only open **{n}** of {item}: your backpack is at {a}/{b}."),
 
     // ---------- missões semanais: o botão da aba mostra quantas estão prontas ----------
     [/^(Diárias|Semanais) ((d+))$/, m => `${m[1] === "Diárias" ? "Daily" : "Weekly"} (${m[2]})`],

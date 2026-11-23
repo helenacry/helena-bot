@@ -5,6 +5,8 @@ import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
 import { getItemQuantity } from "../economy/inventory.mjs";
 
+import { inventorySpace } from "../economy/backpack.mjs";
+
 import {
     getMarket,
     buyPriceOf,
@@ -282,14 +284,15 @@ async function buy(interaction, comandos, item, quantityText) {
         quantity = Math.min(
             MAX_PURCHASE,
             Math.floor(wallet / buyPriceOf(item, getMarket(guildId))),
-            item.maxStack - owned
+            item.maxStack - owned,
+            item.capacity ? Infinity : inventorySpace(guildId, userId).room
         );
 
         if (quantity < 1) {
             return warn(
                 "Não dá para comprar",
-                "Sua carteira não cobre nem uma unidade, ou você já " +
-                "tem o limite deste item."
+                "Sua carteira não cobre nem uma unidade, você já " +
+                "tem o limite deste item ou a mochila está cheia."
             );
         }
 

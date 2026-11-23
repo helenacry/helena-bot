@@ -31,6 +31,16 @@ Itens vendáveis voltam pela **metade do preço** de compra.
 > [!WARNING]
 > A vara de pesca e a mochila **ainda não fazem nada**: a própria descrição fala em atividades e expansões futuras. Compre só se quiser colecionar.
 
+## A mochila: o espaço do inventário
+
+Além do limite de cada item, o inventário tem um **espaço total**: todo mundo começa com **{{v:inventory.base}}** espaços, e cada unidade de qualquer item ocupa 1. O `/inventario` mostra quanto está ocupado ("Mochila 37/100"). Uma mochila soma espaço, e **só vale a maior** que você tem:
+
+{{table:backpacks}}
+
+- A própria mochila **entra sempre**, mesmo com tudo cheio: ela ocupa 1 espaço e soma o dela.
+- Sem espaço, a compra é recusada e a loja mostra "Mochila cheia". O que você pesca é **vendido na hora** pelo preço de tabela, e abrir um pacote pede espaço para o conteúdo todo (cada pacote libera 1 espaço e entrega 6).
+- Quem já tinha mais itens do que cabe não perde nenhum: só não consegue pôr mais até vender ou descartar.
+
 ## Pacotes: `/abrir`
 
 O **Pacote de suprimentos** vem sempre com o mesmo conteúdo, que aparece na loja antes de você pagar: **3 maçãs, 2 cafés e 1 energético**. Sai mais barato que comprar as peças soltas. O `/abrir` abre um pacote e põe tudo no seu inventário; com `quantidade` (um número, ou `max`) abre vários, até 25 de uma vez.

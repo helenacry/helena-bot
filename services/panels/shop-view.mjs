@@ -10,6 +10,8 @@ import { formatMoney, getPlayer } from "../../database/economy.mjs";
 
 import { getInventory } from "../economy/inventory.mjs";
 
+import { inventorySpace } from "../economy/backpack.mjs";
+
 import { shelfLifeNote } from "../economy/food.mjs";
 
 import {
@@ -152,6 +154,10 @@ export function shopContext(guildId, userId) {
         wallet: player.wallet,
         gems: player.gems ?? 0,
         owned,
+
+        // quantas unidades ainda cabem na mochila (o limite total do inventário)
+        bagRoom: inventorySpace(guildId, userId).room,
+
         market: getMarket(guildId)
     };
 }
@@ -165,7 +171,7 @@ const walletRows = (wallet, gems) => [
 
 // O que a carteira e o limite do item permitem: quantas unidades dá
 // para comprar agora e a frase que aparece no cartão.
-export function affordability(item, wallet, owned = 0) {
+export function affordability(item, wallet, owned = 0, bagRoom = Infinity) {
     const room = Number.isFinite(item.maxStack)
         ? item.maxStack - owned
         : Infinity;
@@ -177,10 +183,21 @@ export function affordability(item, wallet, owned = 0) {
         };
     }
 
+    // a mochila tem um limite total (a própria mochila entra sempre)
+    const bag = item.capacity ? Infinity : bagRoom;
+
+    if (bag <= 0) {
+        return {
+            max: 0,
+            text: "🎒 Mochila cheia"
+        };
+    }
+
     const max = Math.min(
         MAX_PURCHASE,
         Math.floor(wallet / item.buyPrice),
-        room
+        room,
+        bag
     );
 
     if (max < 1) {
@@ -424,6 +441,7 @@ export function buildShopView({
     wallet = 0,
     gems = 0,
     owned = {},
+    bagRoom = Infinity,
     market = null
 }) {
     const items = buyableItems(category).map(item => priceItem(item, market));
@@ -453,7 +471,7 @@ export function buildShopView({
     // ==================================
 
     const status = slice.map(item =>
-        affordability(item, wallet, owned[item.id] ?? 0)
+        affordability(item, wallet, owned[item.id] ?? 0, bagRoom)
     );
 
     const fields = slice.map((item, index) => {

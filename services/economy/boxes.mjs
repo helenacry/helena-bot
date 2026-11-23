@@ -20,6 +20,8 @@ import {
 
 import { recordPurchase } from "./food.mjs";
 
+import { inventoryRoom, inventorySpace } from "./backpack.mjs";
+
 import { tx, now as clock } from "../combat/combat.mjs";
 
 import { GameBlocked } from "../../utils/game-error.mjs";
@@ -90,6 +92,16 @@ export function packRoom(guildId, userId, box) {
             return Math.max(0, Math.floor(room / quantity));
         })
     );
+}
+
+// Quantos pacotes dá para abrir sem estourar a mochila: abrir tira 1 pacote e entrega o conteúdo, então cada um pede
+// (unidades do conteúdo - 1) espaços livres.
+export function packBagRoom(guildId, userId, box) {
+    const units = box.contents.reduce((sum, { quantity }) => sum + quantity, 0);
+
+    return units > 1
+        ? Math.floor(inventoryRoom(guildId, userId) / (units - 1))
+        : Infinity;
 }
 
 // Abre "quantity" (um número ou "max"). Devolve, nos dois tipos:
@@ -183,6 +195,21 @@ function openPack({ guildId, userId, item, box, wanted, owned, now }) {
         );
     }
 
+    // a mochila: o conteúdo todo precisa caber (tudo ou nada, como no limite de cada item)
+    const bagRoom = packBagRoom(guildId, userId, box);
+
+    if (bagRoom < wanted) {
+        const space = inventorySpace(guildId, userId);
+
+        throw new GameBlocked(
+            "Sua mochila está cheia",
+            bagRoom < 1
+                ? `Você não tem espaço para abrir ${item.emoji} **${item.name}** (${space.used}/${space.total}). ` +
+                  "Venda ou descarte itens, ou compre uma mochila maior."
+                : `Agora só dá para abrir **${bagRoom}** de ${item.emoji} ${item.name}: a mochila está em ${space.used}/${space.total}.`
+        );
+    }
+
     removeItem(guildId, userId, item.id, wanted);
 
     const received = [];
@@ -239,7 +266,8 @@ function openRandom({ guildId, userId, item, box, wanted, owned, random, now }) 
 
         const prizeItem = getItem(prize.item);
 
-        const fits = prize.quantity <= prizeItem.maxStack - getItemQuantity(guildId, userId, prize.item);
+        const fits = prize.quantity <= prizeItem.maxStack - getItemQuantity(guildId, userId, prize.item) &&
+            (prizeItem.capacity || prize.quantity <= inventoryRoom(guildId, userId));
 
         if (fits) {
             addItem(guildId, userId, prize.item, prize.quantity);

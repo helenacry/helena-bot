@@ -26,6 +26,8 @@ import {
     consumeEnergy
 } from "./energy.mjs";
 
+import { inventoryRoom } from "./backpack.mjs";
+
 import { tx } from "../combat/combat.mjs";
 
 // ==========================================
@@ -131,7 +133,8 @@ export function fish(guildId, userId, { now = Math.floor(Date.now() / 1000), ran
         if (item) {
             const owned = getItemQuantity(guildId, userId, item.id);
 
-            if (owned < item.maxStack) {
+            // cabe se o item não passou do limite dele e a mochila tem espaço
+            if (owned < item.maxStack && inventoryRoom(guildId, userId) >= 1) {
                 addItem(guildId, userId, item.id, 1);
 
                 stored = owned + 1;

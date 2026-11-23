@@ -107,11 +107,36 @@ export const ITEMS = Object.freeze([
         name: "Mochila",
         emoji: "🎒",
         category: "equipment",
-        description: "Equipamento para futuras expansões.",
+        description: "Soma 100 espaços ao inventário. Só vale a maior mochila que você tem.",
+        capacity: 100,
         maxStack: 1,
         buyPrice: 8000,
         sellable: true,
         sellPrice: 4000
+    },
+    {
+        id: "hiking_backpack",
+        name: "Mochila de trilha",
+        emoji: "🧳",
+        category: "equipment",
+        description: "Soma 300 espaços ao inventário. Só vale a maior mochila que você tem.",
+        capacity: 300,
+        maxStack: 1,
+        buyPrice: 80000,
+        sellable: true,
+        sellPrice: 40000
+    },
+    {
+        id: "expedition_backpack",
+        name: "Mochila de expedição",
+        emoji: "🏕️",
+        category: "equipment",
+        description: "Soma 900 espaços ao inventário. Só vale a maior mochila que você tem.",
+        capacity: 900,
+        maxStack: 1,
+        buyPrice: 800000,
+        sellable: true,
+        sellPrice: 400000
     },
     {
         id: "worker_medal",

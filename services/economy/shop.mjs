@@ -24,6 +24,8 @@ import {
 
 import { recordPurchase } from "./food.mjs";
 
+import { inventorySpace } from "./backpack.mjs";
+
 const MAX_CENTS = 100_000_000_000_000;
 const MAX_QUANTITY = 99;
 
@@ -165,6 +167,18 @@ export function buyItem(
             throw new Error(
                 `Você pode armazenar no máximo ${item.maxStack} unidade(s) de ${item.name}. Atualmente possui ${currentQuantity}.`
             );
+        }
+
+        // a mochila: o inventário tem um limite total (a própria mochila entra sempre)
+        if (!item.capacity) {
+            const space = inventorySpace(guildId, userId);
+
+            if (quantity > space.room) {
+                throw new Error(
+                    `Sua mochila está cheia (${space.used}/${space.total}): cabem mais ${space.room} unidade(s). ` +
+                    "Venda ou descarte itens, ou compre uma mochila maior."
+                );
+            }
         }
 
         if (player.wallet < total) {
