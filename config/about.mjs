@@ -49,9 +49,9 @@ export function bioText({ prefix }) {
 // A atualização mais nova, para o /sobre apontar. Ao publicar uma atualização (wiki/updates/vX-Y.md), troque aqui:
 // tests/about-panel.test.mjs confere que é a mesma da pasta e falha se esquecer.
 export const LATEST_UPDATE = Object.freeze({
-    version: "1.3",
-    title: "pacote de suprimentos e apresentação",
-    slug: "v1-3"
+    version: "1.4",
+    title: "pesca, mochila, drops e eventos",
+    slug: "v1-4"
 });
 
 // As sugestões enviadas pelo botão do /sobre (services/platform/suggestions.mjs).

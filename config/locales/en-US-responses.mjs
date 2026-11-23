@@ -44,7 +44,8 @@ const timeWords = (n, unit) => {
 // Os títulos das atualizações em inglês, por versão (a página da wiki fica em português; o /sobre aponta para ela).
 // tests/about-panel.test.mjs confere que a versão mais nova (LATEST_UPDATE) tem o seu.
 export const UPDATE_TITLES = Object.freeze({
-    "1.3": "supply pack and introduction"
+    "1.3": "supply pack and introduction",
+    "1.4": "fishing, backpack, drops and events"
 });
 
 export const RESPONSES_EXACT = Object.freeze({
