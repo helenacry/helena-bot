@@ -29,6 +29,8 @@ import {
 
 import { buildJobs } from "../../services/economy/jobs.mjs";
 
+import { eventMultiplier, eventNotes } from "../../services/economy/events.mjs";
+
 import {
     embedResponse,
     errorEmbed,
@@ -109,7 +111,10 @@ export default {
                     );
                 }
 
-                const reward = job.salary;
+                // eventos da semana (config/events.mjs): a quarta paga mais, o fim de semana dobra o XP
+                const reward = Math.round(job.salary * eventMultiplier("salary"));
+
+                const xpGain = Math.round(CONFIG.xp * eventMultiplier("xp"));
 
                 if (
                     !Number.isSafeInteger(reward) ||
@@ -165,7 +170,7 @@ export default {
                 // EXPERIÊNCIA
                 // ==================================
 
-                const newXp = player.xp + CONFIG.xp;
+                const newXp = player.xp + xpGain;
 
                 if (!Number.isSafeInteger(newXp)) {
                     throw new Error(
@@ -289,6 +294,7 @@ export default {
 
                         say:
                             "Dia de trabalho como **" + job.name + "** feito e pago." +
+                            eventNotes(["salary", "xp"]).map(line => "\n" + line).join("") +
                             (
                                 leveledUp
                                     ? "\n> 🎉 **Subiu para o nível " + updated.level + "!**"
@@ -297,7 +303,7 @@ export default {
 
                         rows: [
                             ["Pagamento", signed(reward, formatMoney(reward))],
-                            ["Experiência", signed(CONFIG.xp, CONFIG.xp + " XP")],
+                            ["Experiência", signed(xpGain, xpGain + " XP")],
                             ["Energia", signed(-ENERGY_CONFIG.workCost, ENERGY_CONFIG.workCost + " (" + energyResult.energy + "/" + energyResult.max + ")")],
                             null,
                             ["Carteira", formatMoney(updated.wallet)],

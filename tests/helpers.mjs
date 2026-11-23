@@ -23,6 +23,10 @@ process.env.DISCORD_BOT_TOKEN = "token-de-teste";
 // loja valer o preço de tabela; tests/market.test.mjs liga e controla o sorteio.
 process.env.HELENA_MARKET = "off";
 
+// Os eventos da semana (config/events.mjs) dependem do dia em que o teste roda: ficam desligados, e
+// tests/events.test.mjs liga e controla o relógio.
+process.env.HELENA_EVENTS = "off";
+
 // O intervalo entre comandos barraria os testes, que usam vários comandos
 // seguidos com a mesma pessoa. Começa desligado; tests/anti-spam.test.mjs cria
 // o seu próprio com relógio controlado (createPrefixRunner aceita { gate }).

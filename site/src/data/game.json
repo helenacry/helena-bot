@@ -1,6 +1,6 @@
 {
   "stats": {
-    "commands": 61,
+    "commands": 62,
     "aliases": 27,
     "jobs": 23,
     "shopItems": 22,
@@ -74,6 +74,11 @@
           "name": "energia",
           "aliases": [],
           "description": "Consulte sua energia e regeneração"
+        },
+        {
+          "name": "evento",
+          "aliases": [],
+          "description": "Veja os eventos de hoje e da semana"
         },
         {
           "name": "gemas",

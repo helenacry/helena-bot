@@ -73,6 +73,7 @@ export async function collectWikiBot() {
     const { FISHING_CONFIG, FISHING_TABLE, FISHING_TIERS } = await import("../../config/fishing.mjs");
     const { INVENTORY_CONFIG } = await import("../../config/inventory.mjs");
     const { TUTORIAL_REWARD, TUTORIAL_STEPS } = await import("../../config/tutorial.mjs");
+    const { EVENTS, WEEKDAY_NAMES } = await import("../../config/events.mjs");
     const { LIVE_CONFIG } = await import("../../config/live.mjs");
     const { ANTI_SPAM } = await import("../../config/anti-spam.mjs");
 
@@ -396,6 +397,15 @@ export async function collectWikiBot() {
             String(INVENTORY_CONFIG.baseCapacity + item.capacity),
             reais(item.buyPrice),
             reais(item.sellPrice)
+        ])
+    );
+
+    tables.events = table(
+        ["Evento", "Quando", "O que muda"],
+        EVENTS.map(event => [
+            `${event.emoji} ${event.name}`,
+            event.days.map(day => WEEKDAY_NAMES[day]).join(" e "),
+            event.description
         ])
     );
 

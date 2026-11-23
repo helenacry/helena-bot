@@ -17,6 +17,8 @@ import { addStat } from "../progress/stats.mjs";
 
 import { recordMissionEvent } from "./missions.mjs";
 
+import { eventMultiplier } from "./events.mjs";
+
 import {
     addItem,
     getItemQuantity
@@ -51,18 +53,26 @@ export function setFishingRandom(fn) {
     fishingRandom = fn ?? unit;
 }
 
-// A linha da tabela que sai para um número de 0 a menos de 1 (vem de fora para os testes).
-export function rollCatch(random = unit) {
-    const total = FISHING_TABLE.reduce((sum, entry) => sum + entry.weight, 0);
+// Os peixes que a "sorte" (o evento da sexta, config/events.mjs) favorece.
+const LUCKY_TIERS = new Set(["rare", "epic", "legendary"]);
+
+// A linha da tabela que sai para um número de 0 a menos de 1 (vem de fora para os testes). Com "luck" maior que 1, o
+// peso dos peixes raros, épicos e lendários multiplica e os outros encolhem na proporção (a soma é o que vale).
+export function rollCatch(random = unit, { luck = 1 } = {}) {
+    const weightOf = entry => LUCKY_TIERS.has(entry.tier) ? entry.weight * luck : entry.weight;
+
+    const total = FISHING_TABLE.reduce((sum, entry) => sum + weightOf(entry), 0);
 
     let point = Math.min(Math.max(random(), 0), 0.999999999) * total;
 
     for (const entry of FISHING_TABLE) {
-        if (point < entry.weight) {
+        const weight = weightOf(entry);
+
+        if (point < weight) {
             return entry;
         }
 
-        point -= entry.weight;
+        point -= weight;
     }
 
     return FISHING_TABLE[FISHING_TABLE.length - 1];
@@ -121,7 +131,10 @@ export function fish(guildId, userId, { now = Math.floor(Date.now() / 1000), ran
 
         // ----- o que veio -----
 
-        const entry = rollCatch(random);
+        // eventos da semana: a sexta de maré boa favorece os raros, o fim de semana dobra o XP
+        const entry = rollCatch(random, { luck: eventMultiplier("fishLuck", now * 1000) });
+
+        const xpGain = Math.round(FISHING_CONFIG.xp * eventMultiplier("xp", now * 1000));
 
         const item = entry.item ? getItem(entry.item) : null;
 
@@ -165,7 +178,7 @@ export function fish(guildId, userId, { now = Math.floor(Date.now() / 1000), ran
 
         // ----- XP e a hora da pescaria -----
 
-        const xp = before.xp + FISHING_CONFIG.xp;
+        const xp = before.xp + xpGain;
 
         const level = calculateLevel(xp);
 
@@ -204,7 +217,7 @@ export function fish(guildId, userId, { now = Math.floor(Date.now() / 1000), ran
             sold,
             money,
             lost,
-            xp: FISHING_CONFIG.xp,
+            xp: xpGain,
             level: after.level,
             leveledUp: after.level > before.level,
             totalXp: after.xp,

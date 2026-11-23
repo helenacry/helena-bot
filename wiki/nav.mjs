@@ -48,7 +48,7 @@ export const NAV = [
     {
         id: "help",
         title: "Ajuda e referência",
-        pages: ["faq", "commands", "cooldowns"]
+        pages: ["faq", "commands", "cooldowns", "events"]
     },
     {
         id: "updates",

@@ -267,6 +267,33 @@ export const RESPONSES_EXACT = Object.freeze({
     "🦹 Ilegal": "🦹 Illegal",
     "Pronto para uso": "Ready to use",
 
+    // ---------- eventos da semana (/evento) ----------
+    "Quarta do trabalhador": "Worker Wednesday",
+    "Sexta de maré boa": "Good Tide Friday",
+    "Fim de semana em dobro": "Double Weekend",
+    "O salário do /trabalhar paga 25% a mais.": "The /trabalhar salary pays 25% more.",
+    "Na /pescar, a chance dos peixes raros, épicos e lendários dobra.": "In /pescar, the chance of rare, epic and legendary fish doubles.",
+    "O XP do /trabalhar e da /pescar vale o dobro.": "XP from /trabalhar and /pescar is worth double.",
+    "Domingo": "Sunday",
+    "Segunda": "Monday",
+    "Terça": "Tuesday",
+    "Quarta": "Wednesday",
+    "Quinta": "Thursday",
+    "Sexta": "Friday",
+    "Sábado": "Saturday",
+    "🎉 Eventos da semana": "🎉 Events this week",
+    "🎉 Eventos desligados": "🎉 Events turned off",
+    "Os eventos da semana estão desligados agora.": "This week's events are turned off right now.",
+    "Eles voltam quando forem ligados": "They come back when turned on",
+    "Os eventos ligam sozinhos, pelo dia da semana (horário de Brasília).": "Events turn on by themselves, by the day of the week (Brasília time).",
+    "🔥 Agora": "🔥 Now",
+    "📅 Esta semana": "📅 This week",
+    "Os bônus valem sozinhos, sem precisar ligar nada": "The bonuses apply on their own, nothing to turn on",
+    "Nenhum evento ativo agora. Veja a semana abaixo.": "No event active right now. See the week below.",
+    "Sem eventos nesta semana.": "No events this week.",
+    "hoje": "today",
+    "Evento": "Event",
+
     // ---------- /tutorial ----------
     "Tutorial": "Tutorial",
     "🧭 Primeiros passos": "🧭 First steps",
@@ -700,6 +727,11 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Código: {url}", "Code: {url}"),
 
     // ---------- /sobre e a sugestão ----------
+    // ---------- eventos da semana ----------
+    tpl("acaba {t}", "ends {t}"),
+
+    
+
     // ---------- /tutorial ----------
     tpl("Tudo feito! Resgate o prêmio: {t}.", "All done! Claim the reward: {t}."),
 

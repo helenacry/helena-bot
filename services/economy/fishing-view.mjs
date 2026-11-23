@@ -15,6 +15,8 @@ import { signed } from "../../utils/receipt.mjs";
 
 import { formatDuration } from "../../utils/time.mjs";
 
+import { eventNotes } from "./events.mjs";
+
 // ==========================================
 // A RESPOSTA DE /PESCAR
 // ==========================================
@@ -86,7 +88,7 @@ export function fishedResponse(result) {
             section: "Pescaria",
             title: item ? "🎣 Pescaria" : "🎣 Nada mordeu",
 
-            say: sayFor(result) + level,
+            say: sayFor(result) + eventNotes(["fishLuck", "xp"]).map(line => "\n" + line).join("") + level,
 
             rows,
 
