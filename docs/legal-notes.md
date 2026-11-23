@@ -4,6 +4,13 @@
 
 Revisão técnico-jurídica dos [Termos de uso](../site/src/pages/terms/index.astro) e da [Política de Privacidade](../site/src/pages/privacy/index.astro), feita em 22/10/2026 (versão 2.0 dos dois). **Não é parecer de advogado e não substitui um.** Serve para registrar o que os textos prometem, em que se apoiam e o que ainda precisa de decisão de vocês. Os testes em `tests/site.test.mjs` travam o que está escrito aqui como "o texto diz".
 
+## O que mudou na versão 2.6 da Política de Privacidade (22/11/2026)
+
+Uma versão só para o lote de novidades da 1.4 em diante; a lista cresce a cada tabela nova (ainda não publicada).
+
+- **Contadores do jogo.** Tabela nova, `player_stats`: para cada pessoa e servidor, um nome de contador e um número (quantos turnos de trabalho, pescarias, crimes e roubos com sucesso, quais peixes já pescou). Servem às conquistas por quantidade e ao tutorial. Só números, sem texto livre. A política descreve na seção 4, junto das missões e conquistas. Base: execução do jogo.
+- **Hora da última pescaria.** A coluna `last_fish` de `players` é um dado operacional como `last_work` (recarga do comando): não é citada uma a uma na política.
+
 ## O que mudou na versão 2.5 da Política de Privacidade (07/11/2026)
 
 - **Idioma.** Tabela nova, `user_settings`: o ID da pessoa e o idioma que ela escolheu em `/config` (português ou inglês), mais a hora da última troca. Vale para a conta (todos os servidores) e só serve para a Helena responder no idioma escolhido. A política descreve isso na seção 4, em "Para toda a conta". Base: execução do jogo, com o mínimo de dados.

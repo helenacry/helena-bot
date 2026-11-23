@@ -13,6 +13,10 @@ import {
 
 import { calculateLevel } from "../progress/experience.mjs";
 
+import { addStat } from "../progress/stats.mjs";
+
+import { recordMissionEvent } from "./missions.mjs";
+
 import {
     addItem,
     getItemQuantity
@@ -174,6 +178,17 @@ export function fish(guildId, userId, { now = Math.floor(Date.now() / 1000), ran
 
         if (update.changes !== 1) {
             throw new Error("Não foi possível registrar a pescaria.");
+        }
+
+        // missões (diária e semanal) e contadores: lançamentos (event_fish), peixes pegos e cada espécie (o álbum)
+        recordMissionEvent(guildId, userId, "fish");
+
+        if (item) {
+            addStat(guildId, userId, "fish_catches");
+
+            if (entry.tier !== "junk") {
+                addStat(guildId, userId, `fish:${item.id}`);
+            }
         }
 
         const after = getPlayer(guildId, userId);

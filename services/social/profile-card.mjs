@@ -562,7 +562,63 @@ const EMOJI_ART = Object.freeze({
         <path d="M23.4,2.6 H16.8 L12.4,13.4 H19 Z" fill="#1e88e5"/>
         <circle cx="16" cy="20.4" r="9" fill="#ffc83d" stroke="#e69a00" stroke-width="1.6"/>
         <circle cx="16" cy="20.4" r="5.4" fill="#ffe082" stroke="#e69a00" stroke-width=".9"/>
-        <path d="M16,17 L16.9,19.3 L19.3,19.5 L17.5,21 L18.1,23.4 L16,22.1 L13.9,23.4 L14.5,21 L12.7,19.5 L15.1,19.3 Z" fill="#e69a00"/>`
+        <path d="M16,17 L16.9,19.3 L19.3,19.5 L17.5,21 L18.1,23.4 L16,22.1 L13.9,23.4 L14.5,21 L12.7,19.5 L15.1,19.3 Z" fill="#e69a00"/>`,
+
+    // 🎣 vara de pescar
+    "🎣": `
+        <path d="M5,28 L22,5" stroke="#8d6e63" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="9.6" cy="22.2" r="2.6" fill="#90a4ae" stroke="#546e7a" stroke-width="1"/>
+        <path d="M22,5 C28,8 28.5,15 26,19" stroke="#78909c" stroke-width="1" fill="none"/>
+        <circle cx="26" cy="21.4" r="2.4" fill="#e53935"/>
+        <path d="M23.7,21.4 H28.3" stroke="#ffffff" stroke-width="1.2"/>
+        <path d="M26,23.8 V27.4 C26,29.4 23.6,29.4 23.6,27.6" stroke="#b0bec5" stroke-width="1.3" fill="none" stroke-linecap="round"/>`,
+
+    // 🐟 peixe
+    "🐟": `
+        <path d="M3.4,16 C8,8.6 17,7.4 23,12.6 L29.2,8 V24 L23,19.4 C17,24.6 8,23.4 3.4,16 Z" fill="#4fc3f7" stroke="#0288d1" stroke-width="1.1" stroke-linejoin="round"/>
+        <circle cx="9.4" cy="14.6" r="1.7" fill="#ffffff"/>
+        <circle cx="9.4" cy="14.6" r=".85" fill="#263238"/>
+        <path d="M14,10.8 C15.6,15 15.6,17 14,21.2" stroke="#0288d1" stroke-width="1" fill="none" opacity=".6"/>`,
+
+    // 📖 livro aberto
+    "📖": `
+        <path d="M16,8 C12,5.6 7,5.4 3,6.6 V24 C7,22.8 12,23 16,25.4 Z" fill="#fff8e1" stroke="#8d6e63" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M16,8 C20,5.6 25,5.4 29,6.6 V24 C25,22.8 20,23 16,25.4 Z" fill="#fffde7" stroke="#8d6e63" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M16,8 V25.4" stroke="#8d6e63" stroke-width="1.2"/>
+        <path d="M6,10 C8.4,9.6 10.6,9.8 13,11 M6,14 C8.4,13.6 10.6,13.8 13,15 M19,11 C21.4,9.8 23.6,9.6 26,10 M19,15 C21.4,13.8 23.6,13.6 26,14" stroke="#bcaaa4" stroke-width=".9" fill="none" stroke-linecap="round"/>`,
+
+    // 🐋 baleia
+    "🐋": `
+        <path d="M2.6,18 C2.6,10.6 8.6,6.6 15,7 C21.4,7.4 27,12 29.4,9.2 C29.8,14 28,18.6 24.6,21.6 C20,25.6 14,26 9.4,24.4 C5.4,23 2.6,21 2.6,18 Z" fill="#4a90d9" stroke="#2c5f9e" stroke-width="1.1" stroke-linejoin="round"/>
+        <path d="M4.6,19.4 C9,22.6 17,23.4 24,19.8 C20,24.6 12,25 7.4,23 Z" fill="#cfe8ff"/>
+        <circle cx="9" cy="14.6" r="1.3" fill="#263238"/>
+        <path d="M13,5.4 C12.4,3.6 11.2,3 10,3.2 M13,5.4 C13.6,3.6 14.8,3 16,3.2" stroke="#81d4fa" stroke-width="1.4" fill="none" stroke-linecap="round"/>`,
+
+    // 🛠 martelo e chave cruzados
+    "🛠": `
+        <g transform="rotate(45 16 16)">
+            <rect x="14.4" y="5" width="3.2" height="22" rx="1.2" fill="#8d6e63"/>
+            <rect x="9.4" y="3.4" width="13.2" height="6.6" rx="1.6" fill="#90a4ae" stroke="#546e7a" stroke-width=".8"/>
+        </g>
+        <g transform="rotate(-45 16 16)">
+            <rect x="14.4" y="9" width="3.2" height="19" rx="1.2" fill="#b0bec5" stroke="#78909c" stroke-width=".6"/>
+            <circle cx="16" cy="7" r="4.6" fill="none" stroke="#90a4ae" stroke-width="3"/>
+        </g>`,
+
+    // 🕵 detetive
+    "🕵": `
+        <ellipse cx="16" cy="12.4" rx="12.4" ry="2.8" fill="#455a64"/>
+        <path d="M8.6,12 C8.6,5.4 11.6,3.4 16,3.4 C20.4,3.4 23.4,5.4 23.4,12 Z" fill="#546e7a"/>
+        <rect x="8.6" y="9.2" width="14.8" height="2.2" fill="#263238"/>
+        <circle cx="16" cy="19.6" r="7" fill="#ffcc80" stroke="#e0a458" stroke-width=".8"/>
+        <rect x="9.8" y="17.2" width="5.4" height="3.4" rx="1.4" fill="#263238"/>
+        <rect x="16.8" y="17.2" width="5.4" height="3.4" rx="1.4" fill="#263238"/>
+        <path d="M13.4,24.4 C14.8,25.4 17.2,25.4 18.6,24.4" stroke="#a1662f" stroke-width="1.1" fill="none" stroke-linecap="round"/>`,
+
+    // 🧤 luva
+    "🧤": `
+        <path d="M9,27.6 V15.4 L6.6,9.8 C6,8.4 7.4,7.4 8.6,8.2 L11.4,12.4 V5.4 C11.4,4.2 13.2,4.2 13.2,5.4 V11.4 V3.8 C13.2,2.6 15.2,2.6 15.2,3.8 V11.4 V4.8 C15.2,3.6 17.2,3.6 17.2,4.8 V12 V7.2 C17.2,6 19.2,6 19.2,7.2 V17.4 C19.2,20 22.4,18.4 23.4,16.8 C24.4,15.2 26.2,16.2 25.6,17.8 C23.6,23.4 21.4,27.6 18,27.6 Z" fill="#ef5350" stroke="#b71c1c" stroke-width="1" stroke-linejoin="round"/>
+        <rect x="9" y="25.2" width="9.6" height="4.2" rx="1" fill="#ffcdd2" stroke="#b71c1c" stroke-width=".8"/>`
 });
 
 // Separa o título equipado ("💰 Rico") no desenho do emoji (ou null) e no texto sem emoji.

@@ -207,7 +207,14 @@ test("missões no V2: uma seção por missão, com Resgatar nas prontas e o esta
     // o clássico: o mesmo embed e um botão por missão pronta
     assert.equal(view.embed.title, "📜 Missões do dia");
     assert.equal(view.components[0].components.length, 1);
-    assert.match(view.embed.fields.at(-1).value, /1/);
+    assert.match(view.embed.fields[2].value, /1/);
+
+    // e a linha das abas: Diárias (a de agora, desligada) e Semanais
+    const tabs = view.components.at(-1).components;
+
+    assert.deepEqual(tabs.map(button => button.label), ["Diárias (1)", "Semanais"], "a aba com recompensa pronta mostra quantas");
+    assert.equal(tabs[0].disabled, true);
+    assert.equal(tabs[1].customId, `miss:tab:${OWNER}:weekly`);
 });
 
 test("o botão Resgatar paga, atualiza a mesma lista com o aviso e o botão vira Resgatada", () => {
@@ -227,7 +234,9 @@ test("o botão Resgatar paga, atualiza a mesma lista com o aviso e o botão vira
     assert.match(allText(answer.data.layout), /resgatada/);
     assert.equal(sectionsOf(answer.data.layout)[0].accessory.label, "Resgatada");
     assert.match(answer.data.embeds[0].description, /resgatada/);
-    assert.deepEqual(answer.data.components, [], "sem botão de resgate quando nada está pronto");
+    // sem botão de resgate quando nada está pronto: sobra só a linha das abas
+    assert.deepEqual(answer.data.components.flatMap(line => line.components).filter(button => button.customId.startsWith("miss:resgatar:")), []);
+    assert.deepEqual(answer.data.components.at(-1).components.map(button => button.customId.split(":")[1]), ["tab", "tab"]);
 
     // apertar de novo (mensagem velha) só avisa
     const again = click(`miss:resgatar:${OWNER}:${mission.id}`);

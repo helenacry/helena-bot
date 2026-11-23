@@ -14,7 +14,7 @@ import { ITEMS, ITEM_CATEGORIES, WEAPON_TYPES } from "../items.mjs";
 
 import { JOBS } from "../jobs.mjs";
 
-import { MISSIONS } from "../missions.mjs";
+import { ALL_MISSIONS } from "../missions.mjs";
 
 import { ACHIEVEMENTS, ACHIEVEMENT_RARITIES } from "../achievements.mjs";
 
@@ -100,7 +100,12 @@ export const JOB_NAMES = Object.freeze({
 export const MISSION_TEXT = Object.freeze({
     work: ["Dedicated worker", "Work 2 times"],
     deposit: ["Financial organization", "Deposit money 2 times"],
-    daily: ["Daily presence", "Claim your daily reward"]
+    daily: ["Daily presence", "Claim your daily reward"],
+    fish: ["Fishing day", "Fish 3 times"],
+    week_work: ["Work week", "Work 10 times this week"],
+    week_fish: ["Fisher of the week", "Fish 15 times this week"],
+    week_crime: ["Life of crime", "Commit 5 successful crimes this week"],
+    week_daily: ["Weekly presence", "Claim the daily on 5 days of the week"]
 });
 
 // ---------- conquistas: [nome, descrição, título] ----------
@@ -118,7 +123,14 @@ export const ACHIEVEMENT_TEXT = Object.freeze({
     daily_30: ["Absolute Discipline", "Reach a 30-day daily streak.", "Unstoppable"],
     duelist: ["Duelist", "Win 10 duels.", "Duelist"],
     champion: ["Arena Champion", "Win 50 duels.", "Champion"],
-    gem_collector: ["Gem Collector", "Accumulate 100 gems.", "Collector"]
+    gem_collector: ["Gem Collector", "Accumulate 100 gems.", "Collector"],
+    fisher: ["Novice Fisher", "Fish 10 times.", "Fisher"],
+    fishing_master: ["Fishing Master", "Fish 100 times.", "Master Fisher"],
+    fish_album: ["Fish Album", "Catch all 8 species of fish.", "Naturalist"],
+    river_legend: ["River Legend", "Catch a pirarucu.", "River Legend"],
+    worker_50: ["Exemplary Worker", "Work 50 times.", "Laborer"],
+    crook_10: ["Dirty Record", "Commit 10 crimes successfully.", "Petty Thief"],
+    light_hands: ["Light Hands", "Rob successfully 10 times.", "Light Hands"]
 });
 
 export const RARITY_NAMES = Object.freeze({
@@ -239,7 +251,7 @@ export const COMMAND_TEXT = Object.freeze({
     "Consulte os empregos e avance na carreira": "Browse jobs and move up in your career",
     "ID do emprego que deseja assumir": "ID of the job you want to take",
     "Veja o índice do mercado, o item em alta e os preços de agora": "See the market index, the trending item and today's prices",
-    "Consulte e resgate suas missões diárias": "Check and claim your daily missions",
+    "Veja e resgate suas missões diárias e semanais": "See and claim your daily and weekly missions",
     "Missão que deseja resgatar": "Mission you want to claim",
     "Consulte os melhores jogadores do servidor ou de todos os servidores": "See the top players of the server or of all servers",
     "Escolha a classificação": "Choose the ranking",
@@ -328,7 +340,7 @@ function build() {
         put(exact, job.name, JOB_NAMES[job.id]);
     }
 
-    for (const mission of MISSIONS) {
+    for (const mission of ALL_MISSIONS) {
         const [name, description] = MISSION_TEXT[mission.id] ?? [];
 
         put(exact, mission.name, name);

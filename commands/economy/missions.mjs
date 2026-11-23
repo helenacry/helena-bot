@@ -1,6 +1,6 @@
 import { getPlayer } from "../../database/economy.mjs";
 
-import { MISSIONS } from "../../config/missions.mjs";
+import { ALL_MISSIONS } from "../../config/missions.mjs";
 
 import { claimMission } from "../../services/economy/missions.mjs";
 
@@ -26,7 +26,7 @@ import {
 export default {
     name: "missoes",
     aliases: ["missao"],
-    description: "Consulte e resgate suas missões diárias",
+    description: "Veja e resgate suas missões diárias e semanais",
 
     options: [
         {
@@ -34,7 +34,7 @@ export default {
             description: "Missão que deseja resgatar",
             type: "string",
             required: false,
-            choices: MISSIONS.map(mission => ({
+            choices: ALL_MISSIONS.map(mission => ({
                 name: mission.name,
                 value: mission.id
             }))
@@ -62,7 +62,7 @@ export default {
             // ==================================
 
             if (!selected) {
-                const view = buildMissions({ guildId, userId });
+                const view = buildMissions({ guildId, userId, tab: "daily" });
 
                 const response = embedResponse(view.embed);
 

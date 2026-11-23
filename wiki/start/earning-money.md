@@ -47,6 +47,14 @@ São {{v:missions.count}} missões por dia, que somam {{v:missions.total}} e {{v
 
 Cumpra o objetivo e resgate: o `/missoes` mostra o botão **Resgatar** em cada missão pronta (também dá para usar `/missoes resgatar:<missão>`). O progresso conta por dia **UTC**: a virada acontece à meia-noite UTC, que é **21h no horário de Brasília**.
 
+## Missões da semana
+
+São {{v:missions.weeklyCount}} missões que valem a semana inteira e somam {{v:missions.weeklyTotal}} e {{v:missions.weeklyTotalXp}} de XP:
+
+{{table:weekly-missions}}
+
+No `/missoes`, o botão **Semanais** troca de aba (e o botão **Diárias** volta). A semana vai da **segunda-feira à meia-noite UTC** até o domingo: a virada é na **noite de domingo para segunda, às 21h no horário de Brasília**. O progresso das semanais não zera todo dia, e o mesmo evento anda a missão do dia e a da semana ao mesmo tempo (um turno de trabalho conta nas duas).
+
 ## Vender o que você não usa
 
 Itens vendáveis, como comida e ferramentas, voltam pela metade do preço de compra no `/vender`. O preço também sofre a influência do mercado do servidor, que você acompanha no [`/bolsa`](wiki:economy/market).

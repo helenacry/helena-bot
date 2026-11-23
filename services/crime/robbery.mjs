@@ -5,6 +5,8 @@ import { getPlayer } from "../../database/economy.mjs";
 
 import { consumeEnergy } from "../economy/energy.mjs";
 
+import { recordMissionEvent } from "../economy/missions.mjs";
+
 import { getEquippedWeapon } from "../combat/equipment.mjs";
 
 import {
@@ -509,6 +511,9 @@ function resolveSuccess({
     `).run(guildId, thiefId, victimId, amount);
 
     registerAttempt(guildId, thiefId, now);
+
+    // contador de roubos com sucesso (as conquistas por quantidade)
+    recordMissionEvent(guildId, thiefId, "rob");
 
     return {
         success: true,

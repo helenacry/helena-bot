@@ -261,6 +261,9 @@ export const RESPONSES_EXACT = Object.freeze({
     "🦹 Ilegal": "🦹 Illegal",
     "Pronto para uso": "Ready to use",
 
+    // ---------- missões semanais ----------
+    "As semanais pagam mais e pedem constância. Elas reiniciam na **segunda-feira, à meia-noite UTC**.": "Weekly missions pay more and ask for consistency. They reset on **Monday at midnight UTC**.",
+
     // ---------- títulos (o painel com botões) ----------
     "Equipado": "Equipped",
     "equipado": "equipped",
@@ -632,6 +635,9 @@ export const RESPONSES_PATTERNS = Object.freeze([
     tpl("Wiki: {url}", "Wiki: {url}"),
 
     tpl("Código: {url}", "Code: {url}"),
+
+    // ---------- missões semanais: o botão da aba mostra quantas estão prontas ----------
+    [/^(Diárias|Semanais) ((d+))$/, m => `${m[1] === "Diárias" ? "Daily" : "Weekly"} (${m[2]})`],
 
     // ---------- títulos (o painel com botões) ----------
     tpl("Título equipado: {t}. Ele aparece no seu /perfil.", "Title equipped: {t}. It shows on your /perfil."),

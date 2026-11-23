@@ -7,6 +7,11 @@ import {
     formatAchievementTitle
 } from "../../config/achievements.mjs";
 
+import {
+    countStats,
+    getStat
+} from "./stats.mjs";
+
 // ==========================================
 // CONSULTAR CONQUISTAS
 // ==========================================
@@ -176,6 +181,16 @@ export function getAchievementProgress(
 
             return Number(row?.wins || 0);
         }
+
+        // ==================================
+        // CONTADORES DO JOGO (pesca, trabalho, crime...)
+        // ==================================
+
+        case "stat":
+            return getStat(guildId, userId, achievement.requirement.key);
+
+        case "stat_count":
+            return countStats(guildId, userId, achievement.requirement.prefix);
 
         default:
             return 0;

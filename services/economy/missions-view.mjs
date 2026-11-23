@@ -60,11 +60,43 @@ export function claimNotice(result) {
     );
 }
 
-// Devolve { embed, components, layout }. "notice" é uma linha de aviso no topo (o resgate).
-export function buildMissions({ guildId, userId, notice = null }) {
-    const missions = getPlayerMissions(guildId, userId);
+// As duas abas: as diárias e as semanais. O V2 tem no máximo 40 componentes e cada missão é uma seção de 4, então
+// uma aba mostra um tipo só; os botões trocam de aba (miss:tab:<dono>:<tipo>).
+const TABS = Object.freeze({
+    daily: Object.freeze({
+        label: "Diárias",
+        emoji: "☀️",
+        title: "📜 Missões do dia",
+        intro: "Complete os objetivos do dia e resgate as recompensas. As missões reiniciam à **meia-noite UTC**.",
+        note: "As missões reiniciam à meia-noite UTC."
+    }),
 
-    const ready = missions.filter(isReady);
+    weekly: Object.freeze({
+        label: "Semanais",
+        emoji: "📅",
+        title: "📅 Missões da semana",
+        intro: "As semanais pagam mais e pedem constância. Elas reiniciam na **segunda-feira, à meia-noite UTC**.",
+        note: "As semanais reiniciam na segunda-feira, à meia-noite UTC."
+    })
+});
+
+// Devolve { embed, components, layout }. "notice" é uma linha de aviso no topo (o resgate); "tab" é "daily" ou
+// "weekly".
+export function buildMissions({ guildId, userId, notice = null, tab = "daily" }) {
+    const kind = Object.hasOwn(TABS, tab) ? tab : "daily";
+
+    const copy = TABS[kind];
+
+    const all = getPlayerMissions(guildId, userId);
+
+    const missions = all.filter(mission => mission.period === kind);
+
+    // o que está pronto em CADA aba: a outra aba também avisa
+    const readyOf = list => list.filter(isReady);
+
+    const ready = readyOf(missions);
+
+    const readyElsewhere = readyOf(all.filter(mission => mission.period !== kind)).length;
 
     const color = ready.length > 0
         ? HELENA_COLORS.success
@@ -75,6 +107,22 @@ export function buildMissions({ guildId, userId, notice = null }) {
         : mission.progress >= mission.target
             ? "🎉 pronta para resgatar"
             : "⏳ em andamento";
+
+    // ==================================
+    // AS ABAS (botões)
+    // ==================================
+
+    const tabButtons = Object.entries(TABS).map(([value, entry]) => {
+        const pending = readyOf(all.filter(mission => mission.period === value)).length;
+
+        return button(
+            `miss:tab:${userId}:${value}`,
+            pending > 0 ? `${entry.label} (${pending})` : entry.label,
+            entry.emoji,
+            value === kind ? "primary" : "secondary",
+            { disabled: value === kind }
+        );
+    });
 
     // ==================================
     // CLÁSSICO
@@ -95,7 +143,7 @@ export function buildMissions({ guildId, userId, notice = null }) {
 
     const embed = ledgerEmbed({
         section: "Missões",
-        title: "📜 Missões do dia",
+        title: copy.title,
 
         say:
             (notice ? notice + "\n" : "") +
@@ -103,7 +151,7 @@ export function buildMissions({ guildId, userId, notice = null }) {
                 ? "🎁 **" + plural(ready.length, "recompensa pronta", "recompensas prontas") + "** para resgatar."
                 : "Cumpra os objetivos e resgate as recompensas."),
 
-        note: "As missões reiniciam à meia-noite UTC.",
+        note: copy.note,
 
         color,
         mood: ready.length > 0 ? "festa" : "feliz",
@@ -145,14 +193,11 @@ export function buildMissions({ guildId, userId, notice = null }) {
         container([
             text("-# HELENA · MISSÕES"),
 
-            text("## 📜 Missões do dia"),
+            text("## " + copy.title),
 
             ...(notice ? [text(notice)] : []),
 
-            text(
-                "Complete os objetivos do dia e resgate as recompensas. " +
-                "As missões reiniciam à **meia-noite UTC**."
-            ),
+            text(copy.intro),
 
             divider(),
 
@@ -172,8 +217,12 @@ export function buildMissions({ guildId, userId, notice = null }) {
             text(
                 ready.length > 0
                     ? `🎁 **${ready.length}** ${ready.length === 1 ? "recompensa pronta" : "recompensas prontas"} para resgatar`
-                    : "🎁 Nenhuma recompensa pronta agora"
-            )
+                    : readyElsewhere > 0
+                        ? "🎁 Há recompensa pronta na outra aba"
+                        : "🎁 Nenhuma recompensa pronta agora"
+            ),
+
+            row(...tabButtons)
         ], { color }),
 
         subtext("Também dá para resgatar com /missoes resgatar")
@@ -181,7 +230,10 @@ export function buildMissions({ guildId, userId, notice = null }) {
 
     return {
         embed,
-        components: claimButtons.length > 0 ? [row(...claimButtons)] : [],
+        components: [
+            ...(claimButtons.length > 0 ? [row(...claimButtons)] : []),
+            row(...tabButtons)
+        ],
         layout
     };
 }

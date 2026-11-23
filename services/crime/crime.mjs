@@ -7,6 +7,8 @@ import { consumeEnergy } from "../economy/energy.mjs";
 
 import { calculateLevel } from "../progress/experience.mjs";
 
+import { recordMissionEvent } from "../economy/missions.mjs";
+
 import {
     status as combatStatus,
     tx,
@@ -241,6 +243,9 @@ function resolveSuccess({
         )
         VALUES (?, ?, NULL, 'crime', ?)
     `).run(guildId, userId, amount);
+
+    // missão da semana e contador de crimes com sucesso
+    recordMissionEvent(guildId, userId, "crime");
 
     return {
         success: true,

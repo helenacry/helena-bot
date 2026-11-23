@@ -246,6 +246,135 @@ export const ACHIEVEMENTS = Object.freeze({
             type: "gems",
             target: 100
         }
+    },
+
+    // ======================================
+    // PESCA
+    // Os contadores vêm de services/progress/stats.mjs: "stat" lê um contador pelo nome (key) e "stat_count"
+    // conta quantos contadores com um prefixo já passaram de zero (as espécies de peixe, "fish:").
+    // ======================================
+
+    fisher: {
+        id: "fisher",
+        name: "Pescador Iniciante",
+        description: "Pesque 10 vezes.",
+        emoji: "🎣",
+        rarity: "common",
+
+        title: "Pescador",
+        titleEmoji: "🎣",
+
+        requirement: {
+            type: "stat",
+            key: "event_fish",
+            target: 10
+        }
+    },
+
+    fishing_master: {
+        id: "fishing_master",
+        name: "Mestre da Pesca",
+        description: "Pesque 100 vezes.",
+        emoji: "🐟",
+        rarity: "rare",
+
+        title: "Mestre Pescador",
+        titleEmoji: "🐟",
+
+        requirement: {
+            type: "stat",
+            key: "event_fish",
+            target: 100
+        }
+    },
+
+    fish_album: {
+        id: "fish_album",
+        name: "Álbum de Peixes",
+        description: "Pesque as 8 espécies de peixe.",
+        emoji: "📖",
+        rarity: "epic",
+
+        title: "Naturalista",
+        titleEmoji: "📖",
+
+        requirement: {
+            type: "stat_count",
+            prefix: "fish:",
+            target: 8
+        }
+    },
+
+    river_legend: {
+        id: "river_legend",
+        name: "Lenda do Rio",
+        description: "Pesque um pirarucu.",
+        emoji: "🐋",
+        rarity: "legendary",
+
+        title: "Lenda do Rio",
+        titleEmoji: "🐋",
+
+        requirement: {
+            type: "stat",
+            key: "fish:pirarucu",
+            target: 1
+        }
+    },
+
+    // ======================================
+    // TRABALHO E CRIME
+    // ======================================
+
+    worker_50: {
+        id: "worker_50",
+        name: "Trabalhador Exemplar",
+        description: "Trabalhe 50 vezes.",
+        emoji: "🛠️",
+        rarity: "uncommon",
+
+        title: "Operário",
+        titleEmoji: "🛠️",
+
+        requirement: {
+            type: "stat",
+            key: "event_work",
+            target: 50
+        }
+    },
+
+    crook_10: {
+        id: "crook_10",
+        name: "Ficha Suja",
+        description: "Cometa 10 crimes com sucesso.",
+        emoji: "🕵️",
+        rarity: "uncommon",
+
+        title: "Larápio",
+        titleEmoji: "🕵️",
+
+        requirement: {
+            type: "stat",
+            key: "event_crime",
+            target: 10
+        }
+    },
+
+    light_hands: {
+        id: "light_hands",
+        name: "Mão Leve",
+        description: "Roube 10 vezes com sucesso.",
+        emoji: "🧤",
+        rarity: "rare",
+
+        title: "Mão Leve",
+        titleEmoji: "🧤",
+
+        requirement: {
+            type: "stat",
+            key: "event_rob",
+            target: 10
+        }
     }
 });
 

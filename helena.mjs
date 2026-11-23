@@ -77,6 +77,10 @@ import {
 } from "./services/economy/box-refund.mjs";
 
 import {
+    runStatsMigrations
+} from "./database/stats-migrations.mjs";
+
+import {
     runDeveloperMigrations
 } from "./database/developer-migrations.mjs";
 
@@ -523,6 +527,7 @@ runUserinfoHistoryMigrations();
 runFoodMigrations();
 runSettingsMigrations();
 runDataFixesMigrations();
+runStatsMigrations();
 
 // Devolve o dinheiro das Caixas misteriosas que já estavam nos inventários (a caixa saiu da loja em 12/11/2026).
 // Roda uma vez só; se falhar, nada muda e tenta de novo na próxima subida.

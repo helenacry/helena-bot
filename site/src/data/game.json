@@ -5,7 +5,7 @@
     "jobs": 23,
     "shopItems": 20,
     "weapons": 14,
-    "achievements": 12
+    "achievements": 19
   },
   "categories": [
     {
@@ -99,7 +99,7 @@
           "aliases": [
             "missao"
           ],
-          "description": "Consulte e resgate suas missões diárias"
+          "description": "Veja e resgate suas missões diárias e semanais"
         },
         {
           "name": "pescar",
@@ -592,6 +592,48 @@
       "emoji": "💎",
       "rarity": "uncommon",
       "description": "Acumule 100 gemas."
+    },
+    {
+      "name": "Pescador Iniciante",
+      "emoji": "🎣",
+      "rarity": "common",
+      "description": "Pesque 10 vezes."
+    },
+    {
+      "name": "Mestre da Pesca",
+      "emoji": "🐟",
+      "rarity": "rare",
+      "description": "Pesque 100 vezes."
+    },
+    {
+      "name": "Álbum de Peixes",
+      "emoji": "📖",
+      "rarity": "epic",
+      "description": "Pesque as 8 espécies de peixe."
+    },
+    {
+      "name": "Lenda do Rio",
+      "emoji": "🐋",
+      "rarity": "legendary",
+      "description": "Pesque um pirarucu."
+    },
+    {
+      "name": "Trabalhador Exemplar",
+      "emoji": "🛠️",
+      "rarity": "uncommon",
+      "description": "Trabalhe 50 vezes."
+    },
+    {
+      "name": "Ficha Suja",
+      "emoji": "🕵️",
+      "rarity": "uncommon",
+      "description": "Cometa 10 crimes com sucesso."
+    },
+    {
+      "name": "Mão Leve",
+      "emoji": "🧤",
+      "rarity": "rare",
+      "description": "Roube 10 vezes com sucesso."
     }
   ],
   "game": {
@@ -675,6 +717,14 @@
         "emoji": "🎁",
         "reward": 150,
         "xp": 20
+      },
+      {
+        "id": "fish",
+        "name": "Dia de pesca",
+        "description": "Pesque 3 vezes",
+        "emoji": "🎣",
+        "reward": 250,
+        "xp": 30
       }
     ],
     "crime": {

@@ -67,7 +67,7 @@ export async function collectWikiBot() {
     const crime = await import("../../config/crime.mjs");
     const { GEM_BONUS } = await import("../../config/gems.mjs");
     const { MARKET_CONFIG } = await import("../../config/market.mjs");
-    const { MISSIONS } = await import("../../config/missions.mjs");
+    const { MISSIONS, WEEKLY_MISSIONS } = await import("../../config/missions.mjs");
     const { COOLDOWNS } = await import("../../config/cooldowns.mjs");
     const { WORK_CONFIG } = await import("../../config/work.mjs");
     const { FISHING_CONFIG, FISHING_TABLE, FISHING_TIERS } = await import("../../config/fishing.mjs");
@@ -159,7 +159,10 @@ export async function collectWikiBot() {
         missions: {
             count: String(MISSIONS.length),
             total: reais(MISSIONS.reduce((sum, mission) => sum + mission.reward, 0)),
-            totalXp: String(MISSIONS.reduce((sum, mission) => sum + mission.xp, 0))
+            totalXp: String(MISSIONS.reduce((sum, mission) => sum + mission.xp, 0)),
+            weeklyCount: String(WEEKLY_MISSIONS.length),
+            weeklyTotal: reais(WEEKLY_MISSIONS.reduce((sum, mission) => sum + mission.reward, 0)),
+            weeklyTotalXp: String(WEEKLY_MISSIONS.reduce((sum, mission) => sum + mission.xp, 0))
         },
 
         gems: {
@@ -413,6 +416,16 @@ export async function collectWikiBot() {
     tables.missions = table(
         ["Missão", "O que fazer", "Prêmio", "XP"],
         MISSIONS.map(mission => [
+            `${mission.emoji} ${mission.name}`,
+            mission.description,
+            reais(mission.reward),
+            String(mission.xp)
+        ])
+    );
+
+    tables["weekly-missions"] = table(
+        ["Missão", "O que fazer", "Prêmio", "XP"],
+        WEEKLY_MISSIONS.map(mission => [
             `${mission.emoji} ${mission.name}`,
             mission.description,
             reais(mission.reward),

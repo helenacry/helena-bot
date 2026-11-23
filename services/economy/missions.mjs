@@ -2,19 +2,22 @@
 import { db } from "../../database/connection.mjs";
 
 import {
-    MISSIONS,
+    ALL_MISSIONS,
     getMission,
     getMissionPeriod
 } from "../../config/missions.mjs";
 
 import { calculateLevel } from "../progress/experience.mjs";
 
+import { addStat } from "../progress/stats.mjs";
+
 // ==========================================
 // REGISTRAR PROGRESSO
 // ==========================================
 
 // Chamar somente dentro de uma transação SQLite.
-// event: "work", "deposit" ou "daily".
+// event: "work", "deposit", "daily", "fish", "crime" ou "rob". Todo evento também soma no contador do jogo
+// (event_<nome>), de onde saem as conquistas por quantidade; as missões diárias e as semanais escutam o mesmo evento.
 export function recordMissionEvent(
     guildId,
     userId,
@@ -31,13 +34,15 @@ export function recordMissionEvent(
         throw new Error("Jogador inválido.");
     }
 
-    const period = getMissionPeriod(now);
+    addStat(guildId, userId, `event_${event}`);
 
-    const missions = MISSIONS.filter(
+    const missions = ALL_MISSIONS.filter(
         mission => mission.event === event
     );
 
     for (const mission of missions) {
+        const period = getMissionPeriod(now, mission.period);
+
         db.prepare(`
             INSERT OR IGNORE INTO mission_progress (
                 guild_id,
@@ -88,22 +93,23 @@ export function getPlayerMissions(
         throw new Error("Jogador inválido.");
     }
 
-    const period = getMissionPeriod(now);
+    // o período de cada tipo (o dia e a semana)
+    const periods = [getMissionPeriod(now, "daily"), getMissionPeriod(now, "weekly")];
 
     const rows = db.prepare(`
-        SELECT mission_id, progress, claimed
+        SELECT mission_id, period, progress, claimed
         FROM mission_progress
         WHERE guild_id = ?
           AND user_id = ?
-          AND period = ?
-    `).all(guildId, userId, period);
+          AND period IN (?, ?)
+    `).all(guildId, userId, periods[0], periods[1]);
 
     const progressMap = new Map(
-        rows.map(row => [row.mission_id, row])
+        rows.map(row => [`${row.mission_id}|${row.period}`, row])
     );
 
-    return MISSIONS.map(mission => {
-        const saved = progressMap.get(mission.id);
+    return ALL_MISSIONS.map(mission => {
+        const saved = progressMap.get(`${mission.id}|${getMissionPeriod(now, mission.period)}`);
 
         return {
             ...mission,
@@ -142,7 +148,7 @@ export function claimMission({
     db.exec("BEGIN IMMEDIATE");
 
     try {
-        const period = getMissionPeriod(now);
+        const period = getMissionPeriod(now, mission.period);
 
         const saved = db.prepare(`
             SELECT progress, claimed

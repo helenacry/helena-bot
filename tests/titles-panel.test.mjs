@@ -438,7 +438,7 @@ test("em inglês, o painel inteiro sai traduzido (botões, avisos e a lista)", (
     assert.match(text, /Remove title/);
     assert.match(text, /Equipped/);
     assert.match(text, /titles unlocked of/);
-    assert.match(text, /page 1\/3/);
+    assert.match(text, new RegExp(`page 1/${Math.ceil(UNLOCK_POOL.length / 5)}`));
 
     assert.doesNotMatch(text, /Título equipado|Tirar título|desbloqueados de|página/);
 });
